@@ -2,7 +2,6 @@
 
 import * as THREE from 'three';
 import { WALK_INTERACT_RANGE } from '../store-walk';
-import { ignoreHandTrackingSource, readXrGamepadStick } from './input-policy';
 
 export { ignoreHandTrackingSource, readXrGamepadStick } from './input-policy';
 
