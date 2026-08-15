@@ -40,11 +40,8 @@ until they pick 日本語 under Store Look → Language (reload).
 
 - **i18n** = UI language (HUD, help, settings, search prompts, walk-mode copy,
   setup/BIOS, device-gate, 2.5D chrome, clerk menus, membership picker).
-- **Brand Packs** (`brandString()`, `public/user-assets/brands/`) = store
-  identity. A Japanese-looking shop is a future Brand Pack, not a locale.
-
-Future Japanese Brand Pack location: `public/user-assets/brands/<id>/` (gitignored,
-same as every other pack). Do not commit TSUTAYA, GEO, or any real-chain assets.
+- **Brand Packs** (`brandString()`, `public/user-assets/brands/` and
+  shipped `public/brand-packs/`) = store identity. Locale never selects a pack.
 
 ## JP-1B migrated surfaces
 
@@ -124,10 +121,9 @@ Documented for the later phase (also in the module header):
 - XR will need `renderer.setAnimationLoop()`; today's rAF + render-on-demand
   loop in `three-scene.ts` is left replaceable and **untouched**
 
-## Intentionally not in this phase
+## Intentionally not in JP-0 / JP-1B
 
-- Japanese rental-store visual redesign
-- A fictional Japanese store Brand Pack
+- Japanese rental-store visual redesign (that is JP-2)
 - TSUTAYA / GEO (or any third-party chain) assets or strings
 - WebXR, Quest controllers, XR performance tuning
 
@@ -143,12 +139,95 @@ Documented for the later phase (also in the module header):
 - Rental-clock diegetic stamps (`MON 8:00 AM`, register receipt dates)
 - Remote companion / tip-jar overlays (secondary surfaces)
 
+## JP-2 — bundled fictional identity
+
+JP-2 ships **ハルシオンビデオ / HALCYON VIDEO** as a bundled Brand Pack
+(`halcyon-jp`). It is the project's own fictional Japanese branch of Halcyon,
+not a TSUTAYA or GEO recreation.
+
+### Bundled vs private packs
+
+| Tree | Role |
+|---|---|
+| `public/brand-packs/<id>/` | Committed, distributable **fictional** identities. Validated by `npm run build`. |
+| `public/user-assets/brands/<id>/` | Git-ignored **private** packs (real-brand recreations, scans). Unchanged. |
+| `public/user-assets/brand/` | Simple drop. Unchanged. |
+
+Resolution of `bb_brand_pack=<id>`:
+
+1. `user-assets/brands/<id>/` if that local pack is installed (may override a bundled id)
+2. `brand-packs/<id>/` only if `<id>` is a registered bundled id
+3. no pack — the English/default Halcyon store, **unless** a simple drop
+   exists in `user-assets/brand/` (presence-driven; unchanged)
+
+Unknown ids never probe the bundled tree. Blank `bb_brand_pack` still probes
+the simple drop. Selecting **Halcyon** in Store Identity writes the sentinel
+`__original__`, which skips the drop without deleting it and never looks
+under `brands/` or `brand-packs/`. **Locale is independent:** `bb_locale=ja`
+does not select `halcyon-jp`, and selecting the pack does not set `bb_locale`.
+
+### How to select ハルシオンビデオ
+
+Store Brand → **Store Identity** → ハルシオンビデオ, then Apply & Close
+(reload). SERVICE MODE still accepts an arbitrary `bb_brand_pack` directory
+name for private packs. Opening Store Brand does not overwrite an unknown
+private id.
+
+### Assets
+
+- Manifest / strings / palette: `public/brand-packs/halcyon-jp/brand.json`
+- VHS/DVD sleeves: `public/brand-packs/halcyon-jp/wraps/`
+- Provenance: `public/brand-packs/halcyon-jp/NOTES.md`
+- Visual review stills: `docs/review/jp2/`
+  - `01-default-interior.jpg` / `02-default-storefront.jpg` — no pack
+  - `03-halcyon-jp-interior.jpg` — 映画 / おすすめ / ゲーム, navy/gold house
+  - `04-halcyon-jp-storefront.jpg` — night-navy house on the facade
+  - `05-halcyon-jp-counter-pop.jpg` — 返却はこちら / 巻き戻してね
+  - `06-halcyon-jp-wrap.jpg` — VHS レンタル専用 sleeve (navy/gold)
+  - `07-switchback-original.jpg` — original Halcyon after UI switchback
+  - `08-original-ja-ui.jpg` — original identity with 日本語 chrome
+  - `09-halcyon-jp-ja-ui.jpg` — bundled identity with 日本語 chrome
+  - `10-halcyon-jp-drama-scifi.jpg` — DRAMA→ドラマ, SCI-FI & FANTASY→SF・ファンタジー
+  - `11-halcyon-jp-identity.jpg` — Store Identity selector + navy/gold emblem
+  - `12-halcyon-jp-counter-crt.jpg` — idle desk CRT: 店舗 #0117, 巻き戻してね
+
+In-world wording lives in the pack `strings` (and `brandGenreLabel()`), not
+in `src/i18n/`. Japanese wordmarks paint through `BBCjk` (the JP-1 Noto Sans
+JP seam) — logo-renderer and sign painters append it when the copy contains
+CJK. No second CJK loader, no extra font file.
+
+Aisle labels map every `STORE_CATEGORY_ORDER` name (and demo library names
+such as MOVIES / ANIMATED MOVIES / VIDEO GAMES / PREVIOUSLY VIEWED) through
+`brand.json` `strings['sign-genre-…']`. DRAMA is ドラマ (the genre), not 邦画.
+Genre metadata is never used to infer country/region. There is no pack-id
+branch in the painters.
+
+### Color system (Round 1B)
+
+The first teal/coral house did not read as one Japanese rental-store identity.
+Three original directions were considered; **night navy + ivory + warm gold**
+(`#1b2a4a` / `#f4efe4` / `#c9a227`) was implemented. It is not Halcyon blue
+and is not a recreation of any real chain’s palette. Storefront, overhead
+signs, counter POP, and sleeves share that system.
+
+### Legal boundary
+
+Fictional project-authored identity. No affiliation with real Japanese rental
+chains. Pack sources are guarded against TSUTAYA / ツタヤ / GEO / ゲオ /
+BLOCKBUSTER tokens. This is not a trademark-clearance claim.
+
+### What remains deferred
+
+- WebXR / Quest / `setAnimationLoop` (JP-3)
+- Translating media titles or rewriting search
+- Real-chain recreations (still private `user-assets/` only)
+- Automatically pairing 日本語 chrome with this identity
+
 ## Next phase
 
-**JP-2 — Fictional Japanese Rental Store Brand Pack & Visual Design**
+**JP-3 — XR Architecture & WebXR Entry**
 
-A fictional (not TSUTAYA/GEO) Brand Pack: lettering, colors, wraps, POP. Not
-this PR.
+JP-2 does not start a WebXR session.
 
 ## Validation
 

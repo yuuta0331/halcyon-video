@@ -93,16 +93,16 @@ const USER_WRAP_SPECS = readUserWrapSpecs();
 
 // ── Installed brand packs ────────────────────────────────────────────────────
 // public/user-assets/brands/<id>/brand.json — git-ignored, so this is normally
-// an empty list. Validation uses the app's OWN validateBrandManifest (no second
+// an empty list. public/brand-packs/<id>/ holds committed bundled fictional
+// identities. Validation uses the app's OWN validateBrandManifest (no second
 // schema to keep in step); --check fails the build on a broken manifest, the
 // same way it does for a signage-config typo.
-const BRANDS_DIR = path.join(root, 'public/user-assets/brands');
-function installedBrandPacks() {
-  if (!fs.existsSync(BRANDS_DIR)) return [];
+function readPackDir(brandsDir) {
+  if (!fs.existsSync(brandsDir)) return [];
   const out = [];
-  for (const e of fs.readdirSync(BRANDS_DIR, { withFileTypes: true })) {
+  for (const e of fs.readdirSync(brandsDir, { withFileTypes: true })) {
     if (!e.isDirectory()) continue;
-    const file = path.join(BRANDS_DIR, e.name, 'brand.json');
+    const file = path.join(brandsDir, e.name, 'brand.json');
     if (!fs.existsSync(file)) {
       out.push({ id: e.name, ok: false, problems: ['brand.json is missing'] });
       continue;
@@ -126,6 +126,15 @@ function installedBrandPacks() {
     });
   }
   return out;
+}
+
+const BRANDS_DIR = path.join(root, 'public/user-assets/brands');
+const BUNDLED_BRANDS_DIR = path.join(root, 'public/brand-packs');
+function installedBrandPacks() {
+  return readPackDir(BRANDS_DIR);
+}
+function bundledBrandPacks() {
+  return readPackDir(BUNDLED_BRANDS_DIR);
 }
 
 // ── The simple drop ─────────────────────────────────────────────────────────
@@ -170,9 +179,10 @@ if (checkMode) {
     process.exit(1);
   }
   const packs = installedBrandPacks();
-  const broken = packs.filter(p => !p.ok);
+  const bundled = bundledBrandPacks();
+  const broken = [...packs, ...bundled].filter(p => !p.ok);
   if (broken.length) {
-    console.error('BRAND PACK INVALID (public/user-assets/brands/):');
+    console.error('BRAND PACK INVALID:');
     for (const p of broken) for (const msg of p.problems) console.error(`  - ${p.id}: ${msg}`);
     console.error('Pack manifest fields: node tools/list-slots.mjs');
     process.exit(1);
@@ -184,9 +194,10 @@ if (checkMode) {
     console.error('The drop folder: public/user-assets/README.md');
     process.exit(1);
   }
-  const packNote = packs.length ? `; ${packs.length} brand pack(s) validated` : '';
+  const packNote = packs.length ? `; ${packs.length} local brand pack(s) validated` : '';
+  const bundledNote = bundled.length ? `; ${bundled.length} bundled pack(s) validated` : '';
   const dropNote = drop ? `; brand drop OK (${drop.manifest ? 'brand.json' : drop.art.join(', ')})` : '';
-  console.log(`signage config OK (${Object.keys(DEFAULT_SIGNAGE_CONFIG).length} slot mappings validated${packNote}${dropNote})`);
+  console.log(`signage config OK (${Object.keys(DEFAULT_SIGNAGE_CONFIG).length} slot mappings validated${packNote}${bundledNote}${dropNote})`);
   process.exit(0);
 }
 
@@ -292,6 +303,7 @@ const wrapPath = (m) => {
 };
 const brandPack = {
   dir: 'public/user-assets/brands/<pack-id>/',
+  bundledDir: 'public/brand-packs/<pack-id>/',
   manifest: 'brand.json',
   activatedBy: 'localStorage bb_brand_pack=<pack-id> (npm run shot -- --set bb_brand_pack=<pack-id>)',
   // Required/optional manifest fields, mirroring BrandPackManifest.
@@ -316,6 +328,7 @@ const brandPack = {
     wrapPath('dvd'),
   ],
   installed: installedBrandPacks(),
+  bundled: bundledBrandPacks(),
 };
 
 // The one-folder tier: no id, no setting, no manifest required.
@@ -391,7 +404,7 @@ console.log('');
 console.log(`FIXTURE KINDS (fixture-registry, via ${fixtureKindsVia}; placements: store-fixtures-config.ts)`);
 console.log('  ' + fixtureKinds.join(', '));
 console.log('');
-console.log(`BRAND PACK — a whole store identity as files (${brandPack.dir})`);
+console.log(`BRAND PACK — a whole store identity as files (private ${brandPack.dir}; bundled ${brandPack.bundledDir})`);
 console.log(`  Activate: ${brandPack.activatedBy}`);
 console.log(`  brand.json required: ${brandPack.manifestFields.required.join(', ')}`);
 console.log(`  brand.json optional: ${brandPack.manifestFields.optional.join(', ')}`);
@@ -401,10 +414,18 @@ for (const p of brandPack.paths) {
   console.log(pad('  ' + p.path, 52) + size + (p.note ?? ''));
 }
 if (brandPack.installed.length === 0) {
-  console.log('  INSTALLED: none (the tree is git-ignored; the committed brand is the built-in one)');
+  console.log('  INSTALLED (private): none (the tree is git-ignored; the committed brand is the built-in one)');
 } else {
   for (const p of brandPack.installed) {
-    console.log(`  INSTALLED: ${p.id} — ${p.ok ? 'OK' : 'INVALID'}${p.declares?.length ? ` [${p.declares.join(', ')}]` : ''}`);
+    console.log(`  INSTALLED (private): ${p.id} — ${p.ok ? 'OK' : 'INVALID'}${p.declares?.length ? ` [${p.declares.join(', ')}]` : ''}`);
+    for (const msg of p.problems) console.log(`      ${msg}`);
+  }
+}
+if (!brandPack.bundled?.length) {
+  console.log('  BUNDLED: none');
+} else {
+  for (const p of brandPack.bundled) {
+    console.log(`  BUNDLED: ${p.id} — ${p.ok ? 'OK' : 'INVALID'}${p.declares?.length ? ` [${p.declares.join(', ')}]` : ''}`);
     for (const msg of p.problems) console.log(`      ${msg}`);
   }
 }

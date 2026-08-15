@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { createSignTextTexture, createCategorySignTexture, createNewReleasesSignTexture } from './canvas-textures';
 import { bb93SignageOn } from './genre-colors';
+import { brandString } from './brand-pack';
 
 export type SignCategory =
   | 'bin-topper'        // above previously-viewed bins
@@ -35,21 +36,30 @@ const STATIC_CATALOG: SignDef[] = [
     id: 'be-kind-rewind',
     category: 'register',
     fixture: 'acrylic-tent',
-    texture: () => createSignTextTexture('Please', 'Rewind', 'standard', 0.9 / 0.7),
+    texture: () => createSignTextTexture(
+      brandString('sign-rewind-please', 'Please'),
+      brandString('sign-rewind', 'Rewind'),
+      'standard', 0.9 / 0.7),
     size: { w: 0.9, h: 0.7 }
   },
   {
     id: 'rental-policy',
     category: 'register',
     fixture: 'wire-frame',
-    texture: () => createSignTextTexture('5 Nights', '$2.99 Rental', 'standard', 0.9 / 0.7),
+    texture: () => createSignTextTexture(
+      brandString('sign-rental-nights', '5 Nights'),
+      brandString('sign-rental-price', '$2.99 Rental'),
+      'standard', 0.9 / 0.7),
     size: { w: 0.9, h: 0.7 }
   },
   {
     id: 'membership-free',
     category: 'register',
     fixture: 'wire-frame',
-    texture: () => createSignTextTexture('Membership', 'Is Always Free', 'standard', 0.9 / 0.7),
+    texture: () => createSignTextTexture(
+      brandString('sign-membership-title', 'Membership'),
+      brandString('sign-membership-body', 'Is Always Free'),
+      'standard', 0.9 / 0.7),
     size: { w: 0.9, h: 0.7 }
   },
   {
@@ -63,14 +73,20 @@ const STATIC_CATALOG: SignDef[] = [
     id: 'previously-viewed-promo',
     category: 'bin-topper',
     fixture: 'shelf-topper',
-    texture: () => createSignTextTexture('Previously Viewed', '3 for $20.00', 'promo', 1.5 / 0.8),
+    texture: () => createSignTextTexture(
+      brandString('sign-viewed-title', 'Previously Viewed'),
+      brandString('sign-viewed-price', '3 for $20.00'),
+      'promo', 1.5 / 0.8),
     size: { w: 1.5, h: 0.8 }
   },
   {
     id: 'candy-promo',
     category: 'candy',
     fixture: 'wire-frame',
-    texture: () => createSignTextTexture('Movie Theater Candy', '$1.99 each', 'promo', 0.9 / 0.7),
+    texture: () => createSignTextTexture(
+      brandString('sign-candy-title', 'Movie Theater Candy'),
+      brandString('sign-candy-price', '$1.99 each'),
+      'promo', 0.9 / 0.7),
     size: { w: 0.9, h: 0.7 }
   },
   // 1993 footage pack: the closed-lane tent. (The yellow INCREDIBLE VALUES
@@ -82,7 +98,10 @@ const STATIC_CATALOG: SignDef[] = [
     category: 'register',
     fixture: 'acrylic-tent',
     dressing: '1993',
-    texture: () => createSignTextTexture('Next Register', 'Please', 'yellow-navy', 0.9 / 0.5),
+    texture: () => createSignTextTexture(
+      brandString('sign-next-register', 'Next Register'),
+      brandString('sign-next-please', 'Please'),
+      'yellow-navy', 0.9 / 0.5),
     size: { w: 0.9, h: 0.5 }
   }
 ];

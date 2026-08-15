@@ -29,6 +29,12 @@ import { DEFAULT_LOGO_SPECS, getActiveLogoSpec } from './logo-spec';
 import {
   activeBrandPackId, brandPackFontFamilies, brandPackSource, brandPackStatus, getBrandPack,
 } from './brand-pack';
+import {
+  HALCYON_JP_PACK_ID,
+  ORIGINAL_IDENTITY_SENTINEL,
+  builtinIdentitySelection,
+  isOriginalIdentitySentinel,
+} from './bundled-brand-packs';
 import { brandDropReport } from './brand-drop';
 import type { LogoShape, LogoSpec } from './logo-spec';
 import { drawLogo, getLogoFontString } from './logo-renderer';
@@ -347,7 +353,10 @@ function brandPackDiagnostic(): string {
   if (!id) {
     return brandPackSource() === 'drop'
       ? `Blank — and a logo is dropped in user-assets/brand/, which is dressing the store. ${brandDropDiagnostic()}`
-      : 'Directory under user-assets/brands/ to dress the store from. Blank = the drop folder user-assets/brand/, else the built-in brand.';
+      : 'Blank = Original Halcyon. Pick ハルシオンビデオ on this page, or type a directory under user-assets/brands/.';
+  }
+  if (isOriginalIdentitySentinel(id)) {
+    return 'Original Halcyon (explicit). A simple drop in user-assets/brand/ is ignored until this is cleared.';
   }
   const status = brandPackStatus();
   if (status === 'loaded') {
@@ -1431,6 +1440,7 @@ export function buildStoreBrandPanel(container: HTMLElement, hooks: BrandPanelHo
     value.className = 'settings-row-value';
     value.textContent = !id
       ? 'None'
+      : isOriginalIdentitySentinel(id) ? 'Original Halcyon'
       : status === 'loaded' ? `${pack?.displayName ?? pack?.name ?? id} (${id})`
       : status === 'failed' ? `${id} — FAILED`
       : `${id} — not installed`;
@@ -1439,6 +1449,57 @@ export function buildStoreBrandPanel(container: HTMLElement, hooks: BrandPanelHo
       () => { /* read-only: the id is typed on the SERVICE MODE page */ },
     );
     row.appendChild(value);
+  }
+
+  // ── Built-in store identity (Original Halcyon / bundled ハルシオンビデオ) ──
+  // Couch-facing. Does not write bb_brand_pack merely by rendering — an
+  // unknown private pack stays selected until the user picks a built-in.
+  {
+    const dropActive = brandPackSource() === 'drop';
+    const current = builtinIdentitySelection(activeBrandPackId(), dropActive);
+    const row = document.createElement('div');
+    row.className = 'settings-row settings-brand-row brand-preset-row';
+    row.tabIndex = -1;
+    const main = document.createElement('span');
+    main.className = 'settings-row-main';
+    const hint = current === 'custom'
+      ? tfill('setting.storeIdentity.custom', { id: activeBrandPackId() ?? '' })
+      : current === 'drop'
+        ? tUi('setting.storeIdentity.drop')
+        : tUi('setting.storeIdentity.hint');
+    main.innerHTML = `
+      <span class="settings-row-label">${tUi('setting.storeIdentity.label')}</span>
+      <span class="settings-row-hint">${hint}</span>
+    `;
+    row.appendChild(main);
+    const strip = document.createElement('span');
+    strip.className = 'brand-preset-strip';
+    const choices: { id: string; sel: 'original' | 'halcyon-jp'; label: string }[] = [
+      { id: ORIGINAL_IDENTITY_SENTINEL, sel: 'original', label: tUi('setting.storeIdentity.original') },
+      { id: HALCYON_JP_PACK_ID, sel: 'halcyon-jp', label: tUi('setting.storeIdentity.halcyonJp') },
+    ];
+    const applyIdentity = (packId: string) => {
+      if (typeof localStorage === 'undefined') return;
+      localStorage.setItem('bb_brand_pack', packId);
+      hooks.onNeedsReload?.();
+    };
+    choices.forEach((choice) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'brand-preset-btn';
+      btn.textContent = choice.label;
+      btn.classList.toggle('active', current === choice.sel);
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        applyIdentity(choice.id);
+      });
+      strip.appendChild(btn);
+    });
+    row.appendChild(strip);
+    registerRow('identity', row, (dir) => {
+      applyIdentity(dir < 0 ? ORIGINAL_IDENTITY_SENTINEL : HALCYON_JP_PACK_ID);
+    });
+    container.appendChild(row);
   }
 
   // ── Preset strip ───────────────────────────────────────────────────────────

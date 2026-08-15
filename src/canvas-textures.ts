@@ -14,6 +14,9 @@ import {
 import agencyFontUrl from './assets/sairasemicondensed-medium.ttf';
 import { BB_ARCHIVO_BLACK, bundledFontsReady } from './bundled-fonts';
 import { createCategoryPlate1993Texture } from './fixtures/category-plate-1993';
+import { brandGenreLabel, brandString } from './brand-pack';
+import { BB_CJK, containsCjk } from './i18n/text';
+import { ensureCjkFont } from './i18n/cjk-font';
 
 // ─── Anisotropic-filtering budget ────────────────────────────────────────────
 // Grazing-angle surfaces (the carpet and walls receding toward the back wall,
@@ -213,18 +216,16 @@ const GENRE_SIGN_COLORS: Record<string, string> = {
 // Shared white-label text pass for the 1024×256 category/collection signs.
 function drawSignLabel(ctx: CanvasRenderingContext2D, label: string): void {
   ctx.save();
-  // Plain white text for reliable contrast against any sign background.
   ctx.fillStyle = '#ffffff';
-  // Brand typography comes from the active LogoSpec, so a brand pack's own
-  // face letters these signs too.
-  ctx.font = getLogoFontString(getActiveLogoSpec(), 96);
+  const display = containsCjk(label) ? label : label.toUpperCase();
+  ctx.font = getLogoFontString(getActiveLogoSpec(), 96, display);
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.shadowColor = 'rgba(0, 0, 0, 0.7)';
   ctx.shadowBlur = 12;
   ctx.shadowOffsetX = 4;
   ctx.shadowOffsetY = 6;
-  ctx.fillText(label.toUpperCase(), 512, 128 + 8);
+  ctx.fillText(display, 512, 128 + 8);
   ctx.restore();
 }
 
@@ -360,7 +361,7 @@ function drawTicketSign(
   const cy = by0 + bh / 2;
   // Archivo Black carries ~0.72 caps-per-em; a brand pack's display face
   // letters these boards in its own family (same cap ratio assumption).
-  const family = logoFontFamily(spec);
+  const family = logoFontFamily(spec, label);
   const fontFor = (cap: number) => `normal ${cap / 0.72}px ${family}`;
   const widthAt = (text: string, cap: number): number => {
     c.font = fontFor(cap);
@@ -371,7 +372,7 @@ function drawTicketSign(
   const capMax = Math.min(HB_CAP_H * H, bh * 0.55);
   const fitCap = (text: string): number =>
     Math.min(capMax, (capMax * usableW) / Math.max(1, widthAt(text, capMax)));
-  const caps = label.toUpperCase();
+  const caps = containsCjk(label) ? label.trim() : label.toUpperCase();
   let lines = [caps];
   let cap = fitCap(caps);
   if (cap < capMax * 0.62 && caps.includes(' ')) {
@@ -444,7 +445,7 @@ export function createCategorySignTexture(
     canvas.height = Math.max(2, Math.round(1024 / faceAspect));
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     drawTicketSign(
-      ctx, canvas.width, canvas.height, categoryName,
+      ctx, canvas.width, canvas.height, brandGenreLabel(categoryName),
       pal.primary, pal.secondary, getActiveLogoSpec().textColor, blade,
     );
   };
@@ -475,7 +476,7 @@ export function createCollectionSignTexture(
 
   ctx.fillStyle = GENRE_SIGN_COLORS[label.toUpperCase()] ?? palette.primary;
   ctx.fillRect(0, 0, 1024, 256);
-  drawSignLabel(ctx, label);
+  drawSignLabel(ctx, brandGenreLabel(label));
 
   const texture = toSignTexture(canvas);
 
@@ -501,7 +502,7 @@ export function createCollectionSignTexture(
     wash.addColorStop(1, 'rgba(0, 0, 0, 0.55)');
     ctx.fillStyle = wash;
     ctx.fillRect(0, 0, 1024, 256);
-    drawSignLabel(ctx, label);
+    drawSignLabel(ctx, brandGenreLabel(label));
     texture.needsUpdate = true;
   };
 
@@ -553,10 +554,9 @@ export function createFlushTopperLabelTexture(label: string, theme = getActiveTh
   ctx.fillStyle = '#ffffff';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  const text = label.toUpperCase().trim();
-  // Toppers letter in the active brand's own typography.
+  const text = containsCjk(label) ? brandGenreLabel(label).trim() : brandGenreLabel(label).toUpperCase().trim();
   const spec = getActiveLogoSpec(theme);
-  const fontFor = (px: number) => getLogoFontString(spec, px);
+  const fontFor = (px: number) => getLogoFontString(spec, px, text);
   let fontSize = 110;
   ctx.font = fontFor(fontSize);
   while (ctx.measureText(text).width > 512 - 50 && fontSize > 34) {
@@ -621,8 +621,14 @@ function paintArchedTopper(canvas: HTMLCanvasElement, label: string): void {
   ctx.fillStyle = BB2000_PLAQUE_STAR;
   fillStar(ctx, W / 2, H * 0.5, H * 0.52, H * 0.52 * 0.42);
 
-  const text = label.toUpperCase().trim();
-  const family = bb2000FontReady ? `'${BB2000_SLAB_FONT}', Georgia, serif` : `Georgia, serif`;
+  const display = brandGenreLabel(label);
+  const text = containsCjk(display) ? display.trim() : display.toUpperCase().trim();
+  const family = containsCjk(text)
+    ? (bb2000FontReady
+      ? `'${BB2000_SLAB_FONT}', ${BB_CJK}, Georgia, serif`
+      : `${BB_CJK}, Georgia, serif`)
+    : (bb2000FontReady ? `'${BB2000_SLAB_FONT}', Georgia, serif` : `Georgia, serif`);
+  if (containsCjk(text)) ensureCjkFont();
   const first = text.slice(0, 1);
   const rest = text.slice(1);
   ctx.textBaseline = 'alphabetic';
@@ -854,7 +860,11 @@ export function createStorefrontLogoYellowTexture(theme = getActiveTheme()): THR
   return toSignTexture(canvas);
 }
 
-const NR_SIGN_TEXT = 'NEW RELEASES';
+const NR_SIGN_FALLBACK = 'NEW RELEASES';
+
+function nrSignText(): string {
+  return brandString('sign-new-releases', NR_SIGN_FALLBACK);
+}
 
 function paintNewReleasesSign(canvas: HTMLCanvasElement, theme: StoreTheme): void {
   const W = canvas.width, H = canvas.height;
@@ -866,23 +876,24 @@ function paintNewReleasesSign(canvas: HTMLCanvasElement, theme: StoreTheme): voi
   // textColor: these letters mount on the wall itself, so they read as the
   // brand's emblem color — its own lettering ink would vanish into the band.
   const spec = getActiveLogoSpec(theme);
+  const copy = nrSignText();
   ctx.textAlign = 'center';
   ctx.fillStyle = spec.bodyColor;
   // Fit from MEASURED metrics rather than a hardcoded size: display faces vary
   // wildly in condensation, so one fixed px can't suit both. Cap height drives
   // the fit (the band is a wide, shallow ribbon); width is only a clamp.
   const PROBE = 100;
-  ctx.font = getLogoFontString(spec, PROBE);
-  const probe = ctx.measureText(NR_SIGN_TEXT);
+  ctx.font = getLogoFontString(spec, PROBE, copy);
+  const probe = ctx.measureText(copy);
   const capPer = Math.max(1, probe.actualBoundingBoxAscent);
   const widthPer = Math.max(1, probe.width);
   const px = Math.max(40, Math.floor(PROBE * Math.min(H * 0.56 / capPer, W * 0.62 / widthPer)));
-  ctx.font = getLogoFontString(spec, px);
+  ctx.font = getLogoFontString(spec, px, copy);
   // Center the MEASURED glyph box: a display face's em box is not symmetric,
   // so textBaseline 'middle' floats the caps high.
-  const m = ctx.measureText(NR_SIGN_TEXT);
+  const m = ctx.measureText(copy);
   ctx.textBaseline = 'alphabetic';
-  ctx.fillText(NR_SIGN_TEXT, W / 2, (H + m.actualBoundingBoxAscent - m.actualBoundingBoxDescent) / 2);
+  ctx.fillText(copy, W / 2, (H + m.actualBoundingBoxAscent - m.actualBoundingBoxDescent) / 2);
 }
 
 export function createNewReleasesSignTexture(theme = getActiveTheme()): THREE.Texture {
@@ -893,12 +904,14 @@ export function createNewReleasesSignTexture(theme = getActiveTheme()): THREE.Te
   const tex = toSignTexture(canvas);
   // The wordmark face is a webfont: if it hasn't resolved yet this first pass
   // baked fallback glyphs, so repaint the band in place when it lands.
-  if (!brandFontReady) {
-    ensureBrandFont(() => {
+  if (!brandFontReady || containsCjk(nrSignText())) {
+    const repaint = () => {
       paintNewReleasesSign(canvas, theme);
       tex.needsUpdate = true;
       pokeRender();
-    });
+    };
+    ensureBrandFont(repaint);
+    if (containsCjk(nrSignText())) ensureCjkFont(repaint);
   }
   return tex;
 }
@@ -1864,7 +1877,11 @@ export function createSignTextTexture(
 
     ctx.fillStyle = textCol;
 
-    const fontName = `${BB_ARCHIVO_BLACK}, sans-serif`;
+    const sample = `${text}${subtitle ?? ''}`;
+    if (containsCjk(sample)) ensureCjkFont();
+    const fontName = containsCjk(sample)
+      ? `${BB_ARCHIVO_BLACK}, ${BB_CJK}, sans-serif`
+      : `${BB_ARCHIVO_BLACK}, sans-serif`;
     // yellow-navy tents print in heavy oblique, per the footage.
     const fontPrefix = style === 'yellow-navy' ? 'italic ' : 'normal ';
 
@@ -1887,7 +1904,8 @@ export function createSignTextTexture(
     const inner = H - (hasBorder ? borderW * 3 : H * 0.12);
 
     if (subtitle) {
-      const TITLE = text.toUpperCase(), SUB = subtitle.toUpperCase();
+      const TITLE = containsCjk(text) ? text : text.toUpperCase();
+      const SUB = containsCjk(subtitle) ? subtitle : subtitle.toUpperCase();
       const titleSize = fit(TITLE, inner * 0.46);
       ctx.font = `${fontPrefix}${titleSize}px ${fontName}`;
       const titleAsc = ctx.measureText(TITLE).actualBoundingBoxAscent || titleSize * 0.72;
@@ -1906,7 +1924,7 @@ export function createSignTextTexture(
       ctx.fillStyle = style === 'promo' ? '#ffcc00' : textCol; // Yellow subtitle for promo
       ctx.fillText(SUB, W / 2, top + titleAsc + gap + subAsc);
     } else {
-      const TITLE = text.toUpperCase();
+      const TITLE = containsCjk(text) ? text : text.toUpperCase();
       const size = fit(TITLE, inner * 0.62);
       ctx.font = `${fontPrefix}${size}px ${fontName}`;
       const asc = ctx.measureText(TITLE).actualBoundingBoxAscent || size * 0.72;

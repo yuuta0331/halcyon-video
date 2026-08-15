@@ -7,7 +7,7 @@
 // shipped at public/textures/surfaces/ before the procedural maps win.
 import * as THREE from 'three';
 import { assetUrl } from './asset-url';
-import { brandPackDir } from './brand-pack';
+import { brandPackPublicRoot } from './brand-pack';
 import { tryLoadShippedSurfaceKtx2 } from './surface-textures';
 
 // One load attempt at an exact public/-relative path.
@@ -63,8 +63,8 @@ export function tryLoadUserAssetTexture(
   // An installed brand pack owns the same tree one level down: its copy of an
   // asset wins, and anything it doesn't ship falls through to the flat path,
   // so a pack is a partial overlay rather than an all-or-nothing swap.
-  const dir = brandPackDir();
-  if (dir) loadOne(`user-assets/${dir}/${relPath}`, onLoad, srgb, () => loadOne(`user-assets/${relPath}`, onLoad, srgb, miss));
+  const root = brandPackPublicRoot();
+  if (root) loadOne(`${root}/${relPath}`, onLoad, srgb, () => loadOne(`user-assets/${relPath}`, onLoad, srgb, miss));
   else loadOne(`user-assets/${relPath}`, onLoad, srgb, miss);
 }
 

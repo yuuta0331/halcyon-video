@@ -1,6 +1,9 @@
 import * as THREE from 'three';
 import { BB_ARCHIVO_BLACK } from '../bundled-fonts';
 import { getBackTexture, registerBackTexture } from './sign-fixtures';
+import { brandGenreLabel } from '../brand-pack';
+import { BB_CJK, containsCjk } from '../i18n/text';
+import { ensureCjkFont } from '../i18n/cjk-font';
 
 /**
  * The 1993 ceiling category WEDGE — genre wayfinding hung over aisle mouths
@@ -94,7 +97,7 @@ const CANVAS_W = 1600;
  * keyline + genre caps. `mirror` paints the physically-correct second side
  * (layout mirrored so it lands on the same body, glyphs kept readable).
  */
-function paintFace(canvas: HTMLCanvasElement, label: string, mirror: boolean): void {
+function paintFace(canvas: HTMLCanvasElement, label: string, mirror: boolean, display = label): void {
   const S = SPEC;
   const family = wedgeGenreColor(label);
   const ctx = canvas.getContext('2d')!;
@@ -131,20 +134,24 @@ function paintFace(canvas: HTMLCanvasElement, label: string, mirror: boolean): v
   if (mirror) ctx.scale(-1, 1); // un-mirror the glyphs only
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
+  if (containsCjk(display)) ensureCjkFont();
+  const typeFamily = containsCjk(display)
+    ? `${BB_ARCHIVO_BLACK}, ${BB_CJK}, sans-serif`
+    : `${BB_ARCHIVO_BLACK}, sans-serif`;
   // Sign-shop fit: hold the visible cap height, condense to fit the plate.
   let size = Math.round((ph * S.capHeightFrac) / 0.72);
-  const setFont = () => { ctx.font = `italic 900 ${size}px ${BB_ARCHIVO_BLACK}, sans-serif`; };
+  const setFont = () => { ctx.font = `italic 900 ${size}px ${typeFamily}`; };
   setFont();
   const maxW = pw * S.textWidthFrac;
-  let squeeze = Math.min(1, maxW / ctx.measureText(label).width);
+  let squeeze = Math.min(1, maxW / ctx.measureText(display).width);
   if (squeeze < 0.6) {
     size = Math.max(40, Math.floor(size * (squeeze / 0.6)));
     setFont();
-    squeeze = Math.min(1, maxW / ctx.measureText(label).width);
+    squeeze = Math.min(1, maxW / ctx.measureText(display).width);
   }
   ctx.scale(squeeze, 1);
   ctx.fillStyle = '#ffffff';
-  ctx.fillText(label, 0, ph * 0.03);
+  ctx.fillText(display, 0, ph * 0.03);
   ctx.restore();
 
   // Lit-from-within VIGNETTE (owner, 2026-08-09): the face doubles as the
@@ -183,7 +190,7 @@ export function createCategoryPlate1993Texture(label: string, faceAspect = 2.48)
     const c = document.createElement('canvas');
     c.width = CANVAS_W;
     c.height = Math.round(CANVAS_W / slantAspect / 8) * 8;
-    paintFace(c, label.toUpperCase(), mirror);
+    paintFace(c, label.toUpperCase(), mirror, brandGenreLabel(label));
     return c;
   };
   const front = toTex(mk(false));
