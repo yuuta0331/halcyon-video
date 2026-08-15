@@ -121,6 +121,7 @@ import {
   initCounterTerminalFlow,
 } from './counter-terminal-flow';
 import { buildControlsHelpPanel, HELP_ROW_PREFIX } from './controls-help';
+import { syncXrEntryLabels, toggleXrSession, wireXrEntry } from './xr/boot';
 import type { CandyRow } from './fixtures/period-fixtures';
 import { getCandyDeliveryAdapter } from './candy-delivery';
 import { isDemoMode } from './demo-mode';
@@ -557,7 +558,7 @@ const ui = {
 let powerMenuIndex = 0;
 // The demo has no Jellyfin session to log out of and no app window to close —
 // those rows leave the keyboard-nav ring too (their DOM is hidden in main()).
-const powerButtons = ['btn-settings', 'btn-controls', 'btn-flat-mode', 'btn-suspend', 'btn-cec-toggle', 'btn-logout', 'btn-exit', 'btn-cancel']
+let powerButtons = ['btn-settings', 'btn-controls', 'btn-flat-mode', 'btn-suspend', 'btn-cec-toggle', 'btn-logout', 'btn-exit', 'btn-cancel']
   .filter((id) => !(isDemoMode && (id === 'btn-logout' || id === 'btn-exit')));
 
 // The single CEC row toggles the display: we track the last state WE commanded
@@ -571,11 +572,21 @@ let cecDisplayAssumedOn = true;
 // SERVICE MODE settings page (review §4.3), and MEDIA RELEASE DATE (#42),
 // the catalog-pin sub-screen. Inserted just above RETURN TO STORE so the
 // safe exit stays last.
-const counterTerminalButtons = (() => {
-  const ids = [...powerButtons];
-  ids.splice(ids.indexOf('btn-cancel'), 0, MEDIA_DATE_BUTTON_ID, 'btn-service');
-  return ids;
-})();
+const counterTerminalButtons: string[] = [];
+function rebuildCounterTerminalButtons() {
+  counterTerminalButtons.length = 0;
+  counterTerminalButtons.push(...powerButtons);
+  const cancel = counterTerminalButtons.indexOf('btn-cancel');
+  counterTerminalButtons.splice(cancel, 0, MEDIA_DATE_BUTTON_ID, 'btn-service');
+}
+rebuildCounterTerminalButtons();
+
+function offerXrPowerButton() {
+  if (powerButtons.includes('btn-enter-vr')) return;
+  const cancel = powerButtons.indexOf('btn-cancel');
+  powerButtons.splice(cancel, 0, 'btn-enter-vr');
+  rebuildCounterTerminalButtons();
+}
 
 // Settings drawer navigation state. `settingsRowKeys` is the flat top-to-bottom
 // order of focusable rows generated from the registry, with the sentinel
@@ -2443,6 +2454,14 @@ async function initializeStoreScene(preservePosterCache = false) {
     const { StoreScene } = await import('./three-scene');
     const scene = new StoreScene(canvasContainer, storeLibraries, logToConsole, jfUrl, jfToken, storeComingSoon, storeDiscovery, storeGameMovies, staffPicks);
     armQualityBackstop();
+    scene.onXrSessionChange = (presenting) => syncXrEntryLabels(presenting);
+    void wireXrEntry({
+      isTauri,
+      scene,
+      getVideo: () => videoPlayer?.videoElement ?? null,
+      onPowerButtonsNeedXr: offerXrPowerButton,
+      log: logToConsole,
+    });
 
     let lastLoggedPct = -1;
     scene.onTextureLoadProgress = (loaded, total) => {
@@ -2739,6 +2758,12 @@ async function executePowerMenuAction(btnId: string) {
       // Controls & Help reference (UX pass 2026-08): every input the app
       // understands, on one page — reachable from all three menus.
       openSettingsDrawer('Controls');
+      return;
+
+    case 'btn-enter-vr':
+      closePowerMenu();
+      counterTerminalClose();
+      await toggleXrSession(storeScene);
       return;
 
     case 'btn-flat-mode':
@@ -4098,6 +4123,16 @@ async function main() {
         setPowerMenuSelection(idx);
       });
     }
+  });
+  document.getElementById('btn-enter-vr')?.addEventListener('click', () => {
+    executePowerMenuAction('btn-enter-vr');
+  });
+  document.getElementById('btn-enter-vr')?.addEventListener('pointerenter', () => {
+    const idx = powerButtons.indexOf('btn-enter-vr');
+    if (idx >= 0) setPowerMenuSelection(idx);
+  });
+  document.getElementById('xr-enter-btn')?.addEventListener('click', () => {
+    void toggleXrSession(storeScene);
   });
 
   // Setup hover listeners for exit confirmation buttons

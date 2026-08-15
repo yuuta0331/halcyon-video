@@ -99,6 +99,8 @@ import type * as subnav from './store-subnav';
 import * as inspect from './store-inspect';
 import * as clerkFlow from './store-clerk-flow';
 import * as walk from './store-walk';
+import * as xrBind from './store-xr';
+import type { XrRuntime } from './xr/runtime';
 import * as overview from './store-overview';
 import * as cam from './store-camera';
 import * as grade from './store-grade';
@@ -384,6 +386,9 @@ export class StoreScene {
   public gondolaMaterials!: GondolaMaterials;
   
   // First Person Walk Around Mode state
+  public xr: XrRuntime | null = null;
+  public xrVideoGetter: (() => HTMLVideoElement | null) | null = null;
+  public onXrSessionChange?: (presenting: boolean) => void;
   public isWalkAroundMode = false;
   public savedModeBeforeWalk = 'library-select';
   // Walk-mode click-to-inspect (handleWalkClick): the standing pose to
@@ -2527,6 +2532,8 @@ export class StoreScene {
 
     // Handle resizing
     window.addEventListener('resize', this.onWindowResize);
+
+    this.xr = xrBind.attachXrRuntime(this, this.animate, () => this.restoreDesktopAnimationLoop());
   }
 
   // Single code path for sizing the renderer/composer/passes, driven by the
@@ -2535,6 +2542,7 @@ export class StoreScene {
   // pixelRatio (the quality-tier cap) is untouched here — only the buffer
   // dimensions scale, so ratio and size are never multiplied together.
   private applyRenderResolution() {
+    if (this.xr?.presenting) return;
     const clientWidth = this.container.clientWidth || window.innerWidth || 1280;
     const clientHeight = this.container.clientHeight || window.innerHeight || 720;
     // Recompute sharpScale here (cheap) so it's always current for the panel we
@@ -4355,15 +4363,17 @@ export class StoreScene {
   }
 
   // Animation render loop
-  private animate = () => {
+  private animate = (frameTime?: number) => {
     if (!this.isRendering) return;
-    
-    requestAnimationFrame(this.animate);
+
+    if (this.xr?.shouldSelfScheduleRaf() !== false && !this.xr?.presenting) {
+      requestAnimationFrame(this.animate);
+    }
     this.frameCount++;
     updatedMeshes.clear();
 
 
-    const time = performance.now();
+    const time = typeof frameTime === 'number' ? frameTime : performance.now();
     perfTrace.frameTick(time);
     perfTrace.begin(SP_SIM);
     const clerkDt = Math.min(0.1, (time - this.lastUpdateTime) / 1000.0);
@@ -4395,7 +4405,15 @@ export class StoreScene {
       }
     }
 
-    if (this.isWalkAroundMode) {
+    if (this.xr?.presenting) {
+      const dt = Math.min(0.1, (time - this.lastUpdateTime) / 1000.0);
+      this.lastUpdateTime = time;
+      this.bobAmount = this.xr.bobAmount(this.bobAmount);
+      this.xr.tick(dt);
+      this.currentCameraPos.copy(this.camera.position);
+      const camForward = this._walkCamFwd.set(0, 0, -1).applyQuaternion(this.camera.quaternion);
+      this.currentLookAt.copy(this.camera.position).add(camForward);
+    } else if (this.isWalkAroundMode) {
       const dt = Math.min(0.1, (time - this.lastUpdateTime) / 1000.0);
       this.lastUpdateTime = time;
       const ROTATION_SPEED = 1.6;
@@ -4800,6 +4818,10 @@ export class StoreScene {
     }
     this.tierIsIdle = !active && !videoPlaying;
     this.currentTier = active ? 'active' : (videoPlaying ? 'video' : 'idle');
+    if (this.xr?.presenting) {
+      this.tierIsIdle = false;
+      this.currentTier = 'active';
+    }
 
     // Set when applyRenderResolution() ran this frame: the drawing-buffer
     // resize cleared the canvas, so we must composite before this frame
@@ -4881,7 +4903,7 @@ export class StoreScene {
       }
     }
 
-    if (staticPersist && !mustRenderThisFrame) {
+    if (!this.xr?.presenting && staticPersist && !mustRenderThisFrame) {
       // Reset the ACTIVE-only fps window (as the IDLE branch does) so these
       // skipped frames aren't misread as a slow GPU and don't downscale.
       this.resScaleFrames = 0;
@@ -4895,7 +4917,7 @@ export class StoreScene {
       this.staticSettled = true;
     }
 
-    if (this.tierIsIdle) {
+    if (!this.xr?.presenting && this.tierIsIdle) {
       // IDLE: composite nothing. We deliberately leave the last rendered frame on
       // screen untouched (the browser/webview keeps presenting it) rather than
       // re-drawing an identical frame every second. This guarantees the acceptance
@@ -4962,7 +4984,7 @@ export class StoreScene {
     // uncapped (see the forceWake comment above), so it's excluded from the
     // gate the same way mustRenderThisFrame is.
     const frameInterval = active ? this.activeFrameInterval : (this.softwareGL ? 1000 : this.VIDEO_FRAME_MS);
-    if (!mustRenderThisFrame && !forceWake && time - this.lastRenderTime < frameInterval) {
+    if (!this.xr?.presenting && !mustRenderThisFrame && !forceWake && time - this.lastRenderTime < frameInterval) {
       return;
     }
     this.lastRenderTime = time;
@@ -5506,7 +5528,10 @@ export class StoreScene {
     // 3. Render scene
     perfTrace.end(SP_SIM);
     perfTrace.begin(SP_RENDER);
-    if (this.composer) {
+    if (this.xr?.presenting) {
+      this.xr.preRender();
+      this.renderer.render(this.scene, this.camera);
+    } else if (this.composer) {
       this.composer.render();
     } else {
       this.renderer.render(this.scene, this.camera);
@@ -5579,7 +5604,12 @@ export class StoreScene {
 
   // Halt rendering loop to yield system resources during video playback
   public pauseRendering() {
+    if (this.xr?.presenting) {
+      this.onConsoleLog('[System] XR session keeps the animation loop live.', 'system');
+      return;
+    }
     this.isRendering = false;
+    this.renderer.setAnimationLoop(null);
     this.onConsoleLog("[System] Rendering paused. Resources yielded.", "system");
   }
 
@@ -5588,7 +5618,8 @@ export class StoreScene {
     if (!this.isRendering) {
       this.isRendering = true;
       this.requestRender(); // draw a real frame immediately, don't wait for the idle heartbeat
-      this.animate();
+      if (this.xr?.presenting) this.renderer.setAnimationLoop(this.animate);
+      else this.animate();
       this.onConsoleLog("[System] Rendering resumed.", "system");
     }
   }
@@ -5847,6 +5878,9 @@ export class StoreScene {
   // Clean up WebGL resources
   public destroy(preservePosterCache = false) {
     this.isRendering = false;
+    this.xr?.dispose();
+    this.xr = null;
+    this.renderer.setAnimationLoop(null);
     window.removeEventListener('resize', this.onWindowResize);
 
     // Every live-brand subscriber holds a canvas or material belonging to THIS
@@ -6151,4 +6185,13 @@ export class StoreScene {
   public updateWalkHUD() { return walk.updateWalkHUD(this); }
 
   public toggleWalkAround() { return walk.toggleWalkAround(this); }
+
+  public probeXr() { return xrBind.probeXr(this); }
+  public enterXr() { return xrBind.enterXr(this); }
+  public exitXr() { return xrBind.exitXr(this); }
+
+  private restoreDesktopAnimationLoop() {
+    this.renderer.setAnimationLoop(null);
+    if (this.isRendering) requestAnimationFrame(this.animate);
+  }
 }

@@ -32,6 +32,13 @@ test('future XR capability is recorded without starting a session', () => {
   assert.equal(p.requiresAnimationLoop, false);
 });
 
+test('Tauri never becomes WebXR-capable even if navigator.xr is present', () => {
+  const p = detectPlatform({ tauri: true, xr: true });
+  assert.equal(p.kind, 'tauri');
+  assert.equal(p.xrAvailability, 'unsupported');
+  assert.equal(p.isXrSession, false);
+});
+
 test('store-unit conversion uses the documented feet-like ratio', () => {
   assert.equal(STORE_UNITS_PER_METER, 3.28084);
   assert.equal(storeUnitsFromMeters(1), 3.28084);

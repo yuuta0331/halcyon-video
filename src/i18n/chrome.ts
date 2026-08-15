@@ -114,6 +114,8 @@ export function applyDocumentChrome(): void {
   setText('#btn-cec-toggle', t('power.cec'));
   setText('#btn-logout', t('power.logout'));
   setText('#btn-exit', brandString('terminal-exit-label', t('power.exit')));
+  setText('#btn-enter-vr', t('power.enterVr'));
+  setText('#xr-enter-btn', t('xr.enter'));
   setText('#btn-cancel', t('power.cancel'));
   setText('.power-desc', t('terminal.ready'));
   const rewind = document.querySelector('#power-menu-overlay .crt-footer-hint');

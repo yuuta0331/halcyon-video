@@ -218,16 +218,19 @@ BLOCKBUSTER tokens. This is not a trademark-clearance claim.
 
 ### What remains deferred
 
-- WebXR / Quest / `setAnimationLoop` (JP-3)
+- Physical VHS/DVD grabbing and rental gestures — **JP-4**
 - Translating media titles or rewriting search
 - Real-chain recreations (still private `user-assets/` only)
 - Automatically pairing 日本語 chrome with this identity
+- Quest asset optimization / 90–120 Hz / foveated rendering — later XR phases
 
 ## Next phase
 
-**JP-3 — XR Architecture & WebXR Entry**
+**JP-3 — XR Architecture & WebXR Entry** is implemented on `feat/webxr-architecture`.
+See `docs/xr-architecture.md` and `docs/review/jp3/`.
 
-JP-2 does not start a WebXR session.
+JP-2 does not start a WebXR session. JP-3 starts one only from an explicit
+Enter VR control, and never from Tauri.
 
 ## Validation
 

@@ -493,6 +493,28 @@ export const en = {
   'walk.hudMouse': 'Or click canvas to Lock Mouse',
   'walk.hudClick': 'Click a case to pick it up',
   'walk.hudExit': 'Exit Walk Mode',
+
+  'xr.enter': 'Enter VR',
+  'xr.exit': 'Exit VR',
+  'power.enterVr': 'Enter VR',
+  'terminal.enterVr': 'ENTER VR',
+  'xr.unsupported': 'VR is not available on this device.',
+  'xr.panel.title': 'HALCYON VIDEO — VR',
+  'xr.panel.layersOn': 'High-acuity compositor layer',
+  'xr.panel.layersOff': 'Compositor fallback (in-world panel)',
+  'xr.panel.move': 'Left stick: walk  •  strafe',
+  'xr.panel.turn': 'Right stick: snap turn',
+  'xr.panel.select': 'Trigger: select a case',
+  'xr.panel.exit': 'System menu or Exit VR to leave',
+  'xr.panel.space': 'Space',
+  'xr.panel.hz': 'Hz',
+  'help.xr.title': 'Quest / WebXR',
+  'help.xr.enter.action': 'Enter VR',
+  'help.xr.enter.hint': 'Headset + Quest Browser. Never starts on its own.',
+  'help.xr.move.action': 'Walk and snap-turn',
+  'help.xr.move.hint': 'Left stick moves. Right stick snaps 30°. Collision matches Walk Mode.',
+  'help.xr.select.action': 'Point and select',
+  'help.xr.select.hint': 'Controller ray + trigger. Physical grabbing is a later phase.',
 } as const;
 
 export type MessageKey = keyof typeof en;

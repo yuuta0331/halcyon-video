@@ -21,6 +21,7 @@ export const COUNTER_TERMINAL_LABELS: Record<string, string> = {
   get 'btn-logout'() { return t('terminal.logout'); },
   // Brand Pack override, then i18n fallback — identity stays with the pack.
   get 'btn-exit'() { return brandString('terminal-exit-label', t('power.exit')); },
+  get 'btn-enter-vr'() { return t('terminal.enterVr'); },
   get 'btn-service'() { return t('terminal.service'); },
   get 'btn-media-date'() { return t('terminal.mediaDate'); },
   get 'btn-cancel'() { return t('terminal.cancel'); },

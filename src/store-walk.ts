@@ -307,3 +307,49 @@ export function toggleWalkAround(scene: StoreScene) {
     scene.onConsoleLog(t('walk.activated'), "system");
   }
 }
+
+/** XR controller ray: reuse walk slot resolution, no camera takeover. */
+export function pickWalkSlotFromRay(
+  scene: StoreScene,
+  origin: THREE.Vector3,
+  direction: THREE.Vector3,
+  maxDist: number = WALK_INTERACT_RANGE,
+): MovieSlot | null {
+  scene._raycaster.set(origin, direction);
+  scene._raycaster.far = maxDist;
+  const intersects = scene._raycaster.intersectObjects(scene.scene.children, true);
+  for (const hit of intersects) {
+    if (hit.distance > maxDist) break;
+    if (hit.instanceId === undefined) continue;
+    const slot = scene.getSlotFromIntersection(hit.object, hit.instanceId);
+    if (slot && !slot.hidden) return slot;
+  }
+  return null;
+}
+
+/**
+ * JP-3 select: highlight / notify without leaving XR or stealing the HMD.
+ * Physical grab belongs to JP-4.
+ */
+export function xrSelectSlot(scene: StoreScene, slot: MovieSlot) {
+  scene.selectedLibraryIdx = slot.libraryIdx;
+  if (slot.source === 'fixture') {
+    scene.selectedUnitSource = 'fixture';
+    scene.selectedFixtureId = slot.fixtureId!;
+    scene.selectedUnitIdx = -1;
+  } else {
+    scene.selectedUnitSource = 'shelving';
+    scene.selectedFixtureId = null;
+    scene.selectedUnitIdx = slot.unitIdx;
+  }
+  scene.selectedSide = slot.side;
+  scene.selectedShelf = slot.shelfIdx;
+  scene.selectedCol = slot.col;
+  scene.isBrowsingNewReleasesDirectly = false;
+  scene.loadAllArtworkForActiveLibrary();
+  retailAudio.playBoxPickup();
+  recordInspect(slot.movie);
+  if (scene.onSelectionChange) scene.onSelectionChange(slot.movie);
+  scene.onConsoleLog(`[XR] Selected "${slot.movie.title}".`, 'system');
+  scene.requestRender();
+}
