@@ -20,7 +20,7 @@ Do not put Jellyfin/Plex URLs, usernames, tokens, or library titles in this fold
 
 Evidence classes:
 
-- UNIT: PASS (342 tests)
-- DESKTOP_BROWSER: PASS (progressive boot + diagnostics)
-- IWER_EMULATED: PASS (`npm run test:xr-emu` CORE / NO-LAYERS / FULL / BOOT)
-- QUEST_HARDWARE = FAILED — awaiting final corrected-head retest
+- UNIT: PASS (347 tests)
+- DESKTOP_BROWSER: PASS (progressive boot + constructor sub-stages + full-texture wait)
+- IWER_EMULATED: PASS after correction round 2 (`npm run test:xr-emu` CORE / NO-LAYERS / FULL / BOOT; unexpectedSeriousErrors = 0)
+- QUEST_HARDWARE = FAILED — historical at `73abd4c` (waiting environment, no world frame). Corrected-head Quest acceptance still pending. Do not treat emulator evidence as hardware.

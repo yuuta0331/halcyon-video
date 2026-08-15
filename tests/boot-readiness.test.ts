@@ -16,6 +16,7 @@ import {
   bootMark,
   type BootDiagnostics,
 } from '../src/perf/boot-diagnostics.ts';
+import { constructRecord, constructProfileSnapshot } from '../src/perf/construct-profile.ts';
 import { BACK_WALL_UNIT_IDX } from '../src/store-layout.ts';
 
 const ctx: PriorityContext = {
@@ -75,4 +76,17 @@ test('boot diagnostic ordering invariants', () => {
   assert.equal(bootDiagnosticsOrderingOk(d), true);
   assert.ok((d.timeToInteractive ?? 0) < (d.timeToFullTextures ?? 0));
   assert.equal(d.criticalReadyBeforeAllTextures, true);
+  assert.ok(Array.isArray(d.construct.top3));
 });
+
+test('construct profile records stages and top3 by cost', () => {
+  constructRecord('cheap', 1);
+  constructRecord('mid', 4);
+  constructRecord('expensive', 20);
+  const snap = constructProfileSnapshot();
+  assert.ok(snap.stages.some((s) => s.name === 'cheap'));
+  assert.equal(snap.top3[0]?.name, 'expensive');
+  assert.equal(snap.top3[1]?.name, 'mid');
+  assert.ok(snap.totalMs >= 25);
+});
+

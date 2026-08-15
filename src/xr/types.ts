@@ -70,6 +70,7 @@ export interface XrDiagnostics {
     firstAnimationCallbackAt: number | null;
     firstDirectRenderStart: number | null;
     firstDirectRenderEnd: number | null;
+    firstWorldRenderCompletedAt: number | null;
     firstVisibleFrameAt: number | null;
     lastCompletedStage: string | null;
     lastError: string | null;

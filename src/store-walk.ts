@@ -308,6 +308,23 @@ export function toggleWalkAround(scene: StoreScene) {
   }
 }
 
+/**
+ * Three.js Sprite.raycast copies `raycaster.camera.matrixWorld`. Desktop
+ * picking uses setFromCamera (which sets .camera); XR select must bind it
+ * too, or Sprite.raycast warns and then throws TypeError on null.matrixWorld.
+ */
+export function bindSlotRaycaster(
+  raycaster: THREE.Raycaster,
+  camera: THREE.Camera,
+  origin: THREE.Vector3,
+  direction: THREE.Vector3,
+  maxDist: number,
+): void {
+  raycaster.camera = camera;
+  raycaster.set(origin, direction);
+  raycaster.far = maxDist;
+}
+
 /** XR controller ray: reuse walk slot resolution, no camera takeover. */
 export function pickWalkSlotFromRay(
   scene: StoreScene,
@@ -315,8 +332,7 @@ export function pickWalkSlotFromRay(
   direction: THREE.Vector3,
   maxDist: number = WALK_INTERACT_RANGE,
 ): MovieSlot | null {
-  scene._raycaster.set(origin, direction);
-  scene._raycaster.far = maxDist;
+  bindSlotRaycaster(scene._raycaster, scene.camera, origin, direction, maxDist);
   const intersects = scene._raycaster.intersectObjects(scene.scene.children, true);
   for (const hit of intersects) {
     if (hit.distance > maxDist) break;

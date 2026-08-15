@@ -128,6 +128,7 @@ import { CarriedTapes, CarryPose, showClerkToast, disposeClerkToast } from './ca
 import { BackRoom, disposeBackRoomFade } from './back-room';
 import { RentalRecord, loadRentalRecord, clearRentalRecord, isLockedOut, formatUnlockLabel } from './rental-clock';
 import { perfTrace, perfSlot } from './perf-trace';
+import { constructStage, resetConstructProfile } from './perf/construct-profile';
 import { ShelfClasps, type ClaspTarget } from './fixtures/shelf-clasp';
 import { requestMovie } from './jellyseerr';
 import { displayHz, computeFpsCap } from './display-hz';
@@ -1062,6 +1063,7 @@ export class StoreScene {
     // sticker); discoveryPicks are not-in-library endcap candidates.
     staffPicks: { ownedPicks: Movie[]; discoveryPicks: Movie[] } | null = null
   ) {
+    resetConstructProfile();
     this.container = container;
     this.onConsoleLog = onConsoleLog;
     this.libraries = libraries;
@@ -1421,9 +1423,9 @@ export class StoreScene {
 
     // (Floor plan already computed above, before the NR wall derivation.)
 
-    this.initThree();
-    this.setupLighting();
-    this.buildStore();
+    constructStage('initThree', () => this.initThree());
+    constructStage('setupLighting', () => this.setupLighting());
+    constructStage('buildStore', () => this.buildStore());
     this.installMirrorThrottle();
     // Prebaked shadows (shadowMap.autoUpdate = false) only render the sun's shadow
     // map when needsUpdate is set. The reflection-probe and mirror cube renders below
@@ -1436,7 +1438,7 @@ export class StoreScene {
     // First environment bake: the empty store shell (movie boxes don't exist yet).
     // This replaces the bootstrap RoomEnvironment with the real room, so the
     // reflection probes baked next capture correctly-lit shelving.
-    this.outdoor.bakeEnvironment();
+    constructStage('bakeEnvironment', () => this.outdoor.bakeEnvironment());
     // The bootstrap PMREM (scene.environment before the line above) is no longer
     // referenced by anything — dispose its render target, compiled blur shader,
     // and the synthetic RoomEnvironment scene now rather than leaking them for
@@ -1447,9 +1449,9 @@ export class StoreScene {
     this.bootstrapEnvRT = null;
     this.bootstrapPmremGen = null;
     this.bootstrapRoomEnv = null;
-    this.generateReflectionProbes();
-    this.buildAllMovieBoxes();
-    this.rebuildMovieBoxes();
+    constructStage('buildAllMovieBoxes', () => this.buildAllMovieBoxes());
+    constructStage('rebuildMovieBoxes', () => this.rebuildMovieBoxes());
+    requestAnimationFrame(() => { constructStage('reflectionProbes', () => this.generateReflectionProbes()); this.requestRender(); });
     // A second bake with STOCKED shelves can't happen here: case instances are
     // placed asynchronously by animate()'s dirty-slot pass as posters stream in
     // (right now every instance is still zero-scale). animate() runs the re-bake
@@ -1476,10 +1478,7 @@ export class StoreScene {
 
     // Preload the recorded door-bell sample so even the first door pass plays
     // it (decode runs fine on a still-suspended AudioContext).
-    try {
-      if (!this.chimeCtx) this.chimeCtx = new AudioContext();
-      this.loadDoorBell(this.chimeCtx);
-    } catch { /* no WebAudio here — playDoorChime degrades the same way */ }
+    requestAnimationFrame(() => { try { if (!this.chimeCtx) this.chimeCtx = new AudioContext(); this.loadDoorBell(this.chimeCtx); } catch { /* no WebAudio */ } });
 
     // T22: rehydrate the carried stack (bb_carried) so an accidental reload
     // doesn't lose the picks. Slots exist by now (buildAllMovieBoxes ran), so
@@ -2891,7 +2890,7 @@ export class StoreScene {
     // renderer process. The probes don't need the mirrors anyway. Mirrors are
     // restored below and render normally (once each) during animation.
     const reflectors: THREE.Object3D[] = [];
-    this.scene.traverse((obj) => { if (obj instanceof Reflector) reflectors.push(obj); });
+    this.scene.traverse((obj) => { if (obj instanceof Reflector || obj.name === 'back-room') reflectors.push(obj); });
     reflectors.forEach((r) => { r.visible = false; });
 
     // Re-bake path: release the previous generation of probes first.
@@ -5526,14 +5525,9 @@ export class StoreScene {
     // 3. Render scene
     perfTrace.end(SP_SIM);
     perfTrace.begin(SP_RENDER);
-    if (this.xr?.shouldSkipComposer()) {
-      this.xr.preRender();
-      this.renderer.render(this.scene, this.camera);
-    } else if (this.composer) {
-      this.composer.render();
-    } else {
-      this.renderer.render(this.scene, this.camera);
-    }
+    if (this.xr?.shouldSkipComposer()) this.xr.renderWorld(this.renderer, this.scene, this.camera);
+    else if (this.composer) this.composer.render();
+    else this.renderer.render(this.scene, this.camera);
     this.fullComposites++;
     // Arms (or disarms) the partial path for the frames that follow: this frame
     // has left a beauty buffer behind that the next one may patch.

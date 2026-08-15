@@ -32,6 +32,7 @@ import {
   xrHeadBobAmount,
 } from '../src/xr/locomotion.ts';
 import { isIwerActive } from '../src/xr/emu-state.ts';
+import { simulateSetSessionOrdering } from '../src/xr/direct-render-cycle.ts';
 
 test('renderer presenting before setSession resolves uses direct render', async () => {
   const result = await bindSessionWithPresentingRace({
@@ -54,16 +55,19 @@ test('EffectComposer is forbidden while renderer.xr.isPresenting', () => {
   assert.equal(xrOwnsFrames({ rendererPresenting: false, xrLoopArmed: true }), true);
 });
 
-test('first XR frame lifecycle: layers wait for visible frame + setSession', () => {
+test('first XR world render completes before optional compositor', () => {
   assert.equal(shouldInitOptionalCompositor({
-    firstVisibleFrame: false, setSessionResolved: true, minimal: false, layersRequested: true,
+    worldRenderCompleted: false, setSessionResolved: true, minimal: false, layersRequested: true,
   }), false);
   assert.equal(shouldInitOptionalCompositor({
-    firstVisibleFrame: true, setSessionResolved: true, minimal: false, layersRequested: true,
+    worldRenderCompleted: true, setSessionResolved: true, minimal: false, layersRequested: true,
   }), true);
   assert.equal(sessionReadyForOptionalLayers({
-    phase: 'projecting', firstVisibleFrameAt: 1, setSessionResolved: true, minimal: false,
+    phase: 'projecting', firstWorldRenderCompletedAt: 1, setSessionResolved: true, minimal: false,
   }), true);
+  assert.equal(sessionReadyForOptionalLayers({
+    phase: 'projecting', firstWorldRenderCompletedAt: null, setSessionResolved: true, minimal: false,
+  }), false);
 });
 
 test('Layers construction throw does not abort projection XR', () => {
@@ -77,7 +81,7 @@ test('minimal XR policy disables optional compositor', () => {
   assert.equal(flags.minimal, true);
   assert.equal(flags.layers, false);
   assert.equal(shouldInitOptionalCompositor({
-    firstVisibleFrame: true, setSessionResolved: true, minimal: true, layersRequested: true,
+    worldRenderCompleted: true, setSessionResolved: true, minimal: true, layersRequested: true,
   }), false);
 });
 
@@ -251,5 +255,47 @@ test('reveal is wired to P0 critical-ready, not all-texture settlement', () => {
   assert.ok(allIdx > revealIdx);
   assert.match(main.slice(revealIdx, allIdx), /hideBootOverlay/);
   assert.doesNotMatch(main.slice(allIdx, allIdx + 180), /hideBootOverlay/);
+});
+
+test('setSession ordering A: XR callback before setSession resolves', async () => {
+  const log = await simulateSetSessionOrdering('callback-before-resolve');
+  assert.equal(log.events[0], 'xr-animation-callback');
+  assert.ok(log.events.indexOf('setSession-resolved') > log.events.indexOf('afterDirectRender'));
+  assert.equal(log.events.includes('path:direct'), true);
+  assert.equal(log.composerDuringPresenting, false);
+  assert.equal(log.firstRendererRenderCompleted, true);
+  assert.equal(log.compositorAfterFirstRender, true);
+});
+
+test('setSession ordering B: setSession resolves before first XR callback', async () => {
+  const log = await simulateSetSessionOrdering('resolve-before-callback');
+  assert.equal(log.events[0], 'setSession-resolved');
+  assert.ok(log.events.indexOf('xr-animation-callback') > 0);
+  assert.equal(log.events.includes('path:direct'), true);
+  assert.equal(log.composerDuringPresenting, false);
+  assert.equal(log.firstRendererRenderCompleted, true);
+  assert.equal(log.compositorAfterFirstRender, true);
+  assert.ok(log.events.indexOf('optional-compositor') > log.events.indexOf('afterDirectRender'));
+});
+
+test('XR slot raycast binds Raycaster.camera before set()', () => {
+  const walk = readFileSync('src/store-walk.ts', 'utf8');
+  assert.match(walk, /export function bindSlotRaycaster/);
+  assert.match(walk, /raycaster\.camera\s*=\s*camera/);
+  assert.match(walk, /bindSlotRaycaster\(scene\._raycaster,\s*scene\.camera,\s*origin,\s*direction,\s*maxDist\)/);
+  const sprite = readFileSync('node_modules/three/src/objects/Sprite.js', 'utf8');
+  assert.match(sprite, /Raycaster\.camera" needs to be set/);
+  assert.match(sprite, /raycaster\.camera\.matrixWorld/);
+});
+
+test('StoreScene XR path records world render around renderer.render', () => {
+  const scene = readFileSync('src/three-scene.ts', 'utf8');
+  assert.match(scene, /this\.xr\.renderWorld\(this\.renderer, this\.scene, this\.camera\)/);
+  assert.doesNotMatch(scene, /this\.xr\.preRender\(\);\s*\n\s*this\.renderer\.render/);
+  const runtime = readFileSync('src/xr/runtime.ts', 'utf8');
+  assert.match(runtime, /beforeDirectRender/);
+  assert.match(runtime, /afterDirectRender/);
+  assert.match(runtime, /firstWorldRenderCompletedAt/);
+  assert.match(runtime, /renderer\.render\(scene, camera\);\s*\n\s*this\.afterDirectRender/);
 });
 

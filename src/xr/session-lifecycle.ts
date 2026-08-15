@@ -15,6 +15,7 @@ export type XrStartupStage =
   | 'firstAnimationCallbackAt'
   | 'firstDirectRenderStart'
   | 'firstDirectRenderEnd'
+  | 'firstWorldRenderCompletedAt'
   | 'firstVisibleFrameAt'
   | 'optionalLayersStart'
   | 'optionalLayersEnd';
@@ -31,6 +32,7 @@ export interface XrStartupTrace {
   firstAnimationCallbackAt: number | null;
   firstDirectRenderStart: number | null;
   firstDirectRenderEnd: number | null;
+  firstWorldRenderCompletedAt: number | null;
   firstVisibleFrameAt: number | null;
   lastCompletedStage: XrStartupStage | null;
   lastError: string | null;
@@ -49,6 +51,7 @@ export function blankStartupTrace(): XrStartupTrace {
     firstAnimationCallbackAt: null,
     firstDirectRenderStart: null,
     firstDirectRenderEnd: null,
+    firstWorldRenderCompletedAt: null,
     firstVisibleFrameAt: null,
     lastCompletedStage: null,
     lastError: null,
@@ -90,13 +93,13 @@ export function startupAborted(input: {
 
 export function sessionReadyForOptionalLayers(input: {
   phase: XrSessionPhase;
-  firstVisibleFrameAt: number | null;
+  firstWorldRenderCompletedAt: number | null;
   setSessionResolved: boolean;
   minimal: boolean;
 }): boolean {
   if (input.minimal) return false;
   if (!input.setSessionResolved) return false;
-  if (input.firstVisibleFrameAt == null) return false;
+  if (input.firstWorldRenderCompletedAt == null) return false;
   return input.phase === 'projecting' || input.phase === 'active';
 }
 

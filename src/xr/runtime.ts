@@ -266,7 +266,7 @@ export class XrRuntime {
     }
     this.setSessionResolved = true;
     this.startup = markStartupStage(this.startup, 'rendererSetSessionEnd', nowMs());
-    this.phase = this.startup.firstVisibleFrameAt != null ? 'active' : 'projecting';
+    this.phase = this.startup.firstWorldRenderCompletedAt != null ? 'active' : 'projecting';
     setXrSessionActive(true);
 
     this.host.onSessionChange?.(true);
@@ -319,10 +319,12 @@ export class XrRuntime {
     this.noteXrFrame();
     if (!this.presenting) return;
     if (this.flags.minimal) return;
+    if (this.startup.firstWorldRenderCompletedAt == null) return;
     this.panel?.flush();
     this.blitUiLayer();
   }
 
+  /** Animation-callback seam only. Does not mean renderer.render completed. */
   noteXrFrame(at: number = nowMs()): void {
     if (this.startup.firstAnimationCallbackAt == null) {
       this.startup = markStartupStage(this.startup, 'firstAnimationCallbackAt', at);
@@ -331,17 +333,38 @@ export class XrRuntime {
       this.xrFrameCount++;
       if (this.lastFrameAt != null) this.lastFrameDtMs = at - this.lastFrameAt;
       this.lastFrameAt = at;
-      if (this.startup.firstVisibleFrameAt == null) {
-        this.startup = markStartupStage(this.startup, 'firstDirectRenderStart', at);
-        this.startup = markStartupStage(this.startup, 'firstDirectRenderEnd', at);
-        this.startup = markStartupStage(this.startup, 'firstVisibleFrameAt', at);
-        if (this.phase === 'binding' || this.phase === 'projecting') {
-          this.phase = this.setSessionResolved ? 'active' : 'projecting';
-        }
-      }
-      this.maybeInitOptionalLayers();
     }
     this.publishDiagnostics();
+  }
+
+  beforeDirectRender(at: number = nowMs()): void {
+    if (this.startup.firstDirectRenderStart == null) {
+      this.startup = markStartupStage(this.startup, 'firstDirectRenderStart', at);
+    }
+  }
+
+  afterDirectRender(at: number = nowMs()): void {
+    if (this.startup.firstDirectRenderEnd == null) {
+      this.startup = markStartupStage(this.startup, 'firstDirectRenderEnd', at);
+      this.startup = markStartupStage(this.startup, 'firstWorldRenderCompletedAt', at);
+      this.startup = markStartupStage(this.startup, 'firstVisibleFrameAt', at);
+    }
+    if (this.phase === 'binding' || this.phase === 'projecting') {
+      this.phase = this.setSessionResolved ? 'active' : 'projecting';
+    }
+    this.maybeInitOptionalLayers();
+    this.publishDiagnostics();
+  }
+
+  renderWorld(renderer: THREE.WebGLRenderer, scene: THREE.Scene, camera: THREE.Camera): void {
+    this.preRender();
+    if (this.host.renderer.xr.isPresenting) {
+      this.beforeDirectRender();
+      renderer.render(scene, camera);
+      this.afterDirectRender();
+      return;
+    }
+    renderer.render(scene, camera);
   }
 
   shouldSkipComposer(): boolean {
@@ -423,30 +446,30 @@ export class XrRuntime {
     if (this.optionalLayersInited) return;
     if (!this.session) return;
     const ready = sessionReadyForOptionalLayers({
-      phase: this.phase,
-      firstVisibleFrameAt: this.startup.firstVisibleFrameAt,
+      phase: this.phase === 'binding' ? 'projecting' : this.phase,
+      firstWorldRenderCompletedAt: this.startup.firstWorldRenderCompletedAt,
       setSessionResolved: this.setSessionResolved,
-      minimal: this.flags.minimal,
-    }) && shouldInitOptionalCompositor({
-      firstVisibleFrame: this.startup.firstVisibleFrameAt != null,
+      minimal: false,
+    });
+    if (!ready) return;
+    if (this.flags.minimal) {
+      this.optionalLayersInited = true;
+      this.phase = 'active';
+      this.publishDiagnostics();
+      return;
+    }
+    if (!shouldInitOptionalCompositor({
+      worldRenderCompleted: this.startup.firstWorldRenderCompletedAt != null,
       setSessionResolved: this.setSessionResolved,
       minimal: this.flags.minimal,
       layersRequested: this.flags.layers,
-    });
-    if (this.flags.minimal) {
-      this.optionalLayersInited = true;
-      this.phase = this.setSessionResolved ? 'active' : this.phase;
-      this.publishDiagnostics();
-      return;
-    }
-    if (!this.flags.layers) {
+    })) {
       this.optionalLayersInited = true;
       this.installMeshPanelOnly();
-      this.phase = this.setSessionResolved ? 'active' : this.phase;
+      this.phase = 'active';
       this.publishDiagnostics();
       return;
     }
-    if (!ready) return;
     this.optionalLayersInited = true;
     this.startup = markStartupStage(this.startup, 'optionalLayersStart', nowMs());
     try {

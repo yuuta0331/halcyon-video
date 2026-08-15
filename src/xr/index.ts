@@ -34,6 +34,7 @@ export {
   startupAborted,
 } from './session-lifecycle';
 export { compositorFailureFallsBack, shouldInitOptionalCompositor, layerConstructionMustNotAbortSession } from './compositor-policy';
+export { simulateSetSessionOrdering } from './direct-render-cycle';
 export { withRestoredGlTextureState } from './gl-state';
 export { isIwerActive } from './emu-state';
 export {

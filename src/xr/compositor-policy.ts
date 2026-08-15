@@ -11,13 +11,13 @@ export function compositorFailureFallsBack(error: unknown): CompositorInitResult
 }
 
 export function shouldInitOptionalCompositor(input: {
-  firstVisibleFrame: boolean;
+  worldRenderCompleted: boolean;
   setSessionResolved: boolean;
   minimal: boolean;
   layersRequested: boolean;
 }): boolean {
   if (input.minimal || !input.layersRequested) return false;
-  return input.firstVisibleFrame && input.setSessionResolved;
+  return input.worldRenderCompleted && input.setSessionResolved;
 }
 
 export function layerConstructionMustNotAbortSession(threw: boolean, sessionStillActive: boolean): boolean {

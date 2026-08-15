@@ -1,24 +1,20 @@
 {
   "console": [
     {
-      "type": "error",
-      "text": "THREE.Sprite: \"Raycaster.camera\" needs to be set in order to raycast against sprites."
-    },
-    {
-      "type": "error",
-      "text": "[Frontend Crash] Uncaught TypeError: Cannot read properties of null (reading 'matrixWorld') at http://127.0.0.1:17425/node_modules/.vite/deps/chunk-TZNCAQM4.js?v=6809c1e2:12334:44"
-    },
-    {
-      "type": "pageerror",
-      "text": "TypeError: Cannot read properties of null (reading 'matrixWorld')"
+      "type": "log",
+      "text": "[UI Log] [03:46:43] [XR] Immersive VR session started."
     },
     {
       "type": "log",
-      "text": "[UI Log] [00:31:57] [XR] Immersive VR session ended."
+      "text": "[UI Log] [03:46:43] [XR] compositor=mesh-fallback layers=none maxRenderLayers=n/a"
     },
     {
       "type": "log",
-      "text": "[UI Log] [00:31:57] [System] Rendering paused. Resources yielded."
+      "text": "[UI Log] [03:46:45] [XR] Immersive VR session ended."
+    },
+    {
+      "type": "log",
+      "text": "[UI Log] [03:46:46] [System] Rendering paused. Resources yielded."
     },
     {
       "type": "debug",
@@ -30,11 +26,11 @@
     },
     {
       "type": "log",
-      "text": "[UI Log] [00:31:58] [System] Initializing HTPC interface..."
+      "text": "[UI Log] [03:46:46] [System] Initializing HTPC interface..."
     },
     {
       "type": "log",
-      "text": "[UI Log] [00:31:58] [System] Demo mode: stocking the store with a placeholder library (no media server)."
+      "text": "[UI Log] [03:46:46] [System] Demo mode: stocking the store with a placeholder library (no media server)."
     },
     {
       "type": "log",
@@ -54,7 +50,7 @@
     },
     {
       "type": "log",
-      "text": "[calibrate] ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002488) Direct3D11 vs_5_0 ps_5_0, D3D11) → medium +supersample (cached)"
+      "text": "[calibrate] ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002488) Direct3D11 vs_5_0 ps_5_0, D3D11) → high +supersample (cached)"
     },
     {
       "type": "log",
@@ -66,7 +62,11 @@
     },
     {
       "type": "log",
-      "text": "[AO] ssaoEnabled: false engine: - (bb_ssao=null)"
+      "text": "[AO] ssaoEnabled: true engine: n8ao (bb_ssao=null)"
+    },
+    {
+      "type": "log",
+      "text": "[AO] N8AOPass active (half-res, Medium, accumulate): [object Object]"
     },
     {
       "type": "log",
@@ -146,17 +146,85 @@
     },
     {
       "type": "log",
-      "text": "[UI Log] [00:32:04] [System] Jump index — 5 counter/libraries/genres, 8 displays."
+      "text": "[UI Log] [03:46:52] [System] Jump index — 5 counter/libraries/genres, 8 displays."
     },
     {
       "type": "log",
-      "text": "[UI Log] [00:32:04] [System] Inside the store — ◄ ► pick a section, ▼ the displays, ▲ the TVs, OK to go."
+      "text": "[UI Log] [03:46:52] [System] Inside the store — ◄ ► pick a section, ▼ the displays, ▲ the TVs, OK to go."
     },
     {
       "type": "log",
       "text": "[resScale] 0.2fps < 50 — down to 0.95"
     },
     {
+      "type": "log",
+      "text": "[UI Log] [03:46:53] [System] 3D Store rendering active in Library Select mode."
+    },
+    {
+      "type": "log",
+      "text": "[UI Log] [03:46:53] [System] Loading critical store textures..."
+    },
+    {
+      "type": "log",
+      "text": "[resScale] 1.3fps < 50 — down to 0.9"
+    },
+    {
+      "type": "warn",
+      "text": "THREE.WebGLTextures: Trying to use 16 texture units while this GPU supports only 16"
+    },
+    {
+      "type": "warn",
+      "text": "THREE.WebGLTextures: Trying to use 17 texture units while this GPU supports only 16"
+    },
+    {
+      "type": "warn",
+      "text": "THREE.WebGLTextures: Trying to use 18 texture units while this GPU supports only 16"
+    },
+    {
+      "type": "warn",
+      "text": "THREE.WebGLTextures: Trying to use 19 texture units while this GPU supports only 16"
+    },
+    {
+      "type": "warn",
+      "text": "THREE.WebGLTextures: Trying to use 20 texture units while this GPU supports only 16"
+    },
+    {
+      "type": "warn",
+      "text": "THREE.WebGLTextures: Trying to use 21 texture units while this GPU supports only 16"
+    },
+    {
+      "type": "warn",
+      "text": "THREE.WebGLTextures: Trying to use 22 texture units while this GPU supports only 16"
+    },
+    {
+      "type": "warn",
+      "text": "THREE.WebGLTextures: Trying to use 23 texture units while this GPU supports only 16"
+    },
+    {
+      "type": "warn",
+      "text": "THREE.WebGLTextures: Trying to use 24 texture units while this GPU supports only 16"
+    },
+    {
+      "type": "log",
+      "text": "[resScale] 0.6fps < 50 — down to 0.85"
+    },
+    {
+      "type": "log",
+      "text": "[UI Log] [03:46:56] [System] Loading store textures... 0% (1/3692)"
+    },
+    {
+      "type": "log",
+      "text": "[warmup] hero material programs drawn+compiled in 470ms"
+    },
+    {
+      "type": "log",
+      "text": "[UI Log] [03:46:58] [System] Loading store textures... 10% (370/3692)"
+    },
+    {
+      "type": "log",
+      "text": "[UI Log] [03:46:59] [System] Store ready. Remaining covers stream in the background."
+    },
+    {
       "type": "warn",
       "text": "THREE.WebGLTextures: Trying to use 16 texture units while this GPU supports only 16"
     },
@@ -206,119 +274,51 @@
     },
     {
       "type": "log",
-      "text": "[UI Log] [00:32:05] [System] 3D Store rendering active in Library Select mode."
+      "text": "[calibrate] first 94 real frames p50=66.7ms (target 16.7ms) — demoting high -> medium for next boot"
     },
     {
       "type": "log",
-      "text": "[UI Log] [00:32:05] [System] Loading critical store textures..."
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 16 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 17 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 18 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 19 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 20 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 21 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 22 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 23 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 24 texture units while this GPU supports only 16"
+      "text": "[UI Log] [03:47:06] [System] Loading store textures... 20% (739/3692)"
     },
     {
       "type": "log",
-      "text": "[resScale] 2.2fps < 50 — down to 0.9"
+      "text": "[UI Log] [03:47:07] [System] Loading store textures... 30% (1108/3692)"
     },
     {
       "type": "log",
-      "text": "[UI Log] [00:32:06] [System] Loading store textures... 0% (1/3692)"
+      "text": "[UI Log] [03:47:08] [System] Loading store textures... 40% (1477/3692)"
     },
     {
       "type": "log",
-      "text": "[warmup] hero material programs drawn+compiled in 788ms"
+      "text": "[UI Log] [03:47:08] [System] Loading store textures... 50% (1846/3692)"
     },
     {
       "type": "log",
-      "text": "[UI Log] [00:32:10] [System] Loading store textures... 10% (370/3692)"
+      "text": "[UI Log] [03:47:08] [System] Loading store textures... 60% (2216/3692)"
     },
     {
       "type": "log",
-      "text": "[UI Log] [00:32:10] [System] Store ready. Remaining covers stream in the background."
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 16 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 17 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 18 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 19 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 20 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 21 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 22 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 23 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 24 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 25 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 26 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 27 texture units while this GPU supports only 16"
+      "text": "[UI Log] [03:47:12] [System] Loading store textures... 70% (2585/3692)"
     },
     {
       "type": "log",
-      "text": "[UI Log] [00:32:11] [System] Rendering paused. Resources yielded."
+      "text": "[UI Log] [03:47:14] [System] Loading store textures... 80% (2954/3692)"
+    },
+    {
+      "type": "log",
+      "text": "[UI Log] [03:47:16] [System] Loading store textures... 90% (3323/3692)"
+    },
+    {
+      "type": "log",
+      "text": "[UI Log] [03:47:17] [System] Loading store textures... 100% (3692/3692)"
+    },
+    {
+      "type": "log",
+      "text": "[UI Log] [03:47:17] [System] All store textures settled."
+    },
+    {
+      "type": "log",
+      "text": "[UI Log] [03:47:18] [System] Rendering paused. Resources yielded."
     }
   ],
   "serious": [
@@ -393,746 +393,6 @@
     {
       "type": "error",
       "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
-    },
-    {
-      "type": "log",
-      "text": "[GPU] WebGL renderer: ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002488) Direct3D11 vs_5_0 ps_5_0, D3D11)"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLProgram: Program Info Log: (210,81-129): warning X4122: sum of 0.996094 and -2.98545e-017 cannot be represented accurately in double precision\n(209,37-61): warning X4122: sum of 1 and -1.49272e-017 cannot be represented accurately in double precision\n(210,82-106): warning X4122: sum of 1 and -1.49272e-017 cannot be represented accurately in double precision\n(209,37-61): warning X4122: sum of 1 and -1.66644e-018 cannot be represented accurately in double precision\n(210,82-106): warning X4122: sum of 1 and -1.66644e-018 cannot be represented accurately in double precision\n\n\n\u0000"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLShadowMap: PCFSoftShadowMap has been deprecated. Using PCFShadowMap instead."
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLProgram: Program Info Log: (210,81-129): warning X4122: sum of 0.996094 and -2.98545e-017 cannot be represented accurately in double precision\n(209,37-61): warning X4122: sum of 1 and -1.49272e-017 cannot be represented accurately in double precision\n(210,82-106): warning X4122: sum of 1 and -1.49272e-017 cannot be represented accurately in double precision\n(209,37-61): warning X4122: sum of 1 and -1.66644e-018 cannot be represented accurately in double precision\n(210,82-106): warning X4122: sum of 1 and -1.66644e-018 cannot be represented accurately in double precision\n\n\n\u0000"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 16 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 17 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 18 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 19 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 20 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 21 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 22 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 23 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 24 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 25 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 26 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 27 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLProgram: Program Info Log: (77,12-86): warning X3595: gradient instruction used in a loop with varying iteration; partial derivatives may have undefined value\n(77,12-86): warning X3595: gradient instruction used in a loop with varying iteration; partial derivatives may have undefined value\n\n\n\u0000"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLProgram: Program Info Log: (190,12-86): warning X3595: gradient instruction used in a loop with varying iteration; partial derivatives may have undefined value\n(190,12-86): warning X3595: gradient instruction used in a loop with varying iteration; partial derivatives may have undefined value\n(411,1): warning X4000: use of potentially uninitialized variable (f_ApplyFXAA)\n\n\n\u0000"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 16 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 17 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 18 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 19 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 20 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 21 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 22 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 23 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 24 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 16 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 17 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 18 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 19 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 20 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 21 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 22 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 23 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 24 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 25 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 26 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 27 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "log",
-      "text": "[GPU] WebGL renderer: ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002488) Direct3D11 vs_5_0 ps_5_0, D3D11)"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLShadowMap: PCFSoftShadowMap has been deprecated. Using PCFShadowMap instead."
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 16 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 17 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 18 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 19 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 20 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 21 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 22 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 23 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 24 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 25 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 26 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 27 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 16 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 17 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 18 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 19 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 20 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 21 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 22 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 23 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 24 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 16 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 17 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 18 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 19 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 20 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 21 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 22 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 23 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 24 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 25 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 26 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 27 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "error",
-      "text": "THREE.Sprite: \"Raycaster.camera\" needs to be set in order to raycast against sprites."
-    },
-    {
-      "type": "error",
-      "text": "[Frontend Crash] Uncaught TypeError: Cannot read properties of null (reading 'matrixWorld') at http://127.0.0.1:17425/node_modules/.vite/deps/chunk-TZNCAQM4.js?v=6809c1e2:12334:44"
-    },
-    {
-      "type": "pageerror",
-      "text": "TypeError: Cannot read properties of null (reading 'matrixWorld')"
-    },
-    {
-      "type": "log",
-      "text": "[GPU] WebGL renderer: ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002488) Direct3D11 vs_5_0 ps_5_0, D3D11)"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLShadowMap: PCFSoftShadowMap has been deprecated. Using PCFShadowMap instead."
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 16 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 17 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 18 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 19 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 20 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 21 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 22 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 23 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 24 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 25 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 26 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 27 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 16 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 17 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 18 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 19 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 20 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 21 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 22 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 23 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 24 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 16 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 17 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 18 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 19 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 20 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 21 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 22 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 23 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 24 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 25 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 26 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 27 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "log",
-      "text": "[GPU] WebGL renderer: ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002488) Direct3D11 vs_5_0 ps_5_0, D3D11)"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLShadowMap: PCFSoftShadowMap has been deprecated. Using PCFShadowMap instead."
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 16 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 17 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 18 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 19 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 20 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 21 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 22 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 23 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 24 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 25 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 26 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 27 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 16 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 17 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 18 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 19 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 20 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 21 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 22 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 23 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 24 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 16 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 17 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 18 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 19 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 20 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 21 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 22 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 23 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 24 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 25 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 26 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 27 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "error",
-      "text": "THREE.Sprite: \"Raycaster.camera\" needs to be set in order to raycast against sprites."
-    },
-    {
-      "type": "error",
-      "text": "[Frontend Crash] Uncaught TypeError: Cannot read properties of null (reading 'matrixWorld') at http://127.0.0.1:17425/node_modules/.vite/deps/chunk-TZNCAQM4.js?v=6809c1e2:12334:44"
-    },
-    {
-      "type": "pageerror",
-      "text": "TypeError: Cannot read properties of null (reading 'matrixWorld')"
-    },
-    {
-      "type": "log",
-      "text": "[GPU] WebGL renderer: ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002488) Direct3D11 vs_5_0 ps_5_0, D3D11)"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLShadowMap: PCFSoftShadowMap has been deprecated. Using PCFShadowMap instead."
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 16 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 17 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 18 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 19 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 20 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 21 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 22 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 23 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 24 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 25 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 26 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 27 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 16 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 17 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 18 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 19 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 20 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 21 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 22 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 23 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 24 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 16 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 17 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 18 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 19 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 20 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 21 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 22 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 23 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 24 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 25 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 26 texture units while this GPU supports only 16"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLTextures: Trying to use 27 texture units while this GPU supports only 16"
     }
   ],
   "scenarios": [
@@ -1152,21 +412,22 @@
           "immersiveVrSupported": true,
           "rendererPresenting": true,
           "referenceSpace": "local-floor",
-          "sessionStartAt": 103005
+          "sessionStartAt": 116452.5
         },
         "startup": {
-          "requestSessionStart": 103004.09999999404,
-          "requestSessionEnd": 103005,
-          "referenceSpaceStart": 103005,
-          "referenceSpaceEnd": 103005.29999999702,
-          "targetFrameRateStart": 103005.29999999702,
-          "targetFrameRateEnd": 103005.69999999553,
-          "rendererSetSessionStart": 103005.89999999851,
-          "rendererSetSessionEnd": 103030.09999999404,
-          "firstAnimationCallbackAt": 103032.79999999702,
-          "firstDirectRenderStart": 103032.79999999702,
-          "firstDirectRenderEnd": 103032.79999999702,
-          "firstVisibleFrameAt": 103032.79999999702,
+          "requestSessionStart": 116449.20000000019,
+          "requestSessionEnd": 116452.5,
+          "referenceSpaceStart": 116452.5,
+          "referenceSpaceEnd": 116452.80000000028,
+          "targetFrameRateStart": 116454.70000000019,
+          "targetFrameRateEnd": 116455.6000000001,
+          "rendererSetSessionStart": 116456.1000000001,
+          "rendererSetSessionEnd": 116461,
+          "firstAnimationCallbackAt": 116467,
+          "firstDirectRenderStart": 116467.1000000001,
+          "firstDirectRenderEnd": 116472.90000000037,
+          "firstWorldRenderCompletedAt": 116472.90000000037,
+          "firstVisibleFrameAt": 116472.90000000037,
           "lastCompletedStage": "firstVisibleFrameAt",
           "lastError": null
         },
@@ -1219,7 +480,7 @@
           ],
           "framebufferScale": 0.7,
           "frameCount": 5,
-          "lastFrameDtMs": 1.1999999955296516
+          "lastFrameDtMs": 1.099999999627471
         },
         "flags": {
           "minimal": true,
@@ -1243,21 +504,22 @@
           "immersiveVrSupported": true,
           "rendererPresenting": true,
           "referenceSpace": "local-floor",
-          "sessionStartAt": 24239.19999999553
+          "sessionStartAt": 24922
         },
         "startup": {
-          "requestSessionStart": 24238,
-          "requestSessionEnd": 24239.19999999553,
-          "referenceSpaceStart": 24239.19999999553,
-          "referenceSpaceEnd": 24239.39999999851,
-          "targetFrameRateStart": 24239.5,
-          "targetFrameRateEnd": 24240.10000000149,
-          "rendererSetSessionStart": 24241.29999999702,
-          "rendererSetSessionEnd": 24269.39999999851,
-          "firstAnimationCallbackAt": 24279.89999999851,
-          "firstDirectRenderStart": 24279.89999999851,
-          "firstDirectRenderEnd": 24279.89999999851,
-          "firstVisibleFrameAt": 24279.89999999851,
+          "requestSessionStart": 24908.099999999627,
+          "requestSessionEnd": 24922,
+          "referenceSpaceStart": 24922,
+          "referenceSpaceEnd": 24922.299999999814,
+          "targetFrameRateStart": 24940.400000000373,
+          "targetFrameRateEnd": 24940.900000000373,
+          "rendererSetSessionStart": 24941.900000000373,
+          "rendererSetSessionEnd": 25005,
+          "firstAnimationCallbackAt": 25016.099999999627,
+          "firstDirectRenderStart": 25016.299999999814,
+          "firstDirectRenderEnd": 25021.200000000186,
+          "firstWorldRenderCompletedAt": 25021.200000000186,
+          "firstVisibleFrameAt": 25021.200000000186,
           "lastCompletedStage": "firstVisibleFrameAt",
           "lastError": null
         },
@@ -1309,8 +571,8 @@
             120
           ],
           "framebufferScale": 0.7,
-          "frameCount": 33,
-          "lastFrameDtMs": 344.80000000447035
+          "frameCount": 43,
+          "lastFrameDtMs": 1.5
         },
         "flags": {
           "minimal": false,
@@ -1335,25 +597,26 @@
           "immersiveVrSupported": true,
           "rendererPresenting": true,
           "referenceSpace": "local-floor",
-          "sessionStartAt": 17255.5
+          "sessionStartAt": 23729.199999999255
         },
         "startup": {
-          "requestSessionStart": 17254.5,
-          "requestSessionEnd": 17255.5,
-          "referenceSpaceStart": 17255.5,
-          "referenceSpaceEnd": 17255.59999999404,
-          "targetFrameRateStart": 17255.69999999553,
-          "targetFrameRateEnd": 17256.19999999553,
-          "rendererSetSessionStart": 17257,
-          "rendererSetSessionEnd": 17259.59999999404,
-          "firstAnimationCallbackAt": 17268.79999999702,
-          "firstDirectRenderStart": 17268.79999999702,
-          "firstDirectRenderEnd": 17268.79999999702,
-          "firstVisibleFrameAt": 17268.79999999702,
+          "requestSessionStart": 23728,
+          "requestSessionEnd": 23729.199999999255,
+          "referenceSpaceStart": 23729.199999999255,
+          "referenceSpaceEnd": 23729.39999999944,
+          "targetFrameRateStart": 23729.5,
+          "targetFrameRateEnd": 23729.89999999944,
+          "rendererSetSessionStart": 23730.89999999944,
+          "rendererSetSessionEnd": 23734.299999999814,
+          "firstAnimationCallbackAt": 23748.89999999944,
+          "firstDirectRenderStart": 23748.89999999944,
+          "firstDirectRenderEnd": 23751.199999999255,
+          "firstWorldRenderCompletedAt": 23751.199999999255,
+          "firstVisibleFrameAt": 23751.199999999255,
           "lastCompletedStage": "optionalLayersEnd",
           "lastError": null,
-          "optionalLayersStart": 17268.79999999702,
-          "optionalLayersEnd": 17276.19999999553
+          "optionalLayersStart": 23751.199999999255,
+          "optionalLayersEnd": 23760.299999999814
         },
         "layersFeature": false,
         "layerCapabilities": {
@@ -1404,7 +667,7 @@
           ],
           "framebufferScale": 0.7,
           "frameCount": 5,
-          "lastFrameDtMs": 0.7999999970197678
+          "lastFrameDtMs": 1.5
         },
         "flags": {
           "minimal": false,
@@ -1417,36 +680,114 @@
       "name": "BOOT_PERF",
       "pass": true,
       "url": "http://127.0.0.1:17425/?demo=1&nogate=1",
+      "waitedForFullTextures": true,
       "diag": {
         "marks": {
-          "appStart": 352.1000000014901,
-          "credentialStart": 415.20000000298023,
-          "credentialEnd": 415.20000000298023,
-          "catalogStart": 415.20000000298023,
-          "catalogEnd": 438.1000000014901,
-          "sidecarsStart": 438.1000000014901,
-          "sidecarsEnd": 438.1000000014901,
-          "baseFontsStart": 438.1000000014901,
-          "brandPackStart": 438.29999999701977,
-          "brandPackEnd": 511.3999999985099,
-          "baseFontsEnd": 511.3999999985099,
-          "cjkFontsStart": 511.3999999985099,
-          "cjkFontsEnd": 562.1000000014901,
-          "qualityCalibrationStart": 1118,
-          "qualityCalibrationEnd": 1131.3999999985099,
-          "threeSceneImportStart": 1131.3999999985099,
-          "threeSceneImportEnd": 1482.6000000014901,
-          "storeSceneConstructStart": 1482.7000000029802,
-          "storeSceneConstructEnd": 7358.20000000298,
-          "criticalTextureReady": 12544.5,
-          "storeInteractive": 12544.5
+          "appStart": 432.40000000037253,
+          "credentialStart": 500.90000000037253,
+          "credentialEnd": 500.90000000037253,
+          "catalogStart": 500.90000000037253,
+          "catalogEnd": 522.0999999996275,
+          "sidecarsStart": 522.0999999996275,
+          "sidecarsEnd": 522.0999999996275,
+          "baseFontsStart": 522.2000000001863,
+          "brandPackStart": 522.2000000001863,
+          "brandPackEnd": 578.4000000003725,
+          "baseFontsEnd": 578.5,
+          "cjkFontsStart": 578.5,
+          "cjkFontsEnd": 625.7000000001863,
+          "qualityCalibrationStart": 1082.5,
+          "qualityCalibrationEnd": 1093.7000000001863,
+          "threeSceneImportStart": 1093.7000000001863,
+          "threeSceneImportEnd": 1223.0999999996275,
+          "storeSceneConstructStart": 1223.0999999996275,
+          "storeSceneConstructEnd": 7093,
+          "criticalTextureReady": 12240,
+          "storeInteractive": 12240,
+          "allTexturesSettled": 31612.799999999814
         },
-        "qualityCalibrationMs": 13.399999998509884,
-        "storeSceneConstructMs": 5875.5,
-        "timeToInteractive": 12192.39999999851,
-        "timeToFullTextures": null,
-        "criticalReadyBeforeAllTextures": null
+        "qualityCalibrationMs": 11.200000000186265,
+        "storeSceneConstructMs": 5869.9000000003725,
+        "timeToInteractive": 11807.599999999627,
+        "timeToFullTextures": 31180.39999999944,
+        "criticalReadyBeforeAllTextures": true,
+        "construct": {
+          "stages": [
+            {
+              "name": "initThree",
+              "ms": 117.70000000018626
+            },
+            {
+              "name": "setupLighting",
+              "ms": 0.5
+            },
+            {
+              "name": "exterior",
+              "ms": 43.09999999962747
+            },
+            {
+              "name": "carpetTextures",
+              "ms": 139.59999999962747
+            },
+            {
+              "name": "wallTextures",
+              "ms": 76.5
+            },
+            {
+              "name": "aisleShelving",
+              "ms": 23.5
+            },
+            {
+              "name": "floorAO",
+              "ms": 1
+            },
+            {
+              "name": "signage",
+              "ms": 205
+            },
+            {
+              "name": "buildStore",
+              "ms": 1410.7999999998137
+            },
+            {
+              "name": "bakeEnvironment",
+              "ms": 2725.7999999998137
+            },
+            {
+              "name": "textureArrayInit",
+              "ms": 12.5
+            },
+            {
+              "name": "buildAllMovieBoxes",
+              "ms": 243.79999999981374
+            },
+            {
+              "name": "rebuildMovieBoxes",
+              "ms": 13.600000000558794
+            },
+            {
+              "name": "reflectionProbes",
+              "ms": 281.90000000037253
+            }
+          ],
+          "top3": [
+            {
+              "name": "bakeEnvironment",
+              "ms": 2725.7999999998137
+            },
+            {
+              "name": "buildStore",
+              "ms": 1410.7999999998137
+            },
+            {
+              "name": "reflectionProbes",
+              "ms": 281.90000000037253
+            }
+          ],
+          "totalMs": 5295.299999999814
+        }
       }
     }
-  ]
+  ],
+  "unexpectedSerious": []
 }

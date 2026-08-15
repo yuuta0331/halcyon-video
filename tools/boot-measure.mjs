@@ -37,6 +37,15 @@ function start(cmd, args) {
   });
 }
 
+function killChild(child) {
+  if (!child?.pid) return;
+  if (process.platform === 'win32') {
+    spawn('taskkill', ['/pid', String(child.pid), '/T', '/F'], { shell: true, stdio: 'ignore' });
+  } else {
+    child.kill('SIGTERM');
+  }
+}
+
 function npx() {
   return process.platform === 'win32' ? 'npx.cmd' : 'npx';
 }
@@ -45,14 +54,26 @@ async function measure(page, url) {
   const tNav = Date.now();
   await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 90_000 });
   const t0 = Date.now();
+  let tti = null;
   while (Date.now() - t0 < 180_000) {
     const diag = await page.evaluate(() => window.__bootDiagnostics?.() ?? null);
     if (diag?.timeToInteractive != null) {
-      return { wallMs: Date.now() - tNav, diag };
+      tti = { wallMs: Date.now() - tNav, diag };
+      break;
     }
     await new Promise((r) => setTimeout(r, 250));
   }
-  throw new Error(`TTI timeout at ${url}`);
+  if (!tti) throw new Error(`TTI timeout at ${url}`);
+  const tFull = Date.now();
+  while (Date.now() - tFull < 240_000) {
+    const diag = await page.evaluate(() => window.__bootDiagnostics?.() ?? null);
+    if (diag?.timeToFullTextures != null) {
+      return { wallMs: Date.now() - tNav, diag, waitedForFullTextures: true };
+    }
+    await new Promise((r) => setTimeout(r, 500));
+  }
+  const diag = await page.evaluate(() => window.__bootDiagnostics?.() ?? null);
+  return { wallMs: Date.now() - tNav, diag, waitedForFullTextures: false };
 }
 
 async function runMode(label, url) {
@@ -77,7 +98,7 @@ async function main() {
     await waitFor(`http://127.0.0.1:${DEV_PORT}/`);
     results.dev = await runMode('dev', `http://127.0.0.1:${DEV_PORT}/?demo=1&nogate=1`);
   } finally {
-    child.kill();
+    killChild(child);
     await new Promise((r) => setTimeout(r, 1500));
   }
 
@@ -86,7 +107,8 @@ async function main() {
     await waitFor(`http://127.0.0.1:${PROD_PORT}/`);
     results.production = await runMode('production', `http://127.0.0.1:${PROD_PORT}/?demo=1&nogate=1`);
   } finally {
-    child.kill();
+    killChild(child);
+    await new Promise((r) => setTimeout(r, 1500));
   }
 
   const file = path.join(outDir, 'boot-performance.json');
@@ -105,9 +127,11 @@ function summarize(mode) {
     wallMs: run.wallMs,
     timeToInteractive: run.diag?.timeToInteractive,
     timeToFullTextures: run.diag?.timeToFullTextures,
+    criticalReadyBeforeAllTextures: run.diag?.criticalReadyBeforeAllTextures,
     qualityCalibrationMs: run.diag?.qualityCalibrationMs,
     storeSceneConstructMs: run.diag?.storeSceneConstructMs,
-    criticalReadyBeforeAllTextures: run.diag?.criticalReadyBeforeAllTextures,
+    constructTop3: run.diag?.construct?.top3 ?? [],
+    waitedForFullTextures: run.waitedForFullTextures,
   });
   return { url: mode.url, cold: pick(mode.cold), warm: pick(mode.warm) };
 }

@@ -17,6 +17,7 @@ import {
   posterPriorityNumber,
   type PosterPriorityClass,
 } from './perf/store-readiness';
+import { constructStage } from './perf/construct-profile';
 import { validateCaseFit, type CaseFitPair } from './layout-validator';
 import { retailAudio } from './audio';
 import {
@@ -232,7 +233,7 @@ export function buildAllMovieBoxes(scene: StoreScene) {
   });
 
   console.log('[System debug] Unique movies count:', uniqueMovieIds.size, 'libraries count:', scene.libraries.length);
-  textureArrayManager.init(uniqueMovieIds.size, scene.renderer);
+  constructStage('textureArrayInit', () => { textureArrayManager.init(uniqueMovieIds.size, scene.renderer); });
 
   // 2. Count slots needed for each unit side to size our instanced meshes
   const unitSideCapacity = new Map<string, number>();

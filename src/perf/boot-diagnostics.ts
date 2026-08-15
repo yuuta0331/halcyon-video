@@ -1,5 +1,7 @@
 // Machine-readable boot timing. No credentials, tokens, or catalog titles.
 
+import { constructProfileSnapshot, type ConstructProfile } from './construct-profile.ts';
+
 export type BootStage =
   | 'appStart'
   | 'credentialStart'
@@ -31,6 +33,7 @@ export interface BootDiagnostics {
   timeToInteractive: number | null;
   timeToFullTextures: number | null;
   criticalReadyBeforeAllTextures: boolean | null;
+  construct: ConstructProfile;
 }
 
 const marks: Partial<Record<BootStage, number>> = {};
@@ -62,6 +65,7 @@ export function bootDiagnosticsSnapshot(): BootDiagnostics {
     timeToFullTextures: full,
     criticalReadyBeforeAllTextures:
       crit == null || settled == null ? null : crit < settled || (crit === settled && tti != null),
+    construct: constructProfileSnapshot(),
   };
 }
 

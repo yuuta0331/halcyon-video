@@ -62,10 +62,38 @@ function killChild(child) {
   }
 }
 
+function isDevProxyHttpError(text) {
+  return /HTTP 5\d\d\s+\S*\/dev-proxy(?:[/?#\s"]|$)/i.test(text);
+}
+
+function isAllowlisted(entry, log) {
+  const text = String(entry.text ?? '');
+  // Optional Jellyseerr/Romm sidecar: vite.config.ts integrationProxyPlugin.
+  // Demo catalog (`?demo=1`) does not require it; unconfigured/down sidecars
+  // surface as HTTP 500 on `/dev-proxy` plus Chrome's paired resource error.
+  if (isDevProxyHttpError(text)) return true;
+  if (
+    entry.type === 'error' &&
+    /Failed to load resource: the server responded with a status of 500/i.test(text) &&
+    log.some((e) => isDevProxyHttpError(String(e.text ?? '')))
+  ) {
+    return true;
+  }
+  return false;
+}
+
+function isSerious(entry) {
+  if (entry.type === 'pageerror') return true;
+  if (entry.type === 'error') return true;
+  return false;
+}
+
 function seriousErrors() {
-  return consoleLog.filter((e) =>
-    e.type === 'error' || e.type === 'pageerror' ||
-    /WebGL|WebXR|uncaught|Unhandled/i.test(e.text));
+  return consoleLog.filter(isSerious);
+}
+
+function unexpectedSeriousErrors() {
+  return seriousErrors().filter((e) => !isAllowlisted(e, consoleLog));
 }
 
 async function waitForPort(ms = 60_000) {
@@ -175,8 +203,16 @@ async function main() {
           const status = xr?.status?.();
           const native = !!navigator.xr;
           const entered = xr ? await xr.enter() : { ok: false, error: 'no __xrTest' };
-          await new Promise((r) => setTimeout(r, 1500));
-          const d1 = window.__xrDiagnostics?.();
+          const waitWorld = async () => {
+            const until = Date.now() + 5000;
+            while (Date.now() < until) {
+              const d = window.__xrDiagnostics?.();
+              if (d?.startup?.firstWorldRenderCompletedAt != null && d?.startup?.firstDirectRenderEnd != null) return d;
+              await new Promise((r) => setTimeout(r, 100));
+            }
+            return window.__xrDiagnostics?.();
+          };
+          const d1 = await waitWorld();
           const pose0 = xr?.getHeadsetPose?.() ?? null;
           xr?.setHeadsetPose?.({ y: 1.7, z: 0.2 });
           await new Promise((r) => setTimeout(r, 400));
@@ -193,7 +229,12 @@ async function main() {
         const shot2 = await shot(page, 'iwer-second-entry.png');
         const iwer = pre.status?.classification === 'IWER_EMULATED' || pre.d1?.classification === 'IWER_EMULATED';
         const presenting = !!pre.d1?.session?.rendererPresenting || pre.d1?.session?.phase === 'active' || pre.d1?.session?.phase === 'projecting';
-        const firstFrame = pre.d1?.startup?.firstVisibleFrameAt != null || pre.d1?.startup?.firstAnimationCallbackAt != null;
+        const st = pre.d1?.startup;
+        const firstFrame = st?.firstWorldRenderCompletedAt != null
+          && st?.firstDirectRenderStart != null
+          && st?.firstDirectRenderEnd != null
+          && st.firstDirectRenderEnd >= st.firstDirectRenderStart
+          && (st.firstAnimationCallbackAt == null || st.firstDirectRenderStart >= st.firstAnimationCallbackAt);
         const second = pre.entered2?.ok === true;
         return {
           pass: iwer && pre.entered?.ok && presenting && firstFrame && pre.exited?.ok && second,
@@ -212,7 +253,13 @@ async function main() {
           }
           const xr = window.__xrTest;
           const entered = xr ? await xr.enter() : { ok: false, error: 'no __xrTest' };
-          await new Promise((r) => setTimeout(r, 1200));
+          const untilWorld = Date.now() + 5000;
+          while (Date.now() < untilWorld) {
+            const dWait = window.__xrDiagnostics?.();
+            if (dWait?.startup?.firstWorldRenderCompletedAt != null) break;
+            await new Promise((r) => setTimeout(r, 100));
+          }
+          await new Promise((r) => setTimeout(r, 400));
           xr?.setControllerPose?.('left', { x: -0.25, y: 1.2, z: -0.3 });
           xr?.setControllerPose?.('right', { x: 0.25, y: 1.2, z: -0.3 });
           const rigBefore = window.storeScene?.xr?.rigPose ?? null;
@@ -242,9 +289,14 @@ async function main() {
           (pre.rigAfterMove.x !== pre.rigBefore.x || pre.rigAfterMove.z !== pre.rigBefore.z);
         const turned = pre.rigAfterTurn && pre.rigAfterMove &&
           pre.rigAfterTurn.yaw !== pre.rigAfterMove.yaw;
+        const world = pre.d?.startup?.firstWorldRenderCompletedAt != null
+          && pre.d?.startup?.firstDirectRenderEnd != null;
+        const layersAfterWorld = pre.d?.startup?.optionalLayersStart == null
+          || (pre.d.startup.firstWorldRenderCompletedAt != null
+            && pre.d.startup.optionalLayersStart >= pre.d.startup.firstWorldRenderCompletedAt);
         return {
-          pass: !!pre.entered?.ok && !!pre.exited?.ok && !!pre.entered2?.ok && !!moved && !!turned,
-          moved: !!moved, turned: !!turned, layers: pre.d?.flags?.layers === false, pre,
+          pass: !!pre.entered?.ok && !!pre.exited?.ok && !!pre.entered2?.ok && !!moved && !!turned && world && layersAfterWorld,
+          moved: !!moved, turned: !!turned, layers: pre.d?.flags?.layers === false, world, layersAfterWorld, pre,
         };
       },
     ));
@@ -262,7 +314,12 @@ async function main() {
           }
           const xr = window.__xrTest;
           const entered = xr ? await xr.enter() : { ok: false, error: 'no __xrTest' };
-          await new Promise((r) => setTimeout(r, 1500));
+          const untilWorld = Date.now() + 5000;
+          while (Date.now() < untilWorld) {
+            const dWait = window.__xrDiagnostics?.();
+            if (dWait?.startup?.firstWorldRenderCompletedAt != null) break;
+            await new Promise((r) => setTimeout(r, 100));
+          }
           const d = window.__xrDiagnostics?.();
           xr?.trigger?.('right', true);
           await new Promise((r) => setTimeout(r, 200));
@@ -271,10 +328,16 @@ async function main() {
           return { entered, d, compositor: d?.compositorUi, layersFeature: d?.layersFeature };
         });
         await shot(page, 'iwer-japanese-ui.png');
+        const world = pre.d?.startup?.firstWorldRenderCompletedAt != null
+          && pre.d?.startup?.firstDirectRenderEnd != null;
+        const layersAfterWorld = pre.d?.startup?.optionalLayersStart == null
+          || (pre.d.startup.firstWorldRenderCompletedAt != null
+            && pre.d.startup.optionalLayersStart >= pre.d.startup.firstWorldRenderCompletedAt);
         return {
-          pass: !!pre.entered?.ok,
+          pass: !!pre.entered?.ok && world && layersAfterWorld,
           compositor: pre.compositor ?? 'unknown',
           layersFeature: pre.layersFeature,
+          world, layersAfterWorld,
           iwerLayersBoundary: 'IWER Meta Quest 3 supportedFeatures do not include `layers`; compositor is mesh-fallback.',
           pre,
         };
@@ -284,10 +347,16 @@ async function main() {
     evidence.scenarios.push(await runScenario(
       browser, 'BOOT_PERF', '?demo=1&nogate=1',
       async (page, boot) => {
-        const diag = await page.evaluate(() => window.__bootDiagnostics?.());
+        const t0 = Date.now();
+        let diag = await page.evaluate(() => window.__bootDiagnostics?.());
+        while (Date.now() - t0 < 180_000 && diag?.timeToFullTextures == null) {
+          await new Promise((r) => setTimeout(r, 500));
+          diag = await page.evaluate(() => window.__bootDiagnostics?.());
+        }
         await shot(page, 'boot-performance.png');
         return {
           pass: diag?.timeToInteractive != null,
+          waitedForFullTextures: diag?.timeToFullTextures != null,
           diag, boot,
         };
       },
@@ -303,8 +372,10 @@ async function main() {
         moved: s.moved, turned: s.turned,
         compositor: s.compositor, layersFeature: s.layersFeature,
         iwerLayersBoundary: s.iwerLayersBoundary,
+        waitedForFullTextures: s.waitedForFullTextures,
         diag: s.pre?.d1 ?? s.pre?.d ?? s.diag,
       })),
+      unexpectedSerious: unexpectedSeriousErrors().map((e) => ({ ...e, text: redact(e.text) })),
     }), null, 2));
     fs.writeFileSync(path.join(outDir, 'boot-performance.json'), JSON.stringify(
       scrub(evidence.scenarios.find((s) => s.name === 'BOOT_PERF') ?? {}), null, 2));
@@ -324,13 +395,17 @@ async function main() {
     killChild(child);
   }
 
-  const failed = evidence.scenarios.filter((s) => !s.pass);
+  const scenarioFailures = evidence.scenarios.filter((s) => !s.pass);
+  const unexpected = unexpectedSeriousErrors();
+  const pass = scenarioFailures.length === 0 && unexpected.length === 0;
   console.log(JSON.stringify({
-    pass: failed.length === 0,
+    pass,
+    scenarioFailures: scenarioFailures.length,
+    unexpectedSeriousErrors: unexpected.length,
     scenarios: evidence.scenarios.map((s) => ({ name: s.name, pass: s.pass })),
-    seriousErrors: seriousErrors().slice(0, 20),
+    unexpectedSerious: unexpected.slice(0, 20).map((e) => ({ ...e, text: redact(e.text) })),
   }, null, 2));
-  if (failed.length) process.exit(1);
+  if (!pass) process.exit(1);
 }
 
 main().catch((err) => {
