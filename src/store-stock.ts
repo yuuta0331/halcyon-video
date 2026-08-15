@@ -18,6 +18,7 @@ import {
   type PosterPriorityClass,
 } from './perf/store-readiness';
 import { constructStage } from './perf/construct-profile';
+import { setGpuLiveState } from './xr/gpu-diagnostics';
 import { validateCaseFit, type CaseFitPair } from './layout-validator';
 import { retailAudio } from './audio';
 import {
@@ -104,6 +105,35 @@ function slotRentalLift(movie: Movie): number {
 function slotRentalHalfDepth(movie: Movie): number {
   if (!movie.game) return rentalBoxDepth() / 2;
   return rentalBoxDepth(gameCaseDims(movie.platform, movie.discCount), gameRentalDims(movie.platform)) / 2;
+}
+
+function assignSlotPosterIndex(scene: StoreScene, slot: MovieSlot): number {
+  const cls = classifySlotPriority(slot, {
+    ...DEFAULT_PRIORITY_CONTEXT,
+    backWallUnitIdx: BACK_WALL_UNIT_IDX,
+    selectedKey: `${scene.selectedLibraryIdx}_${scene.selectedUnitIdx}_front_${scene.selectedShelf}_${scene.selectedCol}`,
+    selectedLibraryIdx: scene.selectedLibraryIdx,
+  });
+  textureArrayManager.notePriority(slot.movie.id, cls);
+  const acquire = !textureArrayManager.residencyBound || cls === 'P0' || cls === 'P1';
+  return textureArrayManager.getIndex(slot.movie.id, acquire);
+}
+
+function publishPosterLiveState(): void {
+  const mem = textureArrayManager.memorySnapshot();
+  setGpuLiveState({
+    poster: {
+      catalogTitleCount: mem.catalogTitleCount,
+      physicalSlots: mem.physicalSlots,
+      residentCount: mem.residentCount,
+      cpuBytes: mem.cpuBytes,
+      gpuBytes: mem.gpuBytes,
+      cacheBytes: posterPixelCache.byteSize + lowResCache.byteSize,
+      cacheBudget: posterPixelCache.budget + lowResCache.budget,
+      cacheHits: posterPixelCache.hits + lowResCache.hits,
+      cacheMisses: posterPixelCache.misses + lowResCache.misses,
+    },
+  });
 }
 
 /**
@@ -234,6 +264,7 @@ export function buildAllMovieBoxes(scene: StoreScene) {
 
   console.log('[System debug] Unique movies count:', uniqueMovieIds.size, 'libraries count:', scene.libraries.length);
   constructStage('textureArrayInit', () => { textureArrayManager.init(uniqueMovieIds.size, scene.renderer); });
+  publishPosterLiveState();
 
   // 2. Count slots needed for each unit side to size our instanced meshes
   const unitSideCapacity = new Map<string, number>();
@@ -535,7 +566,7 @@ export function buildAllMovieBoxes(scene: StoreScene) {
     if (!sameMovie) scene.slotsByMovieId.set(slot.movie.id, (sameMovie = []));
     sameMovie.push(slot);
 
-    const texIdx = textureArrayManager.getIndex(slot.movie.id);
+    const texIdx = assignSlotPosterIndex(scene, slot);
     
     const fIdxAttr = slot.frontMesh.geometry.getAttribute('aTextureIndex') as THREE.InstancedBufferAttribute;
     if (fIdxAttr) fIdxAttr.setX(slot.instanceIdx, texIdx);
@@ -553,6 +584,8 @@ export function buildAllMovieBoxes(scene: StoreScene) {
     lastWrittenSpineHex.set(slot, spineColorHex);
 
     slot.loadShelfDetails = (priority = 1, onSettled?: () => void) => {
+      const cls = priority >= 5 ? 'P0' : priority >= 3 ? 'P1' : priority >= 1 ? 'P2' : 'P3';
+      textureArrayManager.notePriority(slot.movie.id, cls);
       if (posterPixelCache.has(slot.movie.id)) {
         const highResBitmap = posterPixelCache.get(slot.movie.id)!;
         const lowResBitmap = lowResCache.get(slot.movie.id);
@@ -936,6 +969,7 @@ export function buildAllMovieBoxes(scene: StoreScene) {
     const bSp = mesh.geometry.getAttribute('aSpineColor') as THREE.InstancedBufferAttribute;
     if (bSp) bSp.needsUpdate = true;
   });
+  publishPosterLiveState();
 
   // 7. Build static extra-copy cases for high-rated films.
   scene.rebuildExtraCopies();
@@ -1293,7 +1327,7 @@ export function rebuildMovieBoxes(scene: StoreScene) {
       slot.instanceIdx = newInstIdx;
 
       // Update geometry attributes
-      const texIdx = textureArrayManager.getIndex(slot.movie.id);
+      const texIdx = assignSlotPosterIndex(scene, slot);
       const fIdxAttr = slot.frontMesh.geometry.getAttribute('aTextureIndex') as THREE.InstancedBufferAttribute;
       if (fIdxAttr) {
         fIdxAttr.setX(slot.instanceIdx, texIdx);
@@ -1440,7 +1474,7 @@ export function restockSlottedFixtures(scene: StoreScene): void {
 
       // Same attribute writes setupSlot() does at initial build (video-case's
       // shader reads texture index / spine colour per-instance, not per-movie).
-      const texIdx = textureArrayManager.getIndex(fixtureSlot.movie.id);
+      const texIdx = assignSlotPosterIndex(scene, existing);
       const fIdxAttr = existing.frontMesh.geometry.getAttribute('aTextureIndex') as THREE.InstancedBufferAttribute;
       if (fIdxAttr) { fIdxAttr.setX(existing.instanceIdx, texIdx); fIdxAttr.needsUpdate = true; }
       const bIdxAttr = existing.backMesh.geometry.getAttribute('aTextureIndex') as THREE.InstancedBufferAttribute;

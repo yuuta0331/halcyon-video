@@ -99,7 +99,8 @@ function onScreen(m: MirrorEntry, cameraPos: THREE.Vector3): boolean {
  * everywhere else in the app.
  */
 export function liveMirrorsAllowed(scene: StoreScene): boolean {
-  return !scene.softwareGL && !scene.webkitGL && scene.effectiveQuality === 'high';
+  return !scene.softwareGL && !scene.webkitGL && scene.effectiveQuality === 'high'
+    && scene.resourceProfile.liveMirrors;
 }
 
 /**

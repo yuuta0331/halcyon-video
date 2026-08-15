@@ -3523,6 +3523,11 @@ async function playExternally(path: string) {
 
 async function main() {
   await installXrEmulatorIfRequested();
+  const { xrBareRequested, startBareXr } = await import('./xr/bare');
+  if (xrBareRequested()) {
+    await startBareXr();
+    return;
+  }
   applyDocumentChrome();
   // Also installs window.__fpsMeter and raises the FPS overlay if bb_fps_meter
   // (or ?fps=1) says so — see the tail of registerCoreSettings.

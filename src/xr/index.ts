@@ -20,8 +20,9 @@ export {
   shouldSelfScheduleRaf,
   shouldUseSetAnimationLoop,
 } from './loop';
-export { applyXrQualityOverride, restoreDesktopQuality, xrQualityPolicy } from './quality';
+export { restoreDesktopQuality, xrQualityPolicy } from './quality';
 export { readXrFlags, xrEmuRequested } from './flags';
+export { xrBareRequested } from './bare';
 export { shouldInstallIwer } from './emu-policy';
 export { classifyXrEnvironment } from './classification';
 export { desktopComposerForbidden, chooseXrRenderPath, xrOwnsFrames } from './render-invariant';

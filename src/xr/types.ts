@@ -115,6 +115,8 @@ export interface XrDiagnostics {
     minimal: boolean;
     layers: boolean;
     emu: boolean;
+    bare: boolean;
+    safe: boolean;
   };
 }
 

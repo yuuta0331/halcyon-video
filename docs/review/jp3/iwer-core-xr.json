@@ -8,105 +8,101 @@
     "xrTest": true,
     "diag": {
       "marks": {
-        "appStart": 850.4000000003725,
-        "credentialStart": 1315.5,
-        "credentialEnd": 1315.5,
-        "catalogStart": 1315.5,
-        "catalogEnd": 1370.8000000002794,
-        "sidecarsStart": 1370.8000000002794,
-        "sidecarsEnd": 1370.8000000002794,
-        "baseFontsStart": 1370.9000000003725,
-        "brandPackStart": 1371,
-        "brandPackEnd": 1509.5,
-        "baseFontsEnd": 1509.5,
-        "qualityCalibrationStart": 8977.30000000028,
-        "qualityCalibrationEnd": 10000.600000000093,
-        "threeSceneImportStart": 10000.700000000186,
-        "threeSceneImportEnd": 10818.200000000186,
-        "storeSceneConstructStart": 10818.200000000186,
-        "storeSceneConstructEnd": 64837,
-        "criticalTextureReady": 107234.5,
-        "storeInteractive": 107234.5
+        "appStart": 149,
+        "credentialStart": 408.09999999962747,
+        "credentialEnd": 408.09999999962747,
+        "catalogStart": 408.09999999962747,
+        "catalogEnd": 428.59999999962747,
+        "sidecarsStart": 428.59999999962747,
+        "sidecarsEnd": 428.59999999962747,
+        "baseFontsStart": 428.69999999925494,
+        "brandPackStart": 428.7999999988824,
+        "brandPackEnd": 475,
+        "baseFontsEnd": 475,
+        "qualityCalibrationStart": 5997.5999999996275,
+        "qualityCalibrationEnd": 8842.400000000373,
+        "threeSceneImportStart": 8842.5,
+        "threeSceneImportEnd": 9376.5,
+        "storeSceneConstructStart": 9376.5,
+        "storeSceneConstructEnd": 34985.79999999888,
+        "criticalTextureReady": 117489.19999999925,
+        "storeInteractive": 117489.19999999925
       },
-      "qualityCalibrationMs": 1023.2999999998137,
-      "storeSceneConstructMs": 54018.799999999814,
-      "timeToInteractive": 106384.09999999963,
+      "qualityCalibrationMs": 2844.800000000745,
+      "storeSceneConstructMs": 25609.299999998882,
+      "timeToInteractive": 117340.19999999925,
       "timeToFullTextures": null,
       "criticalReadyBeforeAllTextures": null,
       "construct": {
         "stages": [
           {
             "name": "initThree",
-            "ms": 801.5
+            "ms": 2355.2999999988824
           },
           {
             "name": "setupLighting",
-            "ms": 0.39999999990686774
+            "ms": 0.3999999985098839
           },
           {
             "name": "exterior",
-            "ms": 33.299999999813735
+            "ms": 27.09999999962747
           },
           {
             "name": "carpetTextures",
-            "ms": 170.29999999981374
+            "ms": 840.0999999996275
           },
           {
             "name": "wallTextures",
-            "ms": 347.8000000002794
+            "ms": 523.0999999996275
           },
           {
             "name": "aisleShelving",
-            "ms": 25.899999999906868
+            "ms": 42.29999999888241
           },
           {
             "name": "floorAO",
-            "ms": 1
+            "ms": 0.900000000372529
           },
           {
             "name": "signage",
-            "ms": 214.89999999990687
+            "ms": 179.80000000074506
           },
           {
             "name": "buildStore",
-            "ms": 1844.6000000000931
+            "ms": 4459.4000000003725
           },
           {
             "name": "bakeEnvironment",
-            "ms": 40600.5
+            "ms": 0
           },
           {
             "name": "textureArrayInit",
-            "ms": 74
+            "ms": 0.3999999985098839
           },
           {
             "name": "buildAllMovieBoxes",
-            "ms": 291.89999999990687
+            "ms": 122.40000000037253
           },
           {
             "name": "rebuildMovieBoxes",
-            "ms": 16.90000000037253
-          },
-          {
-            "name": "reflectionProbes",
-            "ms": 347.5
+            "ms": 19.800000000745058
           }
         ],
         "top3": [
           {
-            "name": "bakeEnvironment",
-            "ms": 40600.5
-          },
-          {
             "name": "buildStore",
-            "ms": 1844.6000000000931
+            "ms": 4459.4000000003725
           },
           {
             "name": "initThree",
-            "ms": 801.5
+            "ms": 2355.2999999988824
+          },
+          {
+            "name": "carpetTextures",
+            "ms": 840.0999999996275
           }
         ],
-        "totalMs": 44770.5
+        "totalMs": 8570.999999996275
       }
     }
   },
@@ -188,7 +184,9 @@
       "flags": {
         "minimal": true,
         "layers": false,
-        "emu": true
+        "emu": true,
+        "bare": false,
+        "safe": false
       }
     },
     "entered": {
@@ -203,22 +201,22 @@
         "immersiveVrSupported": true,
         "rendererPresenting": true,
         "referenceSpace": "local-floor",
-        "sessionStartAt": 116452.5
+        "sessionStartAt": 121844.29999999888
       },
       "startup": {
-        "requestSessionStart": 116449.20000000019,
-        "requestSessionEnd": 116452.5,
-        "referenceSpaceStart": 116452.5,
-        "referenceSpaceEnd": 116452.80000000028,
-        "targetFrameRateStart": 116454.70000000019,
-        "targetFrameRateEnd": 116455.6000000001,
-        "rendererSetSessionStart": 116456.1000000001,
-        "rendererSetSessionEnd": 116461,
-        "firstAnimationCallbackAt": 116467,
-        "firstDirectRenderStart": 116467.1000000001,
-        "firstDirectRenderEnd": 116472.90000000037,
-        "firstWorldRenderCompletedAt": 116472.90000000037,
-        "firstVisibleFrameAt": 116472.90000000037,
+        "requestSessionStart": 121842.40000000037,
+        "requestSessionEnd": 121844.29999999888,
+        "referenceSpaceStart": 121844.40000000037,
+        "referenceSpaceEnd": 121844.69999999925,
+        "targetFrameRateStart": 121844.79999999888,
+        "targetFrameRateEnd": 121845.5,
+        "rendererSetSessionStart": 121848.29999999888,
+        "rendererSetSessionEnd": 121849.19999999925,
+        "firstAnimationCallbackAt": 121852.69999999925,
+        "firstDirectRenderStart": 121852.79999999888,
+        "firstDirectRenderEnd": 121853.40000000037,
+        "firstWorldRenderCompletedAt": 121853.40000000037,
+        "firstVisibleFrameAt": 121853.40000000037,
         "lastCompletedStage": "firstVisibleFrameAt",
         "lastError": null
       },
@@ -269,14 +267,16 @@
           90,
           120
         ],
-        "framebufferScale": 0.7,
+        "framebufferScale": 0.5,
         "frameCount": 5,
-        "lastFrameDtMs": 1.099999999627471
+        "lastFrameDtMs": 2.5
       },
       "flags": {
         "minimal": true,
         "layers": false,
-        "emu": true
+        "emu": true,
+        "bare": false,
+        "safe": false
       }
     },
     "pose0": {
@@ -375,14 +375,16 @@
           90,
           120
         ],
-        "framebufferScale": 0.7,
+        "framebufferScale": 0.5,
         "frameCount": 0,
         "lastFrameDtMs": null
       },
       "flags": {
         "minimal": true,
         "layers": false,
-        "emu": true
+        "emu": true,
+        "bare": false,
+        "safe": false
       }
     },
     "entered2": {
@@ -397,22 +399,22 @@
         "immersiveVrSupported": true,
         "rendererPresenting": true,
         "referenceSpace": "local-floor",
-        "sessionStartAt": 150376.40000000037
+        "sessionStartAt": 123901.5
       },
       "startup": {
-        "requestSessionStart": 150376.10000000056,
-        "requestSessionEnd": 150376.40000000037,
-        "referenceSpaceStart": 150376.40000000037,
-        "referenceSpaceEnd": 150376.40000000037,
-        "targetFrameRateStart": 150376.40000000037,
-        "targetFrameRateEnd": 150376.7000000002,
-        "rendererSetSessionStart": 150376.7999999998,
-        "rendererSetSessionEnd": 150436.10000000056,
-        "firstAnimationCallbackAt": 150442.90000000037,
-        "firstDirectRenderStart": 150442.90000000037,
-        "firstDirectRenderEnd": 150488.90000000037,
-        "firstWorldRenderCompletedAt": 150488.90000000037,
-        "firstVisibleFrameAt": 150488.90000000037,
+        "requestSessionStart": 123901.19999999925,
+        "requestSessionEnd": 123901.5,
+        "referenceSpaceStart": 123901.59999999963,
+        "referenceSpaceEnd": 123901.59999999963,
+        "targetFrameRateStart": 123901.69999999925,
+        "targetFrameRateEnd": 123901.90000000037,
+        "rendererSetSessionStart": 123902.69999999925,
+        "rendererSetSessionEnd": 123903.09999999963,
+        "firstAnimationCallbackAt": 123951.69999999925,
+        "firstDirectRenderStart": 123951.79999999888,
+        "firstDirectRenderEnd": 124756.09999999963,
+        "firstWorldRenderCompletedAt": 124756.09999999963,
+        "firstVisibleFrameAt": 124756.09999999963,
         "lastCompletedStage": "firstVisibleFrameAt",
         "lastError": null
       },
@@ -463,14 +465,16 @@
           90,
           120
         ],
-        "framebufferScale": 0.7,
-        "frameCount": 29,
-        "lastFrameDtMs": 0.599999999627471
+        "framebufferScale": 0.5,
+        "frameCount": 11,
+        "lastFrameDtMs": 0.6999999992549419
       },
       "flags": {
         "minimal": true,
         "layers": false,
-        "emu": true
+        "emu": true,
+        "bare": false,
+        "safe": false
       }
     },
     "exited2": {

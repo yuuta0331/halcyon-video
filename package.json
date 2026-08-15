@@ -10,6 +10,7 @@
     "serve": "vite preview --port 1420 --strictPort --host",
     "test": "node --experimental-strip-types --test tests/*.test.ts",
     "test:xr-emu": "node tools/xr-emu-harness.mjs",
+    "test:xr-resource": "node tools/xr-resource-harness.mjs",
     "measure:boot": "node tools/boot-measure.mjs",
     "test:rental": "node --experimental-strip-types --test tests/rental-clock.test.ts",
     "test:shelf": "node --experimental-strip-types --test tests/shelf-order.test.ts",

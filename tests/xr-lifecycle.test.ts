@@ -85,6 +85,15 @@ test('minimal XR policy disables optional compositor', () => {
   }), false);
 });
 
+test('bare XR flag is distinct from xrMinimal', () => {
+  const minimal = readXrFlags('?xrMinimal=1');
+  const bare = readXrFlags('?xrBare=1');
+  assert.equal(minimal.minimal, true);
+  assert.equal(minimal.bare, false);
+  assert.equal(bare.bare, true);
+  assert.equal(bare.layers, false);
+});
+
 test('no-layers policy omits the layers optional feature', () => {
   const flags = readXrFlags('?xrLayers=0');
   assert.equal(flags.layers, false);
@@ -296,6 +305,9 @@ test('StoreScene XR path records world render around renderer.render', () => {
   assert.match(runtime, /beforeDirectRender/);
   assert.match(runtime, /afterDirectRender/);
   assert.match(runtime, /firstWorldRenderCompletedAt/);
-  assert.match(runtime, /renderer\.render\(scene, camera\);\s*\n\s*this\.afterDirectRender/);
+  assert.match(runtime, /createXrBootScene/);
+  assert.match(runtime, /XR_BOOT_STABLE_FRAMES/);
+  assert.match(runtime, /this\.afterDirectRender\(\)/);
+  assert.match(runtime, /renderer\.render\(boot \? this\.bootScene! : scene, camera\)/);
 });
 

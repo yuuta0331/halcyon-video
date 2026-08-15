@@ -80,3 +80,13 @@ test('setBudget() shrinking the budget evicts immediately', () => {
   assert.equal(cache.has('b'), false);
   assert.equal(cache.has('c'), true);
 });
+
+test('hit/miss counters distinguish cache lookups from inserts', () => {
+  const cache = new LruByteCache(1000);
+  cache.set('a', bytes(10));
+  cache.get('a');
+  cache.get('missing');
+  assert.equal(cache.hits, 1);
+  assert.equal(cache.misses, 1);
+  assert.equal(cache.sets, 1);
+});

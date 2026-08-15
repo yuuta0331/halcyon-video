@@ -17,8 +17,11 @@
 
 import * as THREE from 'three';
 import { perfTrace, perfSlot } from './perf-trace';
-import { xrUploadBudget } from './perf/store-readiness';
+import { xrUploadBudget, type PosterPriorityClass } from './perf/store-readiness';
 import { xrUploadPolicyState } from './perf/upload-policy';
+import { activeResourceProfile, isXrSafeProfile } from './perf/resource-profile';
+import { PosterResidencyWindow, estimatePosterArrayBytes } from './poster-residency';
+import { pixelStorei } from './xr/gl-state';
 
 const SP_UPLOAD = perfSlot('texUploadMs');  // uploadTextureNow (initTexture + mipmaps)
 const CT_UPLOAD = perfSlot('texUploadN');
@@ -133,6 +136,11 @@ export function getUploadRenderer(): THREE.WebGLRenderer | null {
 let posterLoadedNotify: ((movieId: string) => void) | null = null;
 export function setPosterLoadedNotify(cb: ((movieId: string) => void) | null) {
   posterLoadedNotify = cb;
+}
+
+let posterIndexNotify: ((movieId: string, index: number) => void) | null = null;
+export function setPosterIndexNotify(cb: ((movieId: string, index: number) => void) | null) {
+  posterIndexNotify = cb;
 }
 
 let textureStreamWake: (() => void) | null = null;
@@ -359,8 +367,8 @@ function updateTextureArrayLayerImpl(
   const oldFlipY = gl.getParameter(gl.UNPACK_FLIP_Y_WEBGL);
   const oldPremultiply = gl.getParameter(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL);
 
-  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
-  gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+  pixelStorei(renderer, gl, gl.UNPACK_FLIP_Y_WEBGL, 0);
+  pixelStorei(renderer, gl, gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, 0);
 
   // We use the active texture unit, but we MUST tell Three.js to reset its state cache
   // afterwards because we are making raw WebGL calls that Three.js doesn't track.
@@ -412,9 +420,8 @@ function updateTextureArrayLayerImpl(
     console.warn("WebGL upload deferred until Three.js allocation.", err);
   }
 
-  // Restore unpack parameters
-  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, oldFlipY);
-  gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, oldPremultiply);
+  pixelStorei(renderer, gl, gl.UNPACK_FLIP_Y_WEBGL, oldFlipY ? 1 : 0);
+  pixelStorei(renderer, gl, gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, oldPremultiply ? 1 : 0);
 
   // Restore Three.js state cache so it can re-bind textures correctly
   renderer.resetState();
@@ -426,12 +433,29 @@ function updateTextureArrayLayerImpl(
 // heap spikes followed by GC-pause hitches in perf-trace.
 let downsampleScratch: Uint8Array | null = null;
 function downsample320To160(src: Uint8Array): Uint8Array {
-  const dst = (downsampleScratch ??= new Uint8Array(160 * 240 * 4));
+  return downsampleNearest(src, 320, 480, 160, 240);
+}
+
+const shelfScratch = new Map<string, Uint8Array>();
+function downsampleNearest(
+  src: Uint8Array,
+  sw: number,
+  sh: number,
+  dw: number,
+  dh: number,
+): Uint8Array {
+  const key = `${dw}x${dh}`;
+  let dst = dw === 160 && dh === 240
+    ? (downsampleScratch ??= new Uint8Array(dw * dh * 4))
+    : (shelfScratch.get(key) ?? new Uint8Array(dw * dh * 4));
+  if (dw !== 160 || dh !== 240) shelfScratch.set(key, dst);
   let dstIdx = 0;
-  for (let y = 0; y < 240; y++) {
-    const srcRowOffset = y * 2 * 320 * 4;
-    for (let x = 0; x < 160; x++) {
-      const srcIdx = srcRowOffset + x * 2 * 4;
+  for (let y = 0; y < dh; y++) {
+    const srcY = Math.min(sh - 1, Math.floor((y + 0.5) * sh / dh));
+    const srcRow = srcY * sw * 4;
+    for (let x = 0; x < dw; x++) {
+      const srcX = Math.min(sw - 1, Math.floor((x + 0.5) * sw / dw));
+      const srcIdx = srcRow + srcX * 4;
       dst[dstIdx] = src[srcIdx];
       dst[dstIdx + 1] = src[srcIdx + 1];
       dst[dstIdx + 2] = src[srcIdx + 2];
@@ -440,6 +464,14 @@ function downsample320To160(src: Uint8Array): Uint8Array {
     }
   }
   return dst;
+}
+
+function shelfPixelsFromDecoded(pixelData: Uint8Array, w: number, h: number): Uint8Array {
+  if (pixelData.byteLength === w * h * 4) return pixelData;
+  if (pixelData.byteLength === 320 * 480 * 4) return downsampleNearest(pixelData, 320, 480, w, h);
+  if (pixelData.byteLength === 64 * 96 * 4) return downsampleNearest(pixelData, 64, 96, w, h);
+  if (pixelData.byteLength === 160 * 240 * 4) return downsampleNearest(pixelData, 160, 240, w, h);
+  return downsampleNearest(pixelData, 320, 480, w, h);
 }
 
 // Spare layers allocated beyond the current catalog so TextureArrayManager's
@@ -513,6 +545,24 @@ export function invalidatePosterLayers() {
   posterLayersInvalid = true;
 }
 
+function allocPosterBank(
+  w: number,
+  h: number,
+  layers: number,
+  aniso: number,
+): THREE.DataArrayTexture {
+  const tex = new THREE.DataArrayTexture(new Uint8Array(w * h * layers * 4), w, h, layers);
+  tex.format = THREE.RGBAFormat;
+  tex.type = THREE.UnsignedByteType;
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.minFilter = THREE.LinearMipmapLinearFilter;
+  tex.magFilter = THREE.LinearFilter;
+  tex.generateMipmaps = true;
+  if (aniso) tex.anisotropy = aniso;
+  tex.version = 1;
+  return tex;
+}
+
 class TextureArrayManager {
   private movieToIndex = new Map<string, number>();
   private nextIndex = 0;
@@ -527,6 +577,12 @@ class TextureArrayManager {
    */
   public lowResBase = 0;
   private layerBudgetWarned = false;
+  public catalogTitleCount = 0;
+  public residencyBound = false;
+  public shelfWidth = 160;
+  public shelfHeight = 240;
+  private residency: PosterResidencyWindow | null = null;
+  private moviePriority = new Map<string, PosterPriorityClass>();
 
   public lowResArray: THREE.DataArrayTexture | null = null;
   public highResArray: THREE.DataArrayTexture | null = null;
@@ -557,8 +613,24 @@ class TextureArrayManager {
     //
     // A medium/box-art change genuinely invalidates the pixels; that path calls
     // invalidatePosterLayers() and falls through to the full reallocation.
-    const haveArrays = !!(this.lowResArray && this.highResArray && this.loadedFlagsTexture);
-    if (haveArrays && !posterLayersInvalid && totalMovies <= this.maxMovies &&
+    const profile = activeResourceProfile();
+    const bounded = isXrSafeProfile(profile) && profile.poster.mode === 'bounded-residency';
+    this.catalogTitleCount = totalMovies;
+
+    const haveArrays = !!(this.lowResArray && this.highResArray && this.loadedFlagsTexture)
+      || !!(bounded && this.highResArray && this.loadedFlagsTexture);
+    if (haveArrays && !posterLayersInvalid && bounded && this.residency
+        && this.maxMovies === profile.poster.physicalSlots) {
+      const maxAniso = renderer ? Math.min(8, renderer.capabilities.getMaxAnisotropy()) : 0;
+      if (this.highResArray) {
+        this.highResArray.needsUpdate = true;
+        if (maxAniso) this.highResArray.anisotropy = maxAniso;
+      }
+      this.loadedFlagsTexture!.needsUpdate = true;
+      this.bindUniforms();
+      return;
+    }
+    if (haveArrays && !posterLayersInvalid && !bounded && totalMovies <= this.maxMovies &&
         this.maxMovies - this.nextIndex >= LAYER_CHURN_HEADROOM / 2) {
       // Re-upload the mirrored pixels into the new GL context on first use.
       const maxAniso = renderer ? Math.min(8, renderer.capabilities.getMaxAnisotropy()) : 0;
@@ -581,6 +653,37 @@ class TextureArrayManager {
     this.movieToIndex.clear();
     this.nextIndex = 0;
     this.layerBudgetWarned = false;
+    this.residency = null;
+    this.residencyBound = bounded;
+    this.moviePriority.clear();
+    if (bounded) {
+      this.shelfWidth = profile.poster.shelfWidth;
+      this.shelfHeight = profile.poster.shelfHeight;
+      this.bankSize = profile.poster.physicalSlots;
+      this.maxMovies = profile.poster.physicalSlots;
+      this.lowResBase = 0;
+      this.residency = new PosterResidencyWindow(this.maxMovies);
+      this.lowResUploaded.clear();
+      this.highResQueued.clear();
+      posterLayersInvalid = false;
+      const aniso = renderer ? Math.min(8, renderer.capabilities.getMaxAnisotropy()) : 0;
+      const shelf = allocPosterBank(this.shelfWidth, this.shelfHeight, this.maxMovies, aniso);
+      this.highResArray = shelf;
+      this.lowResArray = null;
+      const lutSize = THREE.MathUtils.ceilPowerOfTwo(this.maxMovies);
+      this.loadedFlags = new Uint8Array(lutSize);
+      this.loadedFlagsTexture = new THREE.DataTexture(
+        this.loadedFlags, lutSize, 1, THREE.RedFormat, THREE.UnsignedByteType,
+      );
+      this.loadedFlagsTexture.minFilter = THREE.NearestFilter;
+      this.loadedFlagsTexture.magFilter = THREE.NearestFilter;
+      this.loadedFlagsTexture.generateMipmaps = false;
+      this.loadedFlagsTexture.needsUpdate = true;
+      this.bindUniforms();
+      return;
+    }
+    this.shelfWidth = 160;
+    this.shelfHeight = 240;
     // Spare layers so the fast path above survives the small catalog churn a
     // rebuild can introduce (a refreshed discovery/gap list, a games refetch).
     // Without headroom the very first rebuild would find nextIndex == maxMovies
@@ -629,24 +732,12 @@ class TextureArrayManager {
     // posters are viewed down the aisles, where isotropic mip sampling
     // over-blurs; cap at the driver's max (some report less than 4).
     const aniso = renderer ? Math.min(8, renderer.capabilities.getMaxAnisotropy()) : 0;
-    const allocBank = (w: number, h: number, layers: number): THREE.DataArrayTexture => {
-      const tex = new THREE.DataArrayTexture(new Uint8Array(w * h * layers * 4), w, h, layers);
-      tex.format = THREE.RGBAFormat;
-      tex.type = THREE.UnsignedByteType;
-      tex.colorSpace = THREE.SRGBColorSpace;
-      tex.minFilter = THREE.LinearMipmapLinearFilter;
-      tex.magFilter = THREE.LinearFilter;
-      tex.generateMipmaps = true;
-      if (aniso) tex.anisotropy = aniso;
-      tex.version = 1;
-      return tex;
-    };
     // High-res covers indices [0, bankSize); low-res covers either the same
     // range (progressive tier) or [bankSize, maxMovies) (second bank).
-    this.highResArray = allocBank(160, 240, Math.min(this.bankSize, this.maxMovies));
-    this.lowResArray = allocBank(64, 96, this.lowResBase === 0
+    this.highResArray = allocPosterBank(160, 240, Math.min(this.bankSize, this.maxMovies), aniso);
+    this.lowResArray = allocPosterBank(64, 96, this.lowResBase === 0
       ? this.maxMovies
-      : this.maxMovies - this.bankSize);
+      : this.maxMovies - this.bankSize, aniso);
 
     // Allocate loaded flags LUT (1D texture)
     const lutSize = THREE.MathUtils.ceilPowerOfTwo(this.maxMovies);
@@ -677,8 +768,9 @@ class TextureArrayManager {
     const updateUniforms = (mat: any) => {
       if (mat && mat.userData.compiledUniformsList) {
         mat.userData.compiledUniformsList.forEach((u: any) => {
-          u.lowResMapArray.value = this.lowResArray;
+          u.lowResMapArray.value = this.lowResArray ?? this.highResArray;
           u.highResMapArray.value = this.highResArray;
+          u.shelfMapArray.value = this.highResArray;
           u.posterLowResBase.value = this.lowResBase;
           u.highResLoadedTex.value = this.loadedFlagsTexture;
           u.maxMoviesCount.value = this.loadedFlagsTexture ? this.loadedFlagsTexture.image.width : 2048;
@@ -688,7 +780,23 @@ class TextureArrayManager {
     for (const mat of caseMaterialUniformProvider?.() ?? []) updateUniforms(mat);
   }
 
-  public getIndex(movieId: string): number {
+  public notePriority(movieId: string, cls: PosterPriorityClass): void {
+    this.moviePriority.set(movieId, cls);
+    this.residency?.notePriority(movieId, cls);
+  }
+
+  public getIndex(movieId: string, acquire = !this.residencyBound): number {
+    if (this.residencyBound && this.residency) {
+      if (!acquire) return this.residency.peek(movieId) ?? 0;
+      const cls = this.moviePriority.get(movieId) ?? 'P2';
+      const { index, evicted, ok } = this.residency.acquire(movieId, cls);
+      if (!ok) return 0;
+      if (evicted) this.afterEvict(evicted);
+      const prev = this.movieToIndex.get(movieId);
+      this.movieToIndex.set(movieId, index);
+      if (prev !== index) posterIndexNotify?.(movieId, index);
+      return index;
+    }
     if (this.movieToIndex.has(movieId)) {
       return this.movieToIndex.get(movieId)!;
     }
@@ -711,6 +819,19 @@ class TextureArrayManager {
     return idx;
   }
 
+  private afterEvict(movieId: string): void {
+    const idx = this.movieToIndex.get(movieId);
+    this.movieToIndex.delete(movieId);
+    this.lowResUploaded.delete(idx ?? -1);
+    this.highResQueued.delete(idx ?? -1);
+    if (idx !== undefined && this.loadedFlags && this.loadedFlagsTexture) {
+      this.loadedFlags[idx] = 0;
+      this.loadedFlagsTexture.needsUpdate = true;
+    }
+    posterIndexNotify?.(movieId, 0);
+    posterLoadedNotify?.(movieId);
+  }
+
   /** True once a title actually owns a layer (see getIndex's exhaustion path). */
   private hasLayer(movieId: string): boolean {
     return this.movieToIndex.has(movieId);
@@ -724,6 +845,7 @@ class TextureArrayManager {
    * would never paint at all (see store-stock's loadShelfDetails).
    */
   public usesHighResOnly(movieId: string): boolean {
+    if (this.residencyBound) return true;
     if (this.lowResBase === 0) return false;
     const idx = this.movieToIndex.get(movieId);
     return idx !== undefined && idx < this.bankSize;
@@ -753,8 +875,18 @@ class TextureArrayManager {
   // happened to hold. Resolving late means a stale task simply lands on the
   // current renderer, which is always the right one.
   public queueLowRes(_renderer: THREE.WebGLRenderer, movieId: string, pixelData: Uint8Array) {
-    const idx = this.getIndex(movieId);
+    const idx = this.getIndex(movieId, true);
     if (!this.hasLayer(movieId)) return; // past the layer budget — no art for this one
+    if (this.residencyBound) {
+      if (this.lowResUploaded.has(idx)) return;
+      this.lowResUploaded.add(idx);
+      queueTextureUpload(() => {
+        const r = getUploadRenderer();
+        if (r) this.updateShelf(r, movieId, pixelData);
+        this.setHighResLoaded(movieId, true);
+      }, 'priority');
+      return;
+    }
     // In overflow mode the low-res array is the SECOND BANK, not a preview
     // tier: a high-bank title has no low-res layer to write (see POSTER_BANKS).
     if (this.isHighBank(idx) && this.lowResBase !== 0) return;
@@ -768,8 +900,12 @@ class TextureArrayManager {
   }
 
   public queueHighRes(_renderer: THREE.WebGLRenderer, movieId: string, pixelData: Uint8Array) {
-    const idx = this.getIndex(movieId);
+    const idx = this.getIndex(movieId, true);
     if (!this.hasLayer(movieId)) return;
+    if (this.residencyBound) {
+      this.queueLowRes(_renderer, movieId, pixelData);
+      return;
+    }
     // An overflow-bank title has no high-res layer; its cover is painted by
     // the low-res path from the same decoded pixels (see updateLowRes's
     // caller in store-stock), so this is not a dropped poster.
@@ -782,6 +918,14 @@ class TextureArrayManager {
       if (r) this.updateHighRes(r, movieId, pixelData);
       this.setHighResLoaded(movieId, true);
     });
+  }
+
+  public updateShelf(renderer: THREE.WebGLRenderer, movieId: string, pixelData: Uint8Array) {
+    const idx = this.getIndex(movieId, true);
+    if (!this.hasLayer(movieId) || !this.highResArray) return;
+    const pixels = shelfPixelsFromDecoded(pixelData, this.shelfWidth, this.shelfHeight);
+    updateTextureArrayLayer(renderer, this.highResArray, idx, pixels);
+    this.lowResUploaded.add(idx);
   }
 
   public updateLowRes(renderer: THREE.WebGLRenderer, movieId: string, pixelData: Uint8Array) {
@@ -930,6 +1074,57 @@ class TextureArrayManager {
     }
     return null;
   }
+
+  public memorySnapshot(): {
+    catalogTitleCount: number;
+    physicalSlots: number;
+    residentCount: number;
+    shelfWidth: number;
+    shelfHeight: number;
+    cpuBytes: number;
+    gpuBytes: number;
+    dualArrays: boolean;
+  } {
+    const layerBytes = (tex: THREE.DataArrayTexture | null) => {
+      if (!tex) return 0;
+      const { width, height, depth, data } = tex.image as {
+        width: number; height: number; depth?: number; data?: Uint8Array;
+      };
+      if (data?.byteLength) return data.byteLength;
+      return width * height * (depth ?? 1) * 4;
+    };
+    const cpu = layerBytes(this.highResArray) + (
+      this.lowResArray && this.lowResArray !== this.highResArray ? layerBytes(this.lowResArray) : 0
+    );
+    return {
+      catalogTitleCount: this.catalogTitleCount,
+      physicalSlots: this.maxMovies,
+      residentCount: this.residency?.residentCount ?? this.movieToIndex.size,
+      shelfWidth: this.shelfWidth,
+      shelfHeight: this.shelfHeight,
+      cpuBytes: cpu,
+      gpuBytes: Math.round(cpu * 4 / 3),
+      dualArrays: !this.residencyBound,
+    };
+  }
 }
 
 export const textureArrayManager = new TextureArrayManager();
+
+export function posterArrayMemorySnapshot() {
+  return textureArrayManager.memorySnapshot();
+}
+
+export function estimatedPosterBytesForCatalog(catalogTitles: number) {
+  const profile = activeResourceProfile();
+  if (isXrSafeProfile(profile)) {
+    return { ...estimatePosterArrayBytes(profile.poster), catalogTitleCount: catalogTitles };
+  }
+  return {
+    ...estimatePosterArrayBytes({
+      ...profile.poster,
+      physicalSlots: catalogTitles,
+    }),
+    catalogTitleCount: catalogTitles,
+  };
+}

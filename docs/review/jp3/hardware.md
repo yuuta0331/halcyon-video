@@ -1,6 +1,14 @@
 # JP-3 Quest 3 hardware smoke
 
-**Status: FAILED** (historical, previous implementation)
+**Current overall status: NOT_READY_FOR_QUEST_ACCEPTANCE / QUEST_HARDWARE_FAILED**
+
+Do not treat emulator evidence as QUEST_HARDWARE. Do not overwrite either
+historical failure as NOT_EXECUTED. Round 3 software/emulator resource gates
+must pass before another headset session is requested.
+
+## Historical hardware failure — HEAD 73abd4c
+
+**Status: FAILED**
 
 A real Meta Quest 3 WAS tested through ADB reverse against HEAD
 `73abd4c1e8a50c185ec65cb80020cf3fb13cfc4a`.
@@ -17,17 +25,49 @@ Observed:
 Reason: Enter VR reached the Quest waiting environment but no world frame
 appeared. This result is retained. It is **not** NOT_EXECUTED.
 
-Do not change this verdict until a later real Quest re-test succeeds on a
-**corrected** HEAD after:
+## Historical hardware failure — HEAD ac94d1d (correction round 2)
 
-- unit tests PASS
-- desktop browser PASS
-- IWER CORE / NO-LAYERS / FULL PASS (as far as IWER supports)
-- boot-performance correction validated
-- exact-head CI PASS
+**Status: FAILED** (same externally-visible result)
+
+A real Meta Quest 3 WAS tested against HEAD
+`ac94d1d27b66bd044c2366a36bef93ae36427cd9`.
+
+Observed:
+
+- application loads in Quest Browser
+- Enter VR button appears normally
+- pressing Enter VR transfers into the Quest immersive/waiting environment
+- the world never appears
+- loading/waiting continues indefinitely
+
+Previous status READY_FOR_FINAL_QUEST_ACCEPTANCE is invalidated.
+
+## Correction round 3
+
+**Status: PENDING hardware** — local software/emulator resource gates:
+
+- `npm test` PASS
+- `npm run build` PASS
+- `npm run test:xr-emu` PASS (BARE + CORE_XR + locomotion + FULL_XR)
+- `npm run test:xr-resource` PASS (BARE + XR_SAFE 200/1000/2000/4000 + store)
+- zero sampler-overflow warnings in IWER
+- physical poster allocation bounded at 128 slots / ~6.8 MiB CPU
+
+Exact-head CI and independent self-review follow the push. Do not request Quest
+hardware until exact-head CI is green.
+
+When those gates are green, request **one** hardware session in this order:
+
+1. `?xrBare=1`
+2. If BARE succeeds: `?demo=1&nogate=1&xrSafe=1&xrMinimal=1`
+3. If that succeeds: `?demo=1&nogate=1&xrSafe=1`
+4. Only then: real Jellyfin with XR_SAFE
+
+If BARE fails, stop. Do not test the full store.
 
 Emulator evidence lives in this folder separately (`iwer-*.png`,
-`xr-diagnostics.json`) and must not be treated as QUEST_HARDWARE.
+`xr-diagnostics.json`, `xr-resource.json`) and must not be treated as
+QUEST_HARDWARE.
 
 When that later acceptance pass happens, record:
 
@@ -41,11 +81,11 @@ When that later acceptance pass happens, record:
 - screenshots: Enter VR UI, in-headset store, controller ray, Japanese panel,
   compositor diagnostic, fallback diagnostic, end-VR desktop restore
 
-Final acceptance checklist (prepare, do not execute in this round):
+Final acceptance checklist (prepare, do not execute until software gates pass):
 
 - [ ] Open app in Quest Browser
-- [ ] Enter VR from the real UI
-- [ ] requestSession → first visible world frame
+- [ ] `?xrBare=1` first world frame
+- [ ] XR_SAFE demo store world frame
 - [ ] Store scale believable
 - [ ] Head motion is HMD pose (no desktop head bob)
 - [ ] Both controllers appear / ray select works

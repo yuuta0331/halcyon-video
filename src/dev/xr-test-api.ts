@@ -64,6 +64,17 @@ export function createXrTestApi(getDevice: () => XRDevice | null): XrTestApi {
       };
     },
     async enter() {
+      const bare = (window as unknown as {
+        __bareXr?: { enter?: () => Promise<void> };
+      }).__bareXr;
+      if (bare?.enter) {
+        try {
+          await bare.enter();
+          return { ok: true };
+        } catch (err) {
+          return { ok: false, error: err instanceof Error ? err.message : String(err) };
+        }
+      }
       const scene = (window as unknown as {
         storeScene?: {
           enterXr?: () => Promise<void>;
@@ -84,6 +95,15 @@ export function createXrTestApi(getDevice: () => XRDevice | null): XrTestApi {
       }
     },
     async exit() {
+      const bare = (window as unknown as { __bareXr?: { exit?: () => Promise<void> } }).__bareXr;
+      if (bare?.exit) {
+        try {
+          await bare.exit();
+          return { ok: true };
+        } catch (err) {
+          return { ok: false, error: err instanceof Error ? err.message : String(err) };
+        }
+      }
       const scene = (window as unknown as { storeScene?: { exitXr?: () => Promise<void> } }).storeScene;
       try {
         if (scene?.exitXr) await scene.exitXr();

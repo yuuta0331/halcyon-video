@@ -10,6 +10,10 @@ export interface XrRuntimeFlags {
   minimal: boolean;
   /** When false, do not request the `layers` optional feature. */
   layers: boolean;
+  /** Bypass StoreScene entirely (`?xrBare=1`). */
+  bare: boolean;
+  /** Force the XR_SAFE resource graph (`?xrSafe=1`). */
+  safe: boolean;
 }
 
 export function readXrFlags(
@@ -17,12 +21,14 @@ export function readXrFlags(
 ): XrRuntimeFlags {
   const q = new URLSearchParams(search.startsWith('?') ? search.slice(1) : search);
   const minimal = q.get('xrMinimal') === '1';
-  const layersOff = q.get('xrLayers') === '0' || minimal;
+  const layersOff = q.get('xrLayers') === '0' || minimal || q.get('xrBare') === '1';
   return {
     emu: q.get('xrEmu') === '1',
     emuUi: q.get('xrEmuUi') === '1',
     minimal,
     layers: !layersOff,
+    bare: q.get('xrBare') === '1',
+    safe: q.get('xrSafe') === '1',
   };
 }
 

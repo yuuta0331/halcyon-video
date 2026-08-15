@@ -8,7 +8,7 @@ import type {
 } from './types';
 
 /** Layers must stay optional so a no-Layers runtime can still enter VR. */
-export const XR_OPTIONAL_FEATURES = ['local-floor', 'layers'] as const;
+export const XR_OPTIONAL_FEATURES = ['local-floor', 'layers', 'high-fixed-foveation-level'] as const;
 
 /** Never required. Hand tracking is intentionally omitted (JP-4 / later). */
 export const XR_REQUIRED_FEATURES: readonly string[] = [];
@@ -24,9 +24,11 @@ export const XR_TARGET_HZ = 72;
 
 export function immersiveVrRequestOptions(opts?: {
   layers?: boolean;
+  foveation?: boolean;
 }): XrSessionRequestOptions {
   const optional: string[] = ['local-floor'];
   if (opts?.layers !== false) optional.push('layers');
+  if (opts?.foveation !== false) optional.push('high-fixed-foveation-level');
   return {
     optionalFeatures: optional,
   };

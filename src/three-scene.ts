@@ -7,7 +7,6 @@ import {
   setReflectionProbes,
   setUploadRenderer,
   setTextureStreamWake,
-  setPosterLoadedNotify,
   backCoverRegions,
   SERIES_DEPTH_MULT,
   posterPixelCache,
@@ -129,6 +128,10 @@ import { BackRoom, disposeBackRoomFade } from './back-room';
 import { RentalRecord, loadRentalRecord, clearRentalRecord, isLockedOut, formatUnlockLabel } from './rental-clock';
 import { perfTrace, perfSlot } from './perf-trace';
 import { constructStage, resetConstructProfile } from './perf/construct-profile';
+import { bindStoreResourceProfile } from './perf/bind-store-profile';
+import { recordResourceSnapshot } from './xr/gpu-diagnostics';
+import { activeResourceProfile, type ResourceProfile } from './perf/resource-profile';
+import { bindStorePosterNotifies, markStoreReady } from './store-poster-notify';
 import { ShelfClasps, type ClaspTarget } from './fixtures/shelf-clasp';
 import { requestMovie } from './jellyseerr';
 import { displayHz, computeFpsCap } from './display-hz';
@@ -201,7 +204,7 @@ export class StoreScene {
   public renderer!: THREE.WebGLRenderer;
   public scene!: THREE.Scene;
   public camera!: THREE.PerspectiveCamera;
-  public composer!: EffectComposer;
+  public composer: EffectComposer | null = null;
   private fxaaPass!: ShaderPass;
   public filmPass!: ShaderPass; // photo grade: vignette/grain/warmth/LUT (store-grade.ts)
   // AO control surface for animate()'s walk gating / settle fade / IDLE
@@ -294,6 +297,7 @@ export class StoreScene {
   // by any real change (see sceneChanging in animate()).
   private staticSettled = false;
   public effectiveQuality: 'high' | 'medium' | 'low' = 'high';
+  public resourceProfile: ResourceProfile = activeResourceProfile();
   // Software rasterizer (SwiftShader/llvmpipe/WARP): every fragment is CPU
   // work, so the whole render pipeline runs a dedicated budget path — see
   // initThree(). Frame cost scales ~linearly with buffer pixels there, which
@@ -1434,29 +1438,25 @@ export class StoreScene {
     // texture — harmless on lenient drivers, but a strict GPU drops those draws and the
     // whole scene renders blank. Bake it once here so the shadow sampler is valid before
     // anything renders the scene.
-    this.renderer.shadowMap.needsUpdate = true;
-    // First environment bake: the empty store shell (movie boxes don't exist yet).
-    // This replaces the bootstrap RoomEnvironment with the real room, so the
-    // reflection probes baked next capture correctly-lit shelving.
-    constructStage('bakeEnvironment', () => this.outdoor.bakeEnvironment());
-    // The bootstrap PMREM (scene.environment before the line above) is no longer
-    // referenced by anything — dispose its render target, compiled blur shader,
-    // and the synthetic RoomEnvironment scene now rather than leaking them for
-    // the whole session (issue #121).
-    this.bootstrapEnvRT?.dispose();
-    this.bootstrapPmremGen?.dispose();
-    this.bootstrapRoomEnv?.dispose();
-    this.bootstrapEnvRT = null;
-    this.bootstrapPmremGen = null;
-    this.bootstrapRoomEnv = null;
+    this.renderer.shadowMap.needsUpdate = this.resourceProfile.shadows;
+    // First environment bake: empty store shell. XR_SAFE keeps RoomEnvironment.
+    if (this.resourceProfile.environmentBake === 'full') {
+      constructStage('bakeEnvironment', () => this.outdoor.bakeEnvironment());
+      this.bootstrapEnvRT?.dispose();
+      this.bootstrapPmremGen?.dispose();
+      this.bootstrapRoomEnv?.dispose();
+      this.bootstrapEnvRT = null;
+      this.bootstrapPmremGen = null;
+      this.bootstrapRoomEnv = null;
+    } else {
+      constructStage('bakeEnvironment', () => { /* RoomEnvironment bootstrap only */ });
+    }
     constructStage('buildAllMovieBoxes', () => this.buildAllMovieBoxes());
     constructStage('rebuildMovieBoxes', () => this.rebuildMovieBoxes());
-    requestAnimationFrame(() => { constructStage('reflectionProbes', () => this.generateReflectionProbes()); this.requestRender(); });
-    // A second bake with STOCKED shelves can't happen here: case instances are
-    // placed asynchronously by animate()'s dirty-slot pass as posters stream in
-    // (right now every instance is still zero-scale). animate() runs the re-bake
-    // once placement has settled — see pendingStockedRebake.
-    this.pendingStockedRebake = true;
+    if (this.resourceProfile.reflectionProbes) {
+      requestAnimationFrame(() => { constructStage('reflectionProbes', () => this.generateReflectionProbes()); this.requestRender(); });
+    }
+    this.pendingStockedRebake = this.resourceProfile.environmentBake === 'full';
     this.createSelectionArrow();
     // After createSelectionArrow(): the arrow is AO-excluded (it bobs while the
     // camera is static, and a floating UI cone shouldn't cast a contact halo),
@@ -1827,6 +1827,7 @@ export class StoreScene {
     // memory/bandwidth (see #27).
     this.renderer = new THREE.WebGLRenderer({ antialias: false, alpha: false, powerPreference: "high-performance" });
     this.renderer.setSize(width, height);
+    if (import.meta.env.DEV) this.renderer.debug.checkShaderErrors = true;
     // Hitch tracer: per-frame renderer.info deltas always; raw-GL upload/compile
     // timing only when profiling (?trace=1 — it allocates per GL call).
     perfTrace.attachRenderer(this.renderer);
@@ -1863,6 +1864,7 @@ export class StoreScene {
     const effectiveQuality = explicitQuality || calibrated?.tier || (softwareGL ? 'low' : integratedGL ? 'medium' : 'high');
     this.effectiveQuality = effectiveQuality as 'high' | 'medium' | 'low';
     this.softwareGL = softwareGL;
+    this.resourceProfile = bindStoreResourceProfile(this.renderer, () => !!this.xr?.presenting);
     // Supersample grant: an AUTO-tiered 'high' only earns the above-native
     // supersample when calibration measured real headroom for it. Explicit
     // bb_quality=high (owner/harness override) keeps today's behavior
@@ -1981,14 +1983,14 @@ export class StoreScene {
     setMaxAnisotropy(effectiveQuality === 'high' ? this.renderer.capabilities.getMaxAnisotropy() : 8);
     // Low tier (and thus every software-GL run) builds the big glazing
     // materials without their clearcoat lobe — see setCheapMaterials.
-    setCheapMaterials(effectiveQuality === 'low');
+    setCheapMaterials(effectiveQuality === 'low' || this.resourceProfile.cheapMaterials);
     // Software GL: shadows off entirely. Every shadow map is a full-scene CPU
     // rasterization pass and every lit fragment pays the PCF taps — together
     // they dominated the multi-second SwiftShader frames. With the flag off,
     // shaders compile without any shadow sampling at all (smaller programs =
     // faster Subzero JIT too) and all shadowMap.needsUpdate requests below
-    // become harmless no-ops.
-    this.renderer.shadowMap.enabled = !softwareGL;
+    // become harmless no-ops. XR_SAFE keeps shadows off for sampler/fill budget.
+    this.renderer.shadowMap.enabled = !softwareGL && this.resourceProfile.shadows;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     // Prebaked lighting: don't re-render the sun's 4K shadow map every frame. The scene
     // is static apart from the (non-shadow-casting) DVD cases and the occasional end-cap
@@ -2052,19 +2054,8 @@ export class StoreScene {
     // Deferred cover-loaded flags can apply after the scene idles — repaint so
     // the new covers actually show (render-on-demand, issue #24).
     setTextureStreamWake(() => this.requestRender());
-    // A cover box is collapsed to zero scale until its art exists, and only the
-    // dirty-slot pass can bring it back — so when a poster finally lands on the
-    // GPU, re-dirty the cases wearing it. Without this a title whose upload
-    // outlives its decode callback (the norm once the queue is thousands deep)
-    // keeps its bare rental shell forever.
-    setPosterLoadedNotify((movieId) => {
-      const slots = this.slotsByMovieId.get(movieId);
-      if (!slots) return;
-      for (const slot of slots) {
-        slot.needsInitialMatrixUpdate = true;
-        this.dirtySlots.add(slot);
-      }
-    });
+    bindStorePosterNotifies(this);
+    recordResourceSnapshot('store-before-heavy-resources');
 
     // NO MSAA on the composer target: EffectComposer clones the target for
     // both ping-pong buffers, so multisampling there makes every pass render
@@ -2073,10 +2064,14 @@ export class StoreScene {
     // on 'high', N8AOPass renders the beauty into its own internal
     // single-sample target, so the composer buffers only ever see full-screen
     // quads. Anti-aliasing here is SSAA (pixel-budget above) + FXAA.
-    this.composer = new EffectComposer(this.renderer);
+    if (this.resourceProfile.composer) {
+    const composer = new EffectComposer(this.renderer);
+    this.composer = composer;
 
     // AO: disabled on medium/low quality, or via explicit bb_ssao=0 override.
-    const ssaoEnabled = localStorage.getItem('bb_ssao') !== '0' && effectiveQuality === 'high';
+    const ssaoEnabled = localStorage.getItem('bb_ssao') !== '0'
+      && effectiveQuality === 'high'
+      && this.resourceProfile.n8ao;
     // AO engine (bb_ao): 'n8ao' (default) or 'gtao' (the previous engine,
     // kept selectable as a fallback while N8AO burns in). N8AO computes AO
     // from the beauty pass's own depth buffer — NO second full-scene
@@ -2109,8 +2104,8 @@ export class StoreScene {
       // enabled toggle.
       const walkRenderPass = new RenderPass(this.scene, this.camera);
       walkRenderPass.enabled = false;
-      this.composer.addPass(n8aoPass);
-      this.composer.addPass(walkRenderPass);
+      composer.addPass(n8aoPass);
+      composer.addPass(walkRenderPass);
       // Perf attribution: time the whole N8AO render under the AO span.
       const n8origRender = n8aoPass.render.bind(n8aoPass);
       n8aoPass.render = (renderer: THREE.WebGLRenderer, writeBuffer: THREE.WebGLRenderTarget, readBuffer: THREE.WebGLRenderTarget, deltaTime?: number, maskActive?: boolean) => {
@@ -2149,7 +2144,7 @@ export class StoreScene {
       // the partial composite has a beauty (and a depth buffer) that survives
       // the frame. See src/partial-composite.ts.
       const beautyPass = new BeautyPass(this.scene, this.camera, this.composer.renderTarget1);
-      this.composer.addPass(beautyPass);
+      composer.addPass(beautyPass);
       beautySource.beautyPass = beautyPass;
     }
 
@@ -2332,7 +2327,7 @@ export class StoreScene {
         this.aoNeedsRefresh = false;
       };
 
-      this.composer.addPass(gtaoPass);
+      composer.addPass(gtaoPass);
       this.aoPass = gtaoPass;
       (window as any).debugSSAO = gtaoPass;
       console.log("[AO] GTAOPass added to composer at full res (motion-gated, view-cached):", {
@@ -2359,7 +2354,7 @@ export class StoreScene {
         // troffers smeared a milky veil across the whole ceiling.
         2.0
       );
-      this.composer.addPass(bloomPass);
+      composer.addPass(bloomPass);
       this.bloomPass = bloomPass;
     }
 
@@ -2404,13 +2399,13 @@ export class StoreScene {
         }
       };
 
-      this.composer.addPass(bokehPass);
+      composer.addPass(bokehPass);
       this.bokehPass = bokehPass;
       (window as any).debugBokeh = bokehPass;
     }
 
     const outputPass = new OutputPass();
-    this.composer.addPass(outputPass);
+    composer.addPass(outputPass);
 
     // AA pass AFTER OutputPass, i.e. on tone-mapped display-referred sRGB —
     // the space luma-based edge detection was designed for (moving FXAA here
@@ -2435,20 +2430,20 @@ export class StoreScene {
       // SMAAPass sizes itself (RTs + resolution uniforms) via setSize, which
       // addPass and composer.setSize drive with effective buffer dimensions —
       // no manual uniform plumbing like FXAA's below.
-      this.composer.addPass(new SMAAPass());
+      composer.addPass(new SMAAPass());
     } else if (aaMode === 'fxaa') {
       this.fxaaPass = new ShaderPass(FXAAShader);
       const pixelRatio = this.renderer.getPixelRatio();
       this.fxaaPass.material.uniforms['resolution'].value.x = 1 / (width * pixelRatio);
       this.fxaaPass.material.uniforms['resolution'].value.y = 1 / (height * pixelRatio);
-      this.composer.addPass(this.fxaaPass);
+      composer.addPass(this.fxaaPass);
     }
 
     // Photo-grade pass (vignette, grain, S-curve/sat/lift, color warmth, the
     // optional nostalgia LUT) — built in store-grade.ts. Applied AFTER
     // OutputPass so it works in display-referred space.
     this.filmPass = grade.createGradePass(this, filmicTonemap);
-    this.composer.addPass(this.filmPass);
+    composer.addPass(this.filmPass);
 
     // Partial composite: while parked with a ceiling TV playing, re-draw only
     // the screens into the cached beauty and re-run the post chain (see the
@@ -2462,11 +2457,15 @@ export class StoreScene {
           renderer: this.renderer,
           scene: this.scene,
           camera: this.camera,
-          composer: this.composer as any,
+          composer: composer as any,
           n8aoPass: beautySource.n8ao as any,
           beautyPass: beautySource.beautyPass,
         })
       : null;
+    } else {
+      this.composer = null;
+      this.partial = null;
+    }
 
     // EXPOSE FOR DEBUGGING
     (window as any).debugScene = this.scene;
@@ -2531,6 +2530,7 @@ export class StoreScene {
     window.addEventListener('resize', this.onWindowResize);
 
     this.xr = xrBind.attachXrRuntime(this, this.animate, () => this.restoreDesktopAnimationLoop());
+    markStoreReady(this, !!this.aoPass && this.resourceProfile.n8ao);
   }
 
   // Single code path for sizing the renderer/composer/passes, driven by the
@@ -2867,6 +2867,7 @@ export class StoreScene {
   private probeRenderTargets: THREE.WebGLCubeRenderTarget[] = [];
 
   private generateReflectionProbes() {
+    if (!this.resourceProfile.reflectionProbes) return;
     const probePositions = [
       { x: -2.0, y: 5.5, z: this.scaleZ(-15.0) },
       { x: 6.0, y: 5.5, z: this.scaleZ(-15.0) },

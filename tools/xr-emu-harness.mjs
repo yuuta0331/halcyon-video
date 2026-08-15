@@ -82,10 +82,26 @@ function isAllowlisted(entry, log) {
   return false;
 }
 
+function isSamplerOrGlFatal(entry) {
+  const text = String(entry.text ?? '');
+  return /Trying to use .*texture units? while (?:this GPU|GPU) supports only/i.test(text)
+    || /too many texture image units/i.test(text)
+    || /texture image units count exceeds/i.test(text)
+    || /CONTEXT_LOST_WEBGL/i.test(text)
+    || /webglcontextlost/i.test(text)
+    || /Could not compile (?:vertex|fragment) shader/i.test(text)
+    || /Error linking/i.test(text)
+    || /INVALID_OPERATION/i.test(text) && /texture/i.test(text);
+}
+
 function isSerious(entry) {
   if (entry.type === 'pageerror') return true;
   if (entry.type === 'error') return true;
   return false;
+}
+
+function samplerWarnings() {
+  return consoleLog.filter(isSamplerOrGlFatal);
 }
 
 function seriousErrors() {
@@ -189,6 +205,44 @@ async function main() {
   const evidence = { startedAt: new Date().toISOString(), scenarios: [] };
 
   try {
+    const barePage = await browser.newPage();
+    attachConsole(barePage);
+    await barePage.goto(`${BASE}/?xrBare=1&xrEmu=1&nogate=1`, { waitUntil: 'domcontentloaded', timeout: 60_000 });
+    const bareBootT0 = Date.now();
+    let bareReady = null;
+    while (Date.now() - bareBootT0 < 60_000) {
+      bareReady = await barePage.evaluate(() => ({
+        bare: !!window.__bareXr,
+        xrTest: !!window.__xrTest,
+      })).catch((err) => ({ error: String(err) }));
+      if (bareReady?.bare && bareReady?.xrTest) break;
+      await new Promise((r) => setTimeout(r, 300));
+    }
+    const bareXr = await barePage.evaluate(async () => {
+      const xr = window.__xrTest;
+      const entered = xr ? await xr.enter() : { ok: false, error: 'no __xrTest' };
+      const t0 = Date.now();
+      let d = window.__xrDiagnostics?.();
+      while (Date.now() - t0 < 8000) {
+        d = window.__xrDiagnostics?.();
+        if (d?.startup?.firstWorldRenderCompletedAt != null || d?.bare?.firstWorldRenderCompletedAt != null) break;
+        await new Promise((r) => setTimeout(r, 100));
+      }
+      const gpu = window.__gpuDiagnostics?.() ?? null;
+      await xr?.exit?.();
+      return { entered, d, gpu };
+    });
+    const barePass = !!bareReady?.bare && !!bareXr.entered?.ok
+      && (bareXr.d?.startup?.firstWorldRenderCompletedAt != null || bareXr.d?.bare?.firstWorldRenderCompletedAt != null);
+    evidence.scenarios.push({
+      name: 'BARE',
+      url: `${BASE}/?xrBare=1&xrEmu=1&nogate=1`,
+      pass: barePass,
+      boot: bareReady,
+      pre: bareXr,
+    });
+    await barePage.close();
+
     evidence.scenarios.push(await runScenario(
       browser, 'CORE_XR', '?demo=1&nogate=1&xrEmu=1&xrMinimal=1',
       async (page) => {
@@ -397,13 +451,16 @@ async function main() {
 
   const scenarioFailures = evidence.scenarios.filter((s) => !s.pass);
   const unexpected = unexpectedSeriousErrors();
-  const pass = scenarioFailures.length === 0 && unexpected.length === 0;
+  const sampler = samplerWarnings();
+  const pass = scenarioFailures.length === 0 && unexpected.length === 0 && sampler.length === 0;
   console.log(JSON.stringify({
     pass,
     scenarioFailures: scenarioFailures.length,
     unexpectedSeriousErrors: unexpected.length,
+    samplerWarnings: sampler.length,
     scenarios: evidence.scenarios.map((s) => ({ name: s.name, pass: s.pass })),
     unexpectedSerious: unexpected.slice(0, 20).map((e) => ({ ...e, text: redact(e.text) })),
+    sampler: sampler.slice(0, 20).map((e) => ({ ...e, text: redact(e.text) })),
   }, null, 2));
   if (!pass) process.exit(1);
 }

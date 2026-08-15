@@ -16,11 +16,13 @@ import { getRommConfig, authHeader } from './romm';
 import { drawTechSpecsTable, TECH_SPECS_TABLE_H } from './tech-specs';
 import { perfTrace, perfSlot } from './perf-trace';
 import { LruByteCache } from './lru-byte-cache';
+import { isXrSafeProfile } from './perf/resource-profile';
 import { getLowResFrontMaterial, disposeLowResFrontMaterials } from './hero-lowres-front';
 // The two DVD typed-metadata passes live in their own module (this file is at
 // its line budget — see dvd-overlays.ts's header). They import this file's
 // shared text/measure helpers back; the cycle is function-level only.
 import { drawDvd2003Overlays, drawDvdBlueOverlays, DVD_BLUE_WRAP_LAYOUT } from './dvd-overlays';
+import { posterArrayUniforms, posterShaderChunk } from './poster-shader';
 import {
   queueTextureUpload,
   textureArrayManager,
@@ -40,6 +42,7 @@ export {
   setTextureStreamWake,
   wakeTextureStream,
   setPosterLoadedNotify,
+  setPosterIndexNotify,
   notifyUserActivity,
   setUploadTurbo,
   beginRebuildDrain,
@@ -1126,6 +1129,19 @@ function caseBodyFinish(): CaseFinish {
 function applyCaseFinish(mat: THREE.MeshPhysicalMaterial, finish: CaseFinish) {
   mat.userData.caseFinish = finish;
   mat.metalness = 0.0;
+  if (isXrSafeProfile()) {
+    mat.roughness = 0.62;
+    mat.envMapIntensity = 0.85;
+    mat.clearcoat = 0;
+    mat.clearcoatRoughness = 1;
+    mat.clearcoatRoughnessMap = null;
+    mat.clearcoatNormalMap = null;
+    mat.clearcoatNormalScale.set(0, 0);
+    mat.transmission = 0;
+    mat.sheen = 0;
+    mat.normalMap = null;
+    return;
+  }
   switch (finish) {
     case 'shrinkwrap':
       mat.roughness = 0.55;
@@ -4764,36 +4780,9 @@ export function isGlobalMaterial(m: THREE.Material): boolean {
 // two samplers already bound, because this shader has no spare texture unit.
 // Shared by both front materials so the two poster sampling sites can never
 // drift apart.
-const POSTER_ARRAY_UNIFORMS = `
-      precision highp sampler2DArray;
-      uniform sampler2DArray lowResMapArray;
-      uniform sampler2DArray highResMapArray;
-      uniform float posterLowResBase;
-      // The SAME two samplers serve both banks — the case shader has no spare
-      // texture unit for a third (see poster-textures.ts POSTER_BANKS). Which
-      // array a title lives in is already encoded in its loaded flag, so the
-      // caller's hi flag picks the array and posterLowResBase rebases the
-      // layer: 0 while the low-res array is every title's preview tier,
-      // bankSize once it becomes the second bank.
-      //
-      // Explicit gradients (never implicit texture()): adjacent instanced quads
-      // are different posters and take different branches, and implicit-LOD
-      // sampling inside non-uniform control flow is undefined per GLSL ES 3.00.
-      vec4 samplePosterBank(bool hi, vec2 uv, float idx, vec2 ddx, vec2 ddy) {
-        if (hi) return textureGrad(highResMapArray, vec3(uv, idx), ddx, ddy);
-        return textureGrad(lowResMapArray, vec3(uv, idx - posterLowResBase), ddx, ddy);
-      }
-`;
-
-/** The poster-array uniforms every case front material registers and binds. */
-function posterArrayUniforms(shader: THREE.WebGLProgramParametersWithUniforms) {
-  const lowResMapArray = shader.uniforms.lowResMapArray = { value: textureArrayManager.lowResArray };
-  const highResMapArray = shader.uniforms.highResMapArray = { value: textureArrayManager.highResArray };
-  const posterLowResBase = shader.uniforms.posterLowResBase = { value: textureArrayManager.lowResBase };
-  const highResLoadedTex = shader.uniforms.highResLoadedTex = { value: textureArrayManager.loadedFlagsTexture };
-  const maxMoviesCount = shader.uniforms.maxMoviesCount =
-    { value: textureArrayManager.loadedFlagsTexture ? textureArrayManager.loadedFlagsTexture.image.width : 2048 };
-  return { lowResMapArray, highResMapArray, posterLowResBase, highResLoadedTex, maxMoviesCount };
+export function applyPosterCacheBudgets(heroBytes: number, shelfBytes: number): void {
+  posterPixelCache.setBudget(heroBytes);
+  lowResCache.setBudget(shelfBytes);
 }
 
 export function initGlobalMaterials() {
@@ -4837,7 +4826,7 @@ export function initGlobalMaterials() {
     );
 
     shader.fragmentShader = `
-      ${POSTER_ARRAY_UNIFORMS}
+      ${posterShaderChunk()}
       uniform sampler2D highResLoadedTex;
       uniform float maxMoviesCount;
       uniform float uPosterCropX;
@@ -4912,7 +4901,7 @@ export function initGlobalMaterials() {
     );
 
     shader.fragmentShader = `
-      ${POSTER_ARRAY_UNIFORMS}
+      ${posterShaderChunk()}
       uniform sampler2D highResLoadedTex;
       uniform float maxMoviesCount;
       uniform float uPosterCropX;

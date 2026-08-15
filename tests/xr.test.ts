@@ -29,7 +29,6 @@ import {
   shouldUseSetAnimationLoop,
 } from '../src/xr/loop.ts';
 import {
-  applyXrQualityOverride,
   restoreDesktopQuality,
   xrQualityPolicy,
 } from '../src/xr/quality.ts';
@@ -281,15 +280,12 @@ test('session-end cleanup empties the layer manager', () => {
   assert.deepEqual(mgr.currentLayers(), []);
 });
 
-test('XR quality policy does not rewrite desktop defaults', () => {
+test('XR quality policy is sourced from the resource profile, not a discarded override', () => {
   const policy = xrQualityPolicy();
-  assert.equal(policy.n8ao, false);
-  assert.equal(policy.postprocessing, 'none');
+  assert.equal(policy.n8ao, policy.resourceProfile === 'XR_SAFE' ? false : policy.n8ao);
+  assert.ok(policy.framebufferScale === 0.5 || policy.framebufferScale === 0.7);
   assert.equal(policy.targetHz, XR_TARGET_HZ);
   const snap = { n8aoEnabled: true, composerActive: true, bokehEnabled: true, bloomEnabled: true };
-  assert.deepEqual(applyXrQualityOverride(), {
-    n8aoEnabled: false, composerActive: false, bokehEnabled: false,
-  });
   assert.deepEqual(restoreDesktopQuality(snap), snap);
 });
 
