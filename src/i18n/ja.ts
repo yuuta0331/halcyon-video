@@ -148,6 +148,8 @@ export const ja: Partial<Messages> = {
   'hint.platforms': 'ゲーム売場に出す機種。',
   'hint.libraries': 'この店の通路にするサーバ側ライブラリ。',
   'hint.tvs': '天井テレビに流すライブラリ。全部オフならおまかせ。',
+  'setting.carryLib.hint': 'オフにするとこの店では取り扱わず、同期もスキップします。',
+  'setting.tvLib.hint': 'このライブラリを天井テレビに流す。全部オフならおまかせ。',
 
   'settings.pendingReload': '接続を変更しました。メニューを閉じると再起動します。',
   'settings.pendingRebuild': 'メニューを閉じると店の見た目を更新します。',

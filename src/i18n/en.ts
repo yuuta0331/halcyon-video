@@ -149,6 +149,8 @@ export const en = {
   'hint.platforms': 'Which consoles get a section on the Video Games shelf.',
   'hint.libraries': 'Which server libraries this store carries as aisles.',
   'hint.tvs': 'Which libraries feed the ceiling TVs. All off = family picks.',
+  'setting.carryLib.hint': 'OFF = this store does not carry the library; its sync is skipped.',
+  'setting.tvLib.hint': 'Feed the ceiling TVs from this library. All OFF = family picks.',
 
   'settings.pendingReload': 'Connection changed — the app will restart when you close this menu.',
   'settings.pendingRebuild': 'Store look will update when you close this menu.',

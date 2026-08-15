@@ -48,7 +48,8 @@ same as every other pack). Do not commit TSUTAYA, GEO, or any real-chain assets.
 
 ## JP-1B migrated surfaces
 
-- Settings labels, cycle values, On/Off, hints, pending-status, page chrome
+- Settings labels, cycle values, On/Off, hints (including dynamically
+  registered Store Libraries / Overhead TVs row hints), pending-status, page chrome
 - Setup / BIOS terminal screens (line count and cursor rows unchanged; stored
   English step/error strings are mapped at render)
 - Device-gate copy and CTAs
@@ -90,6 +91,8 @@ CJK / mixed-script lines use `fitCrtLine(text, maxWidth, measure)` in
   contract as before).
 - CJK / mixed → `truncateText()` against an injected `measure()` so node tests
   work; the painter measures with the same `crtPaintFont` stack it fills with.
+  The result always satisfies `measure(result) <= maxWidth` (empty if even
+  the ellipsis cannot fit).
 - Truncation is code-point based (no lone UTF-16 surrogates).
 - After `BBCjk` loads, `ensureCjkForTexts` triggers one redraw so widths are
   not permanently measured against a host fallback face.

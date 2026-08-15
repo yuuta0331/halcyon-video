@@ -79,8 +79,52 @@ test('long Japanese titles truncate on code points', () => {
   const title = '非常に長い日本語の映画タイトルでellipsisが必要です';
   const out = truncateText(title, 8, byChars);
   assert.ok(out.endsWith('…'));
-  assert.ok(byChars(out) <= 9);
+  assert.ok(byChars(out) <= 8);
   assert.equal(truncateText('短い', 20, byChars), '短い');
+});
+
+test('truncateText never exceeds maxWidth on the measured path', () => {
+  const wide = (s: string) => Array.from(s).length * 2;
+  const ja = '非常に長い日本語の映画タイトル';
+  const mixed = 'The 七人の侍 and then a very long continuation';
+
+  const normal = truncateText(ja, 10, wide);
+  assert.ok(normal.endsWith('…'));
+  assert.ok(wide(normal) <= 10);
+
+  const mixedOut = truncateText(mixed, 12, wide);
+  assert.ok(mixedOut.endsWith('…'));
+  assert.ok(wide(mixedOut) <= 12);
+
+  assert.equal(truncateText('短い', 20, wide), '短い');
+  assert.ok(wide(truncateText('短い', 20, wide)) <= 20);
+
+  const onePlusEllipsis = truncateText(ja, 4, wide);
+  assert.equal(wide(onePlusEllipsis), 4);
+  assert.ok(Array.from(onePlusEllipsis).length === 2);
+  assert.ok(onePlusEllipsis.endsWith('…'));
+
+  assert.equal(truncateText(ja, 2, wide), '…');
+  assert.ok(wide(truncateText(ja, 2, wide)) <= 2);
+
+  assert.equal(truncateText(ja, 1, wide), '');
+  assert.ok(wide('') <= 1);
+
+  const pair = '𩸽あいうえおかきくけこ';
+  const clipped = truncateText(pair, 6, wide);
+  assert.ok(wide(clipped) <= 6);
+  const points = Array.from(clipped);
+  assert.ok(points.every((p) => {
+    const c = p.codePointAt(0)!;
+    return p.length === 2 || c < 0xD800 || c > 0xDFFF;
+  }), 'must not emit a lone UTF-16 surrogate');
+
+  for (const sample of [ja, mixed, pair, 'あ', 'The 侍', '']) {
+    for (const max of [0, 1, 2, 3, 4, 8, 12, 100]) {
+      const result = truncateText(sample, max, wide);
+      assert.ok(wide(result) <= max, `"${sample}" @ ${max} → "${result}"`);
+    }
+  }
 });
 
 test('displayTitle uppercases Latin and leaves Japanese for width-fitting', () => {

@@ -27,6 +27,7 @@
 import { registerSetting } from './settings';
 import { knownServerLibraries } from './jellyfin';
 import type { LibrarySummary } from './jellyfin';
+import { t } from './i18n';
 
 export const CARRY_LIB_PREFIX = 'bb_carrylib_';
 export const TV_LIB_PREFIX = 'bb_tvlib_';
@@ -61,7 +62,7 @@ export function registerLibraryToggles(catalogLibs: ReadonlyArray<LibrarySummary
       subpage: 'Store Libraries',
       default: true,
       applyMode: 'reload',
-      hint: 'OFF = this store does not carry the library; its sync is skipped.',
+      hint: () => t('setting.carryLib.hint'),
       visibleWhen: () => carryIds.has(id),
     });
   }
@@ -77,7 +78,7 @@ export function registerLibraryToggles(catalogLibs: ReadonlyArray<LibrarySummary
       subpage: 'Overhead TVs',
       default: false,
       applyMode: 'rebuild-scene',
-      hint: 'Feed the ceiling TVs from this library. All OFF = family picks.',
+      hint: () => t('setting.tvLib.hint'),
       visibleWhen: () => tvIds.has(id),
     });
   }

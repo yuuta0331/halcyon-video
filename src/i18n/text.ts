@@ -137,7 +137,9 @@ function wrapLatin(
   return lines;
 }
 
-/** Ellipsize to `maxWidth` using code points, not UTF-16 units. */
+/** Ellipsize to `maxWidth` using code points, not UTF-16 units.
+ *  The returned string always satisfies `measure(result) <= maxWidth`.
+ *  If even the ellipsis is too wide, the result is empty. */
 export function truncateText(
   text: string,
   maxWidth: number,
@@ -146,10 +148,11 @@ export function truncateText(
 ): string {
   if (measure(text) <= maxWidth) return text;
   const chars = Array.from(text);
-  while (chars.length > 1 && measure(chars.join('') + ellipsis) > maxWidth) {
+  while (chars.length > 0 && measure(chars.join('') + ellipsis) > maxWidth) {
     chars.pop();
   }
-  return chars.length ? chars.join('') + ellipsis : ellipsis;
+  if (chars.length > 0) return chars.join('') + ellipsis;
+  return measure(ellipsis) <= maxWidth ? ellipsis : '';
 }
 
 /** Historical English CRT column count. Latin lines still clip here. */

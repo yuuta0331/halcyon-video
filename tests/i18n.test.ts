@@ -55,6 +55,8 @@ test('new chrome keys have Japanese entries and English fallback still works', (
   assert.equal(t('gate.open2d'), 'Open the 2D store');
   assert.equal(t('flat.menu'), 'Menu');
   assert.equal(t('setup.title'), 'NEW STORE SETUP — OPENING DAY');
+  assert.equal(t('setting.carryLib.hint'), 'OFF = this store does not carry the library; its sync is skipped.');
+  assert.equal(t('setting.tvLib.hint'), 'Feed the ceiling TVs from this library. All OFF = family picks.');
   setLocale('ja');
   try {
     assert.equal(t('setting.theme.label'), '店の時代');
@@ -62,6 +64,8 @@ test('new chrome keys have Japanese entries and English fallback still works', (
     assert.equal(t('flat.menu'), 'メニュー');
     assert.equal(t('setup.title'), '新規開店 — セットアップ');
     assert.equal(t('crt.idle.search'), '検索: / キー');
+    assert.equal(t('setting.carryLib.hint'), 'オフにするとこの店では取り扱わず、同期もスキップします。');
+    assert.equal(t('setting.tvLib.hint'), 'このライブラリを天井テレビに流す。全部オフならおまかせ。');
   } finally {
     setLocale('en');
     resetLocaleCache();
