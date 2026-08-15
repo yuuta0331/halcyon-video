@@ -189,6 +189,7 @@ private id.
   - `09-halcyon-jp-ja-ui.jpg` — bundled identity with 日本語 chrome
   - `10-halcyon-jp-drama-scifi.jpg` — DRAMA→ドラマ, SCI-FI & FANTASY→SF・ファンタジー
   - `11-halcyon-jp-identity.jpg` — Store Identity selector + navy/gold emblem
+  - `12-halcyon-jp-counter-crt.jpg` — idle desk CRT: 店舗 #0117, 巻き戻してね
 
 In-world wording lives in the pack `strings` (and `brandGenreLabel()`), not
 in `src/i18n/`. Japanese wordmarks paint through `BBCjk` (the JP-1 Noto Sans

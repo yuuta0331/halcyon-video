@@ -934,8 +934,9 @@ export class EntranceCheckout implements StoreFixture {
     // The idle screen is also the manager terminal's only in-world signpost
     // (UX pass 2026-08): the Left press at the counter was taught nowhere,
     // and "/" is keyboard-only advice — a remote user needs the other line.
+    const storeLine = brandString('pos-store-line', 'STORE #55746   GREEN BAY, WI');
     const lines = this.terminalLines ?? [
-      'STORE #55746   GREEN BAY, WI',
+      storeLine,
       '',
       t('terminal.ready'),
       '',
@@ -945,9 +946,9 @@ export class EntranceCheckout implements StoreFixture {
       '>',
     ];
     const title = brandString('pos-system-title', 'HALCYON RENTAL SYSTEM');
-    const footLeft = 'REMEMBER TO REWIND';
-    const footRight = 'PLEASE REWIND';
-    const cjkTexts = [title, ...lines, footLeft, footRight];
+    const footLeft = brandString('pos-footer-left', 'REMEMBER TO REWIND');
+    const footRight = brandString('pos-footer-right', 'PLEASE REWIND');
+    const cjkTexts = [title, storeLine, ...lines, footLeft, footRight];
     if (!this.terminalCjkRepaintArmed && cjkTexts.some(containsCjk)) {
       this.terminalCjkRepaintArmed = true;
       ensureCjkForTexts(cjkTexts, () => this.drawTerminal());
@@ -990,14 +991,24 @@ export class EntranceCheckout implements StoreFixture {
     // ── Footer bar: solid gold status strip (the sandwich, bottom) ──
     ctx.fillStyle = CRT_GOLD;
     ctx.fillRect(PAD_X - CH * 0.5, footTop, SAFE_W + CH, BAR_H);
-    ctx.font = crtPaintFont(FONT_PX, footLeft, 'bold');
     ctx.fillStyle = CRT_INK;
     const footY = footTop + (BAR_H - FONT_PX) / 2;
     // feedback/037 (owner: reword all "be kind rewind" to "please rewind") —
     // was 'BE KIND' paired with the left-aligned 'REMEMBER TO REWIND'.
-    ctx.fillText(footLeft, PAD_X, footY);
-    ctx.font = crtPaintFont(FONT_PX, footRight, 'bold');
-    ctx.fillText(footRight, PAD_X + SAFE_W - ctx.measureText(footRight).width, footY);
+    // Latin fallbacks stay the 40-column slice (unchanged). CJK is pixel-fit
+    // to half the gold bar so a Japanese pack cannot paint through the other
+    // footer.
+    const footBudget = (SAFE_W - CH) / 2;
+    const measureFoot = (s: string) => {
+      ctx.font = crtPaintFont(FONT_PX, s, 'bold');
+      return ctx.measureText(s).width;
+    };
+    const footL = fitCrtLine(footLeft, footBudget, measureFoot);
+    const footR = fitCrtLine(footRight, footBudget, measureFoot);
+    ctx.font = crtPaintFont(FONT_PX, footL, 'bold');
+    ctx.fillText(footL, PAD_X, footY);
+    ctx.font = crtPaintFont(FONT_PX, footR, 'bold');
+    ctx.fillText(footR, PAD_X + SAFE_W - ctx.measureText(footR).width, footY);
 
     // Scanlines at the canvas's native pitch, then the shared curved-tube mask
     // (crt-tube.ts: rounded corners falling off dark, edge vignette). Nothing
