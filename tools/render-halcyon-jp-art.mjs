@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // Rasterize public/brand-packs/halcyon-jp wrap PNGs from project-authored
-// canvas source. Uses the bundled Noto Sans JP face (BBCjk). Provenance:
+// canvas source. Uses bundled BBCjk (Noto Sans JP) and BBArchivoBlack
+// (Archivo Black) from src/assets/ — no font copies in the pack. Provenance:
 // public/brand-packs/halcyon-jp/NOTES.md
 import { createServer } from 'node:http';
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
@@ -13,6 +14,7 @@ const html = readFileSync(path.join(root, 'tools/halcyon-jp-art.html'), 'utf8');
 
 function contentType(p) {
   if (p.endsWith('.woff2')) return 'font/woff2';
+  if (p.endsWith('.ttf')) return 'font/ttf';
   if (p.endsWith('.html')) return 'text/html; charset=utf-8';
   if (p.endsWith('.js')) return 'text/javascript';
   return 'application/octet-stream';
@@ -22,12 +24,22 @@ const server = createServer((req, res) => {
   const url = decodeURIComponent((req.url ?? '/').split('?')[0]);
   if (url === '/' || url === '/art.html') {
     res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
-    res.end(html.replace("url('/src/assets/noto-sans-jp-regular.woff2')", "url('/font.woff2')"));
+    res.end(
+      html
+        .replace("url('/src/assets/noto-sans-jp-regular.woff2')", "url('/font.woff2')")
+        .replace("url('/src/assets/archivo-black.ttf')", "url('/font-archivo.ttf')"),
+    );
     return;
   }
   if (url === '/font.woff2') {
     const buf = readFileSync(path.join(root, 'src/assets/noto-sans-jp-regular.woff2'));
     res.writeHead(200, { 'content-type': 'font/woff2' });
+    res.end(buf);
+    return;
+  }
+  if (url === '/font-archivo.ttf') {
+    const buf = readFileSync(path.join(root, 'src/assets/archivo-black.ttf'));
+    res.writeHead(200, { 'content-type': 'font/ttf' });
     res.end(buf);
     return;
   }

@@ -20,6 +20,8 @@
 // an explicit choice, so it wins over a folder that just happens to exist —
 // and the drop is never consulted when bb_brand_pack is set, so a typo'd pack
 // id reports itself as a typo instead of silently landing on some other identity.
+// `__original__` is a selector sentinel (not a pack id): lookup kind is `none`,
+// the drop is skipped, and neither brands/ nor brand-packs/ is probed.
 //
 // No drop, no key, or a manifest that isn't installed means NO pack: every
 // accessor below answers with the caller's own fallback, so a store with
@@ -159,12 +161,19 @@ export function brandString(key: string, fallback: string): string {
 }
 
 /**
+ * Manifest key suffix for an in-world category / library name.
+ * `SCI-FI & FANTASY` → `SCI-FI-&-FANTASY` (spaces to hyphens, punctuation kept).
+ */
+export function brandGenreKey(name: string): string {
+  return name.trim().toUpperCase().replace(/\s+/g, '-');
+}
+
+/**
  * In-world genre / aisle label. Packs override via `strings['sign-genre-ACTION']`
  * etc. Unknown names keep the caller's fallback — no pack-id branches.
  */
 export function brandGenreLabel(name: string): string {
-  const key = `sign-genre-${name.trim().toUpperCase().replace(/\s+/g, '-')}`;
-  return brandString(key, name);
+  return brandString(`sign-genre-${brandGenreKey(name)}`, name);
 }
 
 /**
@@ -333,23 +342,30 @@ export function loadBrandPack(): Promise<BrandPackManifest | null> {
     return loadPromise;
   }
   const id = activeBrandPackId();
-  if (!id) {
+  const plan = brandPackLookupPlan(id);
+  if (plan.kind === 'none') {
+    status = 'none';
+    source = 'none';
+    loadPromise = Promise.resolve(null);
+    return loadPromise;
+  }
+  if (plan.kind === 'drop') {
     loadPromise = loadBrandDrop();
     return loadPromise;
   }
   status = 'loading';
-  const plan = brandPackLookupPlan(id);
   loadPromise = (async () => {
     try {
-      const userPath = plan.kind === 'drop' ? null : plan.userPath;
+      const packId = plan.id;
+      const userPath = plan.userPath;
       const userText = userPath ? await fetchManifestText(assetUrl(userPath)) : null;
-      if (userText) return adoptParsed(id, userText, `user-assets/brands/${id}`, 'pack');
+      if (userText) return adoptParsed(packId, userText, `user-assets/brands/${packId}`, 'pack');
       if (plan.kind === 'user-then-bundled') {
         const bundledText = await fetchManifestText(assetUrl(plan.bundledPath));
         if (bundledText) {
-          return adoptParsed(id, bundledText, `brand-packs/${id}`, 'bundled');
+          return adoptParsed(packId, bundledText, `brand-packs/${packId}`, 'bundled');
         }
-        console.warn(`[brand-pack] bundled pack ${id} is registered but brand.json was not found — using the built-in brand.`);
+        console.warn(`[brand-pack] bundled pack ${packId} is registered but brand.json was not found — using the built-in brand.`);
         status = 'failed';
         return null;
       }

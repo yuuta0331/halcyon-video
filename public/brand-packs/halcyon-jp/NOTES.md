@@ -20,8 +20,26 @@ lettering, POP, and sleeve treatment were designed for this repository.
   No real-chain logo, palette, sign system, trade dress, or proprietary
   artwork was copied.
 - Wrap PNGs were generated from the project-authored painter in
-  `tools/render-halcyon-jp-art.mjs` (canvas + the bundled Noto Sans JP face
-  already shipped as `BBCjk`). They contain no movie-poster art.
+  `tools/render-halcyon-jp-art.mjs` (canvas + bundled `BBCjk` / Noto Sans JP
+  and bundled `BBArchivoBlack` / Archivo Black). They contain no movie-poster
+  art. The renderer registers those repository faces; it does not copy font
+  files into this pack.
+
+## Color system
+
+Directions considered (all original; none copied from a real chain):
+
+1. **Night navy + ivory + warm gold** (chosen) — `#1b2a4a` field, `#f4efe4`
+   cream walls, `#c9a227` wayfinding gold. Calm retail contrast, late-80s /
+   90s fluorescent-store mood, Latin + CJK both stay readable.
+2. Clean mid-blue + cream + amber — closer to a generic electronics aisle;
+   less “rental shop after dark.”
+3. Indigo + off-white + restrained copper — too muted on overhead signs.
+
+Navy is not Halcyon’s house blue (`#1a49c2`). Gold is a warm retail metal,
+not a high-chroma chain yellow. Walls stay cream rather than competing
+accent fields, so storefront, fascia, counter POP, and sleeves share one
+system.
 
 This file does **not** claim trademark clearance, and it does not claim that
 the name is legally guaranteed conflict-free.

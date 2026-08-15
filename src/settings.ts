@@ -29,7 +29,12 @@ import { DEFAULT_LOGO_SPECS, getActiveLogoSpec } from './logo-spec';
 import {
   activeBrandPackId, brandPackFontFamilies, brandPackSource, brandPackStatus, getBrandPack,
 } from './brand-pack';
-import { HALCYON_JP_PACK_ID, builtinIdentitySelection } from './bundled-brand-packs';
+import {
+  HALCYON_JP_PACK_ID,
+  ORIGINAL_IDENTITY_SENTINEL,
+  builtinIdentitySelection,
+  isOriginalIdentitySentinel,
+} from './bundled-brand-packs';
 import { brandDropReport } from './brand-drop';
 import type { LogoShape, LogoSpec } from './logo-spec';
 import { drawLogo, getLogoFontString } from './logo-renderer';
@@ -349,6 +354,9 @@ function brandPackDiagnostic(): string {
     return brandPackSource() === 'drop'
       ? `Blank — and a logo is dropped in user-assets/brand/, which is dressing the store. ${brandDropDiagnostic()}`
       : 'Blank = Original Halcyon. Pick ハルシオンビデオ on this page, or type a directory under user-assets/brands/.';
+  }
+  if (isOriginalIdentitySentinel(id)) {
+    return 'Original Halcyon (explicit). A simple drop in user-assets/brand/ is ignored until this is cleared.';
   }
   const status = brandPackStatus();
   if (status === 'loaded') {
@@ -1432,6 +1440,7 @@ export function buildStoreBrandPanel(container: HTMLElement, hooks: BrandPanelHo
     value.className = 'settings-row-value';
     value.textContent = !id
       ? 'None'
+      : isOriginalIdentitySentinel(id) ? 'Original Halcyon'
       : status === 'loaded' ? `${pack?.displayName ?? pack?.name ?? id} (${id})`
       : status === 'failed' ? `${id} — FAILED`
       : `${id} — not installed`;
@@ -1446,7 +1455,8 @@ export function buildStoreBrandPanel(container: HTMLElement, hooks: BrandPanelHo
   // Couch-facing. Does not write bb_brand_pack merely by rendering — an
   // unknown private pack stays selected until the user picks a built-in.
   {
-    const current = builtinIdentitySelection(activeBrandPackId());
+    const dropActive = brandPackSource() === 'drop';
+    const current = builtinIdentitySelection(activeBrandPackId(), dropActive);
     const row = document.createElement('div');
     row.className = 'settings-row settings-brand-row brand-preset-row';
     row.tabIndex = -1;
@@ -1454,7 +1464,9 @@ export function buildStoreBrandPanel(container: HTMLElement, hooks: BrandPanelHo
     main.className = 'settings-row-main';
     const hint = current === 'custom'
       ? tfill('setting.storeIdentity.custom', { id: activeBrandPackId() ?? '' })
-      : tUi('setting.storeIdentity.hint');
+      : current === 'drop'
+        ? tUi('setting.storeIdentity.drop')
+        : tUi('setting.storeIdentity.hint');
     main.innerHTML = `
       <span class="settings-row-label">${tUi('setting.storeIdentity.label')}</span>
       <span class="settings-row-hint">${hint}</span>
@@ -1463,13 +1475,12 @@ export function buildStoreBrandPanel(container: HTMLElement, hooks: BrandPanelHo
     const strip = document.createElement('span');
     strip.className = 'brand-preset-strip';
     const choices: { id: string; sel: 'original' | 'halcyon-jp'; label: string }[] = [
-      { id: '', sel: 'original', label: tUi('setting.storeIdentity.original') },
+      { id: ORIGINAL_IDENTITY_SENTINEL, sel: 'original', label: tUi('setting.storeIdentity.original') },
       { id: HALCYON_JP_PACK_ID, sel: 'halcyon-jp', label: tUi('setting.storeIdentity.halcyonJp') },
     ];
     const applyIdentity = (packId: string) => {
       if (typeof localStorage === 'undefined') return;
-      if (!packId) localStorage.removeItem('bb_brand_pack');
-      else localStorage.setItem('bb_brand_pack', packId);
+      localStorage.setItem('bb_brand_pack', packId);
       hooks.onNeedsReload?.();
     };
     choices.forEach((choice) => {
@@ -1486,7 +1497,7 @@ export function buildStoreBrandPanel(container: HTMLElement, hooks: BrandPanelHo
     });
     row.appendChild(strip);
     registerRow('identity', row, (dir) => {
-      applyIdentity(dir < 0 ? '' : HALCYON_JP_PACK_ID);
+      applyIdentity(dir < 0 ? ORIGINAL_IDENTITY_SENTINEL : HALCYON_JP_PACK_ID);
     });
     container.appendChild(row);
   }

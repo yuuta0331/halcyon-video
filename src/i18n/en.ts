@@ -170,6 +170,7 @@ export const en = {
   'setting.storeIdentity.original': 'Halcyon',
   'setting.storeIdentity.halcyonJp': 'ハルシオンビデオ',
   'setting.storeIdentity.custom': 'Custom pack "{id}" is active. A built-in choice replaces it on reload.',
+  'setting.storeIdentity.drop': 'A simple drop in user-assets/brand/ is dressing the store. Halcyon keeps Original without deleting that folder.',
   'setting.dressing93.label': '1993 Store Dressing',
   'setting.dressing93.hintOn': 'Already on: the 1993 era wears this pack by default.',
   'setting.dressing93.hintOff': 'Adds 1993 fascia blades + ribbon ceiling to this era.',

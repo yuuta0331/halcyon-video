@@ -157,11 +157,14 @@ Resolution of `bb_brand_pack=<id>`:
 
 1. `user-assets/brands/<id>/` if that local pack is installed (may override a bundled id)
 2. `brand-packs/<id>/` only if `<id>` is a registered bundled id
-3. no pack — the English/default Halcyon store
+3. no pack — the English/default Halcyon store, **unless** a simple drop
+   exists in `user-assets/brand/` (presence-driven; unchanged)
 
-Unknown ids never probe the bundled tree. `bb_brand_pack` absent/empty keeps
-the original Halcyon look. **Locale is independent:** `bb_locale=ja` does not
-select `halcyon-jp`, and selecting the pack does not set `bb_locale`.
+Unknown ids never probe the bundled tree. Blank `bb_brand_pack` still probes
+the simple drop. Selecting **Halcyon** in Store Identity writes the sentinel
+`__original__`, which skips the drop without deleting it and never looks
+under `brands/` or `brand-packs/`. **Locale is independent:** `bb_locale=ja`
+does not select `halcyon-jp`, and selecting the pack does not set `bb_locale`.
 
 ### How to select ハルシオンビデオ
 
@@ -177,18 +180,34 @@ private id.
 - Provenance: `public/brand-packs/halcyon-jp/NOTES.md`
 - Visual review stills: `docs/review/jp2/`
   - `01-default-interior.jpg` / `02-default-storefront.jpg` — no pack
-  - `03-halcyon-jp-interior.jpg` — 映画 / おすすめ / ゲーム
-  - `04-halcyon-jp-storefront.jpg` — teal/coral house on the facade
-  - `05-halcyon-jp-counter-pop.jpg` — 返却はこちら, ハルシオン レンタルシステム, 新作
-  - `06-halcyon-jp-wrap.jpg` — VHS レンタル専用 sleeve
+  - `03-halcyon-jp-interior.jpg` — 映画 / おすすめ / ゲーム, navy/gold house
+  - `04-halcyon-jp-storefront.jpg` — night-navy house on the facade
+  - `05-halcyon-jp-counter-pop.jpg` — 返却はこちら / 巻き戻してね
+  - `06-halcyon-jp-wrap.jpg` — VHS レンタル専用 sleeve (navy/gold)
   - `07-switchback-original.jpg` — original Halcyon after UI switchback
   - `08-original-ja-ui.jpg` — original identity with 日本語 chrome
   - `09-halcyon-jp-ja-ui.jpg` — bundled identity with 日本語 chrome
+  - `10-halcyon-jp-drama-scifi.jpg` — DRAMA→ドラマ, SCI-FI & FANTASY→SF・ファンタジー
+  - `11-halcyon-jp-identity.jpg` — Store Identity selector + navy/gold emblem
 
 In-world wording lives in the pack `strings` (and `brandGenreLabel()`), not
 in `src/i18n/`. Japanese wordmarks paint through `BBCjk` (the JP-1 Noto Sans
 JP seam) — logo-renderer and sign painters append it when the copy contains
 CJK. No second CJK loader, no extra font file.
+
+Aisle labels map every `STORE_CATEGORY_ORDER` name (and demo library names
+such as MOVIES / ANIMATED MOVIES / VIDEO GAMES / PREVIOUSLY VIEWED) through
+`brand.json` `strings['sign-genre-…']`. DRAMA is ドラマ (the genre), not 邦画.
+Genre metadata is never used to infer country/region. There is no pack-id
+branch in the painters.
+
+### Color system (Round 1B)
+
+The first teal/coral house did not read as one Japanese rental-store identity.
+Three original directions were considered; **night navy + ivory + warm gold**
+(`#1b2a4a` / `#f4efe4` / `#c9a227`) was implemented. It is not Halcyon blue
+and is not a recreation of any real chain’s palette. Storefront, overhead
+signs, counter POP, and sleeves share that system.
 
 ### Legal boundary
 

@@ -169,6 +169,7 @@ export const ja: Partial<Messages> = {
   'setting.storeIdentity.original': 'Halcyon',
   'setting.storeIdentity.halcyonJp': 'ハルシオンビデオ',
   'setting.storeIdentity.custom': 'カスタムパック「{id}」が有効です。内蔵を選ぶと再読み込み後に切り替わります。',
+  'setting.storeIdentity.drop': 'user-assets/brand/ のドロップが店を着飾っています。Halcyon を選ぶとフォルダを消さずに元の顔へ戻します。',
   'setting.dressing93.label': '1993年の店内装飾',
   'setting.dressing93.hintOn': '1993年テーマでは最初から入っています。',
   'setting.dressing93.hintOff': 'この時代に1993年の看板と天井リボンを足します。',
