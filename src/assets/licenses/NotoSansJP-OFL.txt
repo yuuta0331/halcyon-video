@@ -1,25 +1,8 @@
-Noto Sans JP — Japanese 400 subset (WOFF2)
-==========================================
-
-Bundled file: src/assets/noto-sans-jp-regular.woff2
-This is the Japanese-subset Regular (400) WOFF2 packaged by
-@fontsource/noto-sans-jp 5.2.5, which redistributes the Google Fonts cut of
-Noto Sans JP. It is loaded lazily when Japanese UI or CJK glyphs are needed;
-it does not replace the store's Latin display faces.
-
-Upstream:
-  https://github.com/notofonts/noto-cjk
-  https://github.com/google/fonts/tree/main/ofl/notosansjp
-  https://fonts.google.com/noto/specimen/Noto+Sans+JP
-
-License: SIL Open Font License, Version 1.1
 Copyright 2014-2021 Adobe (http://www.adobe.com/), with Reserved Font Name 'Source'
-Copyright Google Inc. (Noto / Google Fonts distribution)
 
 This Font Software is licensed under the SIL Open Font License, Version 1.1.
 This license is copied below, and is also available with a FAQ at:
 https://scripts.sil.org/OFL
-
 
 -----------------------------------------------------------
 SIL OPEN FONT LICENSE Version 1.1 - 26 February 2007
@@ -34,7 +17,7 @@ with others.
 
 The OFL allows the licensed fonts to be used, studied, modified and
 redistributed freely as long as they are not sold by themselves. The
-fonts, including any derivative works, can be bundled, embedded,
+fonts, including any derivative works, can be bundled, embedded, 
 redistributed and/or sold with any software provided that any reserved
 names are not used by derivative works. The fonts and derivatives,
 however, cannot be released under any other type of license. The

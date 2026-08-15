@@ -15,7 +15,8 @@ Application chrome lives in `src/i18n/`:
 | `ja.ts` | Japanese catalog (`Partial` — missing keys fall back to English) |
 | `locale.ts` | `bb_locale` persistence; default **English** |
 | `index.ts` | `t()`, `getLocale()`, `setLocale()`, `lookupMessage()` |
-| `text.ts` | CJK detection, wrap/truncate, `Intl.Collator`, canvas family stack |
+| `text.ts` | CJK detection, wrap/truncate, locale-aware compare, canvas family stack |
+| `canvas-font.ts` | JP-1B canvas seam (`paintFont` / `crtPaintFont`); do not import from node tests |
 | `cjk-font.ts` | Lazy FontFace registration for the bundled JP face |
 | `chrome.ts` | HUD / power-menu / settings-index helpers |
 
@@ -46,20 +47,26 @@ same as every other pack). Do not commit TSUTAYA, GEO, or any real-chain assets.
 
 - Face: **Noto Sans JP** Regular, Japanese subset, WOFF2 (~1.1MB)
 - File: `src/assets/noto-sans-jp-regular.woff2`
-- License: SIL OFL 1.1 — `src/assets/licenses/NotoSansJP-OFL.txt`
+- License: SIL OFL 1.1 — canonical notice in `src/assets/licenses/NotoSansJP-OFL.txt`
+  (verbatim Google Fonts OFL). Bundling provenance is in
+  `src/assets/licenses/NotoSansJP-PROVENANCE.txt`, not in the OFL notice.
 - Runtime family: `BBCjk` (same BB-prefix rule as Anton / Archivo Black)
 
-Latin display fonts are unchanged. `canvasFontStack(text, latinFamily)` inserts
-`BBCjk` only when the string contains CJK. `ensureCjkFont()` / `cjkFontsReady()`
-load the file; English boots do not decode it unless a painter asks. Japanese
-locale waits on it in `waitForFontsAndInit` before canvases bake.
+Latin display fonts are unchanged. `canvasFontStack(text, latinFamily)`
+appends `BBCjk` **after** the shipped Latin family only when the string
+contains CJK (`BBMono, BBCjk`, never `BBCjk, BBMono`). Latin-only strings
+keep a Latin-only stack. The desk CRT / search terminal paints through
+`src/i18n/canvas-font.ts` (`crtPaintFont`) so Japanese glyphs resolve to the
+bundled face even when the UI locale is still English. Other canvas painters
+are a JP-1B migration (`paintFont` / `crtPaintFont` instead of host families).
 
 ## Text handling
 
 `wrapText` / `truncateText` take an injected `measure()` so they test without
 Canvas. Latin wrap is the existing greedy word wrap; CJK may break between
-characters with a small kinsoku rule. Shelf order uses `compareText()`
-(`Intl.Collator`). Search matching is unchanged (no engine rewrite).
+characters with a small kinsoku rule. Shelf order uses `compareText()`: English
+keeps pre-i18n `String.localeCompare()` semantics; Japanese uses
+`Intl.Collator('ja')`. Search matching is unchanged (no engine rewrite).
 
 ## Platform / future XR
 

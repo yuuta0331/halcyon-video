@@ -203,6 +203,16 @@ test('a collection gap carries no backstock copies, however well rated', () => {
   assert.equal(extraCopiesCount(owned), 2);
 });
 
+test('English numeric titles keep pre-PR lexicographic shelf order', () => {
+  setLocale('en');
+  const movies = [mk('Movie 2'), mk('Movie 10')].sort(shelfTitleCompare);
+  assert.deepEqual(movies.map((m) => m.title), ['Movie 10', 'Movie 2']);
+  assert.equal(
+    shelfTitleCompare(mk('Movie 2'), mk('Movie 10')),
+    'movie 2'.localeCompare('movie 10'),
+  );
+});
+
 test('Japanese titles file in locale-aware order when ja is active', () => {
   setLocale('ja');
   try {

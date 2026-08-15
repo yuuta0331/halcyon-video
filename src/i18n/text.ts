@@ -4,8 +4,8 @@
 // Canvas painters that need the bundled Japanese face should:
 //   1. name BB_CJK via canvasFontStack() (never a host family)
 //   2. call ensureCjkFont() from ./cjk-font so the face is actually loaded
-// Latin display faces (Anton, Archivo Black, …) stay first in the stack
-// unless the string actually contains CJK.
+// Latin display faces (Anton, Archivo Black, …) stay first in the stack.
+// BBCjk is appended only when the string contains CJK.
 
 import { getLocale } from './locale.ts';
 import type { Locale } from './types.ts';
@@ -20,26 +20,33 @@ export function containsCjk(text: string): boolean {
 }
 
 /**
- * Canvas `ctx.font` family list. Japanese glyphs request BBCjk explicitly so
- * measureText cannot silently substitute a host face. Latin-only strings keep
- * the caller’s display family unchanged.
+ * Canvas `ctx.font` family list. Latin faces the store actually ships stay
+ * FIRST so mixed strings keep their retro metrics; BBCjk is appended only
+ * when the string contains CJK, so Japanese glyphs do not fall back to a
+ * host face. Latin-only strings are unchanged (no BBCjk in the stack).
+ *
+ *   canvasFontStack('HALCYON', BB_MONO)     → 'BBMono'
+ *   canvasFontStack('七人の侍', BB_MONO)     → 'BBMono, BBCjk'
+ *   canvasFontStack('The 七人の侍', BB_MONO) → 'BBMono, BBCjk'
  */
 export function canvasFontStack(text: string, latinFamily: string): string {
-  return containsCjk(text) ? `${BB_CJK}, ${latinFamily}` : latinFamily;
+  return containsCjk(text) ? `${latinFamily}, ${BB_CJK}` : latinFamily;
 }
 
-const collators = new Map<string, Intl.Collator>();
+let jaCollator: Intl.Collator | null = null;
 
+/**
+ * User-visible string order.
+ *   en — the pre-i18n `String.localeCompare()` semantics (no numeric collation,
+ *        no sensitivity override). English shelf order must not drift.
+ *   ja — `Intl.Collator('ja')`.
+ */
 export function compareText(a: string, b: string, locale: Locale = getLocale()): number {
-  let collator = collators.get(locale);
-  if (!collator) {
-    collator = new Intl.Collator(locale === 'ja' ? 'ja' : 'en', {
-      numeric: true,
-      sensitivity: 'base',
-    });
-    collators.set(locale, collator);
+  if (locale === 'ja') {
+    jaCollator ??= new Intl.Collator('ja');
+    return jaCollator.compare(a, b);
   }
-  return collator.compare(a, b);
+  return a.localeCompare(b);
 }
 
 // Kinsoku-ish: don't start a line with these, don't end a line with these.

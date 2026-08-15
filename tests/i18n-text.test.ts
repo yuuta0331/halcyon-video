@@ -16,9 +16,42 @@ test('CJK detection and canvas family selection', () => {
   assert.equal(containsCjk('Back to the Future'), false);
   assert.equal(containsCjk('バック・トゥ・ザ・フューチャー'), true);
   assert.equal(containsCjk('The 七人の侍'), true);
-  assert.equal(canvasFontStack('HALCYON', 'BBAnton'), 'BBAnton');
-  assert.equal(canvasFontStack('七人の侍', 'BBAnton'), `${BB_CJK}, BBAnton`);
   assert.equal(BB_CJK, 'BBCjk');
+});
+
+test('Latin-only canvas stack is unchanged', () => {
+  assert.equal(canvasFontStack('HALCYON', 'BBMono'), 'BBMono');
+  assert.equal(canvasFontStack('SEARCH> ALIEN', 'BBAnton'), 'BBAnton');
+  assert.equal(canvasFontStack('', 'BBMono').includes(BB_CJK), false);
+});
+
+test('Japanese canvas stack appends BBCjk after the shipped Latin family', () => {
+  const stack = canvasFontStack('七人の侍', 'BBMono');
+  assert.equal(stack, `BBMono, ${BB_CJK}`);
+  assert.ok(stack.startsWith('BBMono'));
+  assert.ok(!stack.startsWith(BB_CJK));
+});
+
+test('mixed Latin/Japanese keeps the Latin family first', () => {
+  const latin = 'BBMono';
+  const stack = canvasFontStack('The 七人の侍', latin);
+  assert.equal(stack, `${latin}, ${BB_CJK}`);
+  assert.equal(stack.indexOf(latin), 0);
+  assert.ok(stack.indexOf(latin) < stack.indexOf(BB_CJK));
+});
+
+test('CJK face is requested only when the string needs it', () => {
+  assert.equal(containsCjk('READY.'), false);
+  assert.equal(containsCjk('検索> エイリアン'), true);
+  assert.equal(canvasFontStack('READY.', 'BBMono').includes(BB_CJK), false);
+  assert.equal(canvasFontStack('検索> エイリアン', 'BBMono').endsWith(BB_CJK), true);
+});
+
+test('BBCjk is never the first family in a canvas stack', () => {
+  for (const s of ['HALCYON', '七人の侍', 'The 七人の侍', '検索> ALIEN', '']) {
+    const stack = canvasFontStack(s, 'BBMono');
+    assert.equal(stack.startsWith(BB_CJK), false, s);
+  }
 });
 
 test('English wrap stays greedy word wrap', () => {
@@ -54,15 +87,36 @@ test('displayTitle uppercases Latin and preserves Japanese', () => {
   assert.equal(Array.from(displayTitle('あいうえおかきくけこさしすせそ', 5)).length, 5);
 });
 
-test('locale-aware ordering for Japanese titles', () => {
-  assert.ok(compareText('エイリアン', 'マトリックス', 'ja') < 0);
-  assert.ok(compareText('あ', 'い', 'ja') < 0);
-  assert.ok(compareText('Alpha', 'beta', 'en') < 0);
-  // Mixed strings must not throw and must be deterministic.
-  assert.equal(
-    compareText('The 七人の侍', 'The 七人の侍', 'ja'),
-    0,
+test('English compareText preserves pre-PR localeCompare semantics', () => {
+  const pairs: Array<[string, string]> = [
+    ['Movie 2', 'Movie 10'],
+    ['2 Fast 2 Furious', '10 Things I Hate About You'],
+    ['cafe', 'café'],
+    ['Alpha', 'beta'],
+    ['zebra', 'Alpha'],
+  ];
+  for (const [a, b] of pairs) {
+    assert.equal(compareText(a, b, 'en'), a.localeCompare(b), `${a} vs ${b}`);
+  }
+});
+
+test('English numeric titles do not pick up Collator numeric sorting', () => {
+  // Pre-PR localeCompare is lexicographic: "Movie 10" files before "Movie 2"
+  // because '1' < '2'. Intl.Collator({ numeric: true }) reverses that.
+  assert.equal(compareText('Movie 10', 'Movie 2', 'en'), 'Movie 10'.localeCompare('Movie 2'));
+  assert.ok(compareText('Movie 10', 'Movie 2', 'en') < 0);
+  const numeric = new Intl.Collator('en', { numeric: true, sensitivity: 'base' });
+  assert.notEqual(
+    Math.sign(compareText('Movie 2', 'Movie 10', 'en')) || 1,
+    Math.sign(numeric.compare('Movie 2', 'Movie 10')) || 1,
   );
+});
+
+test('Japanese ordering still uses the ja collator', () => {
+  const ja = new Intl.Collator('ja');
+  assert.equal(compareText('エイリアン', 'マトリックス', 'ja'), ja.compare('エイリアン', 'マトリックス'));
+  assert.ok(compareText('あ', 'い', 'ja') < 0);
+  assert.equal(compareText('The 七人の侍', 'The 七人の侍', 'ja'), 0);
 });
 
 test('English collation still alphabetizes mixed-case Latin', () => {

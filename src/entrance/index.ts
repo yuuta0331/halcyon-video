@@ -55,6 +55,8 @@ import { ReturnSlot } from './return-slot';
 import type { Movie } from '../jellyfin';
 import { CRT_BLACK, CRT_GOLD, CRT_INK, CRT_TEXT } from '../crt-theme';
 import { brandString } from '../brand-pack';
+import { crtPaintFont, ensureCjkForTexts } from '../i18n/canvas-font';
+import { containsCjk } from '../i18n/text';
 
 export class EntranceCheckout implements StoreFixture {
   // The counter's store-facing point Z (used by StoreScene to frame the checkout camera move).
@@ -141,6 +143,10 @@ export class EntranceCheckout implements StoreFixture {
   private terminalLines: string[] | null = null; // null = idle screen
   private terminalCursorOn = true;
   private terminalLastBlink = 0;
+  // Arm once: if CJK reaches this CRT (Japanese UI or a JP title in search)
+  // we load BBCjk and repaint when it lands. Re-arming inside drawTerminal
+  // would recurse because ensureCjkFont calls onReady immediately once ready.
+  private terminalCjkRepaintArmed = false;
   // Which line gets the blinking cursor block; null = last line (legacy idle
   // behaviour). The diegetic search terminal pins this to the query line (0)
   // so the cursor doesn't wander down into the result list.
@@ -924,14 +930,6 @@ export class EntranceCheckout implements StoreFixture {
     const LINE_H = Math.round(FONT_PX * 1.24);
     const BAR_H = Math.round(LINE_H * 1.3);
 
-    // ── Title bar: solid gold, dark text (the DOS-era POS sandwich, top) ──
-    ctx.textBaseline = 'top';
-    ctx.fillStyle = CRT_GOLD;
-    ctx.fillRect(PAD_X - CH * 0.5, PAD_Y, SAFE_W + CH, BAR_H);
-    ctx.font = `bold ${FONT_PX}px "Courier New", monospace`;
-    ctx.fillStyle = CRT_INK;
-    ctx.fillText(brandString('pos-system-title', 'HALCYON RENTAL SYSTEM'), PAD_X, PAD_Y + (BAR_H - FONT_PX) / 2);
-
     // The idle screen is also the manager terminal's only in-world signpost
     // (UX pass 2026-08): the Left press at the counter was taught nowhere,
     // and "/" is keyboard-only advice — a remote user needs the other line.
@@ -945,7 +943,23 @@ export class EntranceCheckout implements StoreFixture {
       '',
       '>',
     ];
-    ctx.font = `${FONT_PX}px "Courier New", monospace`;
+    const title = brandString('pos-system-title', 'HALCYON RENTAL SYSTEM');
+    const footLeft = 'REMEMBER TO REWIND';
+    const footRight = 'PLEASE REWIND';
+    const cjkTexts = [title, ...lines, footLeft, footRight];
+    if (!this.terminalCjkRepaintArmed && cjkTexts.some(containsCjk)) {
+      this.terminalCjkRepaintArmed = true;
+      ensureCjkForTexts(cjkTexts, () => this.drawTerminal());
+    }
+
+    // ── Title bar: solid gold, dark text (the DOS-era POS sandwich, top) ──
+    ctx.textBaseline = 'top';
+    ctx.fillStyle = CRT_GOLD;
+    ctx.fillRect(PAD_X - CH * 0.5, PAD_Y, SAFE_W + CH, BAR_H);
+    ctx.font = crtPaintFont(FONT_PX, title, 'bold');
+    ctx.fillStyle = CRT_INK;
+    ctx.fillText(title, PAD_X, PAD_Y + (BAR_H - FONT_PX) / 2);
+
     ctx.fillStyle = CRT_TEXT;
     // Body starts one blank row below the title bar; the footer bar (drawn
     // below) reserves its own strip so text never collides with it. The tube's
@@ -961,6 +975,7 @@ export class EntranceCheckout implements StoreFixture {
     lines.slice(0, maxLines).forEach((line, i) => {
       const y = bodyTop + i * LINE_H;
       const text = line.slice(0, 40);
+      ctx.font = crtPaintFont(FONT_PX, text);
       ctx.fillText(text, PAD_X, y);
       if (i === cursorIdx && this.terminalCursorOn) {
         const w = ctx.measureText(text).width;
@@ -971,14 +986,14 @@ export class EntranceCheckout implements StoreFixture {
     // ── Footer bar: solid gold status strip (the sandwich, bottom) ──
     ctx.fillStyle = CRT_GOLD;
     ctx.fillRect(PAD_X - CH * 0.5, footTop, SAFE_W + CH, BAR_H);
-    ctx.font = `bold ${FONT_PX}px "Courier New", monospace`;
+    ctx.font = crtPaintFont(FONT_PX, footLeft, 'bold');
     ctx.fillStyle = CRT_INK;
     const footY = footTop + (BAR_H - FONT_PX) / 2;
     // feedback/037 (owner: reword all "be kind rewind" to "please rewind") —
     // was 'BE KIND' paired with the left-aligned 'REMEMBER TO REWIND'.
-    ctx.fillText('REMEMBER TO REWIND', PAD_X, footY);
-    const rightText = 'PLEASE REWIND';
-    ctx.fillText(rightText, PAD_X + SAFE_W - ctx.measureText(rightText).width, footY);
+    ctx.fillText(footLeft, PAD_X, footY);
+    ctx.font = crtPaintFont(FONT_PX, footRight, 'bold');
+    ctx.fillText(footRight, PAD_X + SAFE_W - ctx.measureText(footRight).width, footY);
 
     // Scanlines at the canvas's native pitch, then the shared curved-tube mask
     // (crt-tube.ts: rounded corners falling off dark, edge vignette). Nothing

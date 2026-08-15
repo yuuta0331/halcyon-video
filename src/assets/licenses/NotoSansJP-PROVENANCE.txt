@@ -1,0 +1,11 @@
+Noto Sans JP — bundled Japanese 400 subset (WOFF2)
+==================================================
+
+This file is provenance only. It is NOT part of the SIL OFL notice.
+
+Font file: src/assets/noto-sans-jp-regular.woff2
+Canonical OFL notice (verbatim): src/assets/licenses/NotoSansJP-OFL.txt
+
+Packaged from @fontsource/noto-sans-jp 5.2.5 (Google Fonts cut).
+Upstream: https://github.com/notofonts/noto-cjk
+Google Fonts: https://github.com/google/fonts/tree/main/ofl/notosansjp
