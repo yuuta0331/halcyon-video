@@ -17,6 +17,8 @@
 
 import * as THREE from 'three';
 import { perfTrace, perfSlot } from './perf-trace';
+import { xrUploadBudget } from './perf/store-readiness';
+import { xrUploadPolicyState } from './perf/upload-policy';
 
 const SP_UPLOAD = perfSlot('texUploadMs');  // uploadTextureNow (initTexture + mipmaps)
 const CT_UPLOAD = perfSlot('texUploadN');
@@ -233,11 +235,21 @@ function processUploads() {
   // the keypress that closed the settings drawer is recent, so it would pin the
   // queue to 4/frame through the first two seconds of exactly the drain we want
   // to rush. Cleared in the empty branch above.
-  const burst = rebuildDraining ||
+  const xr = xrUploadPolicyState();
+  const xrBudget = xrUploadBudget({
+    presenting: xr.presenting,
+    moving: xr.moving,
+    highPriorityPending: priorityUploadQueue.length > 0,
+  });
+  const burst = !xr.presenting && (rebuildDraining ||
     (pendingUploads() > UPLOAD_BURST_THRESHOLD &&
-      performance.now() - lastUserActivityTime > BURST_INPUT_COOLDOWN_MS);
-  const budget = uploadTurbo ? 1000 : burst ? UPLOAD_BURST_BUDGET_MS : UPLOAD_BUDGET_MS;
-  const maxPerFrame = uploadTurbo ? Infinity : burst ? UPLOAD_BURST_MAX_PER_FRAME : UPLOAD_MAX_PER_FRAME;
+      performance.now() - lastUserActivityTime > BURST_INPUT_COOLDOWN_MS));
+  const budget = uploadTurbo ? 1000
+    : xr.presenting ? xrBudget.budgetMs
+    : burst ? UPLOAD_BURST_BUDGET_MS : UPLOAD_BUDGET_MS;
+  const maxPerFrame = uploadTurbo ? Infinity
+    : xr.presenting ? xrBudget.maxPerFrame
+    : burst ? UPLOAD_BURST_MAX_PER_FRAME : UPLOAD_MAX_PER_FRAME;
 
   const start = performance.now();
   let count = 0;
@@ -249,7 +261,11 @@ function processUploads() {
     count < maxPerFrame &&
     (count === 0 || performance.now() - start < budget)
   ) {
-    const task = priorityUploadQueue.length > 0 ? priorityUploadQueue.shift() : textureUploadQueue.shift();
+    const preferPriority = xr.presenting && (xr.moving || priorityUploadQueue.length > 0);
+    const task = preferPriority
+      ? (priorityUploadQueue.shift() ?? (xrBudget.bulkMaxPerFrame > 0 ? textureUploadQueue.shift() : undefined))
+      : (priorityUploadQueue.length > 0 ? priorityUploadQueue.shift() : textureUploadQueue.shift());
+    if (!task) break;
     // A task may throw (e.g. initTexture on a lost/exhausted GL context). It must
     // not propagate out of the loop: that would skip the reschedule below and
     // leave isUploading stuck true, permanently wedging every later upload so
@@ -264,7 +280,7 @@ function processUploads() {
     count++;
   }
 
-  if (textureUploadQueue.length > 0) {
+  if (pendingUploads() > 0) {
     requestAnimationFrame(processUploads);
   } else {
     isUploading = false;

@@ -25,7 +25,12 @@ export function attachXrRuntime(
     getVideoElement: () => scene.xrVideoGetter?.() ?? null,
     requestRender: () => scene.requestRender(),
     setXrAnimationLoop: (enabled) => {
-      scene.renderer.setAnimationLoop(enabled ? animate : null);
+      scene.renderer.setAnimationLoop(enabled
+        ? (time?: number) => {
+          scene.xr?.noteXrFrame(typeof time === 'number' ? time : performance.now());
+          animate(time);
+        }
+        : null);
     },
     onSessionChange: (presenting) => {
       if (presenting) {
@@ -38,7 +43,7 @@ export function attachXrRuntime(
       scene.onXrSessionChange?.(presenting);
     },
   });
-  (window as unknown as { __xrDiagnostics?: unknown }).__xrDiagnostics = () => scene.xr?.diagnostics;
+  (window as unknown as { __xrDiagnostics?: unknown }).__xrDiagnostics = () => scene.xr?.diagnostics ?? null;
   return xr;
 }
 

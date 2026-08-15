@@ -22,9 +22,13 @@ export const XR_REFERENCE_SPACE_FALLBACK: readonly XrReferenceSpaceType[] = [
 /** JP-3 baseline. Do not require 90/120. */
 export const XR_TARGET_HZ = 72;
 
-export function immersiveVrRequestOptions(): XrSessionRequestOptions {
+export function immersiveVrRequestOptions(opts?: {
+  layers?: boolean;
+}): XrSessionRequestOptions {
+  const optional: string[] = ['local-floor'];
+  if (opts?.layers !== false) optional.push('layers');
   return {
-    optionalFeatures: [...XR_OPTIONAL_FEATURES],
+    optionalFeatures: optional,
   };
 }
 

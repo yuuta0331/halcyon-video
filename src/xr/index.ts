@@ -21,6 +21,21 @@ export {
   shouldUseSetAnimationLoop,
 } from './loop';
 export { applyXrQualityOverride, restoreDesktopQuality, xrQualityPolicy } from './quality';
+export { readXrFlags, xrEmuRequested } from './flags';
+export { shouldInstallIwer } from './emu-policy';
+export { classifyXrEnvironment } from './classification';
+export { desktopComposerForbidden, chooseXrRenderPath, xrOwnsFrames } from './render-invariant';
+export {
+  bindSessionWithPresentingRace,
+  blankStartupTrace,
+  canExitPhase,
+  markStartupStage,
+  sessionReadyForOptionalLayers,
+  startupAborted,
+} from './session-lifecycle';
+export { compositorFailureFallsBack, shouldInitOptionalCompositor, layerConstructionMustNotAbortSession } from './compositor-policy';
+export { withRestoredGlTextureState } from './gl-state';
+export { isIwerActive } from './emu-state';
 export {
   applyRigLocomotion,
   headingForward,

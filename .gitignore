@@ -26,6 +26,11 @@ dist-ssr
 # Generated harness screenshots / scratch artifacts
 scratch/
 
+# Isolated XR automation Chrome profile (never the owner's everyday profile)
+.cache/
+
+# Feedback pins
+
 # Feedback pins (F8 in-app hotkey) -- user-filed visual bug reports with
 # screenshots; see feedback/ in the dev server.
 feedback/

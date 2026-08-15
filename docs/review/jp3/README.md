@@ -1,24 +1,26 @@
 # JP-3 review evidence
 
-Desktop and capability captures live here. Headset-in-HMD stills require a
-Quest 3 + Quest Browser session on a secure origin.
+Desktop, emulator, and capability captures live here. Headset-in-HMD stills
+require a later Quest 3 acceptance pass on the **corrected** HEAD.
 
 Do not put Jellyfin/Plex URLs, usernames, tokens, or library titles in this folder.
 
 | File | What it shows |
 |---|---|
 | `README.md` | This index |
-| `hardware.md` | Quest smoke log (**NOT_EXECUTED** — no headset attached) |
+| `hardware.md` | Quest smoke log (**FAILED** — waiting environment, no world frame) |
+| `emulator.md` | IWER + isolated Chrome DevTools MCP workflow |
+| `iwsdk-mcp-decision.md` | Why JP-3 uses standalone IWER + Chrome MCP |
 | `desktop-capability.json` | Chrome 151 probe: `immersive-vr` false, Enter VR hidden, `XRWebGLBinding` present, `XRMediaBinding` absent |
 | `01-desktop-default.png` | Demo store after textures loaded (desktop / no XR) |
 | `02-enter-vr-capability.png` | System Control menu on unsupported desktop: **Enter VR is not listed** |
 | `03-controls-help-xr.png` | Controls & Help → Quest / WebXR (English chrome) |
 | `07-japanese-xr-panel.png` | 1024×512 high-acuity panel canvas with Japanese copy + BBCjk/Noto CJK (not in-headset) |
+| `iwer-*.png` / `*.json` | Emulator harness evidence (IWER_EMULATED, not hardware) |
 
-Missing on purpose until a Quest is attached:
+Evidence classes:
 
-- in-headset store / controller ray
-- compositor-layer vs mesh-fallback as seen in the HMD
-- 72 Hz / `maxRenderLayers` from Quest Browser
-
-Hardware claims without retained captures are marked NOT_EXECUTED.
+- UNIT: PASS (342 tests)
+- DESKTOP_BROWSER: PASS (progressive boot + diagnostics)
+- IWER_EMULATED: PASS (`npm run test:xr-emu` CORE / NO-LAYERS / FULL / BOOT)
+- QUEST_HARDWARE = FAILED — awaiting final corrected-head retest

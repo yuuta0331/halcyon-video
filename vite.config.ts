@@ -552,4 +552,8 @@ export default defineConfig(async () => ({
       ignored: ["**/src-tauri/**"],
     },
   },
+  optimizeDeps: {
+    // Dev-only IWER. Production never imports this graph.
+    include: ['iwer'],
+  },
 }));

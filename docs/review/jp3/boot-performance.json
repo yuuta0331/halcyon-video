@@ -1,0 +1,204 @@
+{
+  "name": "BOOT_PERF",
+  "url": "http://127.0.0.1:17425/?demo=1&nogate=1",
+  "boot": {
+    "overlayHidden": true,
+    "interactive": true,
+    "scene": true,
+    "xrTest": true,
+    "diag": {
+      "marks": {
+        "appStart": 352.1000000014901,
+        "credentialStart": 415.20000000298023,
+        "credentialEnd": 415.20000000298023,
+        "catalogStart": 415.20000000298023,
+        "catalogEnd": 438.1000000014901,
+        "sidecarsStart": 438.1000000014901,
+        "sidecarsEnd": 438.1000000014901,
+        "baseFontsStart": 438.1000000014901,
+        "brandPackStart": 438.29999999701977,
+        "brandPackEnd": 511.3999999985099,
+        "baseFontsEnd": 511.3999999985099,
+        "cjkFontsStart": 511.3999999985099,
+        "cjkFontsEnd": 562.1000000014901,
+        "qualityCalibrationStart": 1118,
+        "qualityCalibrationEnd": 1131.3999999985099,
+        "threeSceneImportStart": 1131.3999999985099,
+        "threeSceneImportEnd": 1482.6000000014901,
+        "storeSceneConstructStart": 1482.7000000029802,
+        "storeSceneConstructEnd": 7358.20000000298,
+        "criticalTextureReady": 12544.5,
+        "storeInteractive": 12544.5
+      },
+      "qualityCalibrationMs": 13.399999998509884,
+      "storeSceneConstructMs": 5875.5,
+      "timeToInteractive": 12192.39999999851,
+      "timeToFullTextures": null,
+      "criticalReadyBeforeAllTextures": null
+    }
+  },
+  "pass": true,
+  "diag": {
+    "marks": {
+      "appStart": 352.1000000014901,
+      "credentialStart": 415.20000000298023,
+      "credentialEnd": 415.20000000298023,
+      "catalogStart": 415.20000000298023,
+      "catalogEnd": 438.1000000014901,
+      "sidecarsStart": 438.1000000014901,
+      "sidecarsEnd": 438.1000000014901,
+      "baseFontsStart": 438.1000000014901,
+      "brandPackStart": 438.29999999701977,
+      "brandPackEnd": 511.3999999985099,
+      "baseFontsEnd": 511.3999999985099,
+      "cjkFontsStart": 511.3999999985099,
+      "cjkFontsEnd": 562.1000000014901,
+      "qualityCalibrationStart": 1118,
+      "qualityCalibrationEnd": 1131.3999999985099,
+      "threeSceneImportStart": 1131.3999999985099,
+      "threeSceneImportEnd": 1482.6000000014901,
+      "storeSceneConstructStart": 1482.7000000029802,
+      "storeSceneConstructEnd": 7358.20000000298,
+      "criticalTextureReady": 12544.5,
+      "storeInteractive": 12544.5
+    },
+    "qualityCalibrationMs": 13.399999998509884,
+    "storeSceneConstructMs": 5875.5,
+    "timeToInteractive": 12192.39999999851,
+    "timeToFullTextures": null,
+    "criticalReadyBeforeAllTextures": null
+  },
+  "measuredAt": "2026-08-15T15:40:16.838Z",
+  "dev": {
+    "label": "dev",
+    "url": "http://127.0.0.1:1426/?demo=1&nogate=1",
+    "cold": {
+      "wallMs": 103398,
+      "diag": {
+        "marks": {
+          "appStart": 554,
+          "credentialStart": 573.5,
+          "credentialEnd": 573.5,
+          "catalogStart": 573.5,
+          "catalogEnd": 599.1999999955297,
+          "sidecarsStart": 599.1999999955297,
+          "sidecarsEnd": 599.1999999955297,
+          "baseFontsStart": 599.2999999970198,
+          "brandPackStart": 599.3999999985099,
+          "brandPackEnd": 664.5,
+          "baseFontsEnd": 664.5,
+          "qualityCalibrationStart": 15692.79999999702,
+          "qualityCalibrationEnd": 16717.19999999553,
+          "threeSceneImportStart": 16717.19999999553,
+          "threeSceneImportEnd": 17207.89999999851,
+          "storeSceneConstructStart": 17207.89999999851,
+          "storeSceneConstructEnd": 68253.19999999553,
+          "criticalTextureReady": 101558.09999999404,
+          "storeInteractive": 101558.09999999404
+        },
+        "qualityCalibrationMs": 1024.3999999985099,
+        "storeSceneConstructMs": 51045.29999999702,
+        "timeToInteractive": 101004.09999999404,
+        "timeToFullTextures": null,
+        "criticalReadyBeforeAllTextures": null
+      }
+    },
+    "warm": {
+      "wallMs": 12875,
+      "diag": {
+        "marks": {
+          "appStart": 1086.7999999970198,
+          "credentialStart": 1096.6999999955297,
+          "credentialEnd": 1096.6999999955297,
+          "catalogStart": 1096.6999999955297,
+          "catalogEnd": 1107.1000000014901,
+          "sidecarsStart": 1107.1000000014901,
+          "sidecarsEnd": 1107.1000000014901,
+          "baseFontsStart": 1107.1000000014901,
+          "brandPackStart": 1107.1999999955297,
+          "brandPackEnd": 1185.6999999955297,
+          "baseFontsEnd": 1185.6999999955297,
+          "qualityCalibrationStart": 2301.89999999851,
+          "qualityCalibrationEnd": 2311.6999999955297,
+          "threeSceneImportStart": 2311.7999999970198,
+          "threeSceneImportEnd": 2408.2999999970198,
+          "storeSceneConstructStart": 2408.2999999970198,
+          "storeSceneConstructEnd": 7230.60000000149,
+          "criticalTextureReady": 12307.89999999851,
+          "storeInteractive": 12307.89999999851
+        },
+        "qualityCalibrationMs": 9.799999997019768,
+        "storeSceneConstructMs": 4822.30000000447,
+        "timeToInteractive": 11221.10000000149,
+        "timeToFullTextures": null,
+        "criticalReadyBeforeAllTextures": null
+      }
+    }
+  },
+  "production": {
+    "label": "production",
+    "url": "http://127.0.0.1:1427/?demo=1&nogate=1",
+    "cold": {
+      "wallMs": 85756,
+      "diag": {
+        "marks": {
+          "appStart": 1029.1999999955297,
+          "credentialStart": 1053.5,
+          "credentialEnd": 1053.5,
+          "catalogStart": 1053.5,
+          "catalogEnd": 1085.7999999970198,
+          "sidecarsStart": 1085.7999999970198,
+          "sidecarsEnd": 1085.8999999985099,
+          "baseFontsStart": 1086,
+          "brandPackStart": 1086.1999999955297,
+          "brandPackEnd": 1150.1999999955297,
+          "baseFontsEnd": 1150.2999999970198,
+          "qualityCalibrationStart": 5054.19999999553,
+          "qualityCalibrationEnd": 5931.19999999553,
+          "threeSceneImportStart": 5931.19999999553,
+          "threeSceneImportEnd": 5986.19999999553,
+          "storeSceneConstructStart": 5986.19999999553,
+          "storeSceneConstructEnd": 53240.69999999553,
+          "criticalTextureReady": 77791.89999999851,
+          "storeInteractive": 77791.89999999851
+        },
+        "qualityCalibrationMs": 877,
+        "storeSceneConstructMs": 47254.5,
+        "timeToInteractive": 76762.70000000298,
+        "timeToFullTextures": null,
+        "criticalReadyBeforeAllTextures": null
+      }
+    },
+    "warm": {
+      "wallMs": 9465,
+      "diag": {
+        "marks": {
+          "appStart": 696.6999999955297,
+          "credentialStart": 704.7999999970198,
+          "credentialEnd": 704.7999999970198,
+          "catalogStart": 704.7999999970198,
+          "catalogEnd": 714.5,
+          "sidecarsStart": 714.6000000014901,
+          "sidecarsEnd": 714.6000000014901,
+          "baseFontsStart": 714.6000000014901,
+          "brandPackStart": 714.6000000014901,
+          "brandPackEnd": 746.8999999985099,
+          "baseFontsEnd": 746.8999999985099,
+          "qualityCalibrationStart": 1273.1999999955297,
+          "qualityCalibrationEnd": 1283.2999999970198,
+          "threeSceneImportStart": 1283.2999999970198,
+          "threeSceneImportEnd": 1311.2999999970198,
+          "storeSceneConstructStart": 1311.2999999970198,
+          "storeSceneConstructEnd": 5243.29999999702,
+          "criticalTextureReady": 9065,
+          "storeInteractive": 9065
+        },
+        "qualityCalibrationMs": 10.100000001490116,
+        "storeSceneConstructMs": 3932,
+        "timeToInteractive": 8368.30000000447,
+        "timeToFullTextures": null,
+        "criticalReadyBeforeAllTextures": null
+      }
+    }
+  }
+}

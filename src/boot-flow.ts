@@ -28,6 +28,7 @@ import {
 } from './membership-cards';
 import { buildDemoLibraries, buildDemoGames } from './demo-library';
 import { getSetting } from './settings';
+import { bootMark } from './perf/boot-diagnostics';
 import { isDemoMode } from './demo-mode';
 import { excludedLibraryIds } from './library-settings';
 import {
@@ -447,8 +448,14 @@ export function startDemoAndLoad() {
   // on first boot only, so a visitor who switches it off keeps it off.
   if (!localStorage.getItem('bb_games_enabled')) localStorage.setItem('bb_games_enabled', '1');
   deps.log('[System] Demo mode: stocking the store with a placeholder library (no media server).', 'system');
+  bootMark('credentialStart');
+  bootMark('credentialEnd');
+  bootMark('catalogStart');
   deps.setLibraries(buildDemoLibraries(900));
   deps.setGames(buildDemoGames(60));
+  bootMark('catalogEnd');
+  bootMark('sidecarsStart');
+  bootMark('sidecarsEnd');
   deps.launchStore();
 }
 
@@ -552,6 +559,9 @@ export async function checkCredentialsAndLoad() {
       });
 
       try {
+        bootMark('credentialStart');
+        bootMark('catalogStart');
+        bootMark('sidecarsStart');
         let libs: JellyfinLibrary[];
         [libs] = await Promise.all([
           Promise.race([
@@ -565,6 +575,9 @@ export async function checkCredentialsAndLoad() {
           d.loadGames()
         ]);
         if (stallTimer) { clearTimeout(stallTimer); stallTimer = null; }
+        bootMark('credentialEnd');
+        bootMark('catalogEnd');
+        bootMark('sidecarsEnd');
 
         if (escaped) return;
 
@@ -591,8 +604,7 @@ export async function checkCredentialsAndLoad() {
         // hid so the stocked rebuild happens behind the usual reveal.
         closeSetupTerminal({ keepCamera: true });
         showBootOverlay();
-        // Boot overlay stays up (see waitForFontsAndInit/initializeStoreScene) until
-        // every cover texture has loaded, so the store is never revealed mid-load.
+        // Boot overlay stays up until critical-ready (not every cover).
         d.launchStore();
       } catch (err: any) {
         if (stallTimer) { clearTimeout(stallTimer); stallTimer = null; }

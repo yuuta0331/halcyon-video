@@ -8,6 +8,8 @@ export type XrReferenceSpaceType = 'local-floor' | 'local' | 'viewer';
 export type XrSessionPhase =
   | 'idle'
   | 'requesting'
+  | 'binding'
+  | 'projecting'
   | 'active'
   | 'ending';
 
@@ -46,13 +48,51 @@ export interface XrLayerCapabilities {
 }
 
 export interface XrDiagnostics {
+  classification: 'UNIT' | 'DESKTOP_BROWSER' | 'IWER_EMULATED' | 'QUEST_HARDWARE';
   immersiveVrSupported: boolean;
+  iwerEmulated: boolean;
+  session: {
+    phase: XrSessionPhase;
+    immersiveVrSupported: boolean;
+    rendererPresenting: boolean;
+    referenceSpace: XrReferenceSpaceType | null;
+    sessionStartAt: number | null;
+  };
+  startup: {
+    requestSessionStart: number | null;
+    requestSessionEnd: number | null;
+    referenceSpaceStart: number | null;
+    referenceSpaceEnd: number | null;
+    targetFrameRateStart: number | null;
+    targetFrameRateEnd: number | null;
+    rendererSetSessionStart: number | null;
+    rendererSetSessionEnd: number | null;
+    firstAnimationCallbackAt: number | null;
+    firstDirectRenderStart: number | null;
+    firstDirectRenderEnd: number | null;
+    firstVisibleFrameAt: number | null;
+    lastCompletedStage: string | null;
+    lastError: string | null;
+  };
   layersFeature: boolean | 'unknown';
   layerCapabilities: XrLayerCapabilities;
   referenceSpace: XrReferenceSpaceType | null;
   targetHz: number | null;
   supportedHz: number[] | null;
   compositorUi: 'layer' | 'mesh-fallback';
+  layers: {
+    featureEnabled: boolean | 'unknown';
+    availableTypes: string[];
+    projectionLayer: boolean;
+    compositorUiPath: 'layer' | 'mesh-fallback';
+    meshFallbackPath: boolean;
+    maxRenderLayers?: number;
+    mediaLayer: {
+      available: boolean;
+      bound: boolean;
+      blocker: string | null;
+    };
+  };
   mediaLayer: {
     available: boolean;
     bound: boolean;
@@ -62,6 +102,18 @@ export interface XrDiagnostics {
     n8ao: boolean;
     postprocessing: 'none' | 'desktop';
     framebufferScale: number;
+  };
+  performance: {
+    targetHz: number | null;
+    supportedHz: number[] | null;
+    framebufferScale: number;
+    frameCount: number;
+    lastFrameDtMs: number | null;
+  };
+  flags: {
+    minimal: boolean;
+    layers: boolean;
+    emu: boolean;
   };
 }
 

@@ -871,11 +871,9 @@ export class StoreScene {
   public onEnterFlatMode?: () => void;
   public onBrowseConfirm?: () => void;
 
-  // Resolves once every cover in the store has settled (loaded or failed) after
-  // the initial low-res preload pass kicked off in buildAllMovieBoxes(). The
-  // caller uses this to hold the scene hidden/non-interactive until shelves are
-  // fully dressed instead of revealing a wall of gray placeholder spines.
+  // Critical-ready (P0 posters settled). All-cover settlement is allTexturesSettledPromise.
   public texturesReadyPromise: Promise<void> = Promise.resolve();
+  public allTexturesSettledPromise: Promise<void> = Promise.resolve();
   public onTextureLoadProgress?: (loaded: number, total: number) => void;
 
   // #62/#63 (supersedes #40): ceiling-hung genre nav signs and the per-section
@@ -5528,7 +5526,7 @@ export class StoreScene {
     // 3. Render scene
     perfTrace.end(SP_SIM);
     perfTrace.begin(SP_RENDER);
-    if (this.xr?.presenting) {
+    if (this.xr?.shouldSkipComposer()) {
       this.xr.preRender();
       this.renderer.render(this.scene, this.camera);
     } else if (this.composer) {

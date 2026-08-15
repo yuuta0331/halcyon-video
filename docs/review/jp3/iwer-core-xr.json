@@ -1,0 +1,413 @@
+{
+  "name": "CORE_XR",
+  "url": "http://127.0.0.1:17425/?demo=1&nogate=1&xrEmu=1&xrMinimal=1",
+  "boot": {
+    "overlayHidden": true,
+    "interactive": true,
+    "scene": true,
+    "xrTest": true,
+    "diag": {
+      "marks": {
+        "appStart": 674.0999999940395,
+        "credentialStart": 874.7999999970198,
+        "credentialEnd": 874.7999999970198,
+        "catalogStart": 874.7999999970198,
+        "catalogEnd": 897.8999999985099,
+        "sidecarsStart": 897.8999999985099,
+        "sidecarsEnd": 897.8999999985099,
+        "baseFontsStart": 898,
+        "brandPackStart": 898.1999999955297,
+        "brandPackEnd": 982.5999999940395,
+        "baseFontsEnd": 982.6999999955297,
+        "qualityCalibrationStart": 16002.29999999702,
+        "qualityCalibrationEnd": 16981.09999999404,
+        "threeSceneImportStart": 16981.09999999404,
+        "threeSceneImportEnd": 17460.09999999404,
+        "storeSceneConstructStart": 17460.09999999404,
+        "storeSceneConstructEnd": 68026.19999999553,
+        "criticalTextureReady": 96038.89999999851,
+        "storeInteractive": 96038.89999999851
+      },
+      "qualityCalibrationMs": 978.7999999970198,
+      "storeSceneConstructMs": 50566.10000000149,
+      "timeToInteractive": 95364.80000000447,
+      "timeToFullTextures": null,
+      "criticalReadyBeforeAllTextures": null
+    }
+  },
+  "pass": true,
+  "iwer": true,
+  "presenting": true,
+  "firstFrame": true,
+  "second": true,
+  "pre": {
+    "d0": {
+      "classification": "IWER_EMULATED",
+      "immersiveVrSupported": true,
+      "iwerEmulated": true,
+      "session": {
+        "phase": "idle",
+        "immersiveVrSupported": false,
+        "rendererPresenting": false,
+        "referenceSpace": null,
+        "sessionStartAt": null
+      },
+      "startup": {
+        "requestSessionStart": null,
+        "requestSessionEnd": null,
+        "referenceSpaceStart": null,
+        "referenceSpaceEnd": null,
+        "targetFrameRateStart": null,
+        "targetFrameRateEnd": null,
+        "rendererSetSessionStart": null,
+        "rendererSetSessionEnd": null,
+        "firstAnimationCallbackAt": null,
+        "firstDirectRenderStart": null,
+        "firstDirectRenderEnd": null,
+        "firstVisibleFrameAt": null,
+        "lastCompletedStage": null,
+        "lastError": null
+      },
+      "layersFeature": "unknown",
+      "layerCapabilities": {
+        "compositorUi": false,
+        "mediaLayer": false,
+        "projectionLayer": false,
+        "fallback": "mesh",
+        "types": []
+      },
+      "referenceSpace": null,
+      "targetHz": null,
+      "supportedHz": null,
+      "compositorUi": "mesh-fallback",
+      "layers": {
+        "featureEnabled": "unknown",
+        "availableTypes": [],
+        "projectionLayer": false,
+        "compositorUiPath": "mesh-fallback",
+        "meshFallbackPath": true,
+        "mediaLayer": {
+          "available": false,
+          "bound": false,
+          "blocker": "No XR session."
+        }
+      },
+      "mediaLayer": {
+        "available": false,
+        "bound": false,
+        "blocker": "No XR session."
+      },
+      "quality": {
+        "n8ao": true,
+        "postprocessing": "desktop",
+        "framebufferScale": 1
+      },
+      "performance": {
+        "targetHz": null,
+        "supportedHz": null,
+        "framebufferScale": 1,
+        "frameCount": 0,
+        "lastFrameDtMs": null
+      },
+      "flags": {
+        "minimal": true,
+        "layers": false,
+        "emu": true
+      }
+    },
+    "entered": {
+      "ok": true
+    },
+    "d1": {
+      "classification": "IWER_EMULATED",
+      "immersiveVrSupported": true,
+      "iwerEmulated": true,
+      "session": {
+        "phase": "active",
+        "immersiveVrSupported": true,
+        "rendererPresenting": true,
+        "referenceSpace": "local-floor",
+        "sessionStartAt": 103005
+      },
+      "startup": {
+        "requestSessionStart": 103004.09999999404,
+        "requestSessionEnd": 103005,
+        "referenceSpaceStart": 103005,
+        "referenceSpaceEnd": 103005.29999999702,
+        "targetFrameRateStart": 103005.29999999702,
+        "targetFrameRateEnd": 103005.69999999553,
+        "rendererSetSessionStart": 103005.89999999851,
+        "rendererSetSessionEnd": 103030.09999999404,
+        "firstAnimationCallbackAt": 103032.79999999702,
+        "firstDirectRenderStart": 103032.79999999702,
+        "firstDirectRenderEnd": 103032.79999999702,
+        "firstVisibleFrameAt": 103032.79999999702,
+        "lastCompletedStage": "firstVisibleFrameAt",
+        "lastError": null
+      },
+      "layersFeature": "unknown",
+      "layerCapabilities": {
+        "compositorUi": false,
+        "mediaLayer": false,
+        "projectionLayer": false,
+        "fallback": "mesh",
+        "types": []
+      },
+      "referenceSpace": "local-floor",
+      "targetHz": 72,
+      "supportedHz": [
+        72,
+        80,
+        90,
+        120
+      ],
+      "compositorUi": "mesh-fallback",
+      "layers": {
+        "featureEnabled": "unknown",
+        "availableTypes": [],
+        "projectionLayer": false,
+        "compositorUiPath": "mesh-fallback",
+        "meshFallbackPath": true,
+        "mediaLayer": {
+          "available": false,
+          "bound": false,
+          "blocker": "No XR session."
+        }
+      },
+      "mediaLayer": {
+        "available": false,
+        "bound": false,
+        "blocker": "No XR session."
+      },
+      "quality": {
+        "n8ao": true,
+        "postprocessing": "desktop",
+        "framebufferScale": 1
+      },
+      "performance": {
+        "targetHz": 72,
+        "supportedHz": [
+          72,
+          80,
+          90,
+          120
+        ],
+        "framebufferScale": 0.7,
+        "frameCount": 5,
+        "lastFrameDtMs": 1.1999999955296516
+      },
+      "flags": {
+        "minimal": true,
+        "layers": false,
+        "emu": true
+      }
+    },
+    "pose0": {
+      "x": 0,
+      "y": 1.600000023841858,
+      "z": 0,
+      "qx": 0,
+      "qy": 0,
+      "qz": 0,
+      "qw": 1
+    },
+    "pose1": {
+      "x": 0,
+      "y": 1.7000000476837158,
+      "z": 0.20000000298023224,
+      "qx": 0,
+      "qy": 0,
+      "qz": 0,
+      "qw": 1
+    },
+    "exited": {
+      "ok": true
+    },
+    "d2": {
+      "classification": "IWER_EMULATED",
+      "immersiveVrSupported": true,
+      "iwerEmulated": true,
+      "session": {
+        "phase": "idle",
+        "immersiveVrSupported": true,
+        "rendererPresenting": true,
+        "referenceSpace": "local-floor",
+        "sessionStartAt": null
+      },
+      "startup": {
+        "requestSessionStart": null,
+        "requestSessionEnd": null,
+        "referenceSpaceStart": null,
+        "referenceSpaceEnd": null,
+        "targetFrameRateStart": null,
+        "targetFrameRateEnd": null,
+        "rendererSetSessionStart": null,
+        "rendererSetSessionEnd": null,
+        "firstAnimationCallbackAt": null,
+        "firstDirectRenderStart": null,
+        "firstDirectRenderEnd": null,
+        "firstVisibleFrameAt": null,
+        "lastCompletedStage": null,
+        "lastError": null
+      },
+      "layersFeature": "unknown",
+      "layerCapabilities": {
+        "compositorUi": false,
+        "mediaLayer": false,
+        "projectionLayer": false,
+        "fallback": "mesh",
+        "types": []
+      },
+      "referenceSpace": "local-floor",
+      "targetHz": 72,
+      "supportedHz": [
+        72,
+        80,
+        90,
+        120
+      ],
+      "compositorUi": "mesh-fallback",
+      "layers": {
+        "featureEnabled": "unknown",
+        "availableTypes": [],
+        "projectionLayer": false,
+        "compositorUiPath": "mesh-fallback",
+        "meshFallbackPath": true,
+        "mediaLayer": {
+          "available": false,
+          "bound": false,
+          "blocker": "No XR session."
+        }
+      },
+      "mediaLayer": {
+        "available": false,
+        "bound": false,
+        "blocker": "No XR session."
+      },
+      "quality": {
+        "n8ao": true,
+        "postprocessing": "desktop",
+        "framebufferScale": 1
+      },
+      "performance": {
+        "targetHz": 72,
+        "supportedHz": [
+          72,
+          80,
+          90,
+          120
+        ],
+        "framebufferScale": 0.7,
+        "frameCount": 0,
+        "lastFrameDtMs": null
+      },
+      "flags": {
+        "minimal": true,
+        "layers": false,
+        "emu": true
+      }
+    },
+    "entered2": {
+      "ok": true
+    },
+    "d3": {
+      "classification": "IWER_EMULATED",
+      "immersiveVrSupported": true,
+      "iwerEmulated": true,
+      "session": {
+        "phase": "active",
+        "immersiveVrSupported": true,
+        "rendererPresenting": true,
+        "referenceSpace": "local-floor",
+        "sessionStartAt": 133447.79999999702
+      },
+      "startup": {
+        "requestSessionStart": 133447.59999999404,
+        "requestSessionEnd": 133447.79999999702,
+        "referenceSpaceStart": 133447.79999999702,
+        "referenceSpaceEnd": 133447.79999999702,
+        "targetFrameRateStart": 133447.79999999702,
+        "targetFrameRateEnd": 133448,
+        "rendererSetSessionStart": 133448.09999999404,
+        "rendererSetSessionEnd": 133482.79999999702,
+        "firstAnimationCallbackAt": 133511.79999999702,
+        "firstDirectRenderStart": 133511.79999999702,
+        "firstDirectRenderEnd": 133511.79999999702,
+        "firstVisibleFrameAt": 133511.79999999702,
+        "lastCompletedStage": "firstVisibleFrameAt",
+        "lastError": null
+      },
+      "layersFeature": "unknown",
+      "layerCapabilities": {
+        "compositorUi": false,
+        "mediaLayer": false,
+        "projectionLayer": false,
+        "fallback": "mesh",
+        "types": []
+      },
+      "referenceSpace": "local-floor",
+      "targetHz": 72,
+      "supportedHz": [
+        72,
+        80,
+        90,
+        120
+      ],
+      "compositorUi": "mesh-fallback",
+      "layers": {
+        "featureEnabled": "unknown",
+        "availableTypes": [],
+        "projectionLayer": false,
+        "compositorUiPath": "mesh-fallback",
+        "meshFallbackPath": true,
+        "mediaLayer": {
+          "available": false,
+          "bound": false,
+          "blocker": "No XR session."
+        }
+      },
+      "mediaLayer": {
+        "available": false,
+        "bound": false,
+        "blocker": "No XR session."
+      },
+      "quality": {
+        "n8ao": true,
+        "postprocessing": "desktop",
+        "framebufferScale": 1
+      },
+      "performance": {
+        "targetHz": 72,
+        "supportedHz": [
+          72,
+          80,
+          90,
+          120
+        ],
+        "framebufferScale": 0.7,
+        "frameCount": 39,
+        "lastFrameDtMs": 0.6999999955296516
+      },
+      "flags": {
+        "minimal": true,
+        "layers": false,
+        "emu": true
+      }
+    },
+    "exited2": {
+      "ok": true
+    },
+    "status": {
+      "classification": "IWER_EMULATED",
+      "iwer": true,
+      "sessionOffered": false,
+      "hasActiveSession": false,
+      "deviceName": "Meta Quest 3"
+    },
+    "native": true
+  },
+  "shots": [
+    "F:\\PG\\halcyon-video\\docs\\review\\jp3\\iwer-core-xr.png",
+    "F:\\PG\\halcyon-video\\docs\\review\\jp3\\iwer-second-entry.png"
+  ]
+}
