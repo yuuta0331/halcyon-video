@@ -12,6 +12,7 @@
 // stays under its line budget and the derivation stays unit-testable.
 import type { Movie, MediaStreamInfo, MediaPlaybackInfo } from './jellyfin';
 import { BB_OUTFIT, BB_ORBITRON } from './bundled-fonts';
+import { truncateText } from './i18n/text';
 
 // ----------------------------------------------------------------------------
 // Data derivation
@@ -292,10 +293,7 @@ function roundRectPath(ctx: CanvasRenderingContext2D, x: number, y: number, w: n
 
 // Truncate to fit maxW, appending an ellipsis. ctx.font must already be set.
 function fitText(ctx: CanvasRenderingContext2D, text: string, maxW: number): string {
-  if (ctx.measureText(text).width <= maxW) return text;
-  let t = text;
-  while (t.length > 1 && ctx.measureText(t + '…').width > maxW) t = t.slice(0, -1);
-  return t + '…';
+  return truncateText(text, maxW, (s) => ctx.measureText(s).width);
 }
 
 // The iconic silver DVD-Video / 4K-UltraHD pill in the header's top-left.

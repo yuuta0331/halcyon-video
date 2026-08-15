@@ -21,6 +21,7 @@ import {
   shelfCategoryCandidatesOf,
   extraCopiesCount,
 } from '../src/store-layout.ts';
+import { setLocale } from '../src/i18n/locale.ts';
 
 function mk(title: string, extra: Partial<Movie> = {}): Movie {
   return {
@@ -200,4 +201,26 @@ test('a collection gap carries no backstock copies, however well rated', () => {
   // assertion above is testing the flag and not a broken threshold.
   const owned = mk('Return of the Harness', { communityRating: 9.4, criticRating: 96 });
   assert.equal(extraCopiesCount(owned), 2);
+});
+
+test('English numeric titles keep pre-PR lexicographic shelf order', () => {
+  setLocale('en');
+  const movies = [mk('Movie 2'), mk('Movie 10')].sort(shelfTitleCompare);
+  assert.deepEqual(movies.map((m) => m.title), ['Movie 10', 'Movie 2']);
+  assert.equal(
+    shelfTitleCompare(mk('Movie 2'), mk('Movie 10')),
+    'movie 2'.localeCompare('movie 10'),
+  );
+});
+
+test('Japanese titles file in locale-aware order when ja is active', () => {
+  setLocale('ja');
+  try {
+    const movies = [mk('マトリックス'), mk('エイリアン'), mk('もののけ姫')].sort(shelfTitleCompare);
+    assert.equal(movies[0].title, 'エイリアン');
+    assert.ok(movies.map((m) => m.title).includes('もののけ姫'));
+    assert.equal(movies.length, 3);
+  } finally {
+    setLocale('en');
+  }
 });

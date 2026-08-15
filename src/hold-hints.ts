@@ -10,6 +10,8 @@
 //   • checkout — a tape is in hand → BACK, then the CHECKOUT counter cursor
 //   • dismiss  — a not-in-stock case → OK opens the ORDER / NOT INTERESTED choice
 
+import { t } from './i18n';
+
 interface HoldPill {
   el: HTMLDivElement;
   fill: HTMLDivElement;
@@ -56,8 +58,8 @@ function setShown(pill: HoldPill, show: boolean) {
 export function refreshHoldHints(state: { checkout: boolean; dismiss: boolean }) {
   if (!checkoutPill) {
     // Stacked with room for the 20px-type pills (each ~44px tall now).
-    checkoutPill = makePill('hold-checkout-hint', '📼 TAPE IN HAND — CHECK OUT: BACK, THEN THE COUNTER', 96);
-    dismissPill = makePill('hold-dismiss-hint', '🚫 NOT YOUR THING? OK, THEN “NOT INTERESTED”', 150);
+    checkoutPill = makePill('hold-checkout-hint', t('hold.checkout'), 96);
+    dismissPill = makePill('hold-dismiss-hint', t('hold.dismiss'), 150);
   }
   setShown(checkoutPill, state.checkout);
   setShown(dismissPill!, state.dismiss);

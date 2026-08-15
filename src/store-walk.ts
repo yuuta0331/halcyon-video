@@ -9,6 +9,7 @@ import { MovieSlot } from './store-layout';
 import { recordInspect } from './clerk-recommend';
 import { retailAudio } from './audio';
 import type { StoreScene } from './three-scene';
+import { t } from './i18n';
 
 // Max reach (ft) for walk-mode click interactions — beyond this a raycast
 // hit is out of arm's-plus-a-step range and the click is ignored.
@@ -253,7 +254,7 @@ export function toggleWalkAround(scene: StoreScene) {
 
     scene.updateWalkHUD();
     scene.updateCameraTarget();
-    scene.onConsoleLog("[System] Walk Mode deactivated. Returned to standard browsing.", "system");
+    scene.onConsoleLog(t('walk.deactivated'), "system");
   } else {
     // Enter walk around mode
     scene.savedModeBeforeWalk = scene.mode;
@@ -303,6 +304,6 @@ export function toggleWalkAround(scene: StoreScene) {
 
     scene.lastUpdateTime = performance.now();
     scene.updateWalkHUD();
-    scene.onConsoleLog("[System] Walk Mode activated. Press WASD to walk, Arrows/Mouse to look.", "system");
+    scene.onConsoleLog(t('walk.activated'), "system");
   }
 }

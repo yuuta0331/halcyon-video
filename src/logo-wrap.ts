@@ -29,6 +29,7 @@ import { HALCYON_TRIM, HALCYON_CREAM, HALCYON_BLUE, HALCYON_INK } from './logo-s
 import { drawLogo, getLogoFontString } from './logo-renderer';
 import { brandString } from './brand-pack';
 import { bundledFontsReady } from './bundled-fonts';
+import { wrapText } from './i18n/text';
 
 // ─── Print constants (mirror the scans / the overlay typists) ────────────────
 // Stock + ink per medium. The stock colors are LOAD-BEARING: the overlay pass
@@ -151,16 +152,7 @@ function fitArialPx(ctx: CanvasRenderingContext2D, text: string, basePx: number,
 
 // Greedy word wrap (measuring font must already be set on ctx).
 function wrapLines(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string[] {
-  const words = text.split(/\s+/).filter(Boolean);
-  const lines: string[] = [];
-  let cur = '';
-  for (const w of words) {
-    const test = cur ? cur + ' ' + w : w;
-    if (ctx.measureText(test).width <= maxWidth) cur = test;
-    else { if (cur) lines.push(cur); cur = w; }
-  }
-  if (cur) lines.push(cur);
-  return lines;
+  return wrapText(text, maxWidth, (s) => ctx.measureText(s).width);
 }
 
 // Spine barcode: print stripes stacked DOWN the spine (each stripe a short

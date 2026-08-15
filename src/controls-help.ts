@@ -13,6 +13,8 @@
 // to a no-op in activateSetting and builds the page via buildControlsHelpPanel
 // (same shape as the Store Brand panel's hooks).
 
+import { t } from './i18n';
+
 export const HELP_ROW_PREFIX = '__help__:';
 
 export interface ControlsHelpHooks {
@@ -40,96 +42,98 @@ interface HelpSection {
 
 // Remote-truthful ordering (review §4.5): the remote's whole vocabulary first,
 // then the in-store destinations it reaches, then the optional hardware.
-const HELP_SECTIONS: HelpSection[] = [
-  {
-    title: 'The Remote — arrows, OK and Back run everything',
-    rows: [
-      {
-        id: 'arrows', control: '◀ ▶ ▲ ▼', action: 'Browse the shelves',
-        hint: 'Left/Right walk the aisle · Up/Down change shelf rows.',
-      },
-      {
-        id: 'ok', control: 'OK', action: 'Pull a case / confirm',
-        hint: 'Inspecting: OK plays or rents it. On the back: pick a name.',
-      },
-      {
-        id: 'back', control: 'BACK', action: 'Step back out',
-        hint: 'Case → shelf → store view → sections. Nothing is locked.',
-      },
-      {
-        id: 'subnav', control: '◀ ▶ in the store view', action: 'Pick a section',
-        hint: 'The marker walks the store left to right · OK flies you there.',
-      },
-      {
-        id: 'subnavdisplays', control: '▼ in the store view', action: 'The displays',
-        hint: 'Endcaps, promo stands and bins · ▶ steps them · BACK comes up.',
-      },
-      {
-        id: 'tvpeek', control: '▲ in the store view', action: 'Ceiling TVs',
-        hint: '◀ ▶ change what’s playing · OK jumps to its case · ▼ returns.',
-      },
-    ],
-  },
-  {
-    title: 'At the counter',
-    rows: [
-      {
-        id: 'counter', control: 'Store view → CHECKOUT', action: 'Walk to the register',
-        hint: 'Back up to the store view, point at CHECKOUT, press OK.',
-      },
-      {
-        id: 'terminal', control: '◀ at the register', action: 'Manager terminal',
-        hint: 'The clerk’s CRT menu: settings, 2D mode, service, power.',
-      },
-      {
-        id: 'clerkcounter', control: '▲ at the register', action: 'Talk to the clerk',
-        hint: 'Ask what she recommends, search, or just chat. Esc ends it.',
-      },
-      {
-        id: 'tipjar', control: '▶ at the register', action: 'Tip jar',
-        hint: 'The tip card on the counter band, when the jar is out.',
-      },
-    ],
-  },
-  {
-    title: 'Keyboard extras',
-    rows: [
-      {
-        id: 'power', control: 'P', action: 'System menu',
-        hint: 'The register CRT’s menu as a full-screen page.',
-      },
-      {
-        id: 'search', control: '/', action: 'Search the catalog',
-        hint: 'Type at the clerk’s terminal; Enter jumps to the match.',
-      },
-      {
-        id: 'walk', control: 'F', action: 'Walk the store (WASD)',
-        hint: 'First-person stroll. F again returns to the shelves.',
-      },
-      {
-        id: 'carry', control: 'C · R · X', action: 'Carry shortcuts',
-        hint: 'C check out carried tapes · R put one back · X not interested.',
-      },
-      {
-        id: 'holds', control: 'Hold OK / hold ▼', action: 'Quick checkout / pass',
-        hint: 'Keyboard & gamepad only — the remote taps instead.',
-      },
-    ],
-  },
-  {
-    title: 'Gamepad',
-    rows: [
-      {
-        id: 'padface', control: 'A · B · Y · Start', action: 'OK · Back · Search · Menu',
-        hint: 'Standard pad mapping; d-pad and left stick both navigate.',
-      },
-      {
-        id: 'padshoulder', control: 'RB · X · LB', action: 'Walk · Checkout · Put back',
-        hint: 'Same jobs as keyboard F, C and R.',
-      },
-    ],
-  },
-];
+function helpSections(): HelpSection[] {
+  return [
+    {
+      title: t('help.remote.title'),
+      rows: [
+        {
+          id: 'arrows', control: '◀ ▶ ▲ ▼', action: t('help.arrows.action'),
+          hint: t('help.arrows.hint'),
+        },
+        {
+          id: 'ok', control: 'OK', action: t('help.ok.action'),
+          hint: t('help.ok.hint'),
+        },
+        {
+          id: 'back', control: 'BACK', action: t('help.back.action'),
+          hint: t('help.back.hint'),
+        },
+        {
+          id: 'subnav', control: '◀ ▶ in the store view', action: t('help.subnav.action'),
+          hint: t('help.subnav.hint'),
+        },
+        {
+          id: 'subnavdisplays', control: '▼ in the store view', action: t('help.subnavdisplays.action'),
+          hint: t('help.subnavdisplays.hint'),
+        },
+        {
+          id: 'tvpeek', control: '▲ in the store view', action: t('help.tvpeek.action'),
+          hint: t('help.tvpeek.hint'),
+        },
+      ],
+    },
+    {
+      title: t('help.counter.title'),
+      rows: [
+        {
+          id: 'counter', control: 'Store view → CHECKOUT', action: t('help.counter.action'),
+          hint: t('help.counter.hint'),
+        },
+        {
+          id: 'terminal', control: '◀ at the register', action: t('help.terminal.action'),
+          hint: t('help.terminal.hint'),
+        },
+        {
+          id: 'clerkcounter', control: '▲ at the register', action: t('help.clerkcounter.action'),
+          hint: t('help.clerkcounter.hint'),
+        },
+        {
+          id: 'tipjar', control: '▶ at the register', action: t('help.tipjar.action'),
+          hint: t('help.tipjar.hint'),
+        },
+      ],
+    },
+    {
+      title: t('help.keyboard.title'),
+      rows: [
+        {
+          id: 'power', control: 'P', action: t('help.power.action'),
+          hint: t('help.power.hint'),
+        },
+        {
+          id: 'search', control: '/', action: t('help.search.action'),
+          hint: t('help.search.hint'),
+        },
+        {
+          id: 'walk', control: 'F', action: t('help.walk.action'),
+          hint: t('help.walk.hint'),
+        },
+        {
+          id: 'carry', control: 'C · R · X', action: t('help.carry.action'),
+          hint: t('help.carry.hint'),
+        },
+        {
+          id: 'holds', control: 'Hold OK / hold ▼', action: t('help.holds.action'),
+          hint: t('help.holds.hint'),
+        },
+      ],
+    },
+    {
+      title: t('help.gamepad.title'),
+      rows: [
+        {
+          id: 'padface', control: 'A · B · Y · Start', action: t('help.padface.action'),
+          hint: t('help.padface.hint'),
+        },
+        {
+          id: 'padshoulder', control: 'RB · X · LB', action: t('help.padshoulder.action'),
+          hint: t('help.padshoulder.hint'),
+        },
+      ],
+    },
+  ];
+}
 
 /**
  * Build the Controls & Help reference into `container` (the page's
@@ -138,7 +142,7 @@ const HELP_SECTIONS: HelpSection[] = [
  * into the drawer's flat nav list so Up/Down (and the CRT paging) walk it.
  */
 export function buildControlsHelpPanel(container: HTMLElement, hooks: ControlsHelpHooks = {}): void {
-  for (const section of HELP_SECTIONS) {
+  for (const section of helpSections()) {
     const titleEl = document.createElement('div');
     titleEl.className = 'settings-group-title';
     titleEl.textContent = section.title;

@@ -59,6 +59,8 @@ The short answers, so you don't have to go looking for them.
 
 **Set it up:** [Manager terminal](#the-manager-terminal) · [Make it yours](#make-it-yours) · [2.5D mode](#25d-mode--the-same-store-for-a-raspberry-pi) · [Remote Play](#remote-play--the-store-in-your-pocket) · [Integrations](#integrations-at-a-glance)
 
+**Japanese edition (this fork):** [Localization, CJK font, and XR-ready platform seam](docs/japanese-foundation.md)
+
 ---
 
 ## What it is

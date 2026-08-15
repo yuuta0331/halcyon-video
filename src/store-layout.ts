@@ -6,6 +6,7 @@
 // stripping (see tests/shelf-order.test.ts).
 import type * as THREE from 'three';
 import type { Movie } from './jellyfin';
+import { compareText } from './i18n/text.ts';
 
 // Layout settings (standardized to feet: 1 unit = 1 foot)
 // THE canonical store-geometry facts (CLAUDE.md documents both for the shot
@@ -595,13 +596,13 @@ export function shelfFileKey(m: Movie): string {
 }
 
 export function shelfTitleCompare(a: Movie, b: Movie): number {
-  const byKey = shelfFileKey(a).localeCompare(shelfFileKey(b));
+  const byKey = compareText(shelfFileKey(a), shelfFileKey(b));
   if (byKey !== 0) return byKey;
   // Same filing key but different collections (or a loose title whose name
   // happens to match a collection's): keep each group contiguous.
   const collA = a.collectionName ?? '';
   const collB = b.collectionName ?? '';
-  if (collA !== collB) return collA.localeCompare(collB);
+  if (collA !== collB) return compareText(collA, collB);
   if (collA) {
     // Within one collection: chronological, the way a customer expects a
     // saga to read along the shelf.
@@ -610,7 +611,7 @@ export function shelfTitleCompare(a: Movie, b: Movie): number {
       return a.premiereDate.localeCompare(b.premiereDate);
     }
   }
-  return shelfSortTitle(a.title).localeCompare(shelfSortTitle(b.title));
+  return compareText(shelfSortTitle(a.title), shelfSortTitle(b.title));
 }
 
 // Every wall category a title's genre tags qualify it for, in shelving-priority

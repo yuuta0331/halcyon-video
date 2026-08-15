@@ -83,6 +83,9 @@ import {
 import { retailAudio } from './audio';
 import { BB_ARCHIVO_BLACK, bundledFontsReady } from './bundled-fonts';
 import { brandString, loadBrandPack } from './brand-pack';
+import { displayTitle, t } from './i18n';
+import { applyDocumentChrome, groupHint, groupLabel, hudHintForMode, inspectCaseHint } from './i18n/chrome';
+import { getLocale } from './i18n/locale';
 import type { StoreScene } from './three-scene';
 import { InputManager } from './input';
 import type { InputCallbacks } from './input';
@@ -687,22 +690,16 @@ function updateMovieHUD(movie: Movie | null) {
   if (hint) {
     if (isInspecting) {
       if (movie.game) {
-        hint.textContent = 'FLIP CASE  •  OK TO RENT & PLAY THIS GAME';
+        hint.textContent = inspectCaseHint('game');
       } else if (movie.discovery) {
-        hint.textContent = isRequestedDiscovery
-          ? 'FLIP CASE  •  ALREADY REQUESTED'
-          : 'FLIP CASE  •  NOT IN STOCK — OK TO ORDER IT OR PASS';
+        hint.textContent = inspectCaseHint(isRequestedDiscovery ? 'discoveryRequested' : 'discovery');
       } else if (movie.collectionGap) {
-        hint.textContent = isRequestedDiscovery
-          ? 'FLIP CASE  •  ON ORDER — COMING SOON'
-          : 'FLIP CASE  •  NOT IN STOCK — OK TO ORDER IT OR PASS';
+        hint.textContent = inspectCaseHint(isRequestedDiscovery ? 'gapRequested' : 'gap');
       } else {
-        hint.textContent = movie.comingSoon
-          ? 'FLIP CASE  •  COMING SOON — NOT YET AVAILABLE'
-          : 'FLIP CASE  •  OK TO PLAY  •  PICK A NAME ON THE BACK';
+        hint.textContent = inspectCaseHint(movie.comingSoon ? 'comingSoon' : 'stock');
       }
     } else {
-      hint.textContent = 'OK TO EXAMINE  •  BACK OUT  •  SETTINGS & HELP AT THE COUNTER';
+      hint.textContent = inspectCaseHint('browse');
     }
   }
 }
@@ -726,48 +723,18 @@ function updateHUDForMode(mode: string) {
   let text = '';
   switch (mode) {
     case 'library-select':
-      text = 'OK TO BROWSE THIS SECTION  •  BACK TO EXIT';
-      break;
     case 'overview':
-      // The jump index IS this view (store-subnav.ts) — say what its four
-      // directions do, since there is no free-look here to advertise any more.
-      text = '◀ ▶ PICK A SECTION  •  ▼ THE DISPLAYS  •  ▲ THE TVs  •  OK TO GO';
-      break;
     case 'genre-select':
-      // Genre picker is its own full overlay with its own chrome.
-      text = '';
-      break;
     case 'browse':
-      // T22: with a tape in hand, surface the route to the counter.
-      text = storeScene?.canHoldToCheckout()
-        ? 'OK TO EXAMINE  •  CHECK OUT: BACK, THEN THE COUNTER'
-        : 'OK TO EXAMINE  •  BACK OUT  •  SETTINGS & HELP AT THE COUNTER';
-      break;
     case 'inspect':
-      // T22: with carry mode on, the confirm takes the tape instead of playing.
-      text = storeScene?.carryMode
-        ? (storeScene.canHoldToCheckout()
-          ? 'OK TO TAKE IT  •  CHECK OUT: BACK, THEN THE COUNTER'
-          : 'OK TO TAKE IT  •  BACK TO THE SHELF')
-        : 'OK TO PLAY  •  BACK TO THE SHELF  •  PICK A NAME ON THE BACK';
-      break;
     case 'checkout':
-      // The Left press is the manager terminal's front door — say so here,
-      // standing at the very counter it lives on (UX pass 2026-08).
-      text = 'OK TO CHECK OUT  •  ◀ MANAGER TERMINAL  •  BACK TO BROWSE';
-      break;
     case 'backroom':
-      // T23: home with the rentals. Arrows pick a tape, OK reads/plays it,
-      // BACK tries the door (locked until the due-back time).
-      text = 'ARROWS PICK A TAPE  •  OK TO READ OR PLAY  •  BACK FOR THE DOOR';
-      break;
     case 'person-endcap':
-      text = 'OK TO GO TO THE MOVIE  •  BACK TO RETURN';
-      break;
     case 'walk-around':
-      // Desktop-only surface (walk mode needs a keyboard to enter at all) —
-      // the one hint that may keep its desktop vocabulary.
-      text = 'WASD TO WALK  •  MOUSE / ARROWS TO LOOK  •  F TO EXIT WALK MODE';
+      text = hudHintForMode(mode, {
+        carryMode: !!storeScene?.carryMode,
+        canHoldToCheckout: !!storeScene?.canHoldToCheckout(),
+      });
       break;
     default:
       text = '';
@@ -955,12 +922,12 @@ let settingsSubpage: string | null = null;
 
 /** One-line blurbs under each category row on the index page. */
 const GROUP_HINTS: Record<SettingGroup, string> = {
-  'Store Look': 'Theme, shelf arrangement, and store layout.',
-  'Store Brand': 'Design your own video-store logo and signage.',
-  'Playback': 'Audio language, captions, and candy delivery.',
-  'Video Games': 'Enable the game section and pick platforms.',
-  'Performance': 'Graphics quality, render mode, FPS cap and counter.',
-  'Connection': 'Jellyfin, Jellyseerr and Romm servers.',
+  get 'Store Look'() { return groupHint('Store Look'); },
+  get 'Store Brand'() { return groupHint('Store Brand'); },
+  get 'Playback'() { return groupHint('Playback'); },
+  get 'Video Games'() { return groupHint('Video Games'); },
+  get 'Performance'() { return groupHint('Performance'); },
+  get 'Connection'() { return groupHint('Connection'); },
 };
 
 /** One-line blurbs under each sub-page's "›" row on its group page. */
@@ -981,11 +948,11 @@ function generateSettingsDrawer() {
   const titleEl = document.querySelector('#settings-drawer-overlay .settings-title');
   if (titleEl) {
     titleEl.textContent =
-      settingsPage === 'Service' ? 'SERVICE MODE — STAFF ONLY'
-        : settingsPage === 'Controls' ? 'CONTROLS & HELP'
+      settingsPage === 'Service' ? t('settings.serviceTitle')
+        : settingsPage === 'Controls' ? t('settings.controlsHelp')
           : settingsSubpage ? settingsSubpage.toUpperCase()
-            : settingsPage ? settingsPage.toUpperCase()
-              : 'STORE SETTINGS';
+            : settingsPage ? groupLabel(settingsPage).toUpperCase()
+              : t('settings.title');
   }
 
   const makeRow = (key: string, label: string, hint: string | undefined, value: string, valueId?: string) => {
@@ -1080,13 +1047,13 @@ function generateSettingsDrawer() {
     const groupEl = document.createElement('div');
     groupEl.className = 'settings-group';
     for (const group of visibleGroups()) {
-      groupEl.appendChild(makeRow(SETTINGS_GROUP_PREFIX + group, group, GROUP_HINTS[group], '›'));
+      groupEl.appendChild(makeRow(SETTINGS_GROUP_PREFIX + group, groupLabel(group), GROUP_HINTS[group], '›'));
     }
     // Controls & Help (UX pass 2026-08): the controls reference, top-level so
     // a new user finds it before they need it.
     groupEl.appendChild(makeRow(
-      SETTINGS_GROUP_PREFIX + 'Controls', 'Controls & Help',
-      'What every button does — remote, keyboard, gamepad.', '›'));
+      SETTINGS_GROUP_PREFIX + 'Controls', t('settings.controlsHelp'),
+      t('settings.controlsHelpHint'), '›'));
     groupsEl.appendChild(groupEl);
 
     // Account (T17): not a settings-registry entry -- switching who's logged
@@ -1098,10 +1065,10 @@ function generateSettingsDrawer() {
       accountGroupEl.className = 'settings-group';
       const accountTitleEl = document.createElement('div');
       accountTitleEl.className = 'settings-group-title';
-      accountTitleEl.textContent = 'Account';
+      accountTitleEl.textContent = t('settings.account');
       accountGroupEl.appendChild(accountTitleEl);
       accountGroupEl.appendChild(
-        makeRow(SWITCH_MEMBER_KEY, 'Switch Member', 'Return to the membership card picker.', '')
+        makeRow(SWITCH_MEMBER_KEY, t('settings.switchMember'), t('settings.switchMemberHint'), '')
       );
       groupsEl.appendChild(accountGroupEl);
     }
@@ -1114,18 +1081,18 @@ function generateSettingsDrawer() {
     serviceGroupEl.className = 'settings-group';
     const serviceTitleEl = document.createElement('div');
     serviceTitleEl.className = 'settings-group-title';
-    serviceTitleEl.textContent = 'Advanced';
+    serviceTitleEl.textContent = t('settings.advanced');
     serviceGroupEl.appendChild(serviceTitleEl);
     serviceGroupEl.appendChild(makeRow(
-      SETTINGS_GROUP_PREFIX + 'Service', 'Service Mode (Manager Override)',
-      'Staff overrides and diagnostics — also on the counter CRT.', '›'));
+      SETTINGS_GROUP_PREFIX + 'Service', t('settings.serviceMode'),
+      t('settings.serviceModeHint'), '›'));
     groupsEl.appendChild(serviceGroupEl);
   } else {
     // One group's settings (or a sub-page / the service page), headed by a
     // Back row.
     const groupEl = document.createElement('div');
     groupEl.className = 'settings-group';
-    groupEl.appendChild(makeRow(SETTINGS_BACK_KEY, '‹ Back', 'Return to all settings.', ''));
+    groupEl.appendChild(makeRow(SETTINGS_BACK_KEY, t('settings.back'), t('settings.backHint'), ''));
     const appendDefRow = (def: SettingDef) => {
       if (def.kind === 'text' || def.kind === 'secret') {
         groupEl.appendChild(makeTextRow(def));
@@ -2172,15 +2139,15 @@ async function openSearchWithQuery(initialQuery: string) {
 // is pinned to line 0 (the query line) so it doesn't wander into the results.
 function updateSearchTerminal() {
   if (!storeScene) return;
-  const lines: string[] = [`SEARCH> ${searchQuery.toUpperCase()}`, ''];
+  const lines: string[] = [`${t('search.prompt')} ${searchQuery.toUpperCase()}`, ''];
   if (searchQuery.trim() === '') {
-    lines.push('AWAITING QUERY...');
+    lines.push(t('search.awaiting'));
   } else if (searchResults.length === 0) {
-    lines.push('NO MATCHES FOUND.');
+    lines.push(t('search.noMatches'));
   } else {
-    lines.push(`${searchResults.length} MATCH(ES):`);
+    lines.push(`${searchResults.length} ${t('search.matches')}`);
     searchResults.slice(0, 6).forEach((m, i) => {
-      lines.push(`${i === searchResultIndex ? '>' : ' '} ${m.title.toUpperCase().slice(0, 30)} (${m.year})`);
+      lines.push(`${i === searchResultIndex ? '>' : ' '} ${displayTitle(m.title)} (${m.year})`);
     });
   }
   storeScene.setTerminalText(lines, 0);
@@ -2749,6 +2716,10 @@ async function waitForFontsAndInit() {
   // build bakes a fallback in permanently. These are local bundle assets, so
   // the wait is a decode, not a fetch.
   await bundledFontsReady();
+  if (getLocale() === 'ja') {
+    const { cjkFontsReady } = await import('./i18n/cjk-font');
+    await cjkFontsReady();
+  }
   await initializeStoreScene();
 }
 
@@ -3511,6 +3482,7 @@ async function playExternally(path: string) {
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 async function main() {
+  applyDocumentChrome();
   // Also installs window.__fpsMeter and raises the FPS overlay if bb_fps_meter
   // (or ?fps=1) says so — see the tail of registerCoreSettings.
   registerCoreSettings();
