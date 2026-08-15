@@ -20,6 +20,7 @@ import { authenticateUser, buildUserAvatarUrl, type PublicUser } from './jellyfi
 import { getActiveTheme } from './themes';
 import { BB_ANTON, BB_ARCHIVO_BLACK } from './bundled-fonts';
 import { HALCYON_CREAM } from './logo-spec';
+import { t } from './i18n';
 
 export interface MembershipLoginSession {
   accessToken: string;
@@ -439,7 +440,7 @@ function shakeCard(index: number, message?: string): void {
   const card = cardEls[index];
   if (!card) return;
   const errEl = card.querySelector('.mc-back-error') as HTMLElement | null;
-  if (errEl) errEl.textContent = message || 'Incorrect password. Try again.';
+  if (errEl) errEl.textContent = message || t('member.badPassword');
   card.classList.remove('mc-shake');
   void card.offsetWidth; // restart the CSS animation
   card.classList.add('mc-shake');
@@ -462,7 +463,7 @@ async function attemptLogin(opts: OpenCardPickerOptions, user: PublicUser, passw
     card?.classList.remove('mc-loading');
     const msg = err?.message ?? (typeof err === 'string' ? err : String(err));
     opts.log?.(`[System] Membership card login failed: ${msg}`);
-    shakeCard(cardIndex, user.hasPassword ? 'Incorrect password. Try again.' : msg);
+    shakeCard(cardIndex, user.hasPassword ? t('member.badPassword') : msg);
   }
 }
 
@@ -576,7 +577,7 @@ export function openMembershipCardPicker(opts: OpenCardPickerOptions): void {
 
   const title = document.createElement('h2');
   title.className = 'mc-title';
-  title.textContent = "Who's Renting Tonight?";
+  title.textContent = t('member.who');
   overlayEl.appendChild(title);
 
   const row = document.createElement('div');
@@ -590,13 +591,13 @@ export function openMembershipCardPicker(opts: OpenCardPickerOptions): void {
 
   const hint = document.createElement('p');
   hint.className = 'mc-hint';
-  hint.textContent = 'Arrow keys to choose a card, Enter to select.';
+  hint.textContent = t('member.hint');
   overlayEl.appendChild(hint);
 
   const manualBtn = document.createElement('button');
   manualBtn.type = 'button';
   manualBtn.className = 'mc-manual-btn';
-  manualBtn.textContent = 'Enter a Different Server';
+  manualBtn.textContent = t('member.differentServer');
   manualBtn.addEventListener('click', () => {
     closeMembershipCardPicker();
     opts.onManualLogin();
@@ -608,7 +609,7 @@ export function openMembershipCardPicker(opts: OpenCardPickerOptions): void {
     demoBtn.type = 'button';
     demoBtn.className = 'mc-manual-btn';
     demoBtn.style.marginTop = '8px';
-    demoBtn.textContent = 'Try Demo Store (No Server Required)';
+    demoBtn.textContent = t('member.demo');
     demoBtn.addEventListener('click', () => {
       closeMembershipCardPicker();
       opts.onDemoMode?.();

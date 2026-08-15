@@ -56,7 +56,8 @@ import type { Movie } from '../jellyfin';
 import { CRT_BLACK, CRT_GOLD, CRT_INK, CRT_TEXT } from '../crt-theme';
 import { brandString } from '../brand-pack';
 import { crtPaintFont, ensureCjkForTexts } from '../i18n/canvas-font';
-import { containsCjk } from '../i18n/text';
+import { containsCjk, fitCrtLine } from '../i18n/text';
+import { t } from '../i18n';
 
 export class EntranceCheckout implements StoreFixture {
   // The counter's store-facing point Z (used by StoreScene to frame the checkout camera move).
@@ -936,10 +937,10 @@ export class EntranceCheckout implements StoreFixture {
     const lines = this.terminalLines ?? [
       'STORE #55746   GREEN BAY, WI',
       '',
-      'READY.',
+      t('terminal.ready'),
       '',
-      'PRESS / TO SEARCH CATALOG',
-      'AT COUNTER: LEFT = MANAGER MENU',
+      t('crt.idle.search'),
+      t('crt.idle.manager'),
       '',
       '>',
     ];
@@ -974,7 +975,10 @@ export class EntranceCheckout implements StoreFixture {
     const cursorIdx = this.terminalCursorLine ?? shown - 1;
     lines.slice(0, maxLines).forEach((line, i) => {
       const y = bodyTop + i * LINE_H;
-      const text = line.slice(0, 40);
+      const text = fitCrtLine(line, SAFE_W, (s) => {
+        ctx.font = crtPaintFont(FONT_PX, s);
+        return ctx.measureText(s).width;
+      });
       ctx.font = crtPaintFont(FONT_PX, text);
       ctx.fillText(text, PAD_X, y);
       if (i === cursorIdx && this.terminalCursorOn) {

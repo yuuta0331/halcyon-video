@@ -137,7 +137,9 @@ function wrapLatin(
   return lines;
 }
 
-/** Ellipsize to `maxWidth` using code points, not UTF-16 units. */
+/** Ellipsize to `maxWidth` using code points, not UTF-16 units.
+ *  The returned string always satisfies `measure(result) <= maxWidth`.
+ *  If even the ellipsis is too wide, the result is empty. */
 export function truncateText(
   text: string,
   maxWidth: number,
@@ -146,18 +148,38 @@ export function truncateText(
 ): string {
   if (measure(text) <= maxWidth) return text;
   const chars = Array.from(text);
-  while (chars.length > 1 && measure(chars.join('') + ellipsis) > maxWidth) {
+  while (chars.length > 0 && measure(chars.join('') + ellipsis) > maxWidth) {
     chars.pop();
   }
-  return chars.length ? chars.join('') + ellipsis : ellipsis;
+  if (chars.length > 0) return chars.join('') + ellipsis;
+  return measure(ellipsis) <= maxWidth ? ellipsis : '';
+}
+
+/** Historical English CRT column count. Latin lines still clip here. */
+export const CRT_COLUMNS = 40;
+
+/**
+ * One CRT body line.
+ *   Latin-only — the pre-i18n 40-column contract: code-point slice, no ellipsis.
+ *   CJK / mixed — measured pixel width via truncateText (ellipsis, code points).
+ * `measure` must use the same font stack the painter will fill with.
+ */
+export function fitCrtLine(
+  text: string,
+  maxWidth: number,
+  measure: (s: string) => number,
+  columns = CRT_COLUMNS,
+): string {
+  if (!containsCjk(text)) return Array.from(text).slice(0, columns).join('');
+  return truncateText(text, maxWidth, measure);
 }
 
 /**
  * Search-terminal / label display: Latin titles stay uppercased the way the
- * CRT already painted them; CJK titles are left intact (toUpperCase is a
- * no-op on kana/kanji and would still slice mid-emoji on mixed strings).
+ * CRT already painted them. CJK titles are left intact — pixel fitting is
+ * `fitCrtLine`'s job, not a character budget.
  */
 export function displayTitle(title: string, maxChars = 30): string {
-  const chars = Array.from(containsCjk(title) ? title : title.toUpperCase());
-  return chars.slice(0, maxChars).join('');
+  if (containsCjk(title)) return title;
+  return Array.from(title.toUpperCase()).slice(0, maxChars).join('');
 }

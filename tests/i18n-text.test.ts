@@ -5,7 +5,9 @@ import {
   canvasFontStack,
   compareText,
   containsCjk,
+  CRT_COLUMNS,
   displayTitle,
+  fitCrtLine,
   truncateText,
   wrapText,
 } from '../src/i18n/text.ts';
@@ -77,14 +79,83 @@ test('long Japanese titles truncate on code points', () => {
   const title = '非常に長い日本語の映画タイトルでellipsisが必要です';
   const out = truncateText(title, 8, byChars);
   assert.ok(out.endsWith('…'));
-  assert.ok(byChars(out) <= 9);
+  assert.ok(byChars(out) <= 8);
   assert.equal(truncateText('短い', 20, byChars), '短い');
 });
 
-test('displayTitle uppercases Latin and preserves Japanese', () => {
+test('truncateText never exceeds maxWidth on the measured path', () => {
+  const wide = (s: string) => Array.from(s).length * 2;
+  const ja = '非常に長い日本語の映画タイトル';
+  const mixed = 'The 七人の侍 and then a very long continuation';
+
+  const normal = truncateText(ja, 10, wide);
+  assert.ok(normal.endsWith('…'));
+  assert.ok(wide(normal) <= 10);
+
+  const mixedOut = truncateText(mixed, 12, wide);
+  assert.ok(mixedOut.endsWith('…'));
+  assert.ok(wide(mixedOut) <= 12);
+
+  assert.equal(truncateText('短い', 20, wide), '短い');
+  assert.ok(wide(truncateText('短い', 20, wide)) <= 20);
+
+  const onePlusEllipsis = truncateText(ja, 4, wide);
+  assert.equal(wide(onePlusEllipsis), 4);
+  assert.ok(Array.from(onePlusEllipsis).length === 2);
+  assert.ok(onePlusEllipsis.endsWith('…'));
+
+  assert.equal(truncateText(ja, 2, wide), '…');
+  assert.ok(wide(truncateText(ja, 2, wide)) <= 2);
+
+  assert.equal(truncateText(ja, 1, wide), '');
+  assert.ok(wide('') <= 1);
+
+  const pair = '𩸽あいうえおかきくけこ';
+  const clipped = truncateText(pair, 6, wide);
+  assert.ok(wide(clipped) <= 6);
+  const points = Array.from(clipped);
+  assert.ok(points.every((p) => {
+    const c = p.codePointAt(0)!;
+    return p.length === 2 || c < 0xD800 || c > 0xDFFF;
+  }), 'must not emit a lone UTF-16 surrogate');
+
+  for (const sample of [ja, mixed, pair, 'あ', 'The 侍', '']) {
+    for (const max of [0, 1, 2, 3, 4, 8, 12, 100]) {
+      const result = truncateText(sample, max, wide);
+      assert.ok(wide(result) <= max, `"${sample}" @ ${max} → "${result}"`);
+    }
+  }
+});
+
+test('displayTitle uppercases Latin and leaves Japanese for width-fitting', () => {
   assert.equal(displayTitle('back to the future', 20), 'BACK TO THE FUTURE');
   assert.equal(displayTitle('もののけ姫', 20), 'もののけ姫');
-  assert.equal(Array.from(displayTitle('あいうえおかきくけこさしすせそ', 5)).length, 5);
+  assert.equal(displayTitle('あいうえおかきくけこさしすせそ', 5), 'あいうえおかきくけこさしすせそ');
+});
+
+test('Latin CRT lines keep the 40-column contract without ellipsis', () => {
+  const measure = (s: string) => s.length * 10;
+  assert.equal(fitCrtLine('PRESS / TO SEARCH CATALOG', 400, measure), 'PRESS / TO SEARCH CATALOG');
+  assert.equal(fitCrtLine('A'.repeat(50), 400, measure), 'A'.repeat(CRT_COLUMNS));
+  assert.equal(fitCrtLine('A'.repeat(50), 400, measure).includes('…'), false);
+});
+
+test('Japanese CRT lines fit measured width and do not split surrogates', () => {
+  const wide = (s: string) => Array.from(s).length * 2;
+  const long = '非常に長い日本語の映画タイトルで画面からはみ出してはいけない';
+  const out = fitCrtLine(long, 10, wide);
+  assert.ok(wide(out) <= 10);
+  assert.ok(out.endsWith('…'));
+  const mixed = fitCrtLine('The 七人の侍 and then a very long continuation', 12, wide);
+  assert.ok(wide(mixed) <= 12);
+  const pair = '𩸽あいうえおかきくけこ';
+  const clipped = fitCrtLine(pair, 8, wide);
+  const points = Array.from(clipped);
+  assert.ok(points.every((p) => {
+    const c = p.codePointAt(0)!;
+    return p.length === 2 || c < 0xD800 || c > 0xDFFF;
+  }), 'must not emit a lone UTF-16 surrogate');
+  assert.ok(wide(clipped) <= 8);
 });
 
 test('English compareText preserves pre-PR localeCompare semantics', () => {

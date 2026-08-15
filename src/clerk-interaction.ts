@@ -1,6 +1,7 @@
 import type { Movie } from './jellyfin';
 import { recommend } from './clerk-recommend';
 import { brandString } from './brand-pack';
+import { t, tfill } from './i18n';
 
 /**
  * Clerk interaction layer (T14 Phase C).
@@ -49,11 +50,11 @@ export interface ClerkInteractionHooks {
 }
 
 const SMALL_TALK = [
-  '"Please rewind" — but honestly these are all digital now.',
-  'Friday nights get busy, so grab your picks early.',
-  "We just restocked the new releases wall by the register.",
-  "Membership's free — ask me and I'll set you up.",
-  "If you liked that one, the sequel's on the back wall.",
+  () => t('clerk.talk.0'),
+  () => t('clerk.talk.1'),
+  () => t('clerk.talk.2'),
+  () => t('clerk.talk.3'),
+  () => t('clerk.talk.4'),
 ];
 
 const STYLE_ID = 'clerk-interaction-styles';
@@ -92,7 +93,7 @@ export class ClerkInteraction {
 
     this.prompt = document.createElement('div');
     this.prompt.className = 'clerk-prompt';
-    this.prompt.innerHTML = `<span class="clerk-key">E</span> Talk to the clerk`;
+    this.prompt.innerHTML = `<span class="clerk-key">E</span> ${t('clerk.prompt')}`;
     document.body.appendChild(this.prompt);
 
     this.dialog = document.createElement('div');
@@ -253,13 +254,13 @@ export class ClerkInteraction {
     this.dialog.appendChild(this.speech(
       brandString('clerk-greeting', 'Hey there! Welcome to Halcyon. What can I help you find?')));
     const opts = this.optionList();
-    this.addOption(opts, '1', 'Looking for something specific', () => {
+    this.addOption(opts, '1', t('clerk.look'), () => {
       this.close();
       this.hooks.onSearch();
     });
-    this.addOption(opts, '2', 'What do you recommend?', () => this.renderRecommendation());
-    this.addOption(opts, '3', 'Just browsing', () => this.renderSmallTalk());
-    this.addOption(opts, 'Esc', 'Never mind', () => this.close());
+    this.addOption(opts, '2', t('clerk.recommend'), () => this.renderRecommendation());
+    this.addOption(opts, '3', t('clerk.browse'), () => this.renderSmallTalk());
+    this.addOption(opts, 'Esc', t('clerk.neverMind'), () => this.close());
     this.finishOptions(opts);
   }
 
@@ -289,29 +290,27 @@ export class ClerkInteraction {
     this.dialog.innerHTML = '';
     if (!rec) {
       this.dialog.appendChild(this.speech(
-        scoped
-          ? "This section's picked pretty clean right now — try me somewhere else."
-          : "Hmm, the shelves are looking bare — check back in a bit!"
+        scoped ? t('clerk.emptyScoped') : t('clerk.emptyBare')
       ));
     } else {
       const { movie, reason } = rec;
       const yr = movie.year ? ` (${movie.year})` : '';
       const lead = label
-        ? `If you're after ${label.toLowerCase()}, `
-        : 'Oh, ';
-      this.dialog.appendChild(this.speech(`${lead}you have to see "${movie.title}"${yr}. ${reason}`));
+        ? tfill('clerk.leadScoped', { label: label.toLowerCase() })
+        : t('clerk.leadOpen');
+      this.dialog.appendChild(this.speech(lead + tfill('clerk.mustSee', { title: movie.title, year: yr, reason })));
       this.hooks.onLog?.(`[Clerk] Recommends "${movie.title}"${yr} — ${reason}`);
     }
     const opts = this.optionList();
-    this.addOption(opts, '1', scoped ? 'Something else?' : 'Anything else?',
+    this.addOption(opts, '1', scoped ? t('clerk.somethingElse') : t('clerk.anythingElse'),
       () => (scoped ? this.renderRecommendation() : this.renderMenu()));
     if (scoped) {
-      this.addOption(opts, '2', 'Actually, let me search', () => {
+      this.addOption(opts, '2', t('clerk.search'), () => {
         this.close();
         this.hooks.onSearch();
       });
     }
-    this.addOption(opts, 'Esc', 'Thanks!', () => this.close());
+    this.addOption(opts, 'Esc', t('clerk.thanks'), () => this.close());
     this.finishOptions(opts);
   }
 
@@ -333,32 +332,32 @@ export class ClerkInteraction {
     const yr = movie.year ? ` (${movie.year})` : '';
     const requested = sug.requested || !!movie.discoveryRequested;
     const tail = requested
-      ? "It's already on order — keep an eye on the Coming Soon rack."
+      ? t('clerk.sugOrdered')
       : this.hooks.onRequest
-        ? 'Want me to put in an order for it?'
-        : 'Worth keeping an eye out for.';
+        ? t('clerk.sugOffer')
+        : t('clerk.sugWatch');
     this.dialog.innerHTML = '';
     this.dialog.appendChild(this.speech(
-      `Now, "${movie.title}"${yr} we don't have on the shelf yet — ${sug.reason} ${tail}`));
+      tfill('clerk.sugLead', { title: movie.title, year: yr, reason: sug.reason, tail })));
     this.hooks.onLog?.(`[Clerk] Suggests "${movie.title}"${yr} (Jellyseerr) — ${sug.reason}`);
     const opts = this.optionList();
     let key = 1;
     if (!requested && this.hooks.onRequest) {
-      this.addOption(opts, String(key++), 'Order it for me', () => this.requestSuggestion(sug));
+      this.addOption(opts, String(key++), t('clerk.order'), () => this.requestSuggestion(sug));
     }
-    this.addOption(opts, String(key++), 'Something else?', () => this.renderRecommendation());
-    this.addOption(opts, String(key++), 'Actually, let me search', () => {
+    this.addOption(opts, String(key++), t('clerk.somethingElse'), () => this.renderRecommendation());
+    this.addOption(opts, String(key++), t('clerk.search'), () => {
       this.close();
       this.hooks.onSearch();
     });
-    this.addOption(opts, 'Esc', 'Thanks!', () => this.close());
+    this.addOption(opts, 'Esc', t('clerk.thanks'), () => this.close());
     this.finishOptions(opts);
   }
 
   private async requestSuggestion(sug: ClerkSuggestion) {
     this.hooks.onBlip?.();
     this.dialog.innerHTML = '';
-    this.dialog.appendChild(this.speech('One sec, let me punch that in...'));
+    this.dialog.appendChild(this.speech(t('clerk.ordering')));
     this.optionActions.clear(); // no live options while the order is in flight
     const ok = await this.hooks.onRequest!(sug.movie).catch(() => false);
     if (!this.open) return; // player walked off while the order was in flight
@@ -367,27 +366,26 @@ export class ClerkInteraction {
     if (ok) {
       sug.requested = true;
       this.dialog.appendChild(this.speech(
-        `You got it — "${sug.movie.title}"${yr} is on order. It'll show up on the Coming Soon rack once it lands.`));
+        tfill('clerk.ordered', { title: sug.movie.title, year: yr })));
     } else {
-      this.dialog.appendChild(this.speech(
-        "Hm, the system's not taking orders right now. Come back and ask me again in a bit."));
+      this.dialog.appendChild(this.speech(t('clerk.orderFail')));
     }
     const opts = this.optionList();
-    this.addOption(opts, '1', 'Something else?', () => this.renderRecommendation());
-    this.addOption(opts, 'Esc', 'Thanks!', () => this.close());
+    this.addOption(opts, '1', t('clerk.somethingElse'), () => this.renderRecommendation());
+    this.addOption(opts, 'Esc', t('clerk.thanks'), () => this.close());
     this.finishOptions(opts);
   }
 
   private renderSmallTalk() {
     this.hooks.onBlip?.();
-    const line = SMALL_TALK[this.smallTalkIdx % SMALL_TALK.length];
+    const line = SMALL_TALK[this.smallTalkIdx % SMALL_TALK.length]();
     this.smallTalkIdx++;
     this.dialog.innerHTML = '';
     this.dialog.appendChild(this.speech(line));
     const opts = this.optionList();
-    this.addOption(opts, '1', 'Tell me more', () => this.renderSmallTalk());
-    this.addOption(opts, '2', 'Back', () => this.renderMenu());
-    this.addOption(opts, 'Esc', 'See ya', () => this.close());
+    this.addOption(opts, '1', t('clerk.tellMore'), () => this.renderSmallTalk());
+    this.addOption(opts, '2', t('clerk.back'), () => this.renderMenu());
+    this.addOption(opts, 'Esc', t('clerk.seeYa'), () => this.close());
     this.finishOptions(opts);
   }
 
@@ -396,7 +394,7 @@ export class ClerkInteraction {
     el.className = 'clerk-speech';
     const name = document.createElement('span');
     name.className = 'clerk-name';
-    name.textContent = 'CLERK';
+    name.textContent = t('clerk.name');
     // `text` may contain raw movie titles from Jellyfin — append it as a text
     // node (never innerHTML) so metadata markup can't inject script.
     el.append(name, text);

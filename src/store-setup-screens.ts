@@ -5,10 +5,12 @@
 // store-setup-flow.ts owns the wiring (camera dock, Jellyfin calls, typed-key
 // capture, persistence).
 //
-// Renderer contract: drawTerminal (entrance/index.ts) hard-clips lines at 40
-// characters and shows ~10 body rows under its banner, so every screen here
-// budgets 10 lines and pre-clips what matters (addresses clip from the LEFT —
-// the end of a URL is the part being typed).
+// Renderer contract: Latin lines still budget 40 columns (the English CRT
+// contract). CJK chrome is translated here and width-fitted again when
+// drawTerminal paints. Addresses clip from the LEFT — the end of a URL is
+// the part being typed.
+
+import { t, tfill, type MessageKey } from './i18n/index.ts';
 
 export type SetupKey = 'up' | 'down' | 'left' | 'right' | 'ok' | 'back';
 
@@ -176,8 +178,42 @@ function clipTail(text: string, max: number): string {
   return text.length <= max ? text : '…' + text.slice(-(max - 1));
 }
 
+function clipCols(text: string, max = 40): string {
+  return Array.from(text).slice(0, max).join('');
+}
+
 function sel(active: boolean, label: string): string {
   return `${active ? '>' : ' '} ${label}`;
+}
+
+const SETUP_STATUS: Record<string, MessageKey> = {
+  'LOOKING UP MEMBERSHIP CARDS...': 'setup.step.cards',
+  'WAITING FOR AUTHORIZATION...': 'setup.step.authWait',
+  'LOOKING UP YOUR SERVERS...': 'setup.step.servers',
+  'PULLING THE CATALOG LIST...': 'setup.step.catalog',
+  'CONTACTING DISTRIBUTOR...': 'setup.step.contact',
+  'RETRYING NOW...': 'setup.step.retry',
+  'TYPE THE SERVER ADDRESS FIRST.': 'setup.err.typeAddress',
+  'TYPE A MEMBER NAME FIRST.': 'setup.err.typeName',
+  'CARRY AT LEAST ONE LIBRARY.': 'setup.err.oneLibrary',
+  'NO CARD LIST HERE. SIGN IN BY NAME.': 'setup.err.noCards',
+  'NO ANSWER. CHECK THE ADDRESS + CORS.': 'setup.err.noAnswer',
+  'THAT CODE EXPIRED. TRY AGAIN.': 'setup.err.codeExpired',
+  'NO SERVERS ON THAT ACCOUNT. TYPE ONE.': 'setup.err.noServers',
+  'THE DISTRIBUTOR LISTS NO LIBRARIES.': 'setup.err.noLibraries',
+  'COULD NOT LIST LIBRARIES. RETRY.': 'setup.err.listFailed',
+  'CATALOG SYNC FAILED. TRY AGAIN.': 'setup.err.syncFailed',
+  'SIGN-IN REFUSED. CHECK NAME + PASSWORD.': 'setup.err.signInRefused',
+  'SIGN-IN FAILED. SERVER UNREACHABLE.': 'setup.err.signInFailed',
+};
+
+function setupStatus(raw: string): string {
+  const known = SETUP_STATUS[raw];
+  if (known) return t(known);
+  if (raw.startsWith('SIGNING IN ') && raw.endsWith('...')) {
+    return tfill('setup.step.signIn', { name: raw.slice(11, -3) });
+  }
+  return raw;
 }
 
 export function setupScreenLines(s: SetupScreen): { lines: string[]; cursorLine: number } {
@@ -188,53 +224,53 @@ export function setupScreenLines(s: SetupScreen): { lines: string[]; cursorLine:
       // a typical http://<lan-ip>:8096 shows whole instead of clipped.
       const addr = clipTail(s.address, s.row === 1 ? 24 : 25) + (s.row === 1 ? '_' : '');
       const lines = [
-        'NEW STORE SETUP — OPENING DAY',
+        t('setup.title'),
         '',
-        'BARE SHELVES, NO STOCK. PICK A',
-        'DISTRIBUTOR TO SUPPLY THIS STORE.',
+        t('setup.bare1'),
+        t('setup.bare2'),
         '',
-        sel(s.row === 0, `DISTRIBUTOR  ${provider}`),
-        sel(s.row === 1, `ADDRESS      ${addr}`),
-        sel(s.row === 2, 'CONNECT'),
-        sel(s.row === 3, 'TRY A DEMO STORE'),
-      ];
-      if (s.error) lines.push(s.error.slice(0, 40));
+        sel(s.row === 0, `${t('setup.distributor')}  ${provider}`),
+        sel(s.row === 1, `${t('setup.address')}      ${addr}`),
+        sel(s.row === 2, t('setup.connect')),
+        sel(s.row === 3, t('setup.demo')),
+      ].map((line) => clipCols(line));
+      if (s.error) lines.push(clipCols(setupStatus(s.error)));
       return { lines, cursorLine: 5 + s.row };
     }
     case 'plex-link': {
       const lines = [
-        'NEW STORE SETUP — OPENING DAY',
+        t('setup.title'),
         '',
-        'THE DISTRIBUTOR WANTS AN ACCOUNT',
-        'CODE. GO TO PLEX.TV/LINK AND',
-        'QUOTE THIS:',
+        t('setup.plex.want'),
+        t('setup.plex.code'),
+        t('setup.plex.quote'),
         '',
         `      ${s.code.toUpperCase()}`,
         '',
-        s.step.slice(0, 40),
-      ];
-      if (s.error) lines.push(s.error.slice(0, 40));
+        setupStatus(s.step),
+      ].map((line) => clipCols(line));
+      if (s.error) lines.push(clipCols(setupStatus(s.error)));
       return { lines, cursorLine: 6 };
     }
     case 'dialing':
       return {
         lines: [
-          'NEW STORE SETUP — OPENING DAY',
+          clipCols(t('setup.title')),
           '',
-          'DIALING DISTRIBUTOR...',
+          clipCols(t('setup.dialing')),
           clipTail(s.address, 40),
           '',
-          s.step.slice(0, 40),
+          clipCols(setupStatus(s.step)),
         ],
         cursorLine: 5,
       };
     case 'members':
       return {
         lines: [
-          'MEMBERSHIP CHECK',
+          clipCols(t('setup.members.title')),
           '',
-          `${s.count} MEMBERSHIP CARD(S) ON FILE.`,
-          'PICK YOURS ON THE COUNTER.',
+          clipCols(tfill('setup.members.count', { n: s.count })),
+          clipCols(t('setup.members.pick')),
         ],
         cursorLine: 3,
       };
@@ -242,17 +278,17 @@ export function setupScreenLines(s: SetupScreen): { lines: string[]; cursorLine:
       const user = clipTail(s.username, 20) + (s.row === 0 ? '_' : '');
       const pass = '*'.repeat(Math.min(s.password.length, 20)) + (s.row === 1 ? '_' : '');
       const lines = [
-        'MEMBERSHIP SIGN-IN',
+        t('setup.auth.title'),
         '',
-        'NO MEMBERSHIP CARDS ON FILE HERE.',
-        'SIGN IN BY NAME.',
+        t('setup.auth.none'),
+        t('setup.auth.byName'),
         '',
-        sel(s.row === 0, `MEMBER NAME   ${user}`),
-        sel(s.row === 1, `PASSWORD      ${pass}`),
-        sel(s.row === 2, 'SIGN IN'),
-        sel(s.row === 3, 'BACK'),
-      ];
-      if (s.error) lines.push(s.error.slice(0, 40));
+        sel(s.row === 0, `${t('setup.auth.member')}   ${user}`),
+        sel(s.row === 1, `${t('setup.auth.password')}      ${pass}`),
+        sel(s.row === 2, t('setup.auth.signIn')),
+        sel(s.row === 3, t('setup.auth.back')),
+      ].map((line) => clipCols(line));
+      if (s.error) lines.push(clipCols(setupStatus(s.error)));
       return { lines, cursorLine: 5 + s.row };
     }
     case 'libraries': {
@@ -266,48 +302,48 @@ export function setupScreenLines(s: SetupScreen): { lines: string[]; cursorLine:
       const visible = s.rows.slice(start, start + LIB_WINDOW);
       const carriedCount = s.rows.filter((r) => r.carried).length;
       const lines = [
-        "CHOOSE THIS STORE'S LIBRARIES",
-        'OK TICKS A BOX. AISLES BUILD FOR',
-        `EVERY LIBRARY CARRIED. (${carriedCount} OF ${s.rows.length})`,
-      ];
+        t('setup.libs.title'),
+        t('setup.libs.ok'),
+        tfill('setup.libs.every', { carried: carriedCount, total: s.rows.length }),
+      ].map((line) => clipCols(line));
       visible.forEach((r, i) => {
         const idx = start + i;
         lines.push(sel(!onOpen && idx === s.row, `[${r.carried ? 'X' : ' '}] ${r.name.toUpperCase().slice(0, 32)}`));
       });
       const openLineIdx = lines.length;
-      lines.push(sel(onOpen, s.error ? s.error : 'OPEN THE STORE'));
+      lines.push(sel(onOpen, s.error ? clipCols(setupStatus(s.error)) : t('setup.libs.open')));
       const cursorLine = onOpen ? openLineIdx : 3 + (s.row - start);
       return { lines, cursorLine };
     }
     case 'sync':
       return {
         lines: [
-          'CATALOG SYNC IN PROGRESS',
+          clipCols(t('setup.sync.title')),
           '',
-          s.stage.slice(0, 40),
-          s.pages > 0 ? `PAGES RECEIVED: ${s.pages}` : '',
+          clipCols(setupStatus(s.stage)),
+          s.pages > 0 ? clipCols(tfill('setup.sync.pages', { n: s.pages })) : '',
           '',
-          'A LARGE CATALOG TAKES A MINUTE.',
-          'THE STORE OPENS WHEN STOCK LANDS.',
+          clipCols(t('setup.sync.wait1')),
+          clipCols(t('setup.sync.wait2')),
         ],
         cursorLine: 2,
       };
     case 'arriving':
       return {
-        lines: ['FIRST SHIPMENT ARRIVING', '', 'STOCKING SHELVES...'],
+        lines: [clipCols(t('setup.arriving.title')), '', clipCols(t('setup.arriving.stock'))],
         cursorLine: 2,
       };
     case 'notice': {
       const lines = [
-        'DISTRIBUTOR NOT ANSWERING',
+        clipCols(t('setup.notice.title')),
         clipTail(s.address, 40),
-        s.detail.slice(0, 40),
+        clipCols(setupStatus(s.detail)),
         '',
-        sel(s.row === 0, 'RETRY NOW'),
-        sel(s.row === 1, 'CHANGE SERVER'),
-        sel(s.row === 2, 'TRY A DEMO STORE'),
+        clipCols(sel(s.row === 0, t('setup.notice.retry'))),
+        clipCols(sel(s.row === 1, t('setup.notice.change'))),
+        clipCols(sel(s.row === 2, t('setup.demo'))),
         '',
-        'RETRYING QUIETLY IN THE BACKGROUND.',
+        clipCols(t('setup.notice.quiet')),
       ];
       return { lines, cursorLine: 4 + s.row };
     }

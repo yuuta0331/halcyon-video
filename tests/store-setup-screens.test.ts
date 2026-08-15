@@ -15,6 +15,7 @@ import {
   setupScreenLines,
   type SetupScreen,
 } from '../src/store-setup-screens.ts';
+import { setLocale } from '../src/i18n/locale.ts';
 
 function lines(s: SetupScreen): string[] {
   return setupScreenLines(s).lines;
@@ -140,6 +141,19 @@ test('every screen honors the 40-column CRT clip', () => {
     for (const line of lines(s)) {
       assert.ok(line.length <= 40, `line over 40 cols: "${line}" (${line.length})`);
     }
+  }
+});
+
+test('Japanese setup chrome still honors the 40-column clip', () => {
+  setLocale('ja');
+  try {
+    const s = initialHomeScreen('http://tv:8096');
+    for (const line of setupScreenLines(s).lines) {
+      assert.ok(Array.from(line).length <= 40, line);
+    }
+    assert.match(setupScreenLines(s).lines[0], /新規開店/);
+  } finally {
+    setLocale('en');
   }
 });
 

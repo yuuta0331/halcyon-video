@@ -9,6 +9,7 @@ import { buildLibraryRows } from './flat-rows';
 import { initFlatNavigation, setLibraryFocus, setButtonFocus } from './flat-nav';
 import { beginFlatSession, endFlatSession, flatSignal } from './flat-lifecycle';
 import { brandString } from '../brand-pack';
+import { t, tfill } from '../i18n';
 
 
 let isNavInitialized = false;
@@ -121,7 +122,7 @@ export function bootFlatStore(
         <line x1="3" y1="6" x2="21" y2="6"></line>
         <line x1="3" y1="18" x2="21" y2="18"></line>
       </svg>
-      <span>Menu</span>
+      <span>${t('flat.menu')}</span>
       <svg class="flat-menu-chevron" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <polyline points="6 9 12 15 18 9"></polyline>
       </svg>
@@ -133,14 +134,14 @@ export function bootFlatStore(
           <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
           <line x1="12" y1="22.08" x2="12" y2="12"></line>
         </svg>
-        <span>3D Store Mode</span>
+        <span>${t('flat.mode3d')}</span>
       </button>
       <button class="flat-menu-item" data-action="settings">
         <svg class="flat-menu-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="3"></circle>
           <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.5 1z"></path>
         </svg>
-        <span>Store Settings</span>
+        <span>${t('flat.settings')}</span>
       </button>
       <button class="flat-menu-item" data-action="power">
         <svg class="flat-menu-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -148,7 +149,7 @@ export function bootFlatStore(
           <line x1="8" y1="21" x2="16" y2="21"></line>
           <line x1="12" y1="17" x2="12" y2="21"></line>
         </svg>
-        <span>System Control</span>
+        <span>${t('flat.system')}</span>
       </button>
       ${localStorage.getItem('jellyfin_url') ? `
       <button class="flat-menu-item" data-action="logout">
@@ -157,7 +158,7 @@ export function bootFlatStore(
           <polyline points="16 17 21 12 16 7"></polyline>
           <line x1="21" y1="12" x2="9" y2="12"></line>
         </svg>
-        <span>Switch Member</span>
+        <span>${t('flat.switchMember')}</span>
       </button>
       ` : ''}
     </div>
@@ -250,7 +251,7 @@ export function bootFlatStore(
 
   const gridTitle = document.createElement('h2');
   gridTitle.className = 'flat-section-title';
-  gridTitle.textContent = 'Select a Library';
+  gridTitle.textContent = t('flat.selectLibrary');
   content.appendChild(gridTitle);
 
   if (libraries.length === 0) {
@@ -258,8 +259,8 @@ export function bootFlatStore(
     emptyGrid.className = 'flat-library-empty-state';
     emptyGrid.innerHTML = `
       <span class="flat-library-empty-icon">🔌</span>
-      <h3 class="flat-library-empty-title">No Libraries Synced</h3>
-      <p class="flat-library-empty-text">Please open settings or reconnect to Jellyfin to synchronize your media libraries.</p>
+      <h3 class="flat-library-empty-title">${t('flat.noLibraries')}</h3>
+      <p class="flat-library-empty-text">${t('flat.noLibrariesHint')}</p>
     `;
     content.appendChild(emptyGrid);
   } else {
@@ -276,7 +277,7 @@ export function bootFlatStore(
 
       const aisleEl = document.createElement('span');
       aisleEl.className = 'flat-library-aisle';
-      aisleEl.textContent = `Aisle ${String(idx + 1).padStart(2, '0')}`;
+      aisleEl.textContent = tfill('flat.aisle', { n: String(idx + 1).padStart(2, '0') });
 
       const nameEl = document.createElement('h3');
       nameEl.className = 'flat-library-name';
@@ -284,7 +285,7 @@ export function bootFlatStore(
 
       const countEl = document.createElement('p');
       countEl.className = 'flat-library-count';
-      countEl.textContent = `${lib.movies.length} titles`;
+      countEl.textContent = tfill('flat.titles', { n: lib.movies.length });
 
       card.appendChild(aisleEl);
       card.appendChild(nameEl);
@@ -363,7 +364,7 @@ function loadLibrary(
 
   const backBtn = document.createElement('button');
   backBtn.className = 'flat-back-btn';
-  backBtn.textContent = '← Back to Libraries';
+  backBtn.textContent = t('flat.backLibraries');
   backBtn.addEventListener('click', () => {
     bootFlatStore(allLibraries, mountEl, activeGameMovies, activeDiscoveryMovies, lib.id);
   });
@@ -387,8 +388,8 @@ function loadLibrary(
     emptyState.className = 'flat-library-empty-state';
     emptyState.innerHTML = `
       <span class="flat-library-empty-icon">📼</span>
-      <h3 class="flat-library-empty-title">Empty Library</h3>
-      <p class="flat-library-empty-text">This library does not contain any titles yet. Connect media sources to sync content!</p>
+      <h3 class="flat-library-empty-title">${t('flat.emptyLibrary')}</h3>
+      <p class="flat-library-empty-text">${t('flat.emptyLibraryHint')}</p>
     `;
     contentEl.appendChild(emptyState);
     

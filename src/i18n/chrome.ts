@@ -29,6 +29,26 @@ export function groupHint(group: string): string {
   }
 }
 
+export function subpageLabel(name: string): string {
+  switch (name) {
+    case 'Building & Storefront': return t('subpage.building');
+    case 'Platforms': return t('subpage.platforms');
+    case 'Store Libraries': return t('subpage.libraries');
+    case 'Overhead TVs': return t('subpage.tvs');
+    default: return name;
+  }
+}
+
+export function subpageHint(name: string): string {
+  switch (name) {
+    case 'Building & Storefront': return t('hint.building');
+    case 'Platforms': return t('hint.platforms');
+    case 'Store Libraries': return t('hint.libraries');
+    case 'Overhead TVs': return t('hint.tvs');
+    default: return '';
+  }
+}
+
 export interface HudModeOpts {
   carryMode: boolean;
   canHoldToCheckout: boolean;
@@ -108,6 +128,80 @@ export function applyDocumentChrome(): void {
   setText('#btn-confirm-exit', t('exit.yes'));
   setText('#btn-confirm-cancel', t('exit.no'));
   setText('.exit-subdesc', t('exit.hint'));
+
+  setText('.login-title', t('login.title'));
+  setText('.login-subtitle', t('login.subtitle'));
+  setText('#login-backend-title', t('login.backend'));
+  setText('label[for="login-backend"]', t('login.serverType'));
+  setText('label[for="login-url"]', t('login.serverAddress'));
+  setText('label[for="login-user"]', t('login.user'));
+  setText('label[for="login-pass"]', t('login.pass'));
+  setText('#btn-plex-pin', t('login.plexPin'));
+  setText('#plex-pin-panel .input-group label', t('login.plexEnter'));
+  setText('#plex-pin-status', t('login.plexWait'));
+  setText('label[for="plex-server"]', t('login.plexServers'));
+  setText('#login-plex-signin > .column-desc', t('login.plexDesc'));
+  setAttr('#plex-pin-qr', 'alt', t('login.plexQr'));
+  setText('#btn-login-submit', t('login.connect'));
+  setText('#btn-demo-submit', t('login.demo'));
+  setText('.login-desc', t('login.desc'));
+  const loginCols = document.querySelectorAll('#login-overlay .login-columns > .login-column');
+  const loginDescKeys = ['login.backendDesc', 'login.seerrDesc', 'login.rommDesc'] as const;
+  const loginTitleKeys = ['login.backend', 'login.seerr', 'login.romm'] as const;
+  loginCols.forEach((col, i) => {
+    const descKey = loginDescKeys[i];
+    const titleKey = loginTitleKeys[i];
+    const desc = col.querySelector(':scope > .column-desc');
+    const title = col.querySelector('.column-title');
+    if (desc && descKey) desc.textContent = t(descKey);
+    if (title && titleKey) title.textContent = t(titleKey);
+  });
+  setText('label[for="login-jellyseerr-url"]', t('login.seerrUrl'));
+  setText('label[for="login-jellyseerr-key"]', t('login.seerrKey'));
+  setText('label[for="login-romm-url"]', t('login.rommUrl'));
+  setText('label[for="login-romm-key"]', t('login.rommKey'));
+
+  setText('.genre-ticket-sub', t('genre.select'));
+  setText('#version-picker-label', t('version.choose'));
+  setText('#candy-checkout-overlay .episode-card-label', t('candy.checkout'));
+  setText('.candy-title', t('candy.title'));
+  setText('.candy-desc', t('candy.desc'));
+  setText('label[for="candy-zip-input"]', t('candy.zip'));
+  setText('#btn-candy-order', t('candy.order'));
+  setText('#btn-candy-skip', t('candy.skip'));
+  setText('.walk-hud-title', t('walk.hudTitle'));
+  setText('.vp-exit-title', t('player.stopTitle'));
+  setText('.vp-exit-desc', t('player.stopDesc'));
+  setText('#vp-exit-yes', t('player.stopYes'));
+  setText('#vp-exit-no', t('player.keep'));
+  setAttr('#vp-back', 'aria-label', t('player.backStore'));
+  setAttr('#vp-back10', 'aria-label', t('player.back10'));
+  setAttr('#vp-playpause', 'aria-label', t('player.play'));
+  setAttr('#vp-fwd10', 'aria-label', t('player.fwd10'));
+  setAttr('#vp-mute', 'aria-label', t('player.mute'));
+  setAttr('#vp-volume-slider', 'aria-label', t('player.volume'));
+  setAttr('#vp-tracks', 'aria-label', t('player.tracks'));
+  setAttr('#vp-subtitles', 'aria-label', t('player.subs'));
+  setAttr('#vp-fullscreen', 'aria-label', t('player.fullscreen'));
+
+  const walkDescs = document.querySelectorAll('.walk-hud-desc');
+  const walkKeys: Array<'walk.hudWalk' | 'walk.hudLook' | 'walk.hudMouse' | 'walk.hudClick' | 'walk.hudExit'> = [
+    'walk.hudWalk', 'walk.hudLook', 'walk.hudMouse', 'walk.hudClick', 'walk.hudExit',
+  ];
+  walkDescs.forEach((el, i) => {
+    const key = walkKeys[i];
+    if (key) el.textContent = t(key);
+  });
+
+  const candyHint = document.querySelector('#candy-checkout-overlay .episode-card-hint');
+  if (candyHint) candyHint.textContent = t('candy.hint');
+  const versionHint = document.querySelector('#version-picker-overlay .episode-card-hint');
+  if (versionHint) versionHint.textContent = t('version.hint');
+}
+
+function setAttr(selector: string, attr: string, value: string): void {
+  const el = document.querySelector(selector);
+  if (el) el.setAttribute(attr, value);
 }
 
 function setText(selector: string, value: string): void {
