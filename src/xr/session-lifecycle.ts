@@ -1,7 +1,7 @@
 // Explicit XR session lifecycle. `active` is not set until projection
 // rendering is established; optional compositor UI starts even later.
 
-import type { XrSessionPhase } from './types';
+import type { XrSessionPhase } from './types.ts';
 
 export type XrStartupStage =
   | 'requestSessionStart'

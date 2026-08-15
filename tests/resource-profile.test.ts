@@ -13,6 +13,9 @@ import {
 import { PosterResidencyWindow, desktopPosterArrayBytes, estimatePosterArrayBytes } from '../src/poster-residency.ts';
 import { xrQualityPolicy } from '../src/xr/quality.ts';
 import { XR_TARGET_HZ } from '../src/xr/session-policy.ts';
+import { blankXrDiagnostics } from '../src/xr/diagnostics.ts';
+import { readXrFlags } from '../src/xr/flags.ts';
+import { gpuDiagnosticsSnapshot, setGpuLiveState } from '../src/xr/gpu-diagnostics.ts';
 
 test('URL flags distinguish bare, safe, and desktop quality', () => {
   assert.equal(readResourceFlags('?xrBare=1').bare, true);
@@ -114,6 +117,10 @@ test('residency window evicts P3 before P0 and promotes on acquire', () => {
   assert.equal(win.peek('a'), 0);
   assert.equal(win.peek('b'), null);
   assert.equal(win.peek('c'), 1);
+  const fourth = win.acquire('d', 'P1');
+  assert.equal(fourth.ok, false);
+  assert.equal(win.peek('c'), 1);
+  assert.equal(win.validateInvariants().ok, true);
 });
 
 test('XR_SAFE quality policy is a real lightweight graph', () => {
@@ -142,4 +149,57 @@ test('XR_SAFE estimated poster bytes do not use the driver layer ceiling', () =>
   const est = estimatePosterArrayBytes(profile.poster);
   assert.equal(est.physicalPosterSlots, 128);
   assert.ok(est.posterArrayCpuBytesEstimated < 20 * 1024 * 1024);
+});
+
+test('XR_SAFE diagnostic quality agrees with the resource policy', () => {
+  resetResourceProfileForTests();
+  setActiveResourceProfile(xrSafeProfile(blankGpuCapabilities({ maxTextures: 16 })));
+  const d = blankXrDiagnostics(readXrFlags('?xrSafe=1&xrEmu=1'));
+  assert.equal(d.quality.n8ao, false);
+  assert.equal(d.quality.postprocessing, 'none');
+  assert.equal(d.quality.framebufferScale, 0.5);
+  const gpu = gpuDiagnosticsSnapshot();
+  assert.equal(gpu.n8aoAllocated, false);
+  assert.equal(gpu.composerAllocated, false);
+  assert.equal(gpu.xrFramebufferScaleRequested, 0.5);
+  assert.equal(d.quality.n8ao, gpu.n8aoAllocated);
+  assert.equal(d.quality.framebufferScale, gpu.xrFramebufferScaleRequested);
+});
+
+test('GPU diagnostics expose residency invariants and fail-closed counts', () => {
+  resetResourceProfileForTests();
+  setActiveResourceProfile(xrSafeProfile(blankGpuCapabilities({ maxTextures: 16 })));
+  setGpuLiveState({
+    poster: {
+      catalogTitleCount: 2001,
+      physicalSlots: 128,
+      residentCount: 80,
+      freeCount: 48,
+      uniqueOwners: 80,
+      residentHighWaterMark: 90,
+      evictionCount: 12,
+      staleUploadDrops: 3,
+      residencyInvariantOk: true,
+      duplicatePhysicalOwners: 0,
+      freeOwnedCollisions: 0,
+      orphanMovieMappings: 0,
+      orphanSlotMappings: 0,
+      cpuBytes: 1,
+      gpuBytes: 1,
+      cacheBytes: 0,
+      cacheBudget: 1,
+      p0UniqueTitles: 40,
+      p1UniqueTitles: 80,
+      p2UniqueTitles: 100,
+      p3UniqueTitles: 200,
+      p0PlusP1UniqueTitles: 120,
+    },
+  });
+  const gpu = gpuDiagnosticsSnapshot();
+  assert.equal(gpu.posterPhysicalSlots, 128);
+  assert.equal(gpu.posterResidentTitles, 80);
+  assert.equal(gpu.posterResidencyInvariantOk, true);
+  assert.equal(gpu.posterDuplicatePhysicalOwners, 0);
+  assert.equal(gpu.p0UniqueTitles, 40);
+  assert.ok((gpu.p0UniqueTitles ?? 0) <= (gpu.posterPhysicalSlots ?? 0));
 });

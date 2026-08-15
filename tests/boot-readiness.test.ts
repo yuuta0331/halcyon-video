@@ -2,11 +2,14 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   classifySlotPriority,
+  capP0UniqueToBudget,
+  countPriorityUniques,
   criticalReadyFromCounts,
   DEFAULT_PRIORITY_CONTEXT,
   navigationPriority,
   posterPriorityNumber,
   revealMustNotWaitForAllTextures,
+  uniqueTitlePriority,
   xrUploadBudget,
   type PriorityContext,
 } from '../src/perf/store-readiness.ts';
@@ -88,5 +91,18 @@ test('construct profile records stages and top3 by cost', () => {
   assert.equal(snap.top3[0]?.name, 'expensive');
   assert.equal(snap.top3[1]?.name, 'mid');
   assert.ok(snap.totalMs >= 25);
+});
+
+test('P0 unique working set is capped to physical poster slots', () => {
+  const items = Array.from({ length: 300 }, (_, i) => ({
+    movieId: `m${i}`,
+    dist: i,
+    cls: 'P0' as const,
+  }));
+  const capped = capP0UniqueToBudget(uniqueTitlePriority(items), 128);
+  const counts = countPriorityUniques(capped);
+  assert.equal(counts.p0UniqueTitles, 128);
+  assert.ok(counts.p0UniqueTitles <= 128);
+  assert.ok(counts.p1UniqueTitles >= 1);
 });
 

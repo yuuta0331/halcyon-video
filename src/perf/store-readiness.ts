@@ -69,6 +69,81 @@ export function navigationPriority(current: PosterPriorityClass): PosterPriority
   return current;
 }
 
+const RANK: Record<PosterPriorityClass, number> = { P0: 0, P1: 1, P2: 2, P3: 3 };
+
+export interface PriorityTitleInput {
+  movieId: string;
+  dist: number;
+  cls: PosterPriorityClass;
+}
+
+export interface PriorityUniqueCounts {
+  p0UniqueTitles: number;
+  p1UniqueTitles: number;
+  p2UniqueTitles: number;
+  p3UniqueTitles: number;
+  p0PlusP1UniqueTitles: number;
+}
+
+/** Best (highest-priority, then nearest) class per unique title. */
+export function uniqueTitlePriority(
+  items: PriorityTitleInput[],
+): Map<string, { cls: PosterPriorityClass; dist: number }> {
+  const best = new Map<string, { cls: PosterPriorityClass; dist: number }>();
+  for (const item of items) {
+    const prev = best.get(item.movieId);
+    if (!prev) {
+      best.set(item.movieId, { cls: item.cls, dist: item.dist });
+      continue;
+    }
+    const betterClass = RANK[item.cls] < RANK[prev.cls];
+    const closerSame = item.cls === prev.cls && item.dist < prev.dist;
+    if (betterClass || closerSame) best.set(item.movieId, { cls: item.cls, dist: item.dist });
+  }
+  return best;
+}
+
+/**
+ * P0 is the initial visible working set and must fit in the physical window.
+ * Keep the nearest unique P0 titles up to `budget`; demote the rest to P1.
+ */
+export function capP0UniqueToBudget(
+  best: Map<string, { cls: PosterPriorityClass; dist: number }>,
+  budget: number,
+): Map<string, PosterPriorityClass> {
+  const out = new Map<string, PosterPriorityClass>();
+  const p0: Array<{ id: string; dist: number }> = [];
+  for (const [id, rec] of best) {
+    if (rec.cls === 'P0') p0.push({ id, dist: rec.dist });
+    else out.set(id, rec.cls);
+  }
+  p0.sort((a, b) => a.dist - b.dist || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+  const keep = Math.max(0, budget);
+  for (let i = 0; i < p0.length; i++) {
+    out.set(p0[i].id, i < keep ? 'P0' : 'P1');
+  }
+  return out;
+}
+
+export function countPriorityUniques(
+  map: Map<string, PosterPriorityClass>,
+): PriorityUniqueCounts {
+  let p0 = 0, p1 = 0, p2 = 0, p3 = 0;
+  for (const cls of map.values()) {
+    if (cls === 'P0') p0++;
+    else if (cls === 'P1') p1++;
+    else if (cls === 'P2') p2++;
+    else p3++;
+  }
+  return {
+    p0UniqueTitles: p0,
+    p1UniqueTitles: p1,
+    p2UniqueTitles: p2,
+    p3UniqueTitles: p3,
+    p0PlusP1UniqueTitles: p0 + p1,
+  };
+}
+
 export function criticalReadyFromCounts(input: {
   p0Total: number;
   p0Settled: number;

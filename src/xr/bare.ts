@@ -174,7 +174,14 @@ function buildScene(): void {
 async function posterResourceProbe(n: number) {
   const { textureArrayManager } = await import('../poster-textures');
   textureArrayManager.init(n, renderer ?? undefined);
+  textureArrayManager.resetBoundedWindowForProbe();
   return textureArrayManager.memorySnapshot();
+}
+
+async function posterResidencyProbe(n: number) {
+  const { textureArrayManager } = await import('../poster-textures');
+  textureArrayManager.init(n, renderer ?? undefined);
+  return textureArrayManager.populateResidencyWindow(n);
 }
 
 function onXrFrame(): void {
@@ -283,6 +290,8 @@ export async function startBareXr(): Promise<void> {
   };
   (window as unknown as { __posterResourceProbe?: (n: number) => Promise<unknown> }).__posterResourceProbe =
     posterResourceProbe;
+  (window as unknown as { __posterResidencyProbe?: (n: number) => Promise<unknown> }).__posterResidencyProbe =
+    posterResidencyProbe;
   publish();
 }
 

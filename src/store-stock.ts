@@ -19,6 +19,7 @@ import {
 } from './perf/store-readiness';
 import { constructStage } from './perf/construct-profile';
 import { setGpuLiveState } from './xr/gpu-diagnostics';
+import { bindBoundedPosterWindow, posterPriorityUniques, slotStreamingClass, titlePosterClass } from './store-poster-window';
 import { validateCaseFit, type CaseFitPair } from './layout-validator';
 import { retailAudio } from './audio';
 import {
@@ -108,7 +109,7 @@ function slotRentalHalfDepth(movie: Movie): number {
 }
 
 function assignSlotPosterIndex(scene: StoreScene, slot: MovieSlot): number {
-  const cls = classifySlotPriority(slot, {
+  const cls = titlePosterClass(slot.movie.id) ?? classifySlotPriority(slot, {
     ...DEFAULT_PRIORITY_CONTEXT,
     backWallUnitIdx: BACK_WALL_UNIT_IDX,
     selectedKey: `${scene.selectedLibraryIdx}_${scene.selectedUnitIdx}_front_${scene.selectedShelf}_${scene.selectedCol}`,
@@ -121,17 +122,33 @@ function assignSlotPosterIndex(scene: StoreScene, slot: MovieSlot): number {
 
 function publishPosterLiveState(): void {
   const mem = textureArrayManager.memorySnapshot();
+  const uniques = posterPriorityUniques();
   setGpuLiveState({
     poster: {
       catalogTitleCount: mem.catalogTitleCount,
       physicalSlots: mem.physicalSlots,
       residentCount: mem.residentCount,
+      freeCount: mem.freeCount,
+      uniqueOwners: mem.uniqueOwners,
+      residentHighWaterMark: mem.residentHighWaterMark,
+      evictionCount: mem.evictionCount,
+      staleUploadDrops: mem.staleUploadDrops,
+      residencyInvariantOk: mem.residencyInvariantOk,
+      duplicatePhysicalOwners: mem.duplicatePhysicalOwners,
+      freeOwnedCollisions: mem.freeOwnedCollisions,
+      orphanMovieMappings: mem.orphanMovieMappings,
+      orphanSlotMappings: mem.orphanSlotMappings,
       cpuBytes: mem.cpuBytes,
       gpuBytes: mem.gpuBytes,
       cacheBytes: posterPixelCache.byteSize + lowResCache.byteSize,
       cacheBudget: posterPixelCache.budget + lowResCache.budget,
       cacheHits: posterPixelCache.hits + lowResCache.hits,
       cacheMisses: posterPixelCache.misses + lowResCache.misses,
+      p0UniqueTitles: uniques.p0UniqueTitles,
+      p1UniqueTitles: uniques.p1UniqueTitles,
+      p2UniqueTitles: uniques.p2UniqueTitles,
+      p3UniqueTitles: uniques.p3UniqueTitles,
+      p0PlusP1UniqueTitles: uniques.p0PlusP1UniqueTitles,
     },
   });
 }
@@ -566,7 +583,9 @@ export function buildAllMovieBoxes(scene: StoreScene) {
     if (!sameMovie) scene.slotsByMovieId.set(slot.movie.id, (sameMovie = []));
     sameMovie.push(slot);
 
-    const texIdx = assignSlotPosterIndex(scene, slot);
+    // Bounded residency stamps real indices in bindBoundedPosterWindow after
+    // every slot exists, so P0 unique titles can be acquired first.
+    const texIdx = textureArrayManager.residencyBound ? 0 : assignSlotPosterIndex(scene, slot);
     
     const fIdxAttr = slot.frontMesh.geometry.getAttribute('aTextureIndex') as THREE.InstancedBufferAttribute;
     if (fIdxAttr) fIdxAttr.setX(slot.instanceIdx, texIdx);
@@ -956,6 +975,9 @@ export function buildAllMovieBoxes(scene: StoreScene) {
   // Slots are all built now, so the fit check can read real placements.
   validateCaseFitForStock(scene);
 
+  const allSlots = Array.from(scene.slotsByPosition.values());
+  bindBoundedPosterWindow(scene, allSlots);
+
   // Mark attributes as needing update so they are uploaded to GPU
   scene.unitSideFrontMeshMap.forEach(mesh => {
     const fIdxAttr = mesh.geometry.getAttribute('aTextureIndex') as THREE.InstancedBufferAttribute;
@@ -976,20 +998,22 @@ export function buildAllMovieBoxes(scene: StoreScene) {
 
   // 8. Progressive poster streaming: reveal on CRITICAL (P0) readiness.
   // Distant covers keep placeholder spines and continue in the background.
-  const allSlots = Array.from(scene.slotsByPosition.values());
   const total = allSlots.length;
   let loaded = 0;
-  const selectedKey = `${scene.selectedLibraryIdx}_${scene.selectedUnitIdx}_front_${scene.selectedShelf}_${scene.selectedCol}`;
-  const ctx = {
-    ...DEFAULT_PRIORITY_CONTEXT,
-    backWallUnitIdx: BACK_WALL_UNIT_IDX,
-    selectedKey,
-    selectedLibraryIdx: scene.selectedLibraryIdx,
-  };
   const groups: Record<PosterPriorityClass, MovieSlot[]> = { P0: [], P1: [], P2: [], P3: [] };
   for (const slot of allSlots) {
-    groups[classifySlotPriority(slot, ctx)].push(slot);
+    groups[slotStreamingClass(slot, scene)].push(slot);
   }
+  const uniqueByMovie = (slots: MovieSlot[]) => {
+    const seen = new Set<string>();
+    const out: MovieSlot[] = [];
+    for (const slot of slots) {
+      if (seen.has(slot.movie.id)) continue;
+      seen.add(slot.movie.id);
+      out.push(slot);
+    }
+    return out;
+  };
   const settle = (slots: MovieSlot[], priority: number) => {
     if (slots.length === 0) return Promise.resolve();
     return Promise.all(slots.map((slot) => new Promise<void>((resolve) => {
@@ -1001,14 +1025,22 @@ export function buildAllMovieBoxes(scene: StoreScene) {
     })));
   };
   scene.onTextureLoadProgress?.(0, total);
-  scene.texturesReadyPromise = settle(groups.P0, posterPriorityNumber('P0')).then(() => {
+  const p0Work = textureArrayManager.residencyBound ? uniqueByMovie(groups.P0) : groups.P0;
+  if (textureArrayManager.residencyBound) {
+    const u = posterPriorityUniques();
+    console.log(
+      `[posters] XR_SAFE P0 unique=${u.p0UniqueTitles} P1 unique=${u.p1UniqueTitles} ` +
+      `slots=${textureArrayManager.maxMovies} p0SettleJobs=${p0Work.length}`,
+    );
+  }
+  scene.texturesReadyPromise = settle(p0Work, posterPriorityNumber('P0')).then(() => {
     scene.warmupRuntimePrograms();
   });
   scene.allTexturesSettledPromise = (async () => {
     await scene.texturesReadyPromise;
-    await settle(groups.P1, posterPriorityNumber('P1'));
-    await settle(groups.P2, posterPriorityNumber('P2'));
-    await settle(groups.P3, posterPriorityNumber('P3'));
+    await settle(textureArrayManager.residencyBound ? uniqueByMovie(groups.P1) : groups.P1, posterPriorityNumber('P1'));
+    await settle(textureArrayManager.residencyBound ? uniqueByMovie(groups.P2) : groups.P2, posterPriorityNumber('P2'));
+    await settle(textureArrayManager.residencyBound ? uniqueByMovie(groups.P3) : groups.P3, posterPriorityNumber('P3'));
   })();
 
   // T25 #26 (superseded): the per-rented-title gold filler group is gone —
@@ -1041,7 +1073,12 @@ export function warmupRuntimePrograms(scene: StoreScene) {
     }
     const movie = firstWithPoster ?? scene.libraries[0]?.movies[0];
     if (!movie) { geo.dispose(); return; }
-    const warm = createProgramWarmupMaterials(movie, firstAnimated, firstSeries);
+    const xrSafe = scene.resourceProfile?.name === 'XR_SAFE';
+    const warm = createProgramWarmupMaterials(
+      movie,
+      xrSafe ? null : firstAnimated,
+      xrSafe ? null : firstSeries,
+    );
     // NOT renderer.compile()/compileAsync(): those compile against the
     // CANVAS output (srgb) with whatever clipping state is current, while
     // the scene actually renders into the composer's linear target
@@ -1058,11 +1095,15 @@ export function warmupRuntimePrograms(scene: StoreScene) {
     }
     // The checkout bag's glossy-plastic variant (map + alphaTest + clearcoat
     // + DoubleSide) otherwise compiles mid-checkout on its first draw.
-    const bagMat = scene.entrance?.getBagWarmupMaterial();
-    if (bagMat) {
-      const bagWarm = new THREE.Mesh(geo, bagMat);
-      bagWarm.frustumCulled = false;
-      warmScene.add(bagWarm);
+    // XR_SAFE has no composer/AO/probes; skip desktop-only bag + second-hero
+    // composites that cannot run in that graph.
+    if (!xrSafe) {
+      const bagMat = scene.entrance?.getBagWarmupMaterial();
+      if (bagMat) {
+        const bagWarm = new THREE.Mesh(geo, bagMat);
+        bagWarm.frustumCulled = false;
+        warmScene.add(bagWarm);
+      }
     }
     warmScene.position.set(11, -60, 0);
     scene.scene.add(warmScene);
@@ -1083,13 +1124,14 @@ export function warmupRuntimePrograms(scene: StoreScene) {
     // texture uploads and the first hero-visible composite (a ~50ms
     // GPU-pipeline blip even with all programs warm) — pay both binds here,
     // each with its own composite, exactly like two real selection moves.
-    const swapTo = scene.libraries[0]?.movies[1] ?? null;
+    const swapTo = xrSafe ? null : (scene.libraries[0]?.movies[1] ?? null);
     for (const bind of swapTo ? [movie, swapTo] : [movie]) {
       scene.ensureHeroCases(bind);
       if (scene.heroFrontMesh && scene.heroBackMesh) {
         scene.heroFrontMesh.visible = true;
         scene.heroBackMesh.visible = true;
-        scene.composer?.render();
+        if (scene.composer) scene.composer.render();
+        else scene.renderer.render(scene.scene, scene.camera);
       }
     }
     scene.hideHeroCases();

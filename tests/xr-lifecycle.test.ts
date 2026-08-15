@@ -255,7 +255,7 @@ test('session end during startup aborts enter; IWER UA is not Quest hardware', (
 
 test('reveal is wired to P0 critical-ready, not all-texture settlement', () => {
   const stock = readFileSync('src/store-stock.ts', 'utf8');
-  assert.match(stock, /texturesReadyPromise = settle\(groups\.P0/);
+  assert.match(stock, /texturesReadyPromise = settle\(p0Work/);
   assert.match(stock, /allTexturesSettledPromise/);
   const main = readFileSync('src/main.ts', 'utf8');
   const revealIdx = main.indexOf('scene.texturesReadyPromise.then');

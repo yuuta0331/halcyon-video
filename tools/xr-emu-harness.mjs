@@ -7,6 +7,11 @@ import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import puppeteer from 'puppeteer';
 
+import {
+  isAllowlisted,
+  isSamplerOrGlFatal,
+} from './xr-harness-log.mjs';
+
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const outDir = path.join(root, 'docs', 'review', 'jp3');
 const profileDir = fs.mkdtempSync(path.join(os.tmpdir(), 'halcyon-xr-puppeteer-'));
@@ -60,38 +65,6 @@ function killChild(child) {
   } else {
     child.kill('SIGTERM');
   }
-}
-
-function isDevProxyHttpError(text) {
-  return /HTTP 5\d\d\s+\S*\/dev-proxy(?:[/?#\s"]|$)/i.test(text);
-}
-
-function isAllowlisted(entry, log) {
-  const text = String(entry.text ?? '');
-  // Optional Jellyseerr/Romm sidecar: vite.config.ts integrationProxyPlugin.
-  // Demo catalog (`?demo=1`) does not require it; unconfigured/down sidecars
-  // surface as HTTP 500 on `/dev-proxy` plus Chrome's paired resource error.
-  if (isDevProxyHttpError(text)) return true;
-  if (
-    entry.type === 'error' &&
-    /Failed to load resource: the server responded with a status of 500/i.test(text) &&
-    log.some((e) => isDevProxyHttpError(String(e.text ?? '')))
-  ) {
-    return true;
-  }
-  return false;
-}
-
-function isSamplerOrGlFatal(entry) {
-  const text = String(entry.text ?? '');
-  return /Trying to use .*texture units? while (?:this GPU|GPU) supports only/i.test(text)
-    || /too many texture image units/i.test(text)
-    || /texture image units count exceeds/i.test(text)
-    || /CONTEXT_LOST_WEBGL/i.test(text)
-    || /webglcontextlost/i.test(text)
-    || /Could not compile (?:vertex|fragment) shader/i.test(text)
-    || /Error linking/i.test(text)
-    || /INVALID_OPERATION/i.test(text) && /texture/i.test(text);
 }
 
 function isSerious(entry) {

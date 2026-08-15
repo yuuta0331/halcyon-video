@@ -6,6 +6,12 @@ import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import puppeteer from 'puppeteer';
+import {
+  isAllowlisted,
+  isSamplerOrGlFatal,
+  populatedWindowImpossible,
+  residencyImpossible,
+} from './xr-harness-log.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const outDir = path.join(root, 'docs', 'review', 'jp3');
@@ -18,6 +24,11 @@ const consoleLog = [];
 function attachConsole(page) {
   page.on('console', (msg) => consoleLog.push({ type: msg.type(), text: msg.text() }));
   page.on('pageerror', (err) => consoleLog.push({ type: 'pageerror', text: String(err) }));
+  page.on('response', (res) => {
+    if (res.status() >= 500) {
+      consoleLog.push({ type: 'error', text: `HTTP ${res.status()} ${res.url()}` });
+    }
+  });
 }
 
 function redact(text) {
@@ -31,38 +42,6 @@ function killChild(child) {
   if (process.platform === 'win32') {
     spawn('taskkill', ['/pid', String(child.pid), '/T', '/F'], { shell: true, stdio: 'ignore' });
   } else child.kill('SIGTERM');
-}
-
-function isSamplerOrGlFatal(entry) {
-  const text = String(entry.text ?? '');
-  return /Trying to use .*texture units? while (?:this GPU|GPU) supports only/i.test(text)
-    || /too many texture image units/i.test(text)
-    || /texture image units count exceeds/i.test(text)
-    || /CONTEXT_LOST_WEBGL/i.test(text)
-    || /webglcontextlost/i.test(text)
-    || /Could not compile (?:vertex|fragment) shader/i.test(text)
-    || /Error linking/i.test(text);
-}
-
-function isDevProxyHttpError(text) {
-  return /HTTP 5\d\d\s+\S*\/dev-proxy(?:[/?#\s"]|$)/i.test(text);
-}
-
-function isAllowlisted(entry, log) {
-  const text = String(entry.text ?? '');
-  if (isDevProxyHttpError(text)) return true;
-  if (
-    entry.type === 'error' &&
-    /Failed to load resource: the server responded with a status of 500/i.test(text) &&
-    (log.some((e) => isDevProxyHttpError(String(e.text ?? '')))
-      || /Jellyseerr|dev-proxy|Unable to retrieve movie recommendations/i.test(JSON.stringify(log.slice(-30))))
-  ) {
-    return true;
-  }
-  if (entry.type === 'error' && /Failed to load resource: the server responded with a status of 500/i.test(text)) {
-    return true;
-  }
-  return false;
 }
 
 function unexpectedSerious() {
@@ -156,9 +135,14 @@ async function main() {
     const bareBoot = await waitReady(barePage, { bare: true });
     const bareXr = await enterAndWaitWorld(barePage);
     const probes = {};
+    const populated = {};
     for (const n of [200, 1000, 2000, 4000]) {
       probes[n] = await barePage.evaluate(async (count) => {
         const fn = window.__posterResourceProbe;
+        return fn ? fn(count) : { error: 'no probe' };
+      }, n);
+      populated[n] = await barePage.evaluate(async (count) => {
+        const fn = window.__posterResidencyProbe;
         return fn ? fn(count) : { error: 'no probe' };
       }, n);
     }
@@ -175,20 +159,27 @@ async function main() {
     });
     for (const n of [200, 1000, 2000, 4000]) {
       const probe = probes[n];
+      const pop = populated[n];
       evidence.scenarios.push({
         name: `XR_SAFE_${n}`,
         pass: bounded
           && typeof probe?.cpuBytes === 'number'
           && (probe.physicalSlots ?? 0) <= 256
           && probe.dualArrays === false
-          && probe.cpuBytes === probes[200]?.cpuBytes,
+          && probe.cpuBytes === probes[200]?.cpuBytes
+          && !populatedWindowImpossible(pop)
+          && (pop.residentCount ?? 0) <= (pop.physicalSlots ?? 0)
+          && (pop.uniqueOwners ?? 0) === (pop.residentCount ?? 0)
+          && (pop.residentHighWaterMark ?? 0) <= (pop.physicalSlots ?? 0),
         probe,
+        populated: pop,
       });
     }
     evidence.scenarios.push({
       name: 'POSTER_WINDOW',
-      pass: bounded,
+      pass: bounded && [200, 1000, 2000, 4000].every((n) => !populatedWindowImpossible(populated[n])),
       probes,
+      populated,
       bytes,
     });
     await barePage.close();
@@ -204,40 +195,64 @@ async function main() {
       const xr = window.__xrTest;
       const gpu0 = window.__gpuDiagnostics?.() ?? null;
       const before = window.storeScene?.xr?.rigPose ?? null;
-      xr?.setStick?.('left', 0, -1);
-      await new Promise((r) => setTimeout(r, 700));
-      xr?.setStick?.('left', 0, 0);
+      const walk = async (x, y, ms) => {
+        xr?.setStick?.('left', x, y);
+        await new Promise((r) => setTimeout(r, ms));
+        xr?.setStick?.('left', 0, 0);
+      };
+      await walk(0, -1, 800);
       xr?.setStick?.('right', 1, 0);
       await new Promise((r) => setTimeout(r, 400));
       xr?.setStick?.('right', 0, 0);
-      xr?.setStick?.('left', 1, 0);
-      await new Promise((r) => setTimeout(r, 500));
-      xr?.setStick?.('left', -1, 0);
-      await new Promise((r) => setTimeout(r, 500));
-      xr?.setStick?.('left', 0, 0);
+      await walk(1, 0, 700);
+      await walk(-1, 0, 700);
+      await walk(0, -1, 900);
+      await walk(1, 0, 800);
+      xr?.setStick?.('right', -1, 0);
+      await new Promise((r) => setTimeout(r, 400));
+      xr?.setStick?.('right', 0, 0);
       xr?.trigger?.('right', true);
       await new Promise((r) => setTimeout(r, 150));
       xr?.trigger?.('right', false);
       const after = window.storeScene?.xr?.rigPose ?? null;
       const gpu = window.__gpuDiagnostics?.() ?? null;
+      const xrDiag = window.__xrDiagnostics?.() ?? null;
       await xr?.exit?.();
-      return { before, after, gpu0, gpu };
+      return { before, after, gpu0, gpu, xrDiag };
     });
     const moved = locomotion.after && locomotion.before
       && (locomotion.after.x !== locomotion.before.x || locomotion.after.z !== locomotion.before.z);
+    const gpu = locomotion.gpu ?? storeXr.gpu;
+    const q = locomotion.xrDiag?.quality ?? storeXr.d?.quality;
+    const storeResidencyOk = !residencyImpossible(gpu)
+      && (gpu?.posterResidentTitles ?? 0) <= (gpu?.posterPhysicalSlots ?? 0)
+      && (gpu?.posterDuplicatePhysicalOwners ?? 0) === 0
+      && (gpu?.posterFreeOwnedCollisions ?? 0) === 0
+      && gpu?.posterResidencyInvariantOk !== false
+      && (gpu?.p0UniqueTitles ?? 0) <= (gpu?.posterPhysicalSlots ?? 0);
+    const qualityAgrees = q?.n8ao === false
+      && q?.postprocessing === 'none'
+      && q?.framebufferScale === 0.5
+      && gpu?.n8aoAllocated === false
+      && gpu?.composerAllocated === false
+      && gpu?.xrFramebufferScaleRequested === 0.5;
     evidence.scenarios.push({
       name: 'XR_SAFE_STORE',
       pass: !!storeXr.entered?.ok
         && storeXr.d?.startup?.firstWorldRenderCompletedAt != null
         && !!moved
-        && (storeXr.gpu?.posterPhysicalSlots ?? 0) <= 256
-        && (storeXr.gpu?.resourceProfile === 'XR_SAFE')
-        && storeXr.gpu?.composerAllocated === false
-        && storeXr.gpu?.n8aoAllocated === false
-        && (storeXr.gpu?.firstStoreXrRenderAt != null || storeXr.gpu?.xrFrameCount >= 3),
+        && (gpu?.posterPhysicalSlots ?? 0) <= 256
+        && (gpu?.resourceProfile === 'XR_SAFE')
+        && gpu?.composerAllocated === false
+        && gpu?.n8aoAllocated === false
+        && (gpu?.firstStoreXrRenderAt != null || gpu?.xrFrameCount >= 3)
+        && storeResidencyOk
+        && qualityAgrees,
       boot: storeBoot,
       xr: storeXr,
       locomotion,
+      storeResidencyOk,
+      qualityAgrees,
     });
     await storePage.close();
   } finally {
@@ -254,7 +269,10 @@ async function main() {
   const scenarioFailures = evidence.scenarios.filter((s) => !s.pass);
   const sampler = consoleLog.filter(isSamplerOrGlFatal);
   const unexpected = unexpectedSerious();
-  const pass = scenarioFailures.length === 0 && sampler.length === 0 && unexpected.length === 0;
+  const storeGpu = evidence.scenarios.find((s) => s.name === 'XR_SAFE_STORE')?.locomotion?.gpu
+    ?? evidence.scenarios.find((s) => s.name === 'XR_SAFE_STORE')?.xr?.gpu;
+  const impossible = residencyImpossible(storeGpu);
+  const pass = scenarioFailures.length === 0 && sampler.length === 0 && unexpected.length === 0 && !impossible;
   console.log(JSON.stringify({
     pass,
     scenarioFailures: scenarioFailures.length,

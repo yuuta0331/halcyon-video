@@ -5,8 +5,8 @@ import {
   activeGpuCapabilities,
   activeResourceProfile,
   type GpuCapabilities,
-} from '../perf/resource-profile';
-import { estimatePosterArrayBytes } from '../poster-residency';
+} from '../perf/resource-profile.ts';
+import { estimatePosterArrayBytes } from '../poster-residency.ts';
 
 export type ResourceSnapshotStage =
   | 'renderer-created'
@@ -49,6 +49,20 @@ export interface GpuDiagnostics {
   posterCatalogTitles: number | null;
   posterPhysicalSlots: number | null;
   posterResidentTitles: number | null;
+  posterFreeSlots: number | null;
+  posterResidencyInvariantOk: boolean | null;
+  posterDuplicatePhysicalOwners: number | null;
+  posterFreeOwnedCollisions: number | null;
+  posterOrphanMovieMappings: number | null;
+  posterOrphanSlotMappings: number | null;
+  posterResidentHighWaterMark: number | null;
+  posterEvictionCount: number | null;
+  posterStaleUploadDrops: number | null;
+  p0UniqueTitles: number | null;
+  p1UniqueTitles: number | null;
+  p2UniqueTitles: number | null;
+  p3UniqueTitles: number | null;
+  p0PlusP1UniqueTitles: number | null;
   posterArrayCpuBytesEstimated: number | null;
   posterArrayGpuBytesEstimated: number | null;
   posterCpuCacheBytes: number | null;
@@ -104,12 +118,27 @@ export interface GpuLiveState {
     catalogTitleCount: number;
     physicalSlots: number;
     residentCount: number;
+    freeCount?: number;
+    uniqueOwners?: number;
+    residentHighWaterMark?: number;
+    evictionCount?: number;
+    staleUploadDrops?: number;
+    residencyInvariantOk?: boolean | null;
+    duplicatePhysicalOwners?: number;
+    freeOwnedCollisions?: number;
+    orphanMovieMappings?: number;
+    orphanSlotMappings?: number;
     cpuBytes: number;
     gpuBytes: number;
     cacheBytes: number;
     cacheBudget: number;
     cacheHits?: number;
     cacheMisses?: number;
+    p0UniqueTitles?: number;
+    p1UniqueTitles?: number;
+    p2UniqueTitles?: number;
+    p3UniqueTitles?: number;
+    p0PlusP1UniqueTitles?: number;
   } | null;
 }
 
@@ -240,6 +269,20 @@ export function gpuDiagnosticsSnapshot(): GpuDiagnostics {
     posterCatalogTitles: poster?.catalogTitleCount ?? null,
     posterPhysicalSlots: poster?.physicalSlots ?? posterEst.physicalPosterSlots,
     posterResidentTitles: poster?.residentCount ?? null,
+    posterFreeSlots: poster?.freeCount ?? null,
+    posterResidencyInvariantOk: poster?.residencyInvariantOk ?? null,
+    posterDuplicatePhysicalOwners: poster?.duplicatePhysicalOwners ?? null,
+    posterFreeOwnedCollisions: poster?.freeOwnedCollisions ?? null,
+    posterOrphanMovieMappings: poster?.orphanMovieMappings ?? null,
+    posterOrphanSlotMappings: poster?.orphanSlotMappings ?? null,
+    posterResidentHighWaterMark: poster?.residentHighWaterMark ?? null,
+    posterEvictionCount: poster?.evictionCount ?? null,
+    posterStaleUploadDrops: poster?.staleUploadDrops ?? null,
+    p0UniqueTitles: poster?.p0UniqueTitles ?? null,
+    p1UniqueTitles: poster?.p1UniqueTitles ?? null,
+    p2UniqueTitles: poster?.p2UniqueTitles ?? null,
+    p3UniqueTitles: poster?.p3UniqueTitles ?? null,
+    p0PlusP1UniqueTitles: poster?.p0PlusP1UniqueTitles ?? null,
     posterArrayCpuBytesEstimated: poster?.cpuBytes ?? posterEst.posterArrayCpuBytesEstimated,
     posterArrayGpuBytesEstimated: poster?.gpuBytes ?? posterEst.posterArrayGpuBytesEstimated,
     posterCpuCacheBytes: poster?.cacheBytes ?? null,

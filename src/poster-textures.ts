@@ -20,7 +20,7 @@ import { perfTrace, perfSlot } from './perf-trace';
 import { xrUploadBudget, type PosterPriorityClass } from './perf/store-readiness';
 import { xrUploadPolicyState } from './perf/upload-policy';
 import { activeResourceProfile, isXrSafeProfile } from './perf/resource-profile';
-import { PosterResidencyWindow, estimatePosterArrayBytes } from './poster-residency';
+import { PosterResidencyWindow, estimatePosterArrayBytes, type PosterLease } from './poster-residency';
 import { pixelStorei } from './xr/gl-state';
 
 const SP_UPLOAD = perfSlot('texUploadMs');  // uploadTextureNow (initTexture + mipmaps)
@@ -583,6 +583,7 @@ class TextureArrayManager {
   public shelfHeight = 240;
   private residency: PosterResidencyWindow | null = null;
   private moviePriority = new Map<string, PosterPriorityClass>();
+  private staleUploadDrops = 0;
 
   public lowResArray: THREE.DataArrayTexture | null = null;
   public highResArray: THREE.DataArrayTexture | null = null;
@@ -663,6 +664,7 @@ class TextureArrayManager {
       this.maxMovies = profile.poster.physicalSlots;
       this.lowResBase = 0;
       this.residency = new PosterResidencyWindow(this.maxMovies);
+      this.staleUploadDrops = 0;
       this.lowResUploaded.clear();
       this.highResQueued.clear();
       posterLayersInvalid = false;
@@ -795,6 +797,7 @@ class TextureArrayManager {
       const prev = this.movieToIndex.get(movieId);
       this.movieToIndex.set(movieId, index);
       if (prev !== index) posterIndexNotify?.(movieId, index);
+      this.prunePriorityMeta();
       return index;
     }
     if (this.movieToIndex.has(movieId)) {
@@ -822,14 +825,29 @@ class TextureArrayManager {
   private afterEvict(movieId: string): void {
     const idx = this.movieToIndex.get(movieId);
     this.movieToIndex.delete(movieId);
+    this.moviePriority.delete(movieId);
     this.lowResUploaded.delete(idx ?? -1);
     this.highResQueued.delete(idx ?? -1);
     if (idx !== undefined && this.loadedFlags && this.loadedFlagsTexture) {
       this.loadedFlags[idx] = 0;
       this.loadedFlagsTexture.needsUpdate = true;
     }
-    posterIndexNotify?.(movieId, 0);
+    // Do not stamp aTextureIndex=0: slot 0 is a real physical layer. Collapse
+    // via hasArt()=false (cover scale 0) until this title is reacquired.
     posterLoadedNotify?.(movieId);
+  }
+
+  private captureLease(movieId: string, acquire: boolean): PosterLease | null {
+    if (!this.residencyBound || !this.residency) return null;
+    if (acquire) this.getIndex(movieId, true);
+    return this.residency.peekLease(movieId);
+  }
+
+  private prunePriorityMeta(): void {
+    if (!this.residencyBound || this.moviePriority.size <= this.maxMovies * 2) return;
+    for (const id of [...this.moviePriority.keys()]) {
+      if (!this.movieToIndex.has(id)) this.moviePriority.delete(id);
+    }
   }
 
   /** True once a title actually owns a layer (see getIndex's exhaustion path). */
@@ -875,18 +893,24 @@ class TextureArrayManager {
   // happened to hold. Resolving late means a stale task simply lands on the
   // current renderer, which is always the right one.
   public queueLowRes(_renderer: THREE.WebGLRenderer, movieId: string, pixelData: Uint8Array) {
-    const idx = this.getIndex(movieId, true);
-    if (!this.hasLayer(movieId)) return; // past the layer budget — no art for this one
-    if (this.residencyBound) {
-      if (this.lowResUploaded.has(idx)) return;
-      this.lowResUploaded.add(idx);
+    if (this.residencyBound && this.residency) {
+      const lease = this.captureLease(movieId, true);
+      if (!lease) return;
+      if (this.lowResUploaded.has(lease.index)) return;
+      this.lowResUploaded.add(lease.index);
       queueTextureUpload(() => {
+        if (!this.residency?.isLeaseCurrent(lease)) {
+          this.staleUploadDrops++;
+          return;
+        }
         const r = getUploadRenderer();
-        if (r) this.updateShelf(r, movieId, pixelData);
-        this.setHighResLoaded(movieId, true);
+        if (r) this.commitShelfLease(r, lease, pixelData);
+        this.setLoadedForLease(lease, 255);
       }, 'priority');
       return;
     }
+    const idx = this.getIndex(movieId, true);
+    if (!this.hasLayer(movieId)) return; // past the layer budget — no art for this one
     // In overflow mode the low-res array is the SECOND BANK, not a preview
     // tier: a high-bank title has no low-res layer to write (see POSTER_BANKS).
     if (this.isHighBank(idx) && this.lowResBase !== 0) return;
@@ -921,11 +945,27 @@ class TextureArrayManager {
   }
 
   public updateShelf(renderer: THREE.WebGLRenderer, movieId: string, pixelData: Uint8Array) {
+    if (this.residencyBound && this.residency) {
+      const lease = this.residency.peekLease(movieId);
+      if (!lease) return;
+      this.commitShelfLease(renderer, lease, pixelData);
+      return;
+    }
     const idx = this.getIndex(movieId, true);
     if (!this.hasLayer(movieId) || !this.highResArray) return;
     const pixels = shelfPixelsFromDecoded(pixelData, this.shelfWidth, this.shelfHeight);
     updateTextureArrayLayer(renderer, this.highResArray, idx, pixels);
     this.lowResUploaded.add(idx);
+  }
+
+  private commitShelfLease(renderer: THREE.WebGLRenderer, lease: PosterLease, pixelData: Uint8Array) {
+    if (!this.residency?.isLeaseCurrent(lease) || !this.highResArray) {
+      if (this.residency && !this.residency.isLeaseCurrent(lease)) this.staleUploadDrops++;
+      return;
+    }
+    const pixels = shelfPixelsFromDecoded(pixelData, this.shelfWidth, this.shelfHeight);
+    updateTextureArrayLayer(renderer, this.highResArray, lease.index, pixels);
+    this.lowResUploaded.add(lease.index);
   }
 
   public updateLowRes(renderer: THREE.WebGLRenderer, movieId: string, pixelData: Uint8Array) {
@@ -953,6 +993,12 @@ class TextureArrayManager {
   // black, until the next whole-array generateMipmap.)
   private setFlag(movieId: string, value: number, low: boolean) {
     if (!this.loadedFlags || !this.loadedFlagsTexture) return;
+    if (this.residencyBound && this.residency) {
+      const lease = this.residency.peekLease(movieId);
+      if (!lease) return;
+      this.setLoadedForLease(lease, value, low);
+      return;
+    }
     const idx = this.getIndex(movieId);
     if (!this.hasLayer(movieId)) return; // no layer, nothing to mark loaded
     // A low-res flip never downgrades an already-applied high-res (255) flag,
@@ -970,6 +1016,21 @@ class TextureArrayManager {
     textureStreamWake?.();
   }
 
+  private setLoadedForLease(lease: PosterLease, value: number, low = false) {
+    if (!this.residency?.isLeaseCurrent(lease)) {
+      this.staleUploadDrops++;
+      return;
+    }
+    if (!this.loadedFlags || !this.loadedFlagsTexture) return;
+    const idx = lease.index;
+    if (low && this.loadedFlags[idx] >= 255) return;
+    const wasUnpainted = this.loadedFlags[idx] === 0;
+    this.loadedFlags[idx] = value;
+    this.loadedFlagsTexture.needsUpdate = true;
+    if (wasUnpainted && value > 0) posterLoadedNotify?.(lease.movieId);
+    textureStreamWake?.();
+  }
+
   /**
    * Has ANY art landed for this title (low-res counts)? Non-allocating on
    * purpose: getIndex() would mint a layer for a title that has none, so this
@@ -979,6 +1040,7 @@ class TextureArrayManager {
   public hasArt(movieId: string): boolean {
     const idx = this.movieToIndex.get(movieId);
     if (idx === undefined || !this.loadedFlags) return false;
+    if (this.residency && this.residency.peek(movieId) !== idx) return false;
     return this.loadedFlags[idx] > 0;
   }
 
@@ -994,6 +1056,7 @@ class TextureArrayManager {
   public hasHighRes(movieId: string): boolean {
     const idx = this.movieToIndex.get(movieId);
     if (idx === undefined || !this.loadedFlags) return false;
+    if (this.residency && this.residency.peek(movieId) !== idx) return false;
     return this.loadedFlags[idx] >= 255;
   }
 
@@ -1053,6 +1116,7 @@ class TextureArrayManager {
   public getFallbackPixels(movieId: string): { data: Uint8Array; w: number; h: number } | null {
     const idx = this.movieToIndex.get(movieId);
     if (idx === undefined || !this.loadedFlags || this.loadedFlags[idx] === 0) return null;
+    if (this.residency && this.residency.peek(movieId) !== idx) return null;
     if (this.lowResArray) {
       const lowIdx = idx - this.lowResBase;
       if (lowIdx >= 0) {
@@ -1079,6 +1143,16 @@ class TextureArrayManager {
     catalogTitleCount: number;
     physicalSlots: number;
     residentCount: number;
+    freeCount: number;
+    uniqueOwners: number;
+    residentHighWaterMark: number;
+    evictionCount: number;
+    staleUploadDrops: number;
+    residencyInvariantOk: boolean | null;
+    duplicatePhysicalOwners: number;
+    freeOwnedCollisions: number;
+    orphanMovieMappings: number;
+    orphanSlotMappings: number;
     shelfWidth: number;
     shelfHeight: number;
     cpuBytes: number;
@@ -1096,16 +1170,63 @@ class TextureArrayManager {
     const cpu = layerBytes(this.highResArray) + (
       this.lowResArray && this.lowResArray !== this.highResArray ? layerBytes(this.lowResArray) : 0
     );
+    const inv = this.residency?.validateInvariants() ?? null;
     return {
       catalogTitleCount: this.catalogTitleCount,
       physicalSlots: this.maxMovies,
       residentCount: this.residency?.residentCount ?? this.movieToIndex.size,
+      freeCount: this.residency?.freeCount ?? Math.max(0, this.maxMovies - this.movieToIndex.size),
+      uniqueOwners: this.residency?.uniquePhysicalOwners() ?? this.movieToIndex.size,
+      residentHighWaterMark: this.residency?.residentHighWaterMark ?? this.movieToIndex.size,
+      evictionCount: this.residency?.evictionCount ?? 0,
+      staleUploadDrops: this.staleUploadDrops,
+      residencyInvariantOk: inv ? inv.ok : null,
+      duplicatePhysicalOwners: inv?.duplicateOwners ?? 0,
+      freeOwnedCollisions: inv?.freeOwnedCollisions ?? 0,
+      orphanMovieMappings: inv?.orphanMovieMappings ?? 0,
+      orphanSlotMappings: inv?.orphanSlotMappings ?? 0,
       shelfWidth: this.shelfWidth,
       shelfHeight: this.shelfHeight,
       cpuBytes: cpu,
       gpuBytes: Math.round(cpu * 4 / 3),
       dualArrays: !this.residencyBound,
     };
+  }
+
+  public resetBoundedWindowForProbe(): void {
+    if (!this.residencyBound || !this.residency) return;
+    this.residency = new PosterResidencyWindow(this.maxMovies);
+    this.movieToIndex.clear();
+    this.moviePriority.clear();
+    this.staleUploadDrops = 0;
+    this.lowResUploaded.clear();
+    this.highResQueued.clear();
+    if (this.loadedFlags) this.loadedFlags.fill(0);
+  }
+  public populateResidencyWindow(logicalCount: number) {
+    this.resetBoundedWindowForProbe();
+    const classes: PosterPriorityClass[] = ['P0', 'P1', 'P2', 'P3'];
+    for (let i = 0; i < logicalCount; i++) {
+      const id = `probe-${i}`;
+      const cls = classes[i % 4];
+      this.notePriority(id, cls);
+      this.getIndex(id, true);
+    }
+    return this.memorySnapshot();
+  }
+
+  /** Test-only: replay a captured lease as if a late decode finished. */
+  public debugCommitLease(lease: PosterLease, loadedValue = 255): boolean {
+    if (!this.residency?.isLeaseCurrent(lease)) {
+      this.staleUploadDrops++;
+      return false;
+    }
+    this.setLoadedForLease(lease, loadedValue);
+    return true;
+  }
+
+  public debugPeekLease(movieId: string): PosterLease | null {
+    return this.residency?.peekLease(movieId) ?? null;
   }
 }
 

@@ -8,7 +8,8 @@ Do not put Jellyfin/Plex URLs, usernames, tokens, or library titles in this fold
 | File | What it shows |
 |---|---|
 | `README.md` | This index |
-| `hardware.md` | Quest smoke log (**FAILED** at `73abd4c` and `ac94d1d`; Round 3 pending) |
+| `hardware.md` | Quest smoke log (**FAILED** at `73abd4c` and `ac94d1d`; Round 3 HEAD `b480993` pending; Round 4 pending) |
+| `history/round3-b480993-xr-resource.json` | Historical Round 3 resource evidence (includes impossible 462 residents / 128 slots) |
 | `emulator.md` | IWER + isolated Chrome DevTools MCP workflow |
 | `iwsdk-mcp-decision.md` | Why JP-3 uses standalone IWER + Chrome MCP |
 | `desktop-capability.json` | Chrome 151 probe: `immersive-vr` false, Enter VR hidden, `XRWebGLBinding` present, `XRMediaBinding` absent |
@@ -23,4 +24,4 @@ Evidence classes:
 - UNIT: resource-profile + XR policy tests in this round
 - DESKTOP_BROWSER: desktop full-quality path must remain unchanged
 - IWER_EMULATED: CORE / NO-LAYERS / FULL plus `test:xr-resource` BARE / XR_SAFE
-- QUEST_HARDWARE = FAILED — historical at `73abd4c` and again at `ac94d1d` (waiting environment, no world frame). Round 3 Quest retest is not requested until software/emulator resource gates pass. Do not treat emulator evidence as hardware.
+- QUEST_HARDWARE = FAILED — historical at `73abd4c` and again at `ac94d1d` (waiting environment, no world frame). Round 3 HEAD `b480993` hardware was NOT_EXECUTED. Round 4 does not request Quest retest until exact-head CI is green. Do not treat emulator evidence as hardware.

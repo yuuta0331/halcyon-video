@@ -3,8 +3,13 @@
 **Current overall status: NOT_READY_FOR_QUEST_ACCEPTANCE / QUEST_HARDWARE_FAILED**
 
 Do not treat emulator evidence as QUEST_HARDWARE. Do not overwrite either
-historical failure as NOT_EXECUTED. Round 3 software/emulator resource gates
-must pass before another headset session is requested.
+historical failure as NOT_EXECUTED.
+
+Round 4 software/emulator resource + residency gates must pass, then exact-head
+CI, before another headset session is requested. Do not request Quest testing
+during Round 4 implementation.
+
+## Historical hardware failure — HEAD 73abd4c
 
 ## Historical hardware failure — HEAD 73abd4c
 
@@ -55,6 +60,29 @@ Previous status READY_FOR_FINAL_QUEST_ACCEPTANCE is invalidated.
 
 Exact-head CI and independent self-review follow the push. Do not request Quest
 hardware until exact-head CI is green.
+
+Round 3 generated `xr-resource.json` is preserved at
+`history/round3-b480993-xr-resource.json`. It recorded the impossible
+`posterPhysicalSlots=128` / `posterResidentTitles=462` state that Round 4
+treats as a blocker. Current `xr-resource.json` is Round 4 evidence.
+
+## Correction round 4
+
+**Status: PENDING hardware on the new HEAD** — Round 3 result was
+REQUEST_CHANGES (poster residency ownership). Round 4 software/emulator
+gates after the ownership fix:
+
+- `npm test` PASS (includes eviction/free-list regression + 10k stress)
+- `npm run build` PASS
+- `npm run test:xr-emu` PASS
+- `npm run test:xr-resource` PASS with `residentCount <= physicalSlots`
+- duplicate physical owners = 0
+- free/owned collisions = 0
+- XR_SAFE diagnostic quality agrees with GPU diagnostics
+- HEAD `b480993` hardware remains NOT_EXECUTED / PENDING
+
+Do not request owner Quest testing until exact-head CI on the Round 4 SHA
+is SUCCESS and the result is READY_FOR_RESOURCE_VALIDATED_QUEST_RETEST.
 
 When those gates are green, request **one** hardware session in this order:
 
