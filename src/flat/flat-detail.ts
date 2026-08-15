@@ -6,6 +6,7 @@ import type { StoreTheme } from '../themes';
 import { getActiveTheme } from '../themes';
 import { getActiveLogoSpec } from '../logo-spec';
 import { drawLogo } from '../logo-renderer';
+import { t } from '../i18n';
 import { flatSignal } from './flat-lifecycle';
 
 let launchVideoPlaybackFn: ((movie: Movie, overrideItemId?: string, overridePath?: string) => Promise<void>) | null = null;
@@ -104,13 +105,13 @@ export function openDetailsOverlay(
       <div class="flat-detail-ratings">
         ${starsHtml ? `
           <div>
-            <div class="flat-detail-rating-label">Community</div>
+            <div class="flat-detail-rating-label">${t('flat.community')}</div>
             ${starsHtml}
           </div>
         ` : ''}
         ${criticHtml ? `
           <div>
-            <div class="flat-detail-rating-label">Critic</div>
+            <div class="flat-detail-rating-label">${t('flat.critic')}</div>
             ${criticHtml}
           </div>
         ` : ''}
@@ -121,19 +122,19 @@ export function openDetailsOverlay(
   // Determine button text/state
   const isRequested = (movie.discovery || movie.collectionGap) &&
     (movie.discoveryRequested || isDiscoveryRequested(movie.tmdbId));
-  let playBtnText = 'Play';
+  let playBtnText = t('flat.play');
   let playBtnDisabled = '';
   let playBtnIcon = '▶';
 
   if (movie.game) {
-    playBtnText = 'Rent';
+    playBtnText = t('flat.rent');
     playBtnIcon = '🎮';
   } else if (movie.discovery || movie.collectionGap) {
-    playBtnText = isRequested ? (movie.collectionGap ? 'Coming Soon' : 'Requested') : 'Request';
+    playBtnText = isRequested ? (movie.collectionGap ? t('flat.comingSoon') : t('flat.requested')) : t('flat.request');
     playBtnIcon = isRequested ? '✓' : '✦';
     playBtnDisabled = isRequested ? 'disabled' : '';
   } else if (movie.comingSoon) {
-    playBtnText = 'Coming Soon';
+    playBtnText = t('flat.comingSoon');
     playBtnIcon = '⏱';
     playBtnDisabled = 'disabled';
   }
@@ -179,26 +180,26 @@ export function openDetailsOverlay(
 
           ${ratingsRowHtml}
 
-          <p class="flat-detail-overview">${movie.overview || 'No description available.'}</p>
+          <p class="flat-detail-overview">${movie.overview || t('flat.noDescription')}</p>
 
           ${(movie.game || movie.discovery) ? '' : `
           <div class="flat-detail-credits">
-            <div class="flat-detail-credits-label">Director</div>
-            <div class="flat-detail-credits-value">${movie.director || 'Unknown'}</div>
+            <div class="flat-detail-credits-label">${t('flat.director')}</div>
+            <div class="flat-detail-credits-value">${movie.director || t('flat.unknown')}</div>
             
-            <div class="flat-detail-credits-label">Cast</div>
-            <div class="flat-detail-credits-value">${movie.actors && movie.actors.length > 0 ? movie.actors.join(', ') : 'Unknown'}</div>
+            <div class="flat-detail-credits-label">${t('flat.cast')}</div>
+            <div class="flat-detail-credits-value">${movie.actors && movie.actors.length > 0 ? movie.actors.join(', ') : t('flat.unknown')}</div>
 
-            <div class="flat-detail-credits-label">Studio</div>
-            <div class="flat-detail-credits-value">${movie.studios && movie.studios.length > 0 ? movie.studios.join(', ') : 'Unknown'}</div>
+            <div class="flat-detail-credits-label">${t('flat.studio')}</div>
+            <div class="flat-detail-credits-value">${movie.studios && movie.studios.length > 0 ? movie.studios.join(', ') : t('flat.unknown')}</div>
           </div>
           `}
 
           ${movie.isSeries ? `
             <div class="flat-detail-episodes">
-              <h4 class="flat-detail-episodes-title">Episodes</h4>
+              <h4 class="flat-detail-episodes-title">${t('flat.episodes')}</h4>
               <div class="flat-detail-episodes-list">
-                <div class="flat-detail-episodes-loading">Loading episodes...</div>
+                <div class="flat-detail-episodes-loading">${t('flat.episodesLoading')}</div>
               </div>
             </div>
           ` : ''}
@@ -209,7 +210,7 @@ export function openDetailsOverlay(
               <span class="flat-detail-btn-text">${playBtnText}</span>
             </button>
             <button class="flat-detail-btn flat-detail-btn--close">
-              <span class="flat-detail-btn-text">Close</span>
+              <span class="flat-detail-btn-text">${t('flat.close')}</span>
             </button>
           </div>
         </div>
@@ -400,7 +401,7 @@ export function openDetailsOverlay(
         // Disable the button and change its text
         playBtn.disabled = true;
         const btnTextEl = playBtn.querySelector('.flat-detail-btn-text');
-        if (btnTextEl) btnTextEl.textContent = movie.collectionGap ? 'Coming Soon' : 'Requested';
+        if (btnTextEl) btnTextEl.textContent = movie.collectionGap ? t('flat.comingSoon') : t('flat.requested');
         const btnIconEl = playBtn.querySelector('.flat-detail-btn-icon');
         if (btnIconEl) btnIconEl.textContent = '✓';
       } else {
@@ -434,7 +435,7 @@ export function openDetailsOverlay(
         if (listContainer) {
           listContainer.innerHTML = '';
           if (episodes.length === 0) {
-            listContainer.innerHTML = '<div class="flat-detail-episodes-empty">No episodes found.</div>';
+            listContainer.innerHTML = `<div class="flat-detail-episodes-empty">${t('flat.episodesNone')}</div>`;
           } else {
             episodes.forEach((ep) => {
               const epEl = document.createElement('div');
@@ -460,7 +461,7 @@ export function openDetailsOverlay(
       .catch(err => {
         console.error('Error fetching series episodes:', err);
         if (listContainer) {
-          listContainer.innerHTML = '<div class="flat-detail-episodes-error">Error loading episodes.</div>';
+          listContainer.innerHTML = `<div class="flat-detail-episodes-error">${t('flat.episodesError')}</div>`;
         }
       });
   }

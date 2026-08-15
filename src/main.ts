@@ -83,8 +83,8 @@ import {
 import { retailAudio } from './audio';
 import { BB_ARCHIVO_BLACK, bundledFontsReady } from './bundled-fonts';
 import { brandString, loadBrandPack } from './brand-pack';
-import { displayTitle, t } from './i18n';
-import { applyDocumentChrome, groupHint, groupLabel, hudHintForMode, inspectCaseHint } from './i18n/chrome';
+import { displayTitle, t, tfill } from './i18n';
+import { applyDocumentChrome, groupHint, groupLabel, hudHintForMode, inspectCaseHint, subpageHint, subpageLabel } from './i18n/chrome';
 import { getLocale } from './i18n/locale';
 import type { StoreScene } from './three-scene';
 import { InputManager } from './input';
@@ -930,14 +930,6 @@ const GROUP_HINTS: Record<SettingGroup, string> = {
   get 'Connection'() { return groupHint('Connection'); },
 };
 
-/** One-line blurbs under each sub-page's "›" row on its group page. */
-const SUBPAGE_HINTS: Record<string, string> = {
-  'Building & Storefront': 'Ceiling, corner step, walls, bulbs, storefront style.',
-  'Platforms': 'Which consoles get a section on the Video Games shelf.',
-  'Store Libraries': 'Which server libraries this store carries as aisles.',
-  'Overhead TVs': 'Which libraries feed the ceiling TVs. All off = family picks.',
-};
-
 /** Build the drawer DOM for the current page. Rows are updated in place. */
 function generateSettingsDrawer() {
   const groupsEl = document.getElementById('settings-groups');
@@ -1149,8 +1141,8 @@ function generateSettingsDrawer() {
           if (!subpagesSeen.has(def.subpage)) {
             subpagesSeen.add(def.subpage);
             groupEl.appendChild(makeRow(
-              SETTINGS_SUBPAGE_PREFIX + def.subpage, def.subpage,
-              SUBPAGE_HINTS[def.subpage], '›'));
+              SETTINGS_SUBPAGE_PREFIX + def.subpage, subpageLabel(def.subpage),
+              subpageHint(def.subpage), '›'));
           }
           continue;
         }
@@ -1291,7 +1283,7 @@ function updateSettingsCrtChrome() {
   const pageEl = document.getElementById('settings-footer-page');
   if (pageEl) {
     pageEl.textContent = pages > 1
-      ? `PAGE ${settingsCrtPage + 1}/${pages} ${settingsCrtPage > 0 ? '▲' : ''}${settingsCrtPage < pages - 1 ? '▼' : ''}`.trimEnd()
+      ? `${tfill('settings.page', { current: settingsCrtPage + 1, total: pages })} ${settingsCrtPage > 0 ? '▲' : ''}${settingsCrtPage < pages - 1 ? '▼' : ''}`.trimEnd()
       : '';
   }
 
@@ -1302,8 +1294,8 @@ function updateSettingsCrtChrome() {
     const below = settingsRowPages.filter((p) => p > settingsCrtPage).length;
     const above = settingsRowPages.filter((p) => p < settingsCrtPage).length;
     moreEl.textContent =
-      below > 0 ? `▼ CONT'D — ${below} MORE OPTION${below === 1 ? '' : 'S'} BELOW`
-        : above > 0 ? `▲ ${above} MORE OPTION${above === 1 ? '' : 'S'} ABOVE`
+      below > 0 ? tfill('settings.moreBelow', { n: below, s: below === 1 ? '' : t('settings.optionPlural') })
+        : above > 0 ? tfill('settings.moreAbove', { n: above, s: above === 1 ? '' : t('settings.optionPlural') })
           : '';
   }
 
@@ -1314,7 +1306,7 @@ function updateSettingsCrtChrome() {
     // settings.ts still embed a (CSS-hidden) .settings-row-hint span instead.
     let hint = (row?.dataset.hint || row?.querySelector('.settings-row-hint')?.textContent || '').trim();
     if (hint.length > 62) hint = hint.slice(0, 59).trimEnd() + '…';
-    hintEl.textContent = hint || 'UP/DOWN SELECT • LEFT/RIGHT CHANGE • BACK RETURNS';
+    hintEl.textContent = hint || t('settings.nav');
   }
 }
 
@@ -1530,11 +1522,11 @@ function updateSettingsStatus() {
   const status = document.getElementById('settings-status');
   if (!status) return;
   if (settingsPendingReload) {
-    status.textContent = 'Connection changed — the app will restart when you close this menu.';
+    status.textContent = t('settings.pendingReload');
   } else if (settingsPendingRebuild) {
-    status.textContent = 'Store look will update when you close this menu.';
+    status.textContent = t('settings.pendingRebuild');
   } else {
-    status.textContent = 'Changes apply as you make them.';
+    status.textContent = t('settings.status');
   }
 }
 

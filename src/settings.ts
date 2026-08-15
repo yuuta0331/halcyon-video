@@ -35,7 +35,7 @@ import { drawLogo, getLogoFontString } from './logo-renderer';
 import { loadMediaReleasePin, saveMediaReleasePin } from './media-release-date';
 import { formatUnlockLabel, makeRentalRecord, rentalCapacityAt } from './rental-clock';
 import type { StoreScene } from './three-scene';
-import { LOCALE_KEY, t as tUi } from './i18n';
+import { LOCALE_KEY, t as tUi, tfill } from './i18n';
 
 export type SettingKind = 'toggle' | 'cycle' | 'text' | 'secret';
 export type ApplyMode = 'live' | 'rebuild-scene' | 'reload';
@@ -211,14 +211,14 @@ export function currentValueLabel(key: string): string {
   const def = registry.get(key);
   if (!def) return '';
   const decorate = (label: string) => (def.valueLabel ? def.valueLabel(label) : label);
-  if (def.kind === 'toggle') return decorate(getSetting<boolean>(key) ? 'On' : 'Off');
+  if (def.kind === 'toggle') return decorate(getSetting<boolean>(key) ? tUi('value.on') : tUi('value.off'));
   if (def.kind === 'cycle') {
     const cur = String(getSetting(key));
     return decorate(def.values?.find((v) => v.id === cur)?.label ?? cur);
   }
   const val = getSetting<string>(key);
-  if (def.kind === 'secret') return decorate(val ? '••••••••' : '(not set)');
-  return decorate(val || '(not set)');
+  if (def.kind === 'secret') return decorate(val ? '••••••••' : tUi('value.notSet'));
+  return decorate(val || tUi('value.notSet'));
 }
 
 /** A def's hint for THIS render — resolves the dynamic (function) form. */
@@ -322,7 +322,7 @@ export function registerCoverVariantSettings(): void {
     if (variants.length < 2) continue;
     registerSetting({
       key: `bb_cover_${medium}`,
-      label: `${medium.toUpperCase()} Rental Cover`,
+      label: tUi(medium === 'vhs' ? 'setting.coverVhs.label' : 'setting.coverDvd.label'),
       kind: 'cycle',
       group: 'Store Look',
       values: variants.map((v) => ({ id: v.id, label: v.label })),
@@ -331,9 +331,7 @@ export function registerCoverVariantSettings(): void {
       // on shared + per-title materials a no-reload rebuild preserves.
       applyMode: 'reload',
       hint:
-        medium === 'vhs'
-          ? 'Which 1988 wrap the VHS rental clamshell wears. “Ticket back” prints are all-ticket wraps with no synopsis window or spine fields, so they carry no movie metadata.'
-          : 'Which wrap the DVD-era rental case wears.',
+        medium === 'vhs' ? tUi('setting.coverVhs.hint') : tUi('setting.coverDvd.hint'),
     });
   }
 }
@@ -371,8 +369,8 @@ function dressing93Hint(): string {
   let era1993 = false;
   try { era1993 = getActiveTheme().dressingEra === '1993'; } catch { /* pre-theme boot */ }
   return era1993
-    ? 'Already on: the 1993 era wears this pack by default.'
-    : 'Adds 1993 fascia blades + ribbon ceiling to this era.';
+    ? tUi('setting.dressing93.hintOn')
+    : tUi('setting.dressing93.hintOff');
 }
 
 /**
@@ -392,10 +390,10 @@ function rentalModeHint(): string {
   // truncated mid-sentence is no warning. The full version (what still plays
   // during the lockout, how to reopen) is logged when the row is switched on.
   if (getSetting<boolean>('bb_rental_dev')) {
-    return `Checkout locks the store for 5 min (dev timer). Limit ${cap}.`;
+    return tfill('setting.rental.hintDev', { cap });
   }
   const unlock = formatUnlockLabel(makeRentalRecord([], now, false));
-  return `Checkout locks the store until ${unlock}. Limit ${cap} tapes.`;
+  return tfill('setting.rental.hint', { unlock, cap });
 }
 
 /**
@@ -457,23 +455,21 @@ export function registerCoreSettings(): void {
   const eraFollowOn = (): boolean => !!loadMediaReleasePin()?.matchEra;
   registerSetting({
     key: 'bb_theme',
-    label: 'Store Theme',
+    label: tUi('setting.theme.label'),
     kind: 'cycle',
     group: 'Store Look',
     values: Object.values(THEMES).map((t) => ({ id: t.id, label: t.name })),
     default: 'bb-1990',
     applyMode: 'rebuild-scene',
-    // Footer bar clips hints at 62 chars — the follow-mode line is written
-    // to fit whole, so the "detaches" half is never truncated away.
     hint: () => eraFollowOn()
-      ? 'Following the Media Release Date pin. A change detaches it.'
-      : 'Era + brand styling for the whole store.',
-    valueLabel: (label) => (eraFollowOn() ? `${label} (AUTO)` : label),
+      ? tUi('setting.theme.hintFollow')
+      : tUi('setting.theme.hint'),
+    valueLabel: (label) => (eraFollowOn() ? `${label} ${tUi('value.autoMark')}` : label),
     onChange: () => {
       const pin = loadMediaReleasePin();
       if (!pin?.matchEra) return;
       saveMediaReleasePin({ ...pin, matchEra: false });
-      return 'Store era detached from the Media Release Date pin — era follow is off.';
+      return tUi('setting.theme.detached');
     },
   });
 
@@ -485,7 +481,7 @@ export function registerCoreSettings(): void {
   // The editor page carries a read-only status row mirroring it.
   registerSetting({
     key: 'bb_brand_pack',
-    label: 'Brand Pack',
+    label: tUi('setting.brandPack.label'),
     kind: 'text',
     group: 'Store Brand',
     default: '',
@@ -516,12 +512,12 @@ export function registerCoreSettings(): void {
   // modifies, and says what it adds.
   registerSetting({
     key: 'bb_93_signage',
-    label: '1993 Store Dressing',
+    label: tUi('setting.dressing93.label'),
     kind: 'cycle',
     group: 'Store Look',
     values: [
-      { id: 'off', label: 'Off' },
-      { id: 'on', label: 'On' },
+      { id: 'off', label: tUi('value.off') },
+      { id: 'on', label: tUi('value.on') },
     ],
     default: 'off',
     applyMode: 'rebuild-scene',
@@ -530,7 +526,7 @@ export function registerCoreSettings(): void {
 
   registerSetting({
     key: 'bb_medium',
-    label: 'Media Format',
+    label: tUi('setting.medium.label'),
     kind: 'cycle',
     group: 'Store Look',
     values: [
@@ -539,18 +535,18 @@ export function registerCoreSettings(): void {
     ],
     default: 'dvd',
     applyMode: 'rebuild-scene',
-    hint: 'Case shape used for every title on the shelves.',
+    hint: tUi('setting.medium.hint'),
   });
 
   registerSetting({
     key: 'bb_case_art',
-    label: 'Rental Case Art',
+    label: tUi('setting.caseArt.label'),
     kind: 'cycle',
     group: 'Store Look',
     values: [
-      { id: 'auto', label: 'Auto' },
-      { id: 'vhs', label: 'VHS Box' },
-      { id: 'dvd', label: 'DVD Box' },
+      { id: 'auto', label: tUi('value.auto') },
+      { id: 'vhs', label: tUi('setting.caseArt.vhs') },
+      { id: 'dvd', label: tUi('setting.caseArt.dvd') },
     ],
     default: 'auto',
     // 'reload' (not rebuild-scene): the rental front/back/spine art is
@@ -558,7 +554,7 @@ export function registerCoreSettings(): void {
     // deliberately preserves (see clearVideoCaseCache's 'rebuild' mode in
     // video-case.ts), so only a full reinit picks up a forced art change.
     applyMode: 'reload',
-    hint: 'Force the VHS/DVD rental box design. Auto follows format.',
+    hint: tUi('setting.caseArt.hint'),
     hidden: true, // service knob: dev override, Auto already follows Media Format
   });
 
@@ -571,17 +567,17 @@ export function registerCoreSettings(): void {
 
   registerSetting({
     key: 'bb_arrangement',
-    label: 'Shelf Arrangement',
+    label: tUi('setting.arrangement.label'),
     kind: 'cycle',
     group: 'Store Look',
     values: [
-      { id: 'herringbone', label: 'Herringbone' },
-      { id: 'straight', label: 'Straight' },
-      { id: 'diagonal', label: 'Diagonal' },
+      { id: 'herringbone', label: tUi('setting.arrangement.herringbone') },
+      { id: 'straight', label: tUi('setting.arrangement.straight') },
+      { id: 'diagonal', label: tUi('setting.arrangement.diagonal') },
     ],
     default: 'herringbone',
     applyMode: 'rebuild-scene',
-    hint: 'How the aisles are oriented on the floor.',
+    hint: tUi('setting.arrangement.hint'),
   });
 
   // bb_outside once offered a 'streetview' mode (removed 2026-08 with its
@@ -592,120 +588,120 @@ export function registerCoreSettings(): void {
   }
   registerSetting({
     key: 'bb_outside',
-    label: 'Environment',
+    label: tUi('setting.environment.label'),
     kind: 'cycle',
     group: 'Store Look',
     values: [
-      { id: 'day', label: 'Daytime' },
-      { id: 'night', label: 'Nighttime' },
-      { id: 'sunset', label: 'Sunset' },
+      { id: 'day', label: tUi('setting.environment.day') },
+      { id: 'night', label: tUi('setting.environment.night') },
+      { id: 'sunset', label: tUi('setting.environment.sunset') },
     ],
     default: 'day',
     applyMode: 'live',
     apply: (value, scene) => scene.setOutsideMode(value as 'day' | 'night' | 'sunset'),
-    hint: 'Time of day seen through the storefront windows.',
+    hint: tUi('setting.environment.hint'),
   });
 
   registerSetting({
     key: 'bb_ceiling',
-    label: 'Ceiling Height',
+    label: tUi('setting.ceiling.label'),
     kind: 'cycle',
     group: 'Store Look',
     values: [
-      { id: 'standard', label: 'Standard' },
-      { id: 'high', label: 'High' },
+      { id: 'standard', label: tUi('setting.ceiling.standard') },
+      { id: 'high', label: tUi('setting.ceiling.high') },
     ],
     default: 'standard',
     applyMode: 'rebuild-scene',
-    hint: 'Standard drop ceiling or a raised high-ceiling shell.',
+    hint: tUi('setting.ceiling.hint'),
     subpage: 'Building & Storefront',
   });
 
   registerSetting({
     key: 'bb_corner',
-    label: 'Corner Step',
+    label: tUi('setting.corner.label'),
     kind: 'cycle',
     group: 'Store Look',
     values: [
-      { id: 'standard', label: 'Standard' },
-      { id: 'wide', label: 'Wide' },
-      { id: 'shallow', label: 'Shallow' },
-      { id: 'none', label: 'None' },
+      { id: 'standard', label: tUi('setting.corner.standard') },
+      { id: 'wide', label: tUi('setting.corner.wide') },
+      { id: 'shallow', label: tUi('setting.corner.shallow') },
+      { id: 'none', label: tUi('setting.corner.none') },
     ],
     default: 'standard',
     applyMode: 'rebuild-scene',
-    hint: 'Stepped back-right corner for New Releases. None = flat.',
+    hint: tUi('setting.corner.hint'),
     subpage: 'Building & Storefront',
   });
 
   registerSetting({
     key: 'bb_walldecor',
-    label: 'Wall Displays',
+    label: tUi('setting.walldecor.label'),
     kind: 'toggle',
     group: 'Store Look',
     default: false,
     applyMode: 'rebuild-scene',
-    hint: 'Featured-actor portraits + film-strip ribbon, right wall. High ceiling only.',
+    hint: tUi('setting.walldecor.hint'),
     subpage: 'Building & Storefront',
   });
 
   registerSetting({
     key: 'bb_wall_color',
-    label: 'Wall Paint',
+    label: tUi('setting.wallPaint.label'),
     kind: 'cycle',
     group: 'Store Look',
     values: [
-      { id: 'auto', label: 'Theme Default' },
+      { id: 'auto', label: tUi('setting.wallPaint.auto') },
       ...Object.entries(WALL_PAINT_OPTIONS).map(([id, v]) => ({ id, label: v.label })),
     ],
     default: 'auto',
     applyMode: 'rebuild-scene',
-    hint: 'Wall paint tint. Theme Default follows the era.',
+    hint: tUi('setting.wallPaint.hint'),
     subpage: 'Building & Storefront',
   });
 
   registerSetting({
     key: 'bb_marquee_bulbs',
-    label: 'Marquee Bulbs',
+    label: tUi('setting.marqueeBulbs.label'),
     kind: 'toggle',
     group: 'Store Look',
     default: true,
     applyMode: 'rebuild-scene',
-    hint: 'Bulb rows on cornice + window posters. Off at Low quality.',
+    hint: tUi('setting.marqueeBulbs.hint'),
     subpage: 'Building & Storefront',
   });
 
   registerSetting({
     key: 'bb_marquee_anim',
-    label: 'Marquee Animation',
+    label: tUi('setting.marqueeAnim.label'),
     kind: 'cycle',
     group: 'Store Look',
     values: [
-      { id: 'off', label: 'Unlit' },
-      { id: 'steady', label: 'Steady' },
-      { id: 'chase', label: 'Chase' },
+      { id: 'off', label: tUi('setting.marqueeAnim.unlit') },
+      { id: 'steady', label: tUi('setting.marqueeAnim.steady') },
+      { id: 'chase', label: tUi('setting.marqueeAnim.chase') },
     ],
     default: 'steady',
     applyMode: 'live',
     apply: (value, scene) => scene.setMarqueeAnimMode(value as 'off' | 'steady' | 'chase'),
-    hint: 'Chase never wakes the idle renderer by itself.',
+    hint: tUi('setting.marqueeAnim.hint'),
     hidden: true, // service knob: render-scheduling behavior, not decor
   });
 
   registerSetting({
     key: 'bb_storefront',
-    label: 'Storefront',
+    label: tUi('setting.storefront.label'),
     kind: 'cycle',
     group: 'Store Look',
     values: [
-      { id: 'standard', label: 'Standard' },
-      { id: 'sliding-gray', label: 'Sliding Doors / Gray' },
-      { id: 'rounded-counter', label: 'Rounded Counter' },
-      { id: 'usquare-counter', label: 'Half-Square Counter' },
+      { id: 'standard', label: tUi('setting.storefront.standard') },
+      { id: 'sliding-gray', label: tUi('setting.storefront.sliding') },
+      { id: 'rounded-counter', label: tUi('setting.storefront.rounded') },
+      { id: 'usquare-counter', label: tUi('setting.storefront.usquare') },
     ],
     default: 'standard',
     applyMode: 'rebuild-scene',
-    hint: 'Doors, storefront window framing, and counter style.',
+    hint: tUi('setting.storefront.hint'),
     subpage: 'Building & Storefront',
   });
 
@@ -713,13 +709,13 @@ export function registerCoreSettings(): void {
   // returns the classic first-aisle start with no reload (and no rebuild).
   registerSetting({
     key: 'bb_overview_start',
-    label: 'Start at entrance overview',
+    label: tUi('setting.overviewStart.label'),
     kind: 'toggle',
     group: 'Store Look',
     default: true,
     applyMode: 'live',
     apply: (value, scene) => scene.setOverviewStart(!!value),
-    hint: 'Start inside the doors on the jump index. Off = cam view.',
+    hint: tUi('setting.overviewStart.hint'),
     hidden: true, // service knob: navigation-flow experiment (T21)
   });
 
@@ -730,32 +726,32 @@ export function registerCoreSettings(): void {
   // byte-identical to a build that never had one.
   registerSetting({
     key: 'bb_tip_jar',
-    label: 'Tip jar on the counter',
+    label: tUi('setting.tipJar.label'),
     kind: 'toggle',
     group: 'Store Look',
     default: true,
     applyMode: 'rebuild-scene',
-    hint: 'A card and a cup by the register, linking the project’s Ko-fi.',
+    hint: tUi('setting.tipJar.hint'),
   });
 
   // T22: carried tapes + front-counter checkout. Default OFF until T23 ships
   // rental mode — when off, the instant play-from-the-shelf flow is untouched.
   registerSetting({
     key: 'bb_carry_mode',
-    label: 'Carry & checkout',
+    label: tUi('setting.carry.label'),
     kind: 'toggle',
     group: 'Store Look',
     default: false,
     applyMode: 'live',
     apply: (value, scene) => scene.setCarryMode(!!value),
-    hint: 'Carry a tape (OK), check out at the counter to play it.',
+    hint: tUi('setting.carry.hint'),
   });
 
   // T23: rental mode ("hardcore mode") — limited tapes per night and a real
   // lockout in the back room after checkout. Forces carry & checkout ON.
   registerSetting({
     key: 'bb_rental_mode',
-    label: 'Rental mode (real lockout)',
+    label: tUi('setting.rental.label'),
     kind: 'toggle',
     group: 'Store Look',
     default: false,
@@ -772,12 +768,12 @@ export function registerCoreSettings(): void {
   // live toggle needs no scene hook.
   registerSetting({
     key: 'bb_rental_dev',
-    label: 'Rental dev timer (5 min)',
+    label: tUi('setting.rentalDev.label'),
     kind: 'toggle',
     group: 'Store Look',
     default: false,
     applyMode: 'live',
-    hint: '5-minute lockout for testing. Applies to the NEXT checkout.',
+    hint: tUi('setting.rentalDev.hint'),
     hidden: true, // service knob: dev timer for exercising the rental loop
     visibleWhen: () => getSetting<boolean>('bb_rental_mode'),
   });
@@ -787,32 +783,32 @@ export function registerCoreSettings(): void {
   // scene hook — they only shape the NEXT playback's initial track selection.
   registerSetting({
     key: 'bb_audio_lang',
-    label: 'Preferred Audio Language',
+    label: tUi('setting.audioLang.label'),
     kind: 'text',
     group: 'Playback',
     default: '',
     applyMode: 'live',
-    hint: 'Track picked at start, e.g. "eng". Blank = file default.',
+    hint: tUi('setting.audioLang.hint'),
   });
 
   registerSetting({
     key: 'bb_local_mpv',
-    label: 'Play Files Off Disk (mpv)',
+    label: tUi('setting.mpv.label'),
     kind: 'toggle',
     group: 'Playback',
     default: true,
     applyMode: 'live',
-    hint: 'Play local files in mpv: real HDR + original surround.',
+    hint: tUi('setting.mpv.hint'),
   });
 
   registerSetting({
     key: 'bb_subtitles_default',
-    label: 'Closed Captions On By Default',
+    label: tUi('setting.captions.label'),
     kind: 'toggle',
     group: 'Playback',
     default: false,
     applyMode: 'live',
-    hint: 'Start every movie with subtitles showing.',
+    hint: tUi('setting.captions.hint'),
   });
 
   // Tone mapping (research-driven, see three-scene initThree): AgX is the
@@ -821,16 +817,16 @@ export function registerCoreSettings(): void {
   // cost of the filmic highlight rolloff.
   registerSetting({
     key: 'bb_tonemap',
-    label: 'Color Response',
+    label: tUi('setting.tonemap.label'),
     kind: 'cycle',
     group: 'Store Look',
     values: [
-      { id: 'neutral', label: 'True Color (PBR Neutral)' },
-      { id: 'agx', label: 'Filmic (AgX)' },
+      { id: 'neutral', label: tUi('setting.tonemap.neutral') },
+      { id: 'agx', label: tUi('setting.tonemap.agx') },
     ],
     default: 'neutral',
     applyMode: 'rebuild-scene',
-    hint: 'True Color keeps art as printed; Filmic softens highlights.',
+    hint: tUi('setting.tonemap.hint'),
     hidden: true, // service knob: tone-mapping engine choice
   });
 
@@ -842,19 +838,19 @@ export function registerCoreSettings(): void {
   // era's cameras rendered them warmer still.
   registerSetting({
     key: 'bb_grade_warmth',
-    label: 'Color Warmth',
+    label: tUi('setting.warmth.label'),
     kind: 'cycle',
     group: 'Store Look',
     values: [
-      { id: '0', label: 'Neutral' },
-      { id: '0.18', label: 'Subtle' },
-      { id: '0.35', label: 'Warm' },
-      { id: '0.7', label: 'Cozy' },
+      { id: '0', label: tUi('setting.warmth.neutral') },
+      { id: '0.18', label: tUi('setting.warmth.subtle') },
+      { id: '0.35', label: tUi('setting.warmth.warm') },
+      { id: '0.7', label: tUi('setting.warmth.cozy') },
     ],
     default: '0.35',
     applyMode: 'live',
     apply: (value, scene) => scene.setGradeWarmth(parseFloat(String(value))),
-    hint: 'Warm leans tungsten, like 90s film. Neutral is pure white.',
+    hint: tUi('setting.warmth.hint'),
     hidden: true, // service knob: grade-pass sweep parameter
   });
 
@@ -864,25 +860,25 @@ export function registerCoreSettings(): void {
   // when off).
   registerSetting({
     key: 'bb_grade_lut',
-    label: 'Film Look (LUT)',
+    label: tUi('setting.lut.label'),
     kind: 'toggle',
     group: 'Store Look',
     default: false,
     applyMode: 'live',
     apply: (value, scene) => scene.setGradeLut(!!value),
-    hint: 'Film-look grade: floated blacks, amber midtones. Free.',
+    hint: tUi('setting.lut.hint'),
     hidden: true, // service knob: film-emulation LUT experiment
   });
 
   // Performance --------------------------------------------------------------
   registerSetting({
     key: 'bb_render_mode',
-    label: 'Render Mode',
+    label: tUi('setting.renderMode.label'),
     kind: 'cycle',
     group: 'Performance',
     values: [
-      { id: '3d', label: '3D Store' },
-      { id: 'flat', label: '2.5D Shelf' }
+      { id: '3d', label: tUi('setting.renderMode.3d') },
+      { id: 'flat', label: tUi('setting.renderMode.flat') }
     ],
     default: '3d',
     // In-process swap (no page reload / Jellyfin re-fetch): on drawer close this
@@ -890,7 +886,7 @@ export function registerCoreSettings(): void {
     // rebuilds the incoming one from the loaded catalog — same path the diegetic
     // manager-terminal / flat-menu switches use (switchRenderMode in main.ts).
     applyMode: 'rebuild-scene',
-    hint: 'Full 3D store, or a flat shelf UI for low-power clients.',
+    hint: tUi('setting.renderMode.hint'),
     // Also switchable diegetically (power menu, counter CRT, flat menu); this
     // row exists so the mode is FINDABLE where users look for it (UX pass
     // 2026-08: performance controls must live on the couch tree).
@@ -898,41 +894,41 @@ export function registerCoreSettings(): void {
 
   registerSetting({
     key: 'bb_quality',
-    label: 'Render Quality',
+    label: tUi('setting.quality.label'),
     kind: 'cycle',
     group: 'Performance',
     values: [
-      { id: 'high', label: 'High' },
-      { id: 'medium', label: 'Medium' },
-      { id: 'low', label: 'Low' },
+      { id: 'high', label: tUi('setting.quality.high') },
+      { id: 'medium', label: tUi('setting.quality.medium') },
+      { id: 'low', label: tUi('setting.quality.low') },
     ],
     default: 'high',
     applyMode: 'rebuild-scene',
-    hint: 'Reflections and post-processing detail. Auto-picked per GPU.',
+    hint: tUi('setting.quality.hint'),
   });
 
   registerSetting({
     key: 'bb_ao',
-    label: 'Ambient Occlusion Engine',
+    label: tUi('setting.ao.label'),
     kind: 'cycle',
     group: 'Performance',
     values: [
-      { id: 'n8ao', label: 'N8AO (half-res)' },
-      { id: 'gtao', label: 'GTAO (legacy)' },
+      { id: 'n8ao', label: tUi('setting.ao.n8ao') },
+      { id: 'gtao', label: tUi('setting.ao.gtao') },
     ],
     default: 'n8ao',
     applyMode: 'rebuild-scene',
-    hint: 'N8AO: cheaper half-res AO. GTAO is the older fallback.',
+    hint: tUi('setting.ao.hint'),
   });
 
   registerSetting({
     key: 'bb_fps_cap',
-    label: 'FPS Cap',
+    label: tUi('setting.fpsCap.label'),
     kind: 'cycle',
     group: 'Performance',
     values: [
-      { id: 'auto', label: 'Auto' },
-      { id: '0', label: 'Uncapped' },
+      { id: 'auto', label: tUi('value.auto') },
+      { id: '0', label: tUi('setting.fpsCap.uncapped') },
       { id: '30', label: '30' },
     ],
     default: 'auto',
@@ -940,7 +936,7 @@ export function registerCoreSettings(): void {
     // other bb_* boot flags this group cycles — needs the same scene rebuild
     // every other Performance row here takes.
     applyMode: 'rebuild-scene',
-    hint: 'ACTIVE render rate. Auto: uncapped on GPUs that earned the supersample grant (and any explicit quality override), else paced to ~60fps at an even display-refresh divisor.',
+    hint: tUi('setting.fpsCap.hint'),
   });
 
   // On-screen frame-rate readout. Live toggle: the meter is a pure DOM overlay
@@ -949,13 +945,13 @@ export function registerCoreSettings(): void {
   // scene nor wakes the render-on-demand loop.
   registerSetting({
     key: FPS_METER_KEY,
-    label: 'FPS Counter',
+    label: tUi('setting.fpsMeter.label'),
     kind: 'toggle',
     group: 'Performance',
     default: false,
     applyMode: 'live',
     apply: (value) => enableFpsMeter(!!value),
-    hint: 'Corner readout: FPS, frame time, 1% low. IDLE when parked.',
+    hint: tUi('setting.fpsMeter.hint'),
   });
 
   // (Removed) 'bb_security_cam' — the security-camera angle is now the ONLY
@@ -973,12 +969,12 @@ export function registerCoreSettings(): void {
   // credential, so it isn't worth building one just for this.
   registerSetting({
     key: 'candy_delivery_enabled',
-    label: 'Candy Delivery',
+    label: tUi('setting.candy.label'),
     kind: 'toggle',
     group: 'Playback',
     default: false,
     applyMode: 'live',
-    hint: 'Adds a "Snacks?" checkout step. Order opens in DoorDash.',
+    hint: tUi('setting.candy.hint'),
   });
 
   // Connection -----------------------------------------------------------------
@@ -989,27 +985,27 @@ export function registerCoreSettings(): void {
   // exists, but is never persisted (see commitTextSetting's special case).
   const cred = (key: string, label: string, kind: SettingKind, opts?: Partial<SettingDef>): void =>
     registerSetting({ key, label, kind, group: 'Connection', default: '', applyMode: 'reload', ...opts });
-  cred('jellyfin_url', 'Jellyfin URL', 'text');
-  cred('jellyfin_username', 'Jellyfin Username', 'text');
-  cred('jellyfin_password', 'Jellyfin Password', 'secret', {
-    hint: 'Blank keeps session. A password re-authenticates.',
+  cred('jellyfin_url', tUi('setting.jfUrl.label'), 'text');
+  cred('jellyfin_username', tUi('setting.jfUser.label'), 'text');
+  cred('jellyfin_password', tUi('setting.jfPass.label'), 'secret', {
+    hint: tUi('setting.jfPass.hint'),
   });
 
-  cred('jellyseerr_url', 'Jellyseerr / Overseerr URL', 'text');
-  cred('jellyseerr_apikey', 'Jellyseerr / Overseerr API Key', 'secret');
+  cred('jellyseerr_url', tUi('setting.seerrUrl.label'), 'text');
+  cred('jellyseerr_apikey', tUi('setting.seerrKey.label'), 'secret');
 
   // Permanent release-date bounds on everything Jellyseerr SUGGESTS (discovery
   // shelves, staff-pick seeds, un-ordered collection gaps) — a static window
   // that does NOT move with the clock, unlike the terminal's rolling Media
   // Release Date pin. The two compose: tighter bound wins (#42).
   const seerrOn = (): boolean => !!getSetting<string>('jellyseerr_url');
-  cred('jellyseerr_suggest_from', 'Suggestions From', 'text', {
+  cred('jellyseerr_suggest_from', tUi('setting.seerrFrom.label'), 'text', {
     visibleWhen: seerrOn,
-    hint: 'YYYY or YYYY-MM-DD. Never suggest titles released earlier.',
+    hint: tUi('setting.seerrFrom.hint'),
   });
-  cred('jellyseerr_suggest_until', 'Suggestions Until', 'text', {
+  cred('jellyseerr_suggest_until', tUi('setting.seerrUntil.label'), 'text', {
     visibleWhen: seerrOn,
-    hint: 'YYYY or YYYY-MM-DD. Never suggest titles released later. The Media Release Date pin still applies if tighter.',
+    hint: tUi('setting.seerrUntil.hint'),
   });
 
   // Remote Play: stream this running store, peer-to-peer, to any browser on
@@ -1017,21 +1013,21 @@ export function registerCoreSettings(): void {
   // without a rebuild.
   registerSetting({
     key: 'bb_remote_play',
-    label: 'Remote Play Stream',
+    label: tUi('setting.remotePlay.label'),
     kind: 'toggle',
     group: 'Connection',
     default: false,
     applyMode: 'live',
     apply: (value) => setRemotePlayEnabled(!!value),
-    hint: 'Streams the store to any browser at /remote.html. Connecting queries a public STUN server.',
+    hint: tUi('setting.remotePlay.hint'),
     hidden: true, // service knob: dev/preview-server streaming feature
   });
 
   // Romm connection fields only make sense once the Video Games section itself
   // is switched on (see bb_games_enabled below).
   const gamesOn = (): boolean => getSetting<boolean>('bb_games_enabled');
-  cred('romm_url', 'Romm URL', 'text', { visibleWhen: gamesOn });
-  cred('romm_apikey', 'Romm API Key', 'secret', { visibleWhen: gamesOn });
+  cred('romm_url', tUi('setting.rommUrl.label'), 'text', { visibleWhen: gamesOn });
+  cred('romm_apikey', tUi('setting.rommKey.label'), 'secret', { visibleWhen: gamesOn });
 
   // Video Games -----------------------------------------------------------------
   // Off by default: an unconfigured store issues zero Romm requests and shows
@@ -1040,12 +1036,12 @@ export function registerCoreSettings(): void {
   // group; every setting below it is gated on gamesOn().
   registerSetting({
     key: 'bb_games_enabled',
-    label: 'Enable video game section',
+    label: tUi('setting.gamesEnabled.label'),
     kind: 'toggle',
     group: 'Video Games',
     default: false,
     applyMode: 'reload',
-    hint: 'Adds a Video Games shelf stocked from Romm (or demo).',
+    hint: tUi('setting.gamesEnabled.hint'),
   });
 
   // The native launch path (romm.ts launchGame -> Tauri's launch_game) has
@@ -1058,12 +1054,12 @@ export function registerCoreSettings(): void {
   // to Romm's EmulatorJS player regardless of what is typed.
   registerSetting({
     key: 'romm_launch_cmd',
-    label: 'Emulator Command',
+    label: tUi('setting.emulator.label'),
     kind: 'text',
     group: 'Video Games',
     default: '',
     applyMode: 'live',
-    hint: 'Desktop app only. e.g. "retroarch -L /path/to/core.so {path}" — {path} becomes the rom file. Blank uses Romm\'s in-browser player.',
+    hint: tUi('setting.emulator.hint'),
     visibleWhen: () => getSetting<boolean>('bb_games_enabled'),
   });
 
@@ -1074,12 +1070,12 @@ export function registerCoreSettings(): void {
   // budget that no longer applies.
   registerSetting({
     key: 'bb_games_only',
-    label: 'Video games only',
+    label: tUi('setting.gamesOnly.label'),
     kind: 'toggle',
     group: 'Video Games',
     default: false,
     applyMode: 'rebuild-scene',
-    hint: 'The whole store becomes the game store — every game in your Romm library, no movies.',
+    hint: tUi('setting.gamesOnly.hint'),
     visibleWhen: gamesOn,
   });
 
@@ -1099,7 +1095,7 @@ export function registerCoreSettings(): void {
       subpage: 'Platforms',
       default: defVal,
       applyMode: 'rebuild-scene',
-      hint: `Show ${label} section on the Video Games shelf.`,
+      hint: tfill('setting.platform.hint', { name: label }),
       visibleWhen: perPlatformPicking,
     });
   };

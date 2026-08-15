@@ -45,7 +45,8 @@ test('desk CRT painter uses the JP-1B canvas-font seam, not host Courier New', (
   assert.ok(start >= 0 && end > start, 'drawTerminal body');
   const body = src.slice(start, end);
   assert.match(body, /crtPaintFont/);
-  assert.match(body, /ensureCjkForTexts/);
+  assert.match(body, /fitCrtLine/);
+  assert.equal(/slice\(0,\s*40\)/.test(body), false);
   assert.equal(/Courier New/.test(body), false);
   assert.equal(/monospace/.test(body), false);
 });

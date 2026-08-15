@@ -31,7 +31,9 @@ export {
   canvasFontStack,
   compareText,
   containsCjk,
+  CRT_COLUMNS,
   displayTitle,
+  fitCrtLine,
   truncateText,
   wrapText,
 } from './text.ts';
@@ -58,4 +60,14 @@ export function lookupMessage(
 
 export function t(key: MessageKey, locale: Locale = getLocale()): string {
   return lookupMessage(key, locale, tables);
+}
+
+/** `t()` with `{name}` placeholders. Unknown names are left as `{name}`. */
+export function tfill(
+  key: MessageKey,
+  vars: Record<string, string | number>,
+  locale: Locale = getLocale(),
+): string {
+  return t(key, locale).replace(/\{(\w+)\}/g, (_, name: string) =>
+    vars[name] === undefined ? `{${name}}` : String(vars[name]));
 }

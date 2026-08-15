@@ -29,6 +29,7 @@
 // custom properties (never a hardcoded house color — see CLAUDE.md signage
 // rule 2), each with a fallback for the case where the theme never applied.
 import { getSetting, setSetting } from './settings';
+import { t } from './i18n';
 
 /** Remembered answer, so a returning visitor is never asked twice. */
 const ANSWER_KEY = 'bb_device_gate';
@@ -82,18 +83,13 @@ export function detectGateReason(): GateReason | null {
 
 const COPY: Record<GateReason, { head: string; body: string; canStay: boolean }> = {
   'touch-primary': {
-    head: 'Built for TVs and desktops',
-    body: 'The 3D store is walked with a remote or the arrow keys, so there’s '
-        + 'nothing here to tap. The 2D store is the same library, same shelves, '
-        + 'built to be touched.',
+    head: t('gate.touch.head'),
+    body: t('gate.touch.body'),
     canStay: true,
   },
   'no-webgl2': {
-    head: 'This browser can’t run the 3D store',
-    body: 'Walking the aisles needs WebGL2, which this browser or graphics driver '
-        + 'doesn’t offer. The 2D store is plain HTML — same library, and it '
-        + 'needs none of it.',
-    // No point offering a 3D store that provably cannot start.
+    head: t('gate.webgl.head'),
+    body: t('gate.webgl.body'),
     canStay: false,
   },
 };
@@ -193,7 +189,7 @@ export function runDeviceGate(): Promise<void> {
 
     const openFlat = document.createElement('button');
     openFlat.className = 'dg-primary';
-    openFlat.textContent = 'Open the 2D store';
+    openFlat.textContent = t('gate.open2d');
     openFlat.addEventListener('click', () => finish('flat'));
     card.appendChild(openFlat);
 
@@ -202,20 +198,20 @@ export function runDeviceGate(): Promise<void> {
     tour.href = TOUR_URL;
     tour.target = '_blank';
     tour.rel = 'noopener noreferrer';
-    tour.textContent = 'Watch the 45-second tour ▶';
+    tour.textContent = t('gate.tour');
     card.appendChild(tour);
 
     if (canStay) {
       const stay = document.createElement('button');
       stay.className = 'dg-tertiary';
-      stay.textContent = 'Continue to the 3D store anyway';
+      stay.textContent = t('gate.stay3d');
       stay.addEventListener('click', () => finish('3d'));
       card.appendChild(stay);
     }
 
     const foot = document.createElement('p');
     foot.className = 'dg-foot';
-    foot.textContent = 'You can switch modes any time from the store menu.';
+    foot.textContent = t('gate.foot');
     card.appendChild(foot);
 
     root.appendChild(card);

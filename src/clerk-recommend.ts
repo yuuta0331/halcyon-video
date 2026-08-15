@@ -1,4 +1,5 @@
 import type { Movie } from './jellyfin';
+import { t, tfill } from './i18n';
 
 /**
  * Clerk recommendation brain (T14 Phase C).
@@ -93,13 +94,13 @@ export function recommend(movies: Movie[]): Recommendation | null {
   let reason: string;
   const topGenre = (best.genres ?? []).find((g) => (affinity[g] ?? 0) > 0);
   if (bestAffinity > 0.3 && topGenre) {
-    reason = `You've been eyeing a lot of ${topGenre.toLowerCase()} — this one's a keeper.`;
+    reason = tfill('clerk.why.genre', { genre: topGenre.toLowerCase() });
   } else if ((best.communityRating ?? 0) >= 7.5) {
-    reason = `It's one of our highest-rated rentals right now.`;
+    reason = t('clerk.why.rated');
   } else if (best.year && best.year >= maxYear - 1) {
-    reason = `Just came in — it's flying off the shelf.`;
+    reason = t('clerk.why.new');
   } else {
-    reason = `A staff favorite. You won't be disappointed.`;
+    reason = t('clerk.why.staff');
   }
 
   return { movie: best, reason };

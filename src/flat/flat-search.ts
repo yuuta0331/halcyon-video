@@ -1,6 +1,7 @@
 import { JellyfinLibrary, Movie } from '../jellyfin';
 import { createCase } from './flat-case';
 import { openDetailsOverlay } from './flat-detail';
+import { t, tfill } from '../i18n';
 
 let originatingFocusElement: HTMLElement | null = null;
 let currentSearchOverlay: HTMLElement | null = null;
@@ -68,7 +69,7 @@ export function openFlatSearchOverlay(
     <div class="flat-search-container">
       <div class="flat-search-input-wrapper">
         <span class="flat-search-icon">🔍</span>
-        <input type="text" class="flat-search-input" placeholder="Search titles, directors, genres..." autocomplete="off" />
+        <input type="text" class="flat-search-input" placeholder="${t('flat.searchPlaceholder')}" autocomplete="off" />
       </div>
       <div class="flat-search-results-container">
         <div class="flat-search-results-grid"></div>
@@ -198,8 +199,8 @@ export function openFlatSearchOverlay(
       resultsGrid.innerHTML = `
         <div class="flat-search-empty-state">
           <span class="flat-search-empty-icon">🍿</span>
-          <h3 class="flat-search-empty-title">Start Typing...</h3>
-          <p class="flat-search-empty-text">Type title, director, or genre to explore.</p>
+          <h3 class="flat-search-empty-title">${t('flat.searchStart')}</h3>
+          <p class="flat-search-empty-text">${t('flat.searchStartHint')}</p>
         </div>
       `;
       return;
@@ -217,13 +218,13 @@ export function openFlatSearchOverlay(
       resultsGrid.innerHTML = `
         <div class="flat-search-empty-state">
           <span class="flat-search-empty-icon">🍿</span>
-          <h3 class="flat-search-empty-title">No Titles Found</h3>
+          <h3 class="flat-search-empty-title">${t('flat.searchNone')}</h3>
           <p class="flat-search-empty-text"></p>
         </div>
       `;
       // textContent, not template interpolation: the query is user input
       const emptyText = resultsGrid.querySelector('.flat-search-empty-text');
-      if (emptyText) emptyText.textContent = `We couldn't find any matches for "${query}".`;
+      if (emptyText) emptyText.textContent = tfill('flat.searchNoneHint', { query });
       return;
     }
 

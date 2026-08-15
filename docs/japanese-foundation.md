@@ -1,9 +1,10 @@
-# Japanese foundation (Phase JP-0 / JP-1A)
+# Japanese foundation (Phase JP-0 / JP-1A / JP-1B)
 
-This fork keeps the upstream English store as the default. This phase adds a
-localization boundary, a bundled Japanese-capable font, mixed-script text
-helpers, and a platform seam for a later WebXR/Quest phase. It does **not**
-redesign the store as a Japanese rental shop.
+This fork keeps the upstream English store as the default. JP-0 / JP-1A added
+the localization boundary, bundled Japanese font, mixed-script helpers, and a
+platform seam. **JP-1B completes application chrome in Japanese and width-aware
+CJK Canvas fitting.** It does **not** redesign the store as a Japanese rental
+shop.
 
 ## Localization
 
@@ -14,11 +15,11 @@ Application chrome lives in `src/i18n/`:
 | `en.ts` | Default catalog (complete) |
 | `ja.ts` | Japanese catalog (`Partial` — missing keys fall back to English) |
 | `locale.ts` | `bb_locale` persistence; default **English** |
-| `index.ts` | `t()`, `getLocale()`, `setLocale()`, `lookupMessage()` |
-| `text.ts` | CJK detection, wrap/truncate, locale-aware compare, canvas family stack |
-| `canvas-font.ts` | JP-1B canvas seam (`paintFont` / `crtPaintFont`); do not import from node tests |
+| `index.ts` | `t()`, `tfill()`, `getLocale()`, `setLocale()`, `lookupMessage()` |
+| `text.ts` | CJK detection, wrap/truncate, `fitCrtLine`, locale-aware compare, canvas family stack |
+| `canvas-font.ts` | Canvas seam (`paintFont` / `crtPaintFont`); do not import from node tests |
 | `cjk-font.ts` | Lazy FontFace registration for the bundled JP face |
-| `chrome.ts` | HUD / power-menu / settings-index helpers |
+| `chrome.ts` | HUD / power-menu / settings-index / HTML overlay helpers |
 
 **English is the default.** `bb_locale` is read only if it is `en` or `ja`.
 Browser language is **not** applied at boot (`detectBrowserLocale()` exists
@@ -29,19 +30,35 @@ until they pick 日本語 under Store Look → Language (reload).
 
 1. Add the key to `src/i18n/en.ts` (required).
 2. Add the Japanese value to `src/i18n/ja.ts`. If you omit it, `t()` shows English.
-3. Call `t('the.key')` at the chrome site. Do not put store identity (wordmark,
-   wrap address, clerk greeting, receipts) here — that is Brand Packs.
+3. Call `t('the.key')` (or `tfill` for `{name}` placeholders) at the chrome site.
+   Do not put store identity (wordmark, wrap address, clerk greeting, receipts)
+   here — that is Brand Packs.
 
-`npm test` covers fallback, locale selection, and mixed-script helpers.
+`npm test` covers fallback, locale selection, mixed-script helpers, and CRT fitting.
 
 ### i18n vs Brand Packs
 
-- **i18n** = UI language (HUD, help, settings, search prompts, walk-mode copy).
+- **i18n** = UI language (HUD, help, settings, search prompts, walk-mode copy,
+  setup/BIOS, device-gate, 2.5D chrome, clerk menus, membership picker).
 - **Brand Packs** (`brandString()`, `public/user-assets/brands/`) = store
   identity. A Japanese-looking shop is a future Brand Pack, not a locale.
 
 Future Japanese Brand Pack location: `public/user-assets/brands/<id>/` (gitignored,
 same as every other pack). Do not commit TSUTAYA, GEO, or any real-chain assets.
+
+## JP-1B migrated surfaces
+
+- Settings labels, cycle values, On/Off, hints, pending-status, page chrome
+- Setup / BIOS terminal screens (line count and cursor rows unchanged; stored
+  English step/error strings are mapped at render)
+- Device-gate copy and CTAs
+- Flat / 2.5D menu, library list, search empty states, detail chrome
+- Clerk prompt, menus, small talk, recommendation templates (greeting stays Brand Pack)
+- Membership picker chrome (printed card face stays era/Brand Pack)
+- Login overlay (including Plex PIN chrome), candy checkout, walk HUD,
+  version picker, player chrome
+- CRT idle instructional lines (`PRESS / TO SEARCH…`); store number and
+  `PLEASE REWIND` / `REMEMBER TO REWIND` stay in-world English
 
 ## Japanese font
 
@@ -57,8 +74,29 @@ appends `BBCjk` **after** the shipped Latin family only when the string
 contains CJK (`BBMono, BBCjk`, never `BBCjk, BBMono`). Latin-only strings
 keep a Latin-only stack. The desk CRT / search terminal paints through
 `src/i18n/canvas-font.ts` (`crtPaintFont`) so Japanese glyphs resolve to the
-bundled face even when the UI locale is still English. Other canvas painters
-are a JP-1B migration (`paintFont` / `crtPaintFont` instead of host families).
+bundled face even when the UI locale is still English (a Japanese catalog
+title can appear on an English UI).
+
+## Canvas width-aware strategy
+
+The old CRT clipped with `line.slice(0, 40)` and search used
+`displayTitle(maxChars)`. That matches a 40-column ASCII terminal and is
+**kept for Latin-only lines**.
+
+CJK / mixed-script lines use `fitCrtLine(text, maxWidth, measure)` in
+`src/i18n/text.ts`:
+
+- Latin-only → `Array.from(text).slice(0, 40)` (no ellipsis, same 40-column
+  contract as before).
+- CJK / mixed → `truncateText()` against an injected `measure()` so node tests
+  work; the painter measures with the same `crtPaintFont` stack it fills with.
+- Truncation is code-point based (no lone UTF-16 surrogates).
+- After `BBCjk` loads, `ensureCjkForTexts` triggers one redraw so widths are
+  not permanently measured against a host fallback face.
+
+English 40-column appearance is unchanged (no ellipsis, no numeric reflow).
+`displayTitle()` still uppercases Latin titles; Japanese titles are left
+intact for the painter to width-fit.
 
 ## Text handling
 
@@ -89,16 +127,55 @@ Documented for the later phase (also in the module header):
 - A fictional Japanese store Brand Pack
 - TSUTAYA / GEO (or any third-party chain) assets or strings
 - WebXR, Quest controllers, XR performance tuning
-- Translating every English literal in the repo
 
-### Remaining i18n migration surface
+### Remaining surfaces (not JP-1B)
 
-Signage and case wraps, clerk dialogue, setup/BIOS screens, device-gate copy,
-flat 2.5D UI, rental-clock prose, fixture POP, demo-library titles, and most
-per-setting labels still use English literals or `brandString()`. Migrate them
-the same way: add keys, call `t()`, leave identity with Brand Packs.
+- Signage, case wraps, aisle bands, fixture POP — Brand Pack / in-world English
+- Clerk greeting default — Brand Pack
+- Theme names (`Halcyon 1990`), wall-paint color names, Store Brand editor
+  (emblem shapes, Megahit/Reel Time presets, Theme Font)
+- Demo-library / user media titles
+- Developer console / `[System]` / `[Clerk]` logs
+- CRT footer `PLEASE REWIND` / `REMEMBER TO REWIND` / store number
+- Rental-clock diegetic stamps (`MON 8:00 AM`, register receipt dates)
+- Remote companion / tip-jar overlays (secondary surfaces)
+
+## Next phase
+
+**JP-2 — Fictional Japanese Rental Store Brand Pack & Visual Design**
+
+A fictional (not TSUTAYA/GEO) Brand Pack: lettering, colors, wraps, POP. Not
+this PR.
 
 ## Validation
 
 PR CI (`.github/workflows/ci.yml`) runs `npm test` and `npm run build`
 (file-budget + signage slots + `tsc` + Vite, including demo-mode via `VITE_DEMO=1`).
+
+### Browser smoke (JP-1B)
+
+1. `npm run dev` (Vite). Isolated browser profile, not a daily Chrome profile.
+2. English: omit `bb_locale`. Confirm HUD/settings English, idle CRT 40-col,
+   no Noto request on all-English idle if Network is visible.
+3. Store Look → Language → 日本語, reload. Confirm HUD/settings/help/setup
+   Japanese, CRT CJK via BBCjk, long title clipped to the tube.
+4. Reload: Japanese persists. Switch back to English: English returns.
+
+JP-1B smoke (isolated Cursor browser tab, Vite `npm run dev` on
+`http://127.0.0.1:1420/?demo=1&nogate=1`, not a daily Chrome profile):
+
+- English default: `bb_locale` unset, HUD `PICK A SECTION`, settings
+  `STORE SETTINGS` / `LANGUAGE` = `ENGLISH`. BBCjk was **not** in
+  `document.fonts`; Noto WOFF2 transferred only as Vite's tiny `?import`
+  URL module (~300–758 B), not the 1.1MB face.
+- Japanese: Store Look → Language → 日本語, Apply & Close (reload). HUD
+  `コーナー選択`, settings `ストア設定`, power menu `マネージャ端末`,
+  3D search CRT `検索>` / `入力待ち...`. BBCjk `loaded`; Noto WOFF2
+  transferred 1,131,884 bytes.
+- Long CJK on the desk CRT truncated with an ellipsis inside the tube;
+  footer stayed `PLEASE REWIND` / `REMEMBER TO REWIND`.
+- Reload kept `bb_locale=ja`. Switching Language back to English restored
+  the English HUD and did not register BBCjk.
+
+Setup/BIOS and device-gate were not walked in this demo boot (`?demo=1`,
+`?nogate=1`); they are covered by unit tests and remain localized.
