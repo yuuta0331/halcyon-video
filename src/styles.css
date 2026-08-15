@@ -48,11 +48,11 @@
 }
 
 :root {
-  --font-title: 'Bebas Neue', sans-serif;
-  --font-logo: 'Archivo Black', sans-serif;
-  --font-body: 'Outfit', sans-serif;
-  --font-mono: 'Share Tech Mono', monospace;
-  --font-display: 'Archivo Black', sans-serif;
+  --font-title: 'Bebas Neue', 'BBCjk', sans-serif;
+  --font-logo: 'Archivo Black', 'BBCjk', sans-serif;
+  --font-body: 'Outfit', 'BBCjk', sans-serif;
+  --font-mono: 'Share Tech Mono', 'BBCjk', monospace;
+  --font-display: 'Archivo Black', 'BBCjk', sans-serif;
 
   /* Chrome palette (DOM overlays; the 3D store reads themes.ts) */
   --bb-navy: #000a1c;

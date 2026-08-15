@@ -1,0 +1,36 @@
+# Pull request checks — typecheck, unit tests, production build, file budgets.
+#
+# Deploy-demo.yml still owns GitHub Pages and only runs on master.
+# This workflow exists so pull requests actually run the same gates `npm run
+# build` already enforces locally, plus the unit tests that were never in CI.
+name: CI
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+        env:
+          PUPPETEER_SKIP_DOWNLOAD: "1"
+
+      - run: npm test
+
+      # file-budget + signage-slot check + tsc + vite (demo mode, as Pages does)
+      - run: npm run build
+        env:
+          VITE_DEMO: "1"
+          PUPPETEER_SKIP_DOWNLOAD: "1"

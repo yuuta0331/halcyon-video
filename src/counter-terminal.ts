@@ -7,27 +7,23 @@
 // without main.ts's DOM shell), so the row text lives here as pure data +
 // a pure formatter rather than inside main.ts.
 import { brandString } from './brand-pack';
+import { t } from './i18n';
 
 // Short labels for the CRT. drawTerminal() in entrance/index.ts hard-clips each
 // line at 40 characters, and the "> " selection prefix eats two of them, so
 // every label here must stay within 38.
 export const COUNTER_TERMINAL_LABELS: Record<string, string> = {
-  'btn-settings': 'STORE SETTINGS',
-  'btn-controls': 'CONTROLS & HELP',
-  'btn-flat-mode': 'SWITCH TO 2D MODE',
-  'btn-suspend': 'SUSPEND SYSTEM (SLEEP)',
-  'btn-cec-toggle': 'DISPLAY ON/OFF (CEC)',
-  'btn-logout': 'CHANGE SERVER / LOG OUT',
-  // Lazy: this object is built at module eval, long before the brand pack
-  // has loaded, so the one branded row reads through a getter.
-  get 'btn-exit'() { return brandString('terminal-exit-label', 'CLOSE HALCYON APP'); },
-  // CRT-only row (not in the glass power menu): the diegetic door into the
-  // SERVICE MODE settings page — the staff knobs hidden from the couch tree.
-  'btn-service': 'MANAGER OVERRIDE (STAFF ONLY)',
-  // CRT-only row (#42): opens the BIOS-style date sub-screen that pins the
-  // catalog to a rolling point in time (counter-terminal-flow.ts).
-  'btn-media-date': 'MEDIA RELEASE DATE (PIN CATALOG)',
-  'btn-cancel': 'RETURN TO STORE',
+  get 'btn-settings'() { return t('terminal.settings'); },
+  get 'btn-controls'() { return t('terminal.controls'); },
+  get 'btn-flat-mode'() { return t('terminal.flatMode'); },
+  get 'btn-suspend'() { return t('terminal.suspend'); },
+  get 'btn-cec-toggle'() { return t('terminal.cec'); },
+  get 'btn-logout'() { return t('terminal.logout'); },
+  // Brand Pack override, then i18n fallback — identity stays with the pack.
+  get 'btn-exit'() { return brandString('terminal-exit-label', t('power.exit')); },
+  get 'btn-service'() { return t('terminal.service'); },
+  get 'btn-media-date'() { return t('terminal.mediaDate'); },
+  get 'btn-cancel'() { return t('terminal.cancel'); },
 };
 
 // Body lines the header sits above (drawTerminal draws its own
@@ -38,7 +34,7 @@ export function counterTerminalLines(ids: string[], selectedIndex: number): {
   lines: string[];
   cursorLine: number;
 } {
-  const lines = ['MANAGER TERMINAL — SYSTEM CONTROL', ''];
+  const lines = [t('terminal.header'), ''];
   ids.forEach((id, idx) => {
     lines.push(`${idx === selectedIndex ? '>' : ' '} ${COUNTER_TERMINAL_LABELS[id] ?? id}`);
   });

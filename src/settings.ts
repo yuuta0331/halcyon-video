@@ -35,6 +35,7 @@ import { drawLogo, getLogoFontString } from './logo-renderer';
 import { loadMediaReleasePin, saveMediaReleasePin } from './media-release-date';
 import { formatUnlockLabel, makeRentalRecord, rentalCapacityAt } from './rental-clock';
 import type { StoreScene } from './three-scene';
+import { LOCALE_KEY, t as tUi } from './i18n';
 
 export type SettingKind = 'toggle' | 'cycle' | 'text' | 'secret';
 export type ApplyMode = 'live' | 'rebuild-scene' | 'reload';
@@ -429,6 +430,22 @@ function brandDropDiagnostic(): string {
 export function registerCoreSettings(): void {
   if (coreRegistered) return;
   coreRegistered = true;
+
+  // Language is chrome, not identity: Brand Packs still own store lettering.
+  // Reload so labels re-resolve; English remains the default when unset.
+  registerSetting({
+    key: LOCALE_KEY,
+    label: tUi('locale.label'),
+    kind: 'cycle',
+    group: 'Store Look',
+    values: [
+      { id: 'en', label: tUi('locale.en') },
+      { id: 'ja', label: tUi('locale.ja') },
+    ],
+    default: 'en',
+    applyMode: 'reload',
+    hint: tUi('locale.hint'),
+  });
 
   // Store Look ---------------------------------------------------------------
   // While the Media Release Date pin's MATCH STORE ERA is on (#42), this row
