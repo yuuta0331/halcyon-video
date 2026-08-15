@@ -1,22 +1,25 @@
 // Brand pack loader — the drop-in seam for a WHOLE store identity.
 //
-// TWO TIERS, one loader:
+// THREE TIERS, one loader:
 //
 //   SIMPLE DROP (no setting, no manifest) — public/user-assets/brand/, the
 //     singular well-known folder. Put logo.svg or logo.png in it and the store
 //     wears it on the next boot; brand-drop.ts synthesizes the manifest from
 //     the art. This is the "one step" tier, and it is ON by presence alone.
-//   BRAND PACK (explicit) — one directory in public/user-assets/brands/:
+//   BRAND PACK (explicit, private) — one directory in public/user-assets/brands/:
 //     `brands/<pack-id>/brand.json` plus whatever art it overrides (logo,
 //     fonts, signs, surfaces, wraps). `localStorage.bb_brand_pack` names the
-//     active one. Several identities can live side by side and be switched
-//     between; a drop is one identity that is simply there.
+//     active one. Git-ignored: real-brand recreations and user scans live here.
+//   BUNDLED PACK (explicit, shipped) — public/brand-packs/<id>/ for fictional
+//     identities that ship with the app (see src/bundled-brand-packs.ts). Only
+//     registered ids are probed; an unknown bb_brand_pack never searches this
+//     tree. A local pack with the same id overrides its bundled counterpart.
 //
-// PRECEDENCE: brand/ (drop) < bb_brand_pack (explicit) < bb_logo (the user's
-// own live edits in the brand editor). Naming a pack is an explicit choice, so
-// it wins over a folder that just happens to exist — and the drop is never
-// consulted when bb_brand_pack is set, so a typo'd pack id reports itself as a
-// typo instead of silently landing on some other identity.
+// PRECEDENCE: brand/ (drop) < bb_brand_pack (explicit user, else bundled) <
+// bb_logo (the user's own live edits in the brand editor). Naming a pack is
+// an explicit choice, so it wins over a folder that just happens to exist —
+// and the drop is never consulted when bb_brand_pack is set, so a typo'd pack
+// id reports itself as a typo instead of silently landing on some other identity.
 //
 // No drop, no key, or a manifest that isn't installed means NO pack: every
 // accessor below answers with the caller's own fallback, so a store with
@@ -35,80 +38,24 @@
 // nothing says so. Boot funnels await loadBrandPack() ahead of
 // initializeStoreScene (main.ts waitForFontsAndInit, harness-boot.ts's
 // watchdog race, asset-viewer.ts's).
-import type { LogoSpec } from './logo-spec';
-import type { StoreTheme } from './themes';
 import { assetUrl } from './asset-url';
 import { registerRuntimeFace } from './bundled-fonts';
 import { BRAND_DROP_DIR, detectBrandDrop } from './brand-drop';
+import { brandPackLookupPlan } from './bundled-brand-packs';
+import { containsCjk } from './i18n/text';
+import { ensureCjkFont } from './i18n/cjk-font';
+import {
+  validateBrandManifest,
+  type BrandPackManifest,
+} from './brand-pack-manifest';
 
-/** One face the pack ships, registered under a collision-proof runtime family. */
-export interface BrandPackFontSpec {
-  /** The name the pack's own logo spec / strings refer to, e.g. 'Halcyon Display'. */
-  family: string;
-  /** Pack-relative file, e.g. 'fonts/display.ttf'. */
-  file: string;
-  descriptors?: FontFaceDescriptors;
-}
-
-/**
- * brand.json. Only `version` and `id` are required — every other field is an
- * override, and absence means "keep today's value". A pack that declares
- * nothing but those two is legal and changes nothing.
- */
-export interface BrandPackManifest {
-  version: number;
-  id: string;
-  /** Brand name for rendered prose (brandString's 'brand-name' default). */
-  name?: string;
-  /** Longer display name for UI chrome; falls back to `name`. */
-  displayName?: string;
-  /** Theme ids this identity is for. Absent/empty = every theme. */
-  appliesTo?: string[];
-  fonts?: BrandPackFontSpec[];
-  /** LogoSpec partial, merged UNDER the user's own bb_logo edits. */
-  logo?: Partial<LogoSpec>;
-  palette?: Partial<StoreTheme['palette']>;
-  /**
-   * PER-ERA deviations from `palette`, keyed by theme id. A real chain that
-   * spans decades is not one palette: it repaints. Without this a pack's single
-   * palette flattens every era onto the one the pack was authored in — the
-   * era's own wall colour, its own livery blue, gone. Merged AFTER `palette`,
-   * so a theme lists only what it does differently.
-   */
-  themes?: Record<string, { palette?: Partial<StoreTheme['palette']> }>;
-  /** Rendered-string overrides, keyed by the ids brandString() names. */
-  strings?: Record<string, string>;
-  /**
-   * Flat wrap prints per medium, pack-relative (USER_WRAP_SPECS geometry).
-   * A bare string is the one-print shorthand; a LIST is how a pack ships the
-   * several prints a real chain used, each choosable in the settings drawer.
-   */
-  wraps?: { vhs?: string | BrandPackWrapSpec[]; dvd?: string | BrandPackWrapSpec[] };
-  signageSet?: string;
-}
-
-/**
- * One selectable wrap print a pack ships. `layout` names which of the app's
- * print geometries the scan follows — the difference between "metadata is
- * TYPED INTO this print's blank form fields" and "this print is final art":
- *   base   — the medium's own scan geometry + its typed-metadata pass
- *   plain  — the medium's crops, nothing typed over the art (default)
- *   ticket — the all-emblem VHS crops (fold lines at the spine band's edges)
- */
-export interface BrandPackWrapSpec {
-  /** Persisted `bb_cover_<medium>` value, e.g. 'standard'. */
-  id: string;
-  /** Settings-drawer label; defaults to the id. */
-  label?: string;
-  /** Pack-relative image, e.g. 'wraps/vhs-standard.jpg'. */
-  file: string;
-  layout?: 'base' | 'plain' | 'ticket';
-}
+export type { BrandPackFontSpec, BrandPackManifest, BrandPackWrapSpec } from './brand-pack-manifest';
+export { validateBrandManifest } from './brand-pack-manifest';
 
 export type BrandPackStatus = 'none' | 'loading' | 'loaded' | 'failed';
 
 /** Which tier supplied the active identity. */
-export type BrandPackSource = 'none' | 'drop' | 'pack';
+export type BrandPackSource = 'none' | 'drop' | 'pack' | 'bundled';
 
 // Legacy theme ids, canonicalized here rather than by importing resolveThemeId
 // from themes.ts — that module imports US at runtime (getActiveTheme merges the
@@ -119,10 +66,10 @@ const THEME_ID_ALIASES: Record<string, string> = { 'bb-90s': 'bb-1990', 'bb-2000
 let pack: BrandPackManifest | null = null;
 let status: BrandPackStatus = 'none';
 let loadPromise: Promise<BrandPackManifest | null> | null = null;
-// Which tier answered, and the user-assets-relative directory it lives in.
-// A simple drop is rooted at `brand/`, an explicit pack at `brands/<id>/`.
+// Which tier answered, and the public/-relative directory it lives in
+// (`user-assets/brands/<id>`, `user-assets/brand`, or `brand-packs/<id>`).
 let source: BrandPackSource = 'none';
-let packDir: string | null = null;
+let packPublicRoot: string | null = null;
 // Declared family name -> the runtime family it was actually registered under.
 const packFamilies = new Map<string, string>();
 // Resolved emblem-image url -> the decoded element (null once it has failed).
@@ -148,7 +95,7 @@ export function brandPackStatus(): BrandPackStatus {
   return status;
 }
 
-/** Which tier the active identity came from — 'drop', 'pack' or 'none'. */
+/** Which tier the active identity came from — 'drop', 'pack', 'bundled' or 'none'. */
 export function brandPackSource(): BrandPackSource {
   return getBrandPack() ? source : 'none';
 }
@@ -169,12 +116,24 @@ function packApplies(): boolean {
 }
 
 /**
- * The active identity's directory relative to user-assets/ — `brands/<id>` for
- * an explicit pack, `brand` for a simple drop — or null. user-assets.ts's
- * override prefix.
+ * Public/-relative root of the active identity (`user-assets/brands/<id>`,
+ * `user-assets/brand`, or `brand-packs/<id>`), or null. Prefer this over
+ * teaching every consumer about both trees.
+ */
+export function brandPackPublicRoot(): string | null {
+  return getBrandPack() ? packPublicRoot : null;
+}
+
+/**
+ * The active identity's directory relative to user-assets/, or null. A simple
+ * drop is `brand`; an explicit private pack is `brands/<id>`. Bundled packs
+ * do not live under user-assets/, so this is null for those — use
+ * brandPackPublicRoot() for a path that works for every tier.
  */
 export function brandPackDir(): string | null {
-  return getBrandPack() ? packDir : null;
+  const root = brandPackPublicRoot();
+  if (!root || !root.startsWith('user-assets/')) return null;
+  return root.slice('user-assets/'.length);
 }
 
 /**
@@ -184,8 +143,8 @@ export function brandPackDir(): string | null {
  */
 export function brandAssetUrl(rel: string): string | null {
   if (/^(?:https?:|data:|blob:|\/)/.test(rel)) return rel;
-  const dir = brandPackDir();
-  return dir ? assetUrl(`user-assets/${dir}/${rel.replace(/^\.?\//, '')}`) : null;
+  const root = brandPackPublicRoot();
+  return root ? assetUrl(`${root}/${rel.replace(/^\.?\//, '')}`) : null;
 }
 
 /**
@@ -197,6 +156,15 @@ export function brandString(key: string, fallback: string): string {
   const s = getBrandPack()?.strings;
   const v = s && typeof s[key] === 'string' ? s[key] : null;
   return v !== null ? v : fallback;
+}
+
+/**
+ * In-world genre / aisle label. Packs override via `strings['sign-genre-ACTION']`
+ * etc. Unknown names keep the caller's fallback — no pack-id branches.
+ */
+export function brandGenreLabel(name: string): string {
+  const key = `sign-genre-${name.trim().toUpperCase().replace(/\s+/g, '-')}`;
+  return brandString(key, name);
 }
 
 /**
@@ -223,82 +191,14 @@ export function brandImage(src: string): HTMLImageElement | null {
   return url ? (packImages.get(url) ?? null) : null;
 }
 
-// ─── Manifest validation ─────────────────────────────────────────────────────
-
-/**
- * Structural problems with a parsed brand.json, as human-readable lines (empty
- * = valid). Shared with `node tools/list-slots.mjs --check`, which validates an
- * installed manifest at build time — same rule set, one implementation.
- */
-export function validateBrandManifest(raw: unknown): string[] {
-  const problems: string[] = [];
-  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return ['manifest is not a JSON object'];
-  const m = raw as Record<string, unknown>;
-  if (typeof m.version !== 'number') problems.push('version: required, must be a number');
-  if (typeof m.id !== 'string' || !m.id.trim()) problems.push('id: required, must be a non-empty string');
-  else if (!/^[a-z0-9][a-z0-9-]*$/.test(m.id)) problems.push(`id: "${m.id}" must be kebab-case (a-z, 0-9, -)`);
-  const str = (k: string) => {
-    if (m[k] !== undefined && typeof m[k] !== 'string') problems.push(`${k}: must be a string`);
-  };
-  str('name'); str('displayName'); str('signageSet');
-  if (m.appliesTo !== undefined && (!Array.isArray(m.appliesTo) || m.appliesTo.some((t) => typeof t !== 'string'))) {
-    problems.push('appliesTo: must be an array of theme ids');
-  }
-  if (m.fonts !== undefined) {
-    if (!Array.isArray(m.fonts)) problems.push('fonts: must be an array');
-    else m.fonts.forEach((f, i) => {
-      const face = f as Record<string, unknown> | null;
-      if (!face || typeof face !== 'object') problems.push(`fonts[${i}]: must be an object`);
-      else {
-        if (typeof face.family !== 'string' || !face.family.trim()) problems.push(`fonts[${i}].family: required string`);
-        if (typeof face.file !== 'string' || !face.file.trim()) problems.push(`fonts[${i}].file: required string`);
-      }
-    });
-  }
-  for (const k of ['logo', 'palette', 'strings', 'wraps', 'themes'] as const) {
-    if (m[k] !== undefined && (typeof m[k] !== 'object' || m[k] === null || Array.isArray(m[k]))) {
-      problems.push(`${k}: must be an object`);
-    }
-  }
-  const themes = m.themes as Record<string, unknown> | undefined;
-  if (themes && typeof themes === 'object' && !Array.isArray(themes)) {
-    for (const [id, v] of Object.entries(themes)) {
-      const entry = v as Record<string, unknown> | null;
-      if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
-        problems.push(`themes.${id}: must be an object`);
-        continue;
-      }
-      if (entry.palette !== undefined
-        && (typeof entry.palette !== 'object' || entry.palette === null || Array.isArray(entry.palette))) {
-        problems.push(`themes.${id}.palette: must be an object`);
-      }
-    }
-  }
-  const strings = m.strings as Record<string, unknown> | undefined;
-  if (strings && typeof strings === 'object' && !Array.isArray(strings)) {
-    for (const [k, v] of Object.entries(strings)) {
-      if (typeof v !== 'string') problems.push(`strings.${k}: must be a string`);
-    }
-  }
-  const wraps = m.wraps as Record<string, unknown> | undefined;
-  if (wraps && typeof wraps === 'object' && !Array.isArray(wraps)) {
-    for (const [medium, v] of Object.entries(wraps)) {
-      if (typeof v === 'string') continue;
-      if (!Array.isArray(v)) { problems.push(`wraps.${medium}: must be a string or an array of prints`); continue; }
-      v.forEach((w, i) => {
-        const spec = w as Record<string, unknown> | null;
-        const at = `wraps.${medium}[${i}]`;
-        if (!spec || typeof spec !== 'object') { problems.push(`${at}: must be an object`); return; }
-        if (typeof spec.id !== 'string' || !spec.id.trim()) problems.push(`${at}.id: required string`);
-        if (typeof spec.file !== 'string' || !spec.file.trim()) problems.push(`${at}.file: required string`);
-        if (spec.label !== undefined && typeof spec.label !== 'string') problems.push(`${at}.label: must be a string`);
-        if (spec.layout !== undefined && !['base', 'plain', 'ticket'].includes(spec.layout as string)) {
-          problems.push(`${at}.layout: must be one of base | plain | ticket`);
-        }
-      });
-    }
-  }
-  return problems;
+function packNeedsCjk(manifest: BrandPackManifest): boolean {
+  const bits: unknown[] = [
+    manifest.name, manifest.displayName,
+    manifest.logo?.mainText, manifest.logo?.subText,
+    manifest.logo?.bandText, manifest.logo?.taglineText,
+    ...Object.values(manifest.strings ?? {}),
+  ];
+  return bits.some((s) => typeof s === 'string' && containsCjk(s));
 }
 
 // ─── Boot load ───────────────────────────────────────────────────────────────
@@ -320,14 +220,20 @@ function preloadImage(url: string): Promise<void> {
 }
 
 /**
- * Adopt a manifest: register its fonts, preload its emblem art. Shared by both
- * tiers — a synthesized drop manifest is a manifest like any other.
+ * Adopt a manifest: register its fonts, preload its emblem art. Shared by every
+ * tier — a synthesized drop manifest is a manifest like any other.
+ * `publicRoot` is site-root-relative (`user-assets/brand`, `user-assets/brands/<id>`,
+ * or `brand-packs/<id>`).
  */
-function adopt(manifest: BrandPackManifest, dir: string, from: BrandPackSource): Promise<BrandPackManifest> {
+function adopt(manifest: BrandPackManifest, publicRoot: string, from: BrandPackSource): Promise<BrandPackManifest> {
   pack = manifest;
-  packDir = dir;
+  packPublicRoot = publicRoot;
   source = from;
   status = 'loaded';
+  // A Japanese wordmark/sign string must wait on BBCjk the same way pack
+  // display faces wait on bundledFontsReady() — once-only canvases cannot
+  // bake a host fallback and never recover.
+  if (packNeedsCjk(manifest)) ensureCjkFont();
   // Fonts first: registerRuntimeFace kicks each fetch and re-arms
   // bundledFontsReady(), which the boot funnel awaits right after us.
   for (const face of manifest.fonts ?? []) {
@@ -359,7 +265,7 @@ function loadBrandDrop(): Promise<BrandPackManifest | null> {
         status = 'failed';
         return null;
       }
-      return adopt(found.manifest, BRAND_DROP_DIR, 'drop');
+      return adopt(found.manifest, `user-assets/${BRAND_DROP_DIR}`, 'drop');
     })
     .catch((e) => {
       console.warn('[brand-drop] could not read user-assets/brand/ — using the built-in brand:', e);
@@ -368,10 +274,52 @@ function loadBrandDrop(): Promise<BrandPackManifest | null> {
     });
 }
 
+/** Fetch a brand.json body, or null if the file is missing / SPA-fallback HTML. */
+function fetchManifestText(url: string): Promise<string | null> {
+  return fetch(url).then((res) => (res.ok ? res.text() : null)).then((text) => {
+    if (text === null || /^\s*</.test(text)) return null;
+    return text;
+  });
+}
+
+function parseManifest(id: string, text: string): BrandPackManifest | null {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(text);
+  } catch (e) {
+    console.warn(`[brand-pack] ${id}/brand.json is not valid JSON — ignoring pack:`, e);
+    status = 'failed';
+    return null;
+  }
+  const problems = validateBrandManifest(parsed);
+  if (problems.length) {
+    console.warn(`[brand-pack] ${id}/brand.json is invalid — ignoring pack:\n  ` + problems.join('\n  '));
+    status = 'failed';
+    return null;
+  }
+  const manifest = parsed as BrandPackManifest;
+  if (manifest.id !== id) {
+    console.warn(`[brand-pack] ${id}/brand.json declares id "${manifest.id}" — using the directory name.`);
+    manifest.id = id;
+  }
+  return manifest;
+}
+
+function adoptParsed(
+  id: string,
+  text: string,
+  publicRoot: string,
+  from: BrandPackSource,
+): Promise<BrandPackManifest | null> {
+  const manifest = parseManifest(id, text);
+  return manifest ? adopt(manifest, publicRoot, from) : Promise.resolve(null);
+}
+
 /**
- * Resolve the active identity: the explicit pack `bb_brand_pack` names, else
- * the simple drop in user-assets/brand/. Registers its fonts and preloads its
- * emblem art. Idempotent (one resolution per page load) and never rejects:
+ * Resolve the active identity: the explicit pack `bb_brand_pack` names (local
+ * user pack first, then a registered bundled pack of that id), else the simple
+ * drop in user-assets/brand/. Registers its fonts and preloads its emblem art.
+ * Idempotent (one resolution per page load) and never rejects:
  *   - nothing installed                   → null, silently (the normal case)
  *   - unreadable/invalid manifest         → null, one console.warn
  * The returned promise settling is the boot funnels' signal that the pack's
@@ -390,46 +338,40 @@ export function loadBrandPack(): Promise<BrandPackManifest | null> {
     return loadPromise;
   }
   status = 'loading';
-  const url = assetUrl(`user-assets/brands/${id}/brand.json`);
-  loadPromise = fetch(url)
-    .then((res) => (res.ok ? res.text() : null))
-    .then((text) => {
-      // A dev/preview server with an SPA fallback answers a MISSING manifest
-      // with index.html and a 200, so "not ok" is not the only miss — an HTML
-      // body means the file isn't there either, and that is the silent case,
-      // not a broken-JSON complaint.
-      if (text === null || /^\s*</.test(text)) {
-        // Not installed. Identical to "no pack" — the committed look stands.
-        status = 'none';
-        return null;
-      }
-      let parsed: unknown;
-      try {
-        parsed = JSON.parse(text);
-      } catch (e) {
-        console.warn(`[brand-pack] ${id}/brand.json is not valid JSON — ignoring pack:`, e);
+  const plan = brandPackLookupPlan(id);
+  loadPromise = (async () => {
+    try {
+      const userPath = plan.kind === 'drop' ? null : plan.userPath;
+      const userText = userPath ? await fetchManifestText(assetUrl(userPath)) : null;
+      if (userText) return adoptParsed(id, userText, `user-assets/brands/${id}`, 'pack');
+      if (plan.kind === 'user-then-bundled') {
+        const bundledText = await fetchManifestText(assetUrl(plan.bundledPath));
+        if (bundledText) {
+          return adoptParsed(id, bundledText, `brand-packs/${id}`, 'bundled');
+        }
+        console.warn(`[brand-pack] bundled pack ${id} is registered but brand.json was not found — using the built-in brand.`);
         status = 'failed';
         return null;
       }
-      const problems = validateBrandManifest(parsed);
-      if (problems.length) {
-        console.warn(`[brand-pack] ${id}/brand.json is invalid — ignoring pack:\n  ` + problems.join('\n  '));
-        status = 'failed';
-        return null;
-      }
-      const manifest = parsed as BrandPackManifest;
-      if (manifest.id !== id) {
-        console.warn(`[brand-pack] ${id}/brand.json declares id "${manifest.id}" — using the directory name.`);
-        manifest.id = id;
-      }
-      return adopt(manifest, `brands/${id}`, 'pack');
-    })
-    .catch((e) => {
-      // Network/permission failure — same fallback as "not installed", but say
-      // so: a pack the user asked for and did not get is worth one line.
+      // Unknown id, not installed. Identical to "no pack" — the committed look stands.
+      status = 'none';
+      return null;
+    } catch (e) {
       console.warn(`[brand-pack] could not load ${id}/brand.json — using the built-in brand:`, e);
       status = 'failed';
       return null;
-    });
+    }
+  })();
   return loadPromise;
+}
+
+/** Test seam: clear the singleton so a second loadBrandPack() can run. */
+export function resetBrandPackForTests(): void {
+  pack = null;
+  status = 'none';
+  loadPromise = null;
+  source = 'none';
+  packPublicRoot = null;
+  packFamilies.clear();
+  packImages.clear();
 }

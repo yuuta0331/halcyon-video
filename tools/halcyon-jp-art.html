@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <title>halcyon-jp art renderer</title>
+  <style>
+    @font-face {
+      font-family: BBCjk;
+      src: url('/src/assets/noto-sans-jp-regular.woff2') format('woff2');
+      font-weight: 400;
+    }
+    body { background: #222; color: #eee; font-family: sans-serif; }
+    canvas { margin: 8px; background: #fff; }
+  </style>
+</head>
+<body>
+  <p>Rendering bundled pack art…</p>
+  <script type="module">
+    const TEAL = '#0e4f4c';
+    const TEAL_LIT = '#15615d';
+    const CORAL = '#e25c3a';
+    const IVORY = '#f3ead8';
+    const CHAR = '#2b2c2a';
+    const CREAM = '#f7f1e4';
+
+    await document.fonts.load('24px BBCjk', 'ハルシオンビデオ');
+    await document.fonts.ready;
+
+    function barcode(ctx, x, y, w, h) {
+      ctx.fillStyle = CHAR;
+      let px = x;
+      const end = x + w;
+      let i = 0;
+      while (px < end) {
+        const bar = 1 + ((i * 7) % 3);
+        const gap = 1 + ((i * 5) % 2);
+        ctx.fillRect(px, y, bar, h);
+        px += bar + gap;
+        i++;
+      }
+    }
+
+    function paintWrap(w, h, folds, medium) {
+      const c = document.createElement('canvas');
+      c.width = w;
+      c.height = h;
+      const ctx = c.getContext('2d');
+      const [f0, f1] = folds;
+      const backW = f0;
+      const spineW = f1 - f0;
+      const frontX = f1;
+      const frontW = w - f1;
+
+      ctx.fillStyle = CREAM;
+      ctx.fillRect(0, 0, w, h);
+
+      // BACK
+      ctx.fillStyle = TEAL;
+      ctx.fillRect(0, 0, backW, 72);
+      ctx.fillStyle = IVORY;
+      ctx.font = '700 28px BBCjk, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('ハルシオンビデオ', backW / 2, 36);
+
+      ctx.fillStyle = CORAL;
+      ctx.fillRect(18, 92, backW - 36, 44);
+      ctx.fillStyle = IVORY;
+      ctx.font = '700 22px BBCjk, sans-serif';
+      ctx.fillText('レンタル専用', backW / 2, 114);
+
+      ctx.fillStyle = CHAR;
+      ctx.font = '16px BBCjk, sans-serif';
+      ctx.textAlign = 'left';
+      const lines = [
+        'ご返却日をご確認ください',
+        '巻き戻してご返却ください',
+        medium === 'vhs' ? 'VHS  ·  3泊4日' : 'DVD  ·  3泊4日',
+        '店舗管理番号  0117',
+      ];
+      lines.forEach((t, i) => ctx.fillText(t, 28, 170 + i * 28));
+
+      barcode(ctx, 28, h - 86, backW - 56, 36);
+      ctx.font = '12px BBCjk, sans-serif';
+      ctx.fillStyle = CHAR;
+      ctx.fillText('HALCYON VIDEO  ·  FICTIONAL STORE COPY', 28, h - 32);
+
+      // SPINE
+      ctx.fillStyle = TEAL;
+      ctx.fillRect(f0, 0, spineW, h);
+      ctx.fillStyle = CORAL;
+      ctx.fillRect(f0, 0, 6, h);
+      ctx.fillRect(f1 - 6, 0, 6, h);
+      ctx.save();
+      ctx.translate(f0 + spineW / 2, h / 2);
+      ctx.rotate(-Math.PI / 2);
+      ctx.fillStyle = IVORY;
+      ctx.font = `700 ${Math.min(28, spineW - 16)}px BBCjk, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('ハルシオンビデオ', 0, 0);
+      ctx.restore();
+
+      // FRONT
+      ctx.fillStyle = TEAL;
+      ctx.fillRect(frontX, 0, frontW, h);
+      ctx.fillStyle = CORAL;
+      ctx.fillRect(frontX, 48, frontW, 10);
+      ctx.fillRect(frontX, h - 120, frontW, 10);
+
+      ctx.fillStyle = IVORY;
+      ctx.textAlign = 'center';
+      ctx.font = '700 42px Archivo Black, BBCjk, sans-serif';
+      ctx.fillText('HALCYON', frontX + frontW / 2, h * 0.38);
+      ctx.font = '700 36px BBCjk, sans-serif';
+      ctx.fillText('ビデオ', frontX + frontW / 2, h * 0.48);
+
+      ctx.fillStyle = CORAL;
+      ctx.fillRect(frontX + 28, h * 0.58, frontW - 56, 40);
+      ctx.fillStyle = IVORY;
+      ctx.font = '700 20px BBCjk, sans-serif';
+      ctx.fillText('おすすめ', frontX + frontW / 2, h * 0.58 + 20);
+
+      ctx.font = '16px BBCjk, sans-serif';
+      ctx.fillText('ご返却日をご確認ください', frontX + frontW / 2, h - 78);
+      ctx.font = '13px BBCjk, sans-serif';
+      ctx.fillText('FICTIONAL RENTAL SLEEVE', frontX + frontW / 2, h - 48);
+
+      return c;
+    }
+
+    const vhs = paintWrap(1024, 762, [473, 589], 'vhs');
+    const dvd = paintWrap(1024, 683, [478, 558], 'dvd');
+    document.body.append(vhs, dvd);
+
+    window.__HALCYON_JP_ART__ = {
+      'wraps/vhs.png': vhs.toDataURL('image/png'),
+      'wraps/dvd.png': dvd.toDataURL('image/png'),
+    };
+    await fetch('/save', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(window.__HALCYON_JP_ART__),
+    });
+    document.title = 'halcyon-jp art ready';
+  </script>
+</body>
+</html>

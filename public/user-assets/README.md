@@ -3,10 +3,23 @@
 Everything in this directory except this README is **git-ignored** (see the
 `public/user-assets/*` block in `.gitignore`). It holds scans, reference
 photos, and faithful recreations of REAL branded products — trademarked art
-that must never land in the repo. The committed code always ships a generic
-procedural fallback and only swaps in an asset from here when the file
-actually exists (`src/user-assets.ts` → `tryLoadUserAssetTexture`; a 404 is
-the normal "not installed" case and is silent).
+that must never land in the repo.
+
+**Two trees, keep them distinct:**
+
+- `public/user-assets/` — **private / local** (this folder). Real-brand
+  recreations, personal scans, user-provided packs. Never committed.
+- `public/brand-packs/` — **distributable bundled fictional identities**
+  that ship with the app (today: `halcyon-jp` / ハルシオンビデオ). These are
+  committed and build-validated. They are not a gitignore exception under
+  `user-assets/`.
+
+The committed code always ships a generic procedural fallback and only swaps
+in an asset from here when the file actually exists (`src/user-assets.ts` →
+`tryLoadUserAssetTexture`; a 404 is the normal "not installed" case and is
+silent). A bundled pack is resolved separately (`src/brand-pack.ts` /
+`src/bundled-brand-packs.ts`) and must not be used to sneak real-chain art
+into git.
 
 Layout convention — one directory per asset. Fixtures skinned to a real
 branded product live under `fixtures/`; whole-surface material scans (floor,
@@ -126,9 +139,11 @@ brands/<pack-id>/
   NOTES.md            # provenance, like every other asset dir
 ```
 
-Activate it with `localStorage.bb_brand_pack = '<pack-id>'` — the Brand Pack row
-on the drawer's SERVICE MODE page. No key, or a manifest that isn't installed,
-means no pack: every surface keeps its built-in value.
+Activate a **private** pack with `localStorage.bb_brand_pack = '<pack-id>'` —
+the Brand Pack row on the drawer's SERVICE MODE page. Bundled fictional
+identities (Store Brand → Store Identity) live under `public/brand-packs/`
+instead. No key, or a manifest that isn't installed, means no pack: every
+surface keeps its built-in value.
 
 `brand.json` requires only `version` and `id` (which must match the directory
 name); every other field is an override and absence means "keep today's value":

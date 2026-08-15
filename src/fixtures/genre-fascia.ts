@@ -18,6 +18,9 @@ import * as THREE from 'three';
 import { markSignMesh } from '../sign-builders';
 import { bb93GenreColor } from '../genre-colors';
 import { BB_ANTON, BB_ARCHIVO_BLACK, bundledFontReady, ensureBundledFont } from '../bundled-fonts';
+import { brandGenreLabel } from '../brand-pack';
+import { BB_CJK, containsCjk } from '../i18n/text';
+import { ensureCjkFont } from '../i18n/cjk-font';
 
 // Sized by the user's own count against the footage: the board covers THREE
 // displayed boxes (see shelving.ts BOARD_LEN_MAX), and the height holds the
@@ -110,33 +113,30 @@ function paintFascia(canvas: HTMLCanvasElement, key: string, way: FasciaColorway
   ctx.fillStyle = way ? way.field : fasciaColor(key);
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  // White block letters, thin navy outline, cap height at ~65% of the band
-  // with even margins above and below. Sizing and centering use MEASURED
-  // glyph metrics (actualBoundingBox*), not an assumed cap/em ratio —
-  // Anton's tall ascent made ratio-based sizing clip the caps at the top
-  // (user-flagged).
+  const display = brandGenreLabel(key);
+  if (containsCjk(display)) ensureCjkFont();
   ctx.textAlign = 'center';
   ctx.textBaseline = 'alphabetic';
-  // Both faces are bundled, so neither name can silently substitute: Anton
-  // when it has landed, otherwise the heavy grotesque as the stand-in the
-  // first paint uses until the repaint above catches it.
-  const family = bundledFontReady(FASCIA_FONT)
-    ? `${FASCIA_FONT}, ${BB_ARCHIVO_BLACK}, sans-serif`
-    : `${BB_ARCHIVO_BLACK}, sans-serif`;
+  const latin = bundledFontReady(FASCIA_FONT)
+    ? `${FASCIA_FONT}, ${BB_ARCHIVO_BLACK}`
+    : `${BB_ARCHIVO_BLACK}`;
+  const family = containsCjk(display)
+    ? `${latin}, ${BB_CJK}, sans-serif`
+    : `${latin}, sans-serif`;
   const capTarget = canvas.height * 0.65;
   ctx.font = `100px ${family}`;
-  const capPer100 = Math.max(1, ctx.measureText(key).actualBoundingBoxAscent);
+  const capPer100 = Math.max(1, ctx.measureText(display).actualBoundingBoxAscent);
   let em = Math.round(capTarget / capPer100 * 100);
   const setFont = () => { ctx.font = `${em}px ${family}`; };
   setFont();
   const maxW = Math.round(canvas.width * 0.84);
-  let squeeze = Math.min(1, maxW / ctx.measureText(key).width);
+  let squeeze = Math.min(1, maxW / ctx.measureText(display).width);
   if (squeeze < 0.55) {
     em = Math.max(24, Math.floor(em * (squeeze / 0.55)));
     setFont();
-    squeeze = Math.min(1, maxW / ctx.measureText(key).width);
+    squeeze = Math.min(1, maxW / ctx.measureText(display).width);
   }
-  const m = ctx.measureText(key);
+  const m = ctx.measureText(display);
   ctx.save();
   // Baseline placed so the measured glyph box sits dead-center vertically.
   ctx.translate(canvas.width / 2, (canvas.height + m.actualBoundingBoxAscent - m.actualBoundingBoxDescent) / 2);
@@ -144,9 +144,9 @@ function paintFascia(canvas: HTMLCanvasElement, key: string, way: FasciaColorway
   ctx.lineWidth = Math.max(3, em * 0.04);
   ctx.lineJoin = 'round';
   ctx.strokeStyle = way ? way.outline : GENRE_OUTLINE;
-  ctx.strokeText(key, 0, 0);
+  ctx.strokeText(display, 0, 0);
   ctx.fillStyle = way ? way.ink : GENRE_INK;
-  ctx.fillText(key, 0, 0);
+  ctx.fillText(display, 0, 0);
   ctx.restore();
 }
 

@@ -13,6 +13,8 @@
 import type { LogoArtLayer, LogoSpec } from './logo-spec';
 import { BB_ARCHIVO_BLACK, BB_OUTFIT } from './bundled-fonts';
 import { brandImage, brandPackFontFamily } from './brand-pack';
+import { BB_CJK, containsCjk } from './i18n/text';
+import { ensureCjkFont } from './i18n/cjk-font';
 
 // ─── Small utilities ─────────────────────────────────────────────────────────
 
@@ -387,22 +389,28 @@ const BUNDLED_BRAND_FAMILY: Record<string, string> = {
  * CAP HEIGHT (canvas-textures' signboards) and so cannot hand a rounded px
  * size to the string builder.
  */
-export function logoFontFamily(spec: LogoSpec): string {
+export function logoFontFamily(spec: LogoSpec, text = ''): string {
   // A brand pack's own faces resolve the same way: brand-pack.ts registered
   // each under a BBPack-prefixed family, and the spec keeps the human name.
   const bundled = BUNDLED_BRAND_FAMILY[spec.fontFamily] ?? brandPackFontFamily(spec.fontFamily);
-  return bundled
-    ? `${bundled}, sans-serif`
-    : spec.fontFamily.includes(',') ? spec.fontFamily : `"${spec.fontFamily}", sans-serif`;
+  const latin = bundled
+    ? bundled
+    : spec.fontFamily.includes(',') ? spec.fontFamily : `"${spec.fontFamily}"`;
+  if (text && containsCjk(text)) {
+    ensureCjkFont();
+    return `${latin}, ${BB_CJK}, sans-serif`;
+  }
+  return bundled ? `${bundled}, sans-serif` : `${latin}, sans-serif`;
 }
 
 /**
  * Canvas font string for the spec at a pixel size. A bare family name gets
  * quoted with a sans-serif fallback; a list (contains a comma) is used
- * verbatim, so a spec can carry a whole stack.
+ * verbatim, so a spec can carry a whole stack. Pass `text` so CJK strings
+ * measure and paint with BBCjk — never an unbundled host family.
  */
-export function getLogoFontString(spec: LogoSpec, px: number): string {
-  return `${spec.fontStyle} ${Math.round(px)}px ${logoFontFamily(spec)}`;
+export function getLogoFontString(spec: LogoSpec, px: number, text = ''): string {
+  return `${spec.fontStyle} ${Math.round(px)}px ${logoFontFamily(spec, text)}`;
 }
 
 // ─── Ink-safe box: where lettering can go on an irregular silhouette ─────────
@@ -554,7 +562,7 @@ function fitWrappedText(
   const step = Math.max(2, Math.round(maxPx / 60));
   let best = { fontSize: minPx, lines: [text] };
   for (let fs = Math.round(maxPx); fs >= minPx; fs -= step) {
-    ctx.font = getLogoFontString(spec, fs);
+    ctx.font = getLogoFontString(spec, fs, text);
     const lines: string[] = [];
     let current = '';
     let fitOk = true;
@@ -780,14 +788,14 @@ function drawGeneric(ctx: CanvasRenderingContext2D, spec: LogoSpec, opts: DrawLo
     } else if (wordmarkD) {
       drawWordmarkPath(ctx, wordmarkD, maxW, maxH, blockShift);
     } else {
-      ctx.font = getLogoFontString(spec, fitted.fontSize);
+      ctx.font = getLogoFontString(spec, fitted.fontSize, text);
       fitted.lines.forEach((line, idx) => ctx.fillText(line, 0, startY + idx * lineHeight));
     }
 
     if (hasSub) {
       // Right-aligned under the wordmark, the classic "…VIDEO" placement.
       const subPx = Math.max(14, fitted.fontSize * 0.4);
-      ctx.font = getLogoFontString(spec, subPx);
+      ctx.font = getLogoFontString(spec, subPx, spec.subText);
       ctx.textAlign = 'right';
       const subY = blockShift + ((fitted.lines.length - 1) * lineHeight) / 2 + lineHeight * 0.52 + subPx * 0.62;
       ctx.fillText(spec.subText.toUpperCase(), maxW / 2, subY);
@@ -799,7 +807,7 @@ function drawGeneric(ctx: CanvasRenderingContext2D, spec: LogoSpec, opts: DrawLo
       ctx.save();
       ctx.translate(-ew / 2 + eh * 0.1, 0);
       ctx.rotate(-Math.PI / 2);
-      ctx.font = getLogoFontString(spec, bandPx);
+      ctx.font = getLogoFontString(spec, bandPx, spec.bandText);
       ctx.fillText(spec.bandText.toUpperCase(), 0, 0);
       ctx.restore();
     }
@@ -826,7 +834,7 @@ function drawGeneric(ctx: CanvasRenderingContext2D, spec: LogoSpec, opts: DrawLo
       applyShadow(ctx, opts);
       ctx.fillStyle = spec.textColor;
       const fitted = fitWrappedText(ctx, spec, spec.taglineText.toUpperCase(), tw * 0.92, th, th * 0.62);
-      ctx.font = getLogoFontString(spec, fitted.fontSize);
+      ctx.font = getLogoFontString(spec, fitted.fontSize, spec.taglineText);
       ctx.fillText(fitted.lines.join(' '), ecx, ty + th / 2);
       ctx.restore();
     }
