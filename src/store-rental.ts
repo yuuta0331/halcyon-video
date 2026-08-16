@@ -13,6 +13,8 @@ import { RentalRecord, clearRentalRecord, makeRentalRecord, isLockedOut, msUntil
 import type { StoreScene } from './three-scene';
 import { removeGoldClamshellFillers } from './fixtures/gold-clamshell';
 import { brandString } from './brand-pack';
+import { textureArrayManager } from './video-case';
+import { promoteSelectedPoster } from './store-poster-window';
 
 export function rentalDevTimerOn(_scene: StoreScene): boolean {
   return typeof localStorage !== 'undefined' && localStorage.getItem('bb_rental_dev') === '1';
@@ -256,6 +258,11 @@ export function backRoomCloseInspect(scene: StoreScene): void {
 }
 
 export function loadAllArtworkForActiveLibrary(scene: StoreScene) {
+  if (textureArrayManager.residencyBound) {
+    const movie = scene.getSelectedMovie();
+    if (movie) promoteSelectedPoster(scene, movie.id);
+    return;
+  }
   const activeLibIdx = scene.selectedLibraryIdx;
   const isNewReleases = scene.selectedLibraryIdx === scene.libraries.length || scene.isBrowsingNewReleasesDirectly;
   const isDisplay = scene.selectedLibraryIdx > scene.libraries.length;

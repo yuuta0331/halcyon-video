@@ -1,0 +1,45 @@
+{
+  "capturedAt": "2026-08-15T12:01:00+09:00",
+  "harness": "Chrome desktop at http://127.0.0.1:1420/?demo=1&nogate=1",
+  "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+  "secureContext": true,
+  "hasNavigatorXr": true,
+  "immersiveVrSupported": false,
+  "hasXRWebGLBinding": true,
+  "hasXRMediaBinding": false,
+  "enterVrHidden": true,
+  "hudHidden": true,
+  "locale": null,
+  "brand": null,
+  "xrDiagnostics": {
+    "immersiveVrSupported": false,
+    "layersFeature": "unknown",
+    "layerCapabilities": {
+      "compositorUi": false,
+      "mediaLayer": false,
+      "projectionLayer": false,
+      "fallback": "mesh",
+      "types": []
+    },
+    "referenceSpace": null,
+    "targetHz": null,
+    "supportedHz": null,
+    "compositorUi": "mesh-fallback",
+    "mediaLayer": {
+      "available": false,
+      "bound": false,
+      "blocker": "No XR session."
+    },
+    "quality": {
+      "n8ao": true,
+      "postprocessing": "desktop",
+      "framebufferScale": 1
+    }
+  },
+  "notes": [
+    "Desktop Chrome exposes navigator.xr and XRWebGLBinding but isSessionSupported('immersive-vr') is false without a headset.",
+    "Enter VR stays hidden (hidden attribute + CSS so .power-btn display:flex cannot unhide it).",
+    "XRMediaBinding is absent on this desktop Chrome build — media-layer path stays behind ?xrMedia=1 and reports the blocker.",
+    "This is not a Quest Browser / in-headset PASS."
+  ]
+}

@@ -8,8 +8,27 @@
 import * as THREE from 'three';
 import { Movie } from './jellyfin';
 import { buildGoldClamshellFillers, getGoldCaseMaterials, repaintGoldCase } from './fixtures/gold-clamshell';
-import { posterQueue, CASE_MEDIUM, CASE_HEIGHT, CASE_DEPTH, textureArrayManager, createClonedCaseGeometry, getGlobalFrontMaterials, getGlobalBackMaterials, updateGlobalMaterialsEnvMap, leftmostColorCache, posterPixelCache, reflectionProbes, isGlobalMaterial, lowResCache, createProgramWarmupMaterials, gameShapeKey, gameDimsForShape, gameCaseDims, gameRentalDims, rentalBottomLift, rentalBoxDepth, rentalBoxHeight, beginRebuildDrain, SERIES_DEPTH_MULT } from './video-case';
+import { posterQueue, CASE_MEDIUM, CASE_HEIGHT, CASE_DEPTH, textureArrayManager, createClonedCaseGeometry, getGlobalFrontMaterials, getGlobalBackMaterials, updateGlobalMaterialsEnvMap, leftmostColorCache, posterPixelCache, reflectionProbes, isGlobalMaterial, lowResCache, createProgramWarmupMaterials, gameShapeKey, gameDimsForShape, gameCaseDims, gameRentalDims, rentalBottomLift, rentalBoxDepth, rentalBoxHeight, SERIES_DEPTH_MULT } from './video-case';
 import { AISLE_SHELF_HEIGHTS, WALL_SHELF_HEIGHTS, LEAN_ANGLE, STAGGER_OFFSET, UNIT_SIDE_CAPACITY, BACK_WALL_UNIT_IDX, sideEntrySlot, COPY_X_JITTER_RANGE, EXTRA_COPY_DEPTH_STEP, extraCopiesCount, isUnstockedTitle, seededRandom01, MovieSlot } from './store-layout';
+import {
+  classifySlotPriority,
+  DEFAULT_PRIORITY_CONTEXT,
+  navigationPriority,
+  posterPriorityNumber,
+  type PosterPriorityClass,
+} from './perf/store-readiness';
+import { constructStage } from './perf/construct-profile';
+import {
+  bindBoundedPosterWindow,
+  initialWorkingSetSlots,
+  notePosterDecodeJob,
+  posterPriorityUniques,
+  publishGpuPosterState,
+  releaseBootPosterPins,
+  slotStreamingClass,
+  titlePosterClass,
+  updatePosterWorkingSet,
+} from './store-poster-window';
 import { validateCaseFit, type CaseFitPair } from './layout-validator';
 import { retailAudio } from './audio';
 import {
@@ -96,6 +115,24 @@ function slotRentalLift(movie: Movie): number {
 function slotRentalHalfDepth(movie: Movie): number {
   if (!movie.game) return rentalBoxDepth() / 2;
   return rentalBoxDepth(gameCaseDims(movie.platform, movie.discCount), gameRentalDims(movie.platform)) / 2;
+}
+
+function assignSlotPosterIndex(scene: StoreScene, slot: MovieSlot): number {
+  const cls = titlePosterClass(slot.movie.id) ?? classifySlotPriority(slot, {
+    ...DEFAULT_PRIORITY_CONTEXT,
+    backWallUnitIdx: BACK_WALL_UNIT_IDX,
+    selectedKey: `${scene.selectedLibraryIdx}_${scene.selectedUnitIdx}_front_${scene.selectedShelf}_${scene.selectedCol}`,
+    selectedLibraryIdx: scene.selectedLibraryIdx,
+  });
+  textureArrayManager.notePriority(slot.movie.id, cls);
+  if (textureArrayManager.residencyBound) {
+    return textureArrayManager.peekIndex(slot.movie.id) ?? 0;
+  }
+  return textureArrayManager.getIndex(slot.movie.id, true);
+}
+
+function publishPosterLiveState(): void {
+  publishGpuPosterState();
 }
 
 /**
@@ -225,7 +262,8 @@ export function buildAllMovieBoxes(scene: StoreScene) {
   });
 
   console.log('[System debug] Unique movies count:', uniqueMovieIds.size, 'libraries count:', scene.libraries.length);
-  textureArrayManager.init(uniqueMovieIds.size, scene.renderer);
+  constructStage('textureArrayInit', () => { textureArrayManager.init(uniqueMovieIds.size, scene.renderer); });
+  publishPosterLiveState();
 
   // 2. Count slots needed for each unit side to size our instanced meshes
   const unitSideCapacity = new Map<string, number>();
@@ -527,7 +565,9 @@ export function buildAllMovieBoxes(scene: StoreScene) {
     if (!sameMovie) scene.slotsByMovieId.set(slot.movie.id, (sameMovie = []));
     sameMovie.push(slot);
 
-    const texIdx = textureArrayManager.getIndex(slot.movie.id);
+    // Bounded residency stamps real indices in bindBoundedPosterWindow after
+    // every slot exists, so P0 unique titles can be acquired first.
+    const texIdx = textureArrayManager.residencyBound ? 0 : assignSlotPosterIndex(scene, slot);
     
     const fIdxAttr = slot.frontMesh.geometry.getAttribute('aTextureIndex') as THREE.InstancedBufferAttribute;
     if (fIdxAttr) fIdxAttr.setX(slot.instanceIdx, texIdx);
@@ -545,6 +585,12 @@ export function buildAllMovieBoxes(scene: StoreScene) {
     lastWrittenSpineHex.set(slot, spineColorHex);
 
     slot.loadShelfDetails = (priority = 1, onSettled?: () => void) => {
+      if (textureArrayManager.residencyBound && textureArrayManager.peekIndex(slot.movie.id) == null) {
+        onSettled?.();
+        return;
+      }
+      const cls = priority >= 5 ? 'P0' : priority >= 3 ? 'P1' : priority >= 1 ? 'P2' : 'P3';
+      textureArrayManager.notePriority(slot.movie.id, cls);
       if (posterPixelCache.has(slot.movie.id)) {
         const highResBitmap = posterPixelCache.get(slot.movie.id)!;
         const lowResBitmap = lowResCache.get(slot.movie.id);
@@ -618,6 +664,7 @@ export function buildAllMovieBoxes(scene: StoreScene) {
         return;
       }
 
+      notePosterDecodeJob();
       posterQueue.load(slot.movie, priority, (pixels) => {
         if (scene.renderer) {
           // Fresh decodes are queued (budgeted, flag flips tied to the real
@@ -915,6 +962,9 @@ export function buildAllMovieBoxes(scene: StoreScene) {
   // Slots are all built now, so the fit check can read real placements.
   validateCaseFitForStock(scene);
 
+  const allSlots = Array.from(scene.slotsByPosition.values());
+  bindBoundedPosterWindow(scene, allSlots);
+
   // Mark attributes as needing update so they are uploaded to GPU
   scene.unitSideFrontMeshMap.forEach(mesh => {
     const fIdxAttr = mesh.geometry.getAttribute('aTextureIndex') as THREE.InstancedBufferAttribute;
@@ -928,43 +978,63 @@ export function buildAllMovieBoxes(scene: StoreScene) {
     const bSp = mesh.geometry.getAttribute('aSpineColor') as THREE.InstancedBufferAttribute;
     if (bSp) bSp.needsUpdate = true;
   });
+  publishPosterLiveState();
 
   // 7. Build static extra-copy cases for high-rated films.
   scene.rebuildExtraCopies();
 
-  // 8. Pre-load all covers in low-res in the background, tracking completion
-  // via texturesReadyPromise so the caller can hold the scene hidden/non-
-  // interactive until every cover has settled (loaded or failed) rather than
-  // revealing a wall of gray placeholder spines that fill in over time.
-  const allSlots = Array.from(scene.slotsByPosition.values());
+  // 8. Progressive poster streaming: reveal on CRITICAL (P0) readiness.
+  // Distant covers keep placeholder spines and continue in the background.
   const total = allSlots.length;
   let loaded = 0;
-  // Nothing is interactive while this preload runs (the boot overlay is up), so
-  // the queue should drain at burst rate rather than the polite 4-per-frame
-  // interactive budget — the same reasoning rebuildStoreScene applies to a
-  // no-reload rebuild. It matters most at catalog scale: a 7k-title store
-  // otherwise reveals a room of bare rental shells that paint in over tens of
-  // seconds. Self-clearing when the queue empties.
-  beginRebuildDrain();
-  scene.onTextureLoadProgress?.(0, total);
-  scene.texturesReadyPromise = Promise.all(allSlots.map(slot => new Promise<void>(resolve => {
-    slot.loadShelfDetails(0, () => {
-      loaded++;
-      scene.onTextureLoadProgress?.(loaded, total);
-      resolve();
-    });
-  }))).then(() => {
-    // Posters are in the pixel cache now, so the warm-up can build the real
-    // hero materials (not placeholder fallbacks) — see the method's comment.
+  const groups: Record<PosterPriorityClass, MovieSlot[]> = { P0: [], P1: [], P2: [], P3: [] };
+  for (const slot of allSlots) {
+    groups[slotStreamingClass(slot, scene)].push(slot);
+  }
+  const bootSet = textureArrayManager.residencyBound ? initialWorkingSetSlots(allSlots) : null;
+  const p0Work = bootSet ? bootSet.p0 : groups.P0;
+  const p1Work = bootSet ? bootSet.p1 : groups.P1;
+  const settleTotal = bootSet ? p0Work.length + p1Work.length : total;
+  const settle = (slots: MovieSlot[], priority: number) => {
+    if (slots.length === 0) return Promise.resolve();
+    return Promise.all(slots.map((slot) => new Promise<void>((resolve) => {
+      slot.loadShelfDetails(priority, () => {
+        loaded++;
+        scene.onTextureLoadProgress?.(loaded, settleTotal);
+        resolve();
+      });
+    })));
+  };
+  scene.onTextureLoadProgress?.(0, settleTotal);
+  if (bootSet) {
+    const u = posterPriorityUniques();
+    console.log(
+      `[posters] XR_SAFE P0 unique=${u.p0UniqueTitles} P1 unique=${u.p1UniqueTitles} ` +
+      `slots=${textureArrayManager.maxMovies} p0SettleJobs=${p0Work.length} ` +
+      `p1ScheduledAtBoot=${p1Work.length} (bounded working set, not full catalog)`,
+    );
+  }
+  scene.texturesReadyPromise = settle(p0Work, posterPriorityNumber('P0')).then(() => {
     scene.warmupRuntimePrograms();
   });
+  scene.texturesReadyPromise.then(() => {
+    queueMicrotask(() => releaseBootPosterPins());
+  });
+  scene.allTexturesSettledPromise = (async () => {
+    await scene.texturesReadyPromise;
+    await settle(p1Work, posterPriorityNumber('P1'));
+    if (!textureArrayManager.residencyBound) {
+      await settle(groups.P2, posterPriorityNumber('P2'));
+      await settle(groups.P3, posterPriorityNumber('P3'));
+    }
+  })();
 
   // T25 #26 (superseded): the per-rented-title gold filler group is gone —
   // the NR wall back meshes above wear the gold materials for every slot.
   // The call clears any legacy group; the repaint re-runs the palette swap
   // once the source scans have decoded, or it would stay white paper.
   buildGoldClamshellFillers(scene);
-  scene.texturesReadyPromise?.then(() => {
+  scene.allTexturesSettledPromise.then(() => {
     repaintGoldCase();
     scene.requestRender();
   });
@@ -989,7 +1059,12 @@ export function warmupRuntimePrograms(scene: StoreScene) {
     }
     const movie = firstWithPoster ?? scene.libraries[0]?.movies[0];
     if (!movie) { geo.dispose(); return; }
-    const warm = createProgramWarmupMaterials(movie, firstAnimated, firstSeries);
+    const xrSafe = scene.resourceProfile?.name === 'XR_SAFE';
+    const warm = createProgramWarmupMaterials(
+      movie,
+      xrSafe ? null : firstAnimated,
+      xrSafe ? null : firstSeries,
+    );
     // NOT renderer.compile()/compileAsync(): those compile against the
     // CANVAS output (srgb) with whatever clipping state is current, while
     // the scene actually renders into the composer's linear target
@@ -1006,11 +1081,15 @@ export function warmupRuntimePrograms(scene: StoreScene) {
     }
     // The checkout bag's glossy-plastic variant (map + alphaTest + clearcoat
     // + DoubleSide) otherwise compiles mid-checkout on its first draw.
-    const bagMat = scene.entrance?.getBagWarmupMaterial();
-    if (bagMat) {
-      const bagWarm = new THREE.Mesh(geo, bagMat);
-      bagWarm.frustumCulled = false;
-      warmScene.add(bagWarm);
+    // XR_SAFE has no composer/AO/probes; skip desktop-only bag + second-hero
+    // composites that cannot run in that graph.
+    if (!xrSafe) {
+      const bagMat = scene.entrance?.getBagWarmupMaterial();
+      if (bagMat) {
+        const bagWarm = new THREE.Mesh(geo, bagMat);
+        bagWarm.frustumCulled = false;
+        warmScene.add(bagWarm);
+      }
     }
     warmScene.position.set(11, -60, 0);
     scene.scene.add(warmScene);
@@ -1031,13 +1110,14 @@ export function warmupRuntimePrograms(scene: StoreScene) {
     // texture uploads and the first hero-visible composite (a ~50ms
     // GPU-pipeline blip even with all programs warm) — pay both binds here,
     // each with its own composite, exactly like two real selection moves.
-    const swapTo = scene.libraries[0]?.movies[1] ?? null;
+    const swapTo = xrSafe ? null : (scene.libraries[0]?.movies[1] ?? null);
     for (const bind of swapTo ? [movie, swapTo] : [movie]) {
       scene.ensureHeroCases(bind);
       if (scene.heroFrontMesh && scene.heroBackMesh) {
         scene.heroFrontMesh.visible = true;
         scene.heroBackMesh.visible = true;
-        scene.composer?.render();
+        if (scene.composer) scene.composer.render();
+        else scene.renderer.render(scene.scene, scene.camera);
       }
     }
     scene.hideHeroCases();
@@ -1275,7 +1355,7 @@ export function rebuildMovieBoxes(scene: StoreScene) {
       slot.instanceIdx = newInstIdx;
 
       // Update geometry attributes
-      const texIdx = textureArrayManager.getIndex(slot.movie.id);
+      const texIdx = assignSlotPosterIndex(scene, slot);
       const fIdxAttr = slot.frontMesh.geometry.getAttribute('aTextureIndex') as THREE.InstancedBufferAttribute;
       if (fIdxAttr) {
         fIdxAttr.setX(slot.instanceIdx, texIdx);
@@ -1422,7 +1502,7 @@ export function restockSlottedFixtures(scene: StoreScene): void {
 
       // Same attribute writes setupSlot() does at initial build (video-case's
       // shader reads texture index / spine colour per-instance, not per-movie).
-      const texIdx = textureArrayManager.getIndex(fixtureSlot.movie.id);
+      const texIdx = assignSlotPosterIndex(scene, existing);
       const fIdxAttr = existing.frontMesh.geometry.getAttribute('aTextureIndex') as THREE.InstancedBufferAttribute;
       if (fIdxAttr) { fIdxAttr.setX(existing.instanceIdx, texIdx); fIdxAttr.needsUpdate = true; }
       const bIdxAttr = existing.backMesh.geometry.getAttribute('aTextureIndex') as THREE.InstancedBufferAttribute;
@@ -1459,6 +1539,11 @@ export function updateLOD(scene: StoreScene) {
   updateGlobalMaterialsEnvMap(activeEnvMap);
   scene.entrance?.setEnvMap(activeEnvMap);
 
+  if (textureArrayManager.residencyBound) {
+    updatePosterWorkingSet(scene);
+    return;
+  }
+
   // 2. Stream high-resolution covers for the active shelving units
   const currentLibIdx = scene.selectedLibraryIdx;
   scene.slotsByPosition.forEach(slot => {
@@ -1472,8 +1557,13 @@ export function updateLOD(scene: StoreScene) {
     }
 
     if (isActive) {
-      // Load high-resolution cover
-      slot.loadShelfDetails(1);
+      const cls = classifySlotPriority(slot, {
+        ...DEFAULT_PRIORITY_CONTEXT,
+        backWallUnitIdx: BACK_WALL_UNIT_IDX,
+        selectedKey: `${scene.selectedLibraryIdx}_${scene.selectedUnitIdx}_front_${scene.selectedShelf}_${scene.selectedCol}`,
+        selectedLibraryIdx: scene.selectedLibraryIdx,
+      });
+      slot.loadShelfDetails(posterPriorityNumber(navigationPriority(cls)));
     }
   });
 }

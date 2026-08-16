@@ -17,6 +17,9 @@ export class LruByteCache {
   private map = new Map<string, Uint8Array>();
   private bytes = 0;
   private budgetBytes: number;
+  hits = 0;
+  misses = 0;
+  sets = 0;
 
   constructor(budgetBytes: number) {
     this.budgetBytes = budgetBytes;
@@ -24,7 +27,11 @@ export class LruByteCache {
 
   get(key: string): Uint8Array | undefined {
     const value = this.map.get(key);
-    if (value === undefined) return undefined;
+    if (value === undefined) {
+      this.misses += 1;
+      return undefined;
+    }
+    this.hits += 1;
     // Refresh recency: delete + re-set moves this entry to the newest end of
     // Map insertion order — the LRU idiom this whole class relies on.
     this.map.delete(key);
@@ -37,6 +44,7 @@ export class LruByteCache {
   }
 
   set(key: string, value: Uint8Array): void {
+    this.sets += 1;
     const existing = this.map.get(key);
     if (existing !== undefined) this.bytes -= existing.byteLength;
     this.map.delete(key); // drop first so the set below lands at the newest end
@@ -66,6 +74,14 @@ export class LruByteCache {
   /** Current total bytes held. Diagnostics/tests only — not read on any hot path. */
   get byteSize(): number {
     return this.bytes;
+  }
+
+  get budget(): number {
+    return this.budgetBytes;
+  }
+
+  stats() {
+    return { hits: this.hits, misses: this.misses, sets: this.sets, bytes: this.bytes, budget: this.budgetBytes };
   }
 
   /** Re-applies a new budget immediately (evicts if the new budget is smaller). */

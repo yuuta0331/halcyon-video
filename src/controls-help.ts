@@ -132,6 +132,23 @@ function helpSections(): HelpSection[] {
         },
       ],
     },
+    {
+      title: t('help.xr.title'),
+      rows: [
+        {
+          id: 'xenter', control: 'Enter VR', action: t('help.xr.enter.action'),
+          hint: t('help.xr.enter.hint'),
+        },
+        {
+          id: 'xrmove', control: 'XR sticks', action: t('help.xr.move.action'),
+          hint: t('help.xr.move.hint'),
+        },
+        {
+          id: 'xrselect', control: 'XR trigger', action: t('help.xr.select.action'),
+          hint: t('help.xr.select.hint'),
+        },
+      ],
+    },
   ];
 }
 

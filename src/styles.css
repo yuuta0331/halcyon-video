@@ -150,6 +150,34 @@ html, body {
   padding: 40px;
 }
 
+#xr-enter-btn {
+  position: absolute;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 8;
+  pointer-events: auto;
+  min-width: 220px;
+  min-height: 56px;
+  padding: 12px 28px;
+  border: 2px solid #c9a227;
+  background: rgba(12, 18, 32, 0.92);
+  color: #f4efe4;
+  font-family: 'Outfit', 'BBCjk', sans-serif;
+  font-size: 22px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+#xr-enter-btn[hidden] {
+  display: none;
+}
+#xr-enter-btn:hover,
+#xr-enter-btn:focus {
+  background: #1b2a4a;
+  color: #c9a227;
+}
+
 /* ─── Floating Browse Locator ───────────────────────────────────────────────
    Current section/aisle name + left/right nav arrows, floating over the 3D
    view with no background bar. Used across library-select / browse / inspect
@@ -795,6 +823,11 @@ html, body {
   flex-direction: column;
   gap: 4px;
   margin-top: 6px;
+}
+
+.power-btn[hidden],
+#btn-enter-vr[hidden] {
+  display: none;
 }
 
 .power-btn {

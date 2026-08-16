@@ -9,6 +9,9 @@
     "preview": "vite preview",
     "serve": "vite preview --port 1420 --strictPort --host",
     "test": "node --experimental-strip-types --test tests/*.test.ts",
+    "test:xr-emu": "node tools/xr-emu-harness.mjs",
+    "test:xr-resource": "node tools/xr-resource-harness.mjs",
+    "measure:boot": "node tools/boot-measure.mjs",
     "test:rental": "node --experimental-strip-types --test tests/rental-clock.test.ts",
     "test:shelf": "node --experimental-strip-types --test tests/shelf-order.test.ts",
     "test:nav": "node --experimental-strip-types --test tests/clerk-nav.test.ts",
@@ -31,8 +34,10 @@
     "three": "^0.184.0"
   },
   "devDependencies": {
+    "@iwer/devui": "^2.3.0",
     "@tauri-apps/cli": "^2",
     "@types/three": "^0.184.1",
+    "iwer": "^2.3.0",
     "puppeteer": "^25.2.0",
     "typescript": "~5.6.2",
     "vite": "^6.0.3"

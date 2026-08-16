@@ -54,6 +54,7 @@ import { buildSignage, SignSlot } from './fixtures/signage';
 import { buildWallBand } from './wall-band';
 import { buildWallStripe1990 } from './wall-stripe-1990';
 import { isJellyseerrAvailable } from './jellyseerr';
+import { constructStage } from './perf/construct-profile';
 import type { StoreScene } from './three-scene';
 
 // Chrome+mirror ceiling cornice intrusion (see buildCeilingFrame): standoff
@@ -485,7 +486,7 @@ export function buildStore(scene: StoreScene) {
   // ─── T15: exterior environment dressing (sidewalk, lamps, cars, strip-mall
   // backdrop) — everything beyond the glass that only needs to exist for the
   // view outward. Synced to the current day/night mode immediately.
-  scene.exterior = buildExteriorEnvironment(scene.scene, storeWidth);
+  scene.exterior = constructStage('exterior', () => buildExteriorEnvironment(scene.scene, storeWidth));
   scene.exterior.setOutsideMode(scene.outdoor.outsideMode);
   dimEnvOutside(scene.exterior.group);
 
@@ -1203,7 +1204,7 @@ export function buildStore(scene: StoreScene) {
 
   // 2. Photoreal loop-pile carpet in the theme's own color (albedo mottle +
   //    pile normal + wear roughness).
-  const { map: carpetTex, normalMap: carpetNormTex, roughnessMap: carpetRoughTex } = createCarpetTextures();
+  const { map: carpetTex, normalMap: carpetNormTex, roughnessMap: carpetRoughTex } = constructStage('carpetTextures', () => createCarpetTextures());
 
   const carpetFeetPerTile = 6.0;
   [carpetTex, carpetNormTex, carpetRoughTex].forEach(t =>
@@ -1277,7 +1278,7 @@ export function buildStore(scene: StoreScene) {
   }
 
   // 2.5 Store walls: amber-gold drywall with painted orange-peel relief.
-  const { map: wallTex, normalMap: wallNormTex, roughnessMap: wallRoughTex } = createWallTextures();
+  const { map: wallTex, normalMap: wallNormTex, roughnessMap: wallRoughTex } = constructStage('wallTextures', () => createWallTextures());
 
   const wallFeetPerTile = 9.0;
   [wallTex, wallNormTex, wallRoughTex].forEach(t =>
@@ -2101,7 +2102,7 @@ export function buildStore(scene: StoreScene) {
   for (const p of endcapPlacements) {
     if (typeof p.options?.lineId === 'number') endcapHostLineIds.add(p.options.lineId);
   }
-  buildAisleShelving({
+  constructStage('aisleShelving', () => buildAisleShelving({
     scene: scene.scene,
     plan: scene.plan,
     libraries: scene.libraries,
@@ -2121,7 +2122,7 @@ export function buildStore(scene: StoreScene) {
       ? (placement) => scene.shelfClasps.add(placement)
       : undefined,
     suppressFrontCapLineIds: endcapHostLineIds,
-  });
+  }));
 
   // 4. (Mirrored Pillars removed)
 
@@ -2312,10 +2313,10 @@ export function buildStore(scene: StoreScene) {
   // represents a walkable glass box, not a solid base.
   if (scene.floorMat) {
     scene.floorAOTex?.dispose();
-    scene.floorAOTex = bakeFloorAO(
+    scene.floorAOTex = constructStage('floorAO', () => bakeFloorAO(
       scene.clerkNavRects.filter(f => !(f.label ?? '').includes('vestibule')),
       { minX: STORE_CENTER_X - storeWidth / 2, maxX: STORE_CENTER_X + storeWidth / 2, minZ: backWallZ, maxZ: FRONT_GLASS_Z },
-    );
+    ));
     scene.floorMat.aoMap = scene.floorAOTex;
     scene.floorMat.aoMapIntensity = 0.85;
     scene.floorMat.needsUpdate = true;
@@ -2528,7 +2529,7 @@ export function buildStore(scene: StoreScene) {
     })()
   ];
 
-  buildSignage(scene.fixtureContext(), signageSlots, scene.activeSignageObjects);
+  constructStage('signage', () => { buildSignage(scene.fixtureContext(), signageSlots, scene.activeSignageObjects); });
 
   // bb-2010 store fabric: the painted NEW RELEASES / CHARTBUSTERS band over
   // the same wall runs (see wall-band.ts). It supersedes that theme's topper

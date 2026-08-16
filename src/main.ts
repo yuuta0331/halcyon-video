@@ -2,10 +2,14 @@ import { invoke } from '@tauri-apps/api/core';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { measureDisplayHz } from './display-hz';
 import { installDebugLog, debugLogPath } from './debug-log';
+import { bootMark, installBootDiagnostics } from './perf/boot-diagnostics';
+import { installXrEmulatorIfRequested } from './dev/install-xr-emu';
 
 // Before anything else that might fail: a packaged build has no devtools and
 // no stdout, so without this every console line is written to nowhere.
 installDebugLog();
+installBootDiagnostics();
+bootMark('appStart');
 
 // Sample the compositor's real refresh rate while the boot overlay is up, so
 // the dynamic resolution scaler chases 120fps on a 120Hz display instead of
@@ -121,6 +125,7 @@ import {
   initCounterTerminalFlow,
 } from './counter-terminal-flow';
 import { buildControlsHelpPanel, HELP_ROW_PREFIX } from './controls-help';
+import { syncXrEntryLabels, toggleXrSession, wireXrEntry } from './xr/boot';
 import type { CandyRow } from './fixtures/period-fixtures';
 import { getCandyDeliveryAdapter } from './candy-delivery';
 import { isDemoMode } from './demo-mode';
@@ -557,7 +562,7 @@ const ui = {
 let powerMenuIndex = 0;
 // The demo has no Jellyfin session to log out of and no app window to close —
 // those rows leave the keyboard-nav ring too (their DOM is hidden in main()).
-const powerButtons = ['btn-settings', 'btn-controls', 'btn-flat-mode', 'btn-suspend', 'btn-cec-toggle', 'btn-logout', 'btn-exit', 'btn-cancel']
+let powerButtons = ['btn-settings', 'btn-controls', 'btn-flat-mode', 'btn-suspend', 'btn-cec-toggle', 'btn-logout', 'btn-exit', 'btn-cancel']
   .filter((id) => !(isDemoMode && (id === 'btn-logout' || id === 'btn-exit')));
 
 // The single CEC row toggles the display: we track the last state WE commanded
@@ -571,11 +576,21 @@ let cecDisplayAssumedOn = true;
 // SERVICE MODE settings page (review §4.3), and MEDIA RELEASE DATE (#42),
 // the catalog-pin sub-screen. Inserted just above RETURN TO STORE so the
 // safe exit stays last.
-const counterTerminalButtons = (() => {
-  const ids = [...powerButtons];
-  ids.splice(ids.indexOf('btn-cancel'), 0, MEDIA_DATE_BUTTON_ID, 'btn-service');
-  return ids;
-})();
+const counterTerminalButtons: string[] = [];
+function rebuildCounterTerminalButtons() {
+  counterTerminalButtons.length = 0;
+  counterTerminalButtons.push(...powerButtons);
+  const cancel = counterTerminalButtons.indexOf('btn-cancel');
+  counterTerminalButtons.splice(cancel, 0, MEDIA_DATE_BUTTON_ID, 'btn-service');
+}
+rebuildCounterTerminalButtons();
+
+function offerXrPowerButton() {
+  if (powerButtons.includes('btn-enter-vr')) return;
+  const cancel = powerButtons.indexOf('btn-cancel');
+  powerButtons.splice(cancel, 0, 'btn-enter-vr');
+  rebuildCounterTerminalButtons();
+}
 
 // Settings drawer navigation state. `settingsRowKeys` is the flat top-to-bottom
 // order of focusable rows generated from the registry, with the sentinel
@@ -2438,11 +2453,25 @@ async function initializeStoreScene(preservePosterCache = false) {
     // never calls initializeStoreScene() at all. No-ops instantly when an
     // explicit bb_quality is set or a cached calibration still matches.
     const { calibrateQualityIfNeeded, armQualityBackstop } = await import('./quality-calibrate');
+    bootMark('qualityCalibrationStart');
     await calibrateQualityIfNeeded();
+    bootMark('qualityCalibrationEnd');
 
+    bootMark('threeSceneImportStart');
     const { StoreScene } = await import('./three-scene');
+    bootMark('threeSceneImportEnd');
+    bootMark('storeSceneConstructStart');
     const scene = new StoreScene(canvasContainer, storeLibraries, logToConsole, jfUrl, jfToken, storeComingSoon, storeDiscovery, storeGameMovies, staffPicks);
+    bootMark('storeSceneConstructEnd');
     armQualityBackstop();
+    scene.onXrSessionChange = (presenting) => syncXrEntryLabels(presenting);
+    void wireXrEntry({
+      isTauri,
+      scene,
+      getVideo: () => videoPlayer?.videoElement ?? null,
+      onPowerButtonsNeedXr: offerXrPowerButton,
+      log: logToConsole,
+    });
 
     let lastLoggedPct = -1;
     scene.onTextureLoadProgress = (loaded, total) => {
@@ -2620,9 +2649,11 @@ async function initializeStoreScene(preservePosterCache = false) {
       });
     };
 
-    logToConsole('[System] Loading store textures...', 'system');
+    logToConsole('[System] Loading critical store textures...', 'system');
 
     scene.texturesReadyPromise.then(() => {
+      bootMark('criticalTextureReady');
+      bootMark('storeInteractive');
       storeScene = scene;
       (window as any).storeScene = storeScene;
       (window as any).librariesList = storeLibraries;
@@ -2647,7 +2678,7 @@ async function initializeStoreScene(preservePosterCache = false) {
       updateBrowseHUDVisibility();
       aisleIndicatorInterval = window.setInterval(updateBrowseHUDVisibility, 200);
 
-      logToConsole('[System] All textures loaded. Store ready.', 'system');
+      logToConsole('[System] Store ready. Remaining covers stream in the background.', 'system');
       // Opening day (#41): dock the counter CRT's NEW STORE SETUP before the
       // overlay drops, so the player wakes already at the terminal.
       maybeOpenSetupTerminal();
@@ -2678,6 +2709,15 @@ async function initializeStoreScene(preservePosterCache = false) {
       });
     });
 
+    scene.allTexturesSettledPromise.then(() => {
+      bootMark('allTexturesSettled');
+      if (scene.resourceProfile?.name === 'XR_SAFE') {
+        logToConsole('[System] Initial poster working set settled.', 'system');
+      } else {
+        logToConsole('[System] All store textures settled.', 'system');
+      }
+    });
+
   } catch (err: any) {
     console.error('[System] Failed to initialize 3D Store Scene:', err);
     logToConsole(`[System] 3D graphics initialization failed: ${err.message || err}. Falling back to 2D UI.`, 'system');
@@ -2686,6 +2726,7 @@ async function initializeStoreScene(preservePosterCache = false) {
 }
 
 async function waitForFontsAndInit() {
+  bootMark('baseFontsStart');
   if (document.fonts) {
     try {
       // Explicitly wait for the display face used in canvas texture rendering.
@@ -2697,20 +2738,25 @@ async function waitForFontsAndInit() {
       // Proceed even if the font fails to load rather than blocking the app.
     }
   }
+  bootMark('brandPackStart');
   // The installed brand pack's manifest, BEFORE the font gate below: it may
   // declare faces of its own, and registering them here is what puts them in
   // bundledFontsReady()'s wait rather than a repaint that never comes. Never
   // rejects — no pack installed is the normal case (src/brand-pack.ts).
   await loadBrandPack();
+  bootMark('brandPackEnd');
   // Same reason, for the bundled display faces (Anton / Archivo Black / Outfit /
   // Orbitron / Yellowtail): most of the canvases that set them are painted once
   // into a texture cache and never repainted, so a face landing after the store
   // build bakes a fallback in permanently. These are local bundle assets, so
   // the wait is a decode, not a fetch.
   await bundledFontsReady();
+  bootMark('baseFontsEnd');
   if (getLocale() === 'ja') {
+    bootMark('cjkFontsStart');
     const { cjkFontsReady } = await import('./i18n/cjk-font');
     await cjkFontsReady();
+    bootMark('cjkFontsEnd');
   }
   await initializeStoreScene();
 }
@@ -2739,6 +2785,12 @@ async function executePowerMenuAction(btnId: string) {
       // Controls & Help reference (UX pass 2026-08): every input the app
       // understands, on one page — reachable from all three menus.
       openSettingsDrawer('Controls');
+      return;
+
+    case 'btn-enter-vr':
+      closePowerMenu();
+      counterTerminalClose();
+      await toggleXrSession(storeScene);
       return;
 
     case 'btn-flat-mode':
@@ -3474,6 +3526,37 @@ async function playExternally(path: string) {
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 async function main() {
+  await installXrEmulatorIfRequested();
+  const { xrBareRequested, startBareXr } = await import('./xr/bare');
+  if (xrBareRequested()) {
+    try {
+      await startBareXr();
+    } catch (err) {
+      console.error('[XR] bare start failed:', err);
+      throw err;
+    }
+    return;
+  }
+  const { xrRawRequested, startRawXr } = await import('./xr/raw');
+  if (xrRawRequested()) {
+    try {
+      await startRawXr();
+    } catch (err) {
+      console.error('[XR] raw start failed:', err);
+      throw err;
+    }
+    return;
+  }
+  const { xrThreeBaselineRequested, startThreeBaseline } = await import('./xr/three-baseline');
+  if (xrThreeBaselineRequested()) {
+    try {
+      await startThreeBaseline();
+    } catch (err) {
+      console.error('[XR] three baseline start failed:', err);
+      throw err;
+    }
+    return;
+  }
   applyDocumentChrome();
   // Also installs window.__fpsMeter and raises the FPS overlay if bb_fps_meter
   // (or ?fps=1) says so — see the tail of registerCoreSettings.
@@ -4098,6 +4181,16 @@ async function main() {
         setPowerMenuSelection(idx);
       });
     }
+  });
+  document.getElementById('btn-enter-vr')?.addEventListener('click', () => {
+    executePowerMenuAction('btn-enter-vr');
+  });
+  document.getElementById('btn-enter-vr')?.addEventListener('pointerenter', () => {
+    const idx = powerButtons.indexOf('btn-enter-vr');
+    if (idx >= 0) setPowerMenuSelection(idx);
+  });
+  document.getElementById('xr-enter-btn')?.addEventListener('click', () => {
+    void toggleXrSession(storeScene);
   });
 
   // Setup hover listeners for exit confirmation buttons

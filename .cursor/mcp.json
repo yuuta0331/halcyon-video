@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "halcyon-xr-browser": {
+      "command": "node",
+      "args": ["tools/halcyon-xr-browser-mcp.mjs"]
+    }
+  }
+}
