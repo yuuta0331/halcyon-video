@@ -3,6 +3,7 @@ import { ensureCjkFont } from '../i18n/cjk-font';
 import { XR_UI_PIXEL_HEIGHT, XR_UI_PIXEL_WIDTH, uvToRowIndex } from './ui/hit';
 import { clipXrLabel, layoutXrLines, xrUiFontStack, xrUiNeedsCjk } from './ui/layout';
 import type { XrUiPaint } from './ui-session';
+import type { XrUiPlacement } from './ui-placement';
 
 export const XR_UI_WIDTH_M = 0.84;
 export const XR_UI_HEIGHT_M = 0.63;
@@ -92,12 +93,13 @@ export class XrUiShell {
     const mat = new THREE.MeshBasicMaterial({
       map: this.texture,
       transparent: false,
-      depthTest: true,
-      depthWrite: true,
+      depthTest: false,
+      depthWrite: false,
       side: THREE.DoubleSide,
     });
     this.mesh = new THREE.Mesh(geom, mat);
     this.mesh.name = 'xr-ui-shell';
+    this.mesh.renderOrder = 1000;
     this.mesh.position.set(0, 1.28, -1.05);
     this.mesh.visible = false;
   }
@@ -125,6 +127,11 @@ export class XrUiShell {
   show(origin: THREE.Object3D): void {
     if (this.mesh.parent !== origin) origin.add(this.mesh);
     this.mesh.visible = true;
+  }
+
+  applyPlacement(pose: XrUiPlacement): void {
+    this.mesh.position.set(pose.x, pose.y, pose.z);
+    this.mesh.rotation.set(0, pose.yaw, 0);
   }
 
   hide(): void {

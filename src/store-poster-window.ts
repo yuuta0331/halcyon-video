@@ -20,6 +20,7 @@ import {
   PosterWorkingSetTracker,
   type SpatialTitle,
 } from './poster-working-set';
+import { bindPosterDetailTier, promoteSelectedPosterDetail, reconcilePosterDetail } from './store-poster-detail';
 
 let lastTitlePriority = new Map<string, PosterPriorityClass>();
 let lastUniques: PriorityUniqueCounts = {
@@ -243,6 +244,7 @@ export function bindBoundedPosterWindow(_scene: StoreScene, slots: MovieSlot[]):
   );
   tracker.noteBoot(desired);
   stampResidentIndices(slots);
+  bindPosterDetailTier(_scene, slots);
   publishGpuPosterState();
   publishWorkingSetWindow();
 }
@@ -255,13 +257,15 @@ export function releaseBootPosterPins(): void {
   publishWorkingSetWindow();
 }
 
-export function updatePosterWorkingSet(_scene: StoreScene, _opts: { force?: boolean } = {}): void {
+export function updatePosterWorkingSet(scene: StoreScene, opts: { force?: boolean } = {}): void {
   // Pose / yaw / region must not control STORE_VISIBLE_BASE residency.
+  reconcilePosterDetail(scene, opts);
 }
 
 export function promoteSelectedPoster(scene: StoreScene, movieId: string): void {
   if (!textureArrayManager.residencyBound) return;
   textureArrayManager.notePriority(movieId, 'P0');
+  promoteSelectedPosterDetail(scene, movieId);
   const slots = scene.slotsByMovieId.get(movieId);
   if (slots) {
     for (const slot of slots) {

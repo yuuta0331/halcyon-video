@@ -66,6 +66,9 @@ import {
 import { locomotionAllowed, uiOwnsInput, type XrUiMode } from './ui-mode';
 import { XrUiSession } from './ui-session';
 import { XrUiShell } from './ui-shell';
+import { placeUiInFrontOfHmd } from './ui-placement';
+import { applyXrDepthNear, restoreCameraNear, DESKTOP_CAMERA_NEAR } from './near-plane';
+import { ensureXrEyesSeeWorld } from './stereo-view';
 import { XrFpsHud } from './fps-panel.ts';
 import { rayHitsPanelUv } from './ui/hit';
 import {
@@ -134,6 +137,7 @@ export class XrRuntime {
     position: THREE.Vector3;
     quaternion: THREE.Quaternion;
     parent: THREE.Object3D | null;
+    near: number;
   } | null = null;
   private session: XRSession | null = null;
   private onSessionEnd = (): void => { void this.cleanupAfterEnd(); };
@@ -168,6 +172,7 @@ export class XrRuntime {
   private targetFrameRateArmed = false;
   private uiSession: XrUiSession | null = null;
   private uiShell: XrUiShell | null = null;
+  private uiPlacedFromWorld = false;
   private fpsHud: XrFpsHud | null = null;
   private uiButtons = emptyXrButtonSnapshot();
   private prevUiButtons = emptyXrButtonSnapshot();
@@ -202,6 +207,7 @@ export class XrRuntime {
   openXrMenu(): void {
     this.ensureUi();
     this.uiSession?.openMenu();
+    this.uiPlacedFromWorld = false;
     this.syncUiShell();
   }
 
@@ -473,6 +479,7 @@ export class XrRuntime {
     if (this.ending) return;
     this.noteXrFrame();
     if (!this.presenting) return;
+    ensureXrEyesSeeWorld(this.host.renderer);
     if (this.flags.minimal) return;
     if (this.startup.firstWorldRenderCompletedAt == null) return;
     this.panel?.flush();
@@ -694,7 +701,9 @@ export class XrRuntime {
       position: cam.position.clone(),
       quaternion: cam.quaternion.clone(),
       parent: cam.parent,
+      near: cam.near,
     };
+    applyXrDepthNear(cam);
   }
 
   private requestTargetFrameRateBestEffort(): void {
@@ -1136,10 +1145,27 @@ export class XrRuntime {
     const shell = this.uiShell;
     if (!ui || !shell || !this.rig) return;
     if (uiOwnsInput(ui.mode)) {
+      if (!this.uiPlacedFromWorld && this.rig) {
+        const cam = this.host.camera;
+        cam.updateMatrixWorld(true);
+        const pos = new THREE.Vector3();
+        const quat = new THREE.Quaternion();
+        cam.getWorldPosition(pos);
+        cam.getWorldQuaternion(quat);
+        this.rig.xrOrigin.worldToLocal(pos);
+        const localQuat = this.rig.xrOrigin.getWorldQuaternion(new THREE.Quaternion()).invert().multiply(quat);
+        const placed = placeUiInFrontOfHmd({
+          hmdX: pos.x, hmdY: pos.y, hmdZ: pos.z,
+          qx: localQuat.x, qy: localQuat.y, qz: localQuat.z, qw: localQuat.w,
+        });
+        shell.applyPlacement(placed);
+        this.uiPlacedFromWorld = true;
+      }
       shell.setPaint(ui.paint());
       shell.show(this.rig.xrOrigin);
       this.panel?.hideMesh();
     } else {
+      this.uiPlacedFromWorld = false;
       shell.hide();
       if (this.rig) this.panel?.showMesh(this.rig.xrOrigin);
     }
@@ -1196,6 +1222,7 @@ export class XrRuntime {
       else cam.removeFromParent();
       cam.position.copy(this.desktopPose.position);
       cam.quaternion.copy(this.desktopPose.quaternion);
+      restoreCameraNear(cam, this.desktopPose.near ?? DESKTOP_CAMERA_NEAR);
       this.desktopPose = null;
     }
     if (this.rig) {

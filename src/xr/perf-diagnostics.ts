@@ -8,6 +8,8 @@ import { pendingScopedTextureUploads } from '../perf/texture-upload-queue.ts';
 import { storeVisibleResidency } from '../store-visible-residency.ts';
 import { textureArrayManager } from '../poster-textures.ts';
 import { gpuDiagnosticsSnapshot } from './gpu-diagnostics.ts';
+import { posterDetailResidency } from '../poster-detail-residency.ts';
+import { posterDetailGpuCreates, posterDetailGpuDisposals } from '../poster-detail-gpu.ts';
 
 export function xrPerfDiagnostics(): Record<string, unknown> {
   const frame = fpsMeterReadout();
@@ -24,9 +26,12 @@ export function xrPerfDiagnostics(): Record<string, unknown> {
       p99: frame.p99Ms,
       worst: frame.worstMs,
       over1389ms: frame.over1389,
+      over20ms: frame.over20,
+      over333ms: frame.over333,
       longFrames: frame.over1389,
       uiMode: null,
       samples: frame.samples,
+      note: 'JavaScript inter-composite gap; not GPU time',
     },
     STORE_READINESS: {
       state: ready.state,
@@ -82,6 +87,11 @@ export function xrPerfDiagnostics(): Record<string, unknown> {
       duplicateMappingCount: vis.duplicateOwners,
       invalidFreeOwnedCollisionCount: mem.freeOwnedCollisions,
       mappingOk: vis.ok && mem.residencyInvariantOk !== false,
+    },
+    HIGH_RES: posterDetailResidency.snapshot(),
+    DETAIL_GPU: {
+      creates: posterDetailGpuCreates(),
+      disposals: posterDetailGpuDisposals(),
     },
   };
 }

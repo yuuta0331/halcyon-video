@@ -19,6 +19,7 @@ import {
   createTicketBoardLabelMaterial, TICKET_BOARD_W, TICKET_BOARD_H, TICKET_BOARD_T,
 } from './fixtures/ticket-board-sign';
 import { createTrapezoidGeometry, splitTrapezoidGroups, createLibraryEndCapMaterial, markSignMesh } from './sign-builders';
+import { markMirrorSkip } from './scene-layers';
 import { createFasciaBladeFactory, FASCIA_BLADE_H } from './fixtures/genre-fascia';
 import { bb93SignageOn } from './genre-colors';
 import { getActiveTheme } from './themes';
@@ -569,7 +570,7 @@ export function buildAisleShelving(deps: AisleShelvingDeps): void {
           mesh.position.set(xCenter, UNIT_FRAME_HEIGHT, zSecCenter); // base y=0 → flush on the frame top
           mesh.castShadow = true;
           mesh.receiveShadow = true;
-          mesh.layers.set(1); // keep the mirror-skip behavior of the classic toppers
+          markMirrorSkip(mesh);
           aisleParent.add(mesh);
           deps.addCollider(mesh);
         });
@@ -605,7 +606,6 @@ export function buildAisleShelving(deps: AisleShelvingDeps): void {
       // Shelf frame tops out at UNIT_FRAME_HEIGHT; the card's BOTTOM edge lands there.
       signMesh.position.set(xCenter, UNIT_FRAME_HEIGHT + signHeight / 2, zSecCenter);
       markSignMesh(signMesh, { casts: true }); // free-hanging board: it does cast
-      signMesh.layers.set(1);
       aisleParent.add(signMesh);
       deps.addCollider(signMesh);
     }
@@ -629,7 +629,7 @@ export function buildAisleShelving(deps: AisleShelvingDeps): void {
       const z = run.reduce((best, r) => Math.abs(r.z - zMid) < Math.abs(best.z - zMid) ? r : best, run[0]).z;
       const blade = fasciaFactory.blade(run[0].plusXLabel, run[0].minusXLabel, Math.min(span, BOARD_LEN_MAX));
       blade.position.set(xCenter, UNIT_FRAME_HEIGHT + FASCIA_BLADE_H / 2, z);
-      blade.layers.set(1); // keep the classic toppers' mirror-skip behavior
+      markMirrorSkip(blade);
       aisleParent.add(blade);
       deps.addCollider(blade);
       i = j;
@@ -658,7 +658,7 @@ export function buildAisleShelving(deps: AisleShelvingDeps): void {
           mesh.position.set(xCenter, UNIT_FRAME_HEIGHT, zFrontEdge);
           mesh.castShadow = true;
           mesh.receiveShadow = true;
-          mesh.layers.set(1);
+          markMirrorSkip(mesh);
           aisleParent.add(mesh);
           deps.addCollider(mesh);
         });

@@ -16,7 +16,10 @@ merge `351947a`. This slice does not reopen that verdict.
 | `quest-smoke-checklist.md` | Prepared Quest 3 smoke (do not run until independent review) |
 | `iwer-jp4a-ui.json` | Isolated IWER menu/settings/parity harness (written by `test:xr-emu`) |
 | `jp4a-round4-review.md` | Round 4 independent-review package (REQUEST_CHANGES; preload closed) |
-| `jp4a-round4.1-review.md` | Round 4.1 bank-switch evidence correction (not Quest-ready) |
+| `jp4a-round5-quest-fail.md` | Real Quest 3 FAILED on `a20389e` (historical; not rewritten) |
+| `jp4a-round5a-review.md` | Round 5A implementation package (not Quest-ready) |
+| `jp4a-round5a-iwer.json` | IWER_EMULATED Round 5A stereo/detail/close-range (not Quest) |
+| `jp4a.5-catalog-delta-sync.md` | Deferred persistent catalog / delta sync (not in this PR) |
 | `jp4a-round4-preload-stability.json` | DESKTOP_BROWSER STORE_VISIBLE_BASE drain |
 | `jp4a-round4-production-multibank.json` | DESKTOP_BROWSER production shelf 3+ bank render |
 | `jp4a-round4.1-production-bank-switch.json` | DESKTOP_BROWSER onBeforeRender bank-switch proof |

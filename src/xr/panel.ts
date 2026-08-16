@@ -79,12 +79,13 @@ export class XrHelpPanel {
     const mat = new THREE.MeshBasicMaterial({
       map: this.texture,
       transparent: false,
-      depthTest: true,
-      depthWrite: true,
+      depthTest: false,
+      depthWrite: false,
       side: THREE.DoubleSide,
     });
     this.mesh = new THREE.Mesh(geom, mat);
     this.mesh.name = 'xr-help-panel';
+    this.mesh.renderOrder = 999;
     // Body-oriented, not head-locked: offset in the meter-scaled origin.
     // ~1.15 m ahead, slightly left and below eye height so it is not a HUD.
     this.mesh.position.set(-0.22, 1.25, -1.15);

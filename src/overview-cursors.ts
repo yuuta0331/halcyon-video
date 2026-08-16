@@ -13,6 +13,7 @@
 import * as THREE from 'three';
 import { getActiveTheme } from './themes';
 import { getActiveLogoSpec } from './logo-spec';
+import { markMirrorSkip } from './scene-layers';
 import { registerBrandRepaint } from './brand-live';
 import {
   getLogoFontString, buildLogoShapePath, logoShapeInnerBox, logoShapeFitRect,
@@ -221,7 +222,7 @@ export class OverviewCursors {
     this.group.userData.excludeFromSSAO = true;
     this.group.traverse((child) => {
       child.userData.excludeFromSSAO = true;
-      child.layers.set(1);
+      markMirrorSkip(child);
     });
     scene.add(this.group);
   }

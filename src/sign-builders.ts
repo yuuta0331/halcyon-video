@@ -24,6 +24,7 @@ export function markSignMesh<T extends THREE.Mesh>(mesh: T, opts: { casts?: bool
   mesh.castShadow = opts.casts ?? false;
   mesh.receiveShadow = true;
   mesh.userData.isSign = true;
+  mesh.layers.set(3);
   return mesh;
 }
 

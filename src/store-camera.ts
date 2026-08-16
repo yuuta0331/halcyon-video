@@ -9,6 +9,7 @@ import { CASE_WIDTH, CASE_HEIGHT } from './video-case';
 import { FIELD_Z_FRONT, BROWSE_WINDOW_SIZE, AISLE_SHELF_HEIGHTS, WALL_SHELF_HEIGHTS, BOX_SPACING, UNIT_FRAME_HEIGHT, unitDepthAtHeight, BACK_WALL_UNIT_IDX, extraCopiesCount, MovieSlot, STORE_CENTER_X } from './store-layout';
 import { getActiveTheme } from './themes';
 import { OVERVIEW_POS, OVERVIEW_PITCH_MIN, OVERVIEW_PITCH_MAX } from './scene-shared';
+import { markMirrorSkip } from './scene-layers';
 import { BB_ARCHIVO_BLACK } from './bundled-fonts';
 import { getActiveLogoSpec } from './logo-spec';
 import { onBrandChange } from './brand-live';
@@ -566,7 +567,7 @@ export function createSelectionArrow(scene: StoreScene) {
 
   // Set all selection arrow objects to Layer 1 so they don't reflect in mirrors
   group.traverse((child) => {
-    child.layers.set(1);
+    markMirrorSkip(child);
   });
 
   scene.scene.add(group);

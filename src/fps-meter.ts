@@ -133,6 +133,8 @@ export interface FpsMeterReadout {
   p99Ms: number | null;
   worstMs: number | null;
   over1389: number;
+  over20: number;
+  over333: number;
   samples: number;
 }
 
@@ -140,7 +142,7 @@ export function fpsMeterReadout(now = typeof performance !== 'undefined' ? perfo
   if (now - lastFrameTs > PARK_MS) {
     return {
       top: 'IDLE', bot: 'renderer parked', idle: true,
-      fps: null, meanMs: null, p95Ms: null, p99Ms: null, worstMs: null, over1389: 0, samples: 0,
+      fps: null, meanMs: null, p95Ms: null, p99Ms: null, worstMs: null, over1389: 0, over20: 0, over333: 0, samples: 0,
     };
   }
   const cutoff = now - MAX_AGE_MS;
@@ -148,6 +150,8 @@ export function fpsMeterReadout(now = typeof performance !== 'undefined' ? perfo
   let sum = 0;
   let max = 0;
   let over = 0;
+  let over20 = 0;
+  let over333 = 0;
   for (let i = 0; i < count; i++) {
     if (ts[i] < cutoff) continue;
     const v = dts[i];
@@ -155,11 +159,13 @@ export function fpsMeterReadout(now = typeof performance !== 'undefined' ? perfo
     sum += v;
     if (v > max) max = v;
     if (v > 13.89) over++;
+    if (v > 20) over20++;
+    if (v > 33.3) over333++;
   }
   if (n === 0) {
     return {
       top: '-- FPS', bot: 'measuring', idle: true,
-      fps: null, meanMs: null, p95Ms: null, p99Ms: null, worstMs: null, over1389: 0, samples: 0,
+      fps: null, meanMs: null, p95Ms: null, p99Ms: null, worstMs: null, over1389: 0, over20: 0, over333: 0, samples: 0,
     };
   }
   const mean = sum / n;
@@ -177,6 +183,8 @@ export function fpsMeterReadout(now = typeof performance !== 'undefined' ? perfo
     p99Ms: p99,
     worstMs: max,
     over1389: over,
+    over20,
+    over333,
     samples: n,
   };
 }

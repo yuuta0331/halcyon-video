@@ -11,6 +11,9 @@ import { setXrContentLiveState, xrContentLiveState, xrContentSnapshot } from './
 import { classifyObjectName } from './xr/content-classes';
 import { brandPackStatus } from './brand-pack';
 import { publishXrPerfDiagnostics } from './xr/perf-diagnostics.ts';
+import { posterDetailResidency } from './poster-detail-residency';
+import { inspectCloseRangePosters, closeRangeSweepPlan } from './xr/close-range-probe';
+import { sampleSignageStereo, stereoSignagePass, negativeControlLeftEyeOnly, userCameraMask } from './xr/stereo-signage-probe';
 import { noteStoreWorldClassProgress, refreshStoreVisualReady } from './store-visual-ready';
 
 export function attachXrRuntime(
@@ -65,6 +68,27 @@ export function attachXrRuntime(
   });
   (window as unknown as { __xrDiagnostics?: unknown }).__xrDiagnostics = () => scene.xr?.diagnostics ?? null;
   (window as unknown as { __xrContent?: unknown }).__xrContent = () => xrContentSnapshot();
+  (window as unknown as { __posterDetail?: unknown }).__posterDetail = () => posterDetailResidency.snapshot();
+  (window as unknown as { __closeRangeProbe?: unknown }).__closeRangeProbe = () => {
+    const samples = closeRangeSweepPlan().map((step) => inspectCloseRangePosters(scene.scene, step, 'mono'));
+    return {
+      classification: 'IWER_EMULATED',
+      samples,
+      worldReady: xrContentSnapshot().worldReady,
+      QUEST_HARDWARE: 'NOT_EXECUTED',
+    };
+  };
+  (window as unknown as { __stereoSignage?: unknown }).__stereoSignage = () => {
+    const mask = userCameraMask(scene.camera);
+    const samples = sampleSignageStereo(scene.scene, mask);
+    return {
+      classification: 'IWER_EMULATED',
+      samples: samples.slice(0, 24),
+      pass: stereoSignagePass(samples),
+      negativeControl: negativeControlLeftEyeOnly(mask),
+      QUEST_HARDWARE: 'NOT_EXECUTED',
+    };
+  };
   publishXrPerfDiagnostics();
   publishXrContent(scene);
   return xr;
