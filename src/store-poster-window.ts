@@ -22,6 +22,7 @@ import {
   hashIdList,
   reconcilePosterWindow,
   selectGpuWorkingSet,
+  shouldReconcileWorkingSet,
   PosterWorkingSetTracker,
   type SpatialTitle,
   type WorkingSetQuery,
@@ -304,7 +305,7 @@ export function releaseBootPosterPins(): void {
 
 export function updatePosterWorkingSet(scene: StoreScene, opts: { force?: boolean } = {}): void {
   if (!textureArrayManager.residencyBound) return;
-  if (tracker.state.bootPinsActive && !opts.force) return;
+  if (!shouldReconcileWorkingSet(tracker.state.bootPinsActive, !!opts.force)) return;
   if (spatialCache.length === 0) {
     cacheSpatial(Array.from(scene.slotsByPosition.values()));
   }
@@ -355,7 +356,9 @@ export function promoteSelectedPoster(scene: StoreScene, movieId: string): void 
     }
   }
   loadEntered(scene, [movieId], posterPriorityNumber('P0'));
-  updatePosterWorkingSet(scene, { force: true });
+  if (shouldReconcileWorkingSet(tracker.state.bootPinsActive, true)) {
+    updatePosterWorkingSet(scene, { force: true });
+  }
 }
 
 export function slotStreamingClass(slot: MovieSlot, scene: StoreScene): PosterPriorityClass {

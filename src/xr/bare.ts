@@ -3,7 +3,7 @@
 
 import * as THREE from 'three';
 import { readXrFlags } from './flags';
-import { immersiveVrRequestOptions, pickReferenceSpaceType, probeImmersiveVrSupported } from './session-policy';
+import { immersiveVrRequestOptions, probeImmersiveVrSupported, selectReferenceSpaceTypeFromFeatures } from './session-policy';
 import {
   attachContextLossDiagnostics,
   gpuDiagnosticsSnapshot,
@@ -21,6 +21,7 @@ import {
   setActiveResourceProfile,
   xrSafeProfile,
 } from '../perf/resource-profile';
+import { installXrStartupJournal } from './startup-journal';
 import { classifyXrEnvironment } from './classification';
 import { isIwerActive } from './emu-state';
 
@@ -257,7 +258,8 @@ export async function enterBareXr(): Promise<void> {
   recordResourceSnapshot('requestSession-resolved');
   session = next;
   next.addEventListener('end', () => { void cleanupBareSession(); });
-  const space = await pickReferenceSpaceType((type) => next.requestReferenceSpace(type));
+  const features = Array.from((next as XRSession & { enabledFeatures?: ReadonlyArray<string> }).enabledFeatures ?? []);
+  const space = selectReferenceSpaceTypeFromFeatures(features);
   const xrMgr = renderer.xr;
   xrMgr.enabled = true;
   xrMgr.setReferenceSpaceType(space);
@@ -300,6 +302,7 @@ async function cleanupBareSession(): Promise<void> {
 }
 
 export async function startBareXr(): Promise<void> {
+  installXrStartupJournal('BARE');
   installGpuDiagnostics();
   setActiveResourceProfile(xrSafeProfile(blankGpuCapabilities()), blankGpuCapabilities());
   hideStoreChrome();

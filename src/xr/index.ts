@@ -5,6 +5,7 @@ export {
   immersiveVrRequestOptions,
   layersIsOptionalFeature,
   pickReferenceSpaceType,
+  selectReferenceSpaceTypeFromFeatures,
   pickXrTargetHz,
   probeImmersiveVrSupported,
   sessionCanStartWithoutLayers,
@@ -23,6 +24,9 @@ export {
 export { restoreDesktopQuality, xrQualityPolicy } from './quality';
 export { readXrFlags, xrEmuRequested } from './flags';
 export { xrBareRequested } from './bare';
+export { xrRawRequested } from './raw';
+export { xrThreeBaselineRequested } from './three-baseline';
+export { shouldPauseStoreRenderingOnOcclusion } from './occlusion-policy';
 export { shouldInstallIwer } from './emu-policy';
 export { classifyXrEnvironment } from './classification';
 export { desktopComposerForbidden, chooseXrRenderPath, xrOwnsFrames } from './render-invariant';

@@ -5,12 +5,14 @@ import type { StoreScene } from './three-scene';
 import { XrRuntime } from './xr/runtime';
 import * as walk from './store-walk';
 import { updatePosterWorkingSet } from './store-poster-window';
+import { installXrStartupJournal } from './xr/startup-journal';
 
 export function attachXrRuntime(
   scene: StoreScene,
   animate: (time?: number) => void,
   restoreDesktopLoop: () => void,
 ): XrRuntime {
+  installXrStartupJournal('HALCYON');
   const xr = new XrRuntime({
     renderer: scene.renderer,
     scene: scene.scene,
@@ -26,6 +28,7 @@ export function attachXrRuntime(
     getVideoElement: () => scene.xrVideoGetter?.() ?? null,
     requestRender: () => scene.requestRender(),
     setXrAnimationLoop: (enabled) => {
+      if (enabled) scene.claimXrRenderLoop();
       scene.renderer.setAnimationLoop(enabled
         ? (time?: number) => {
           scene.xr?.noteXrFrame(typeof time === 'number' ? time : performance.now());
@@ -33,6 +36,7 @@ export function attachXrRuntime(
         }
         : null);
     },
+    claimRenderLoop: () => scene.claimXrRenderLoop(),
     onSessionChange: (presenting) => {
       if (presenting) {
         if (document.pointerLockElement === scene.renderer.domElement) {

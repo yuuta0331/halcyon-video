@@ -124,7 +124,7 @@ test('session can start without Layers support', () => {
   assert.equal(sessionCanStartWithoutLayers({ optionalFeatures: [], requiredFeatures: ['layers'] }), false);
 });
 
-test('reference-space policy prefers local-floor then local then viewer', async () => {
+test('reference-space policy prefers local-floor then local', async () => {
   const tried: string[] = [];
   const type = await pickReferenceSpaceType(async (tpe) => {
     tried.push(tpe);

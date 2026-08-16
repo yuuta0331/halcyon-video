@@ -5,9 +5,8 @@
 Do not treat emulator evidence as QUEST_HARDWARE. Do not overwrite either
 historical failure as NOT_EXECUTED.
 
-Round 5 software/emulator dynamic-working-set gates must pass, then exact-head
-CI, before another headset session is requested. Do not request Quest testing
-during Round 5 implementation.
+Round 6 software/emulator XR-entry gates must pass, then exact-head CI.
+Do not request Quest testing during Round 6 implementation.
 
 ## Historical hardware failure — HEAD 73abd4c
 
@@ -99,16 +98,33 @@ Current `xr-resource.json` must show `evictionCount > 0` after a store walk,
 `bootPinsActive == false` after critical-ready.
 
 - HEAD `00b3e08`: hardware **NOT_EXECUTED / PENDING**
-- Round 5 HEAD: hardware **NOT_EXECUTED / PENDING**
+- HEAD `90aa400`: hardware **FAILED** on retest (waiting environment, no world frame — same historical symptom)
+- Round 6 HEAD: hardware **NOT_EXECUTED / PENDING**
 
-When those gates are green, request **one** hardware session in this order:
+## Correction round 6
 
-1. `?xrBare=1`
-2. If BARE succeeds: `?demo=1&nogate=1&xrSafe=1&xrMinimal=1`
-3. If that succeeds: `?demo=1&nogate=1&xrSafe=1`
-4. Only then: real Jellyfin with XR_SAFE
+**Status: PENDING hardware** — Round 5 Quest retest on `90aa400` reproduced the
+waiting-environment hang. Round 6 investigates XR entry/lifecycle (page
+occlusion during requesting/binding, frame-rate await before setSession,
+reference-space probing). Do not request another Quest session during this
+correction.
 
-If BARE fails, stop. Do not test the full store.
+IWER now includes `RAW_WEBXR`, `THREE_BASELINE`, and `BLUR_DURING_ENTRY`.
+Those are emulator evidence, not QUEST_HARDWARE.
+
+When those gates are green **and independent review asks for hardware**, one
+later session should use this order:
+
+1. `?xrRaw=1`
+2. If RAW succeeds: `?xrThreeBaseline=1`
+3. If that succeeds: `?xrBare=1`
+4. If BARE succeeds: `?demo=1&nogate=1&xrSafe=1&xrMinimal=1`
+5. If that succeeds: `?demo=1&nogate=1&xrSafe=1`
+6. Only then: real Jellyfin with XR_SAFE
+
+If RAW fails, stop (browser/raw-WebXR). If RAW passes and Three baseline
+fails, investigate Three WebXRManager / context compatibility. If BARE fails,
+stop. Do not test the full store.
 
 Emulator evidence lives in this folder separately (`iwer-*.png`,
 `xr-diagnostics.json`, `xr-resource.json`) and must not be treated as

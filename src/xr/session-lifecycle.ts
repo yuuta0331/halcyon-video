@@ -8,6 +8,8 @@ export type XrStartupStage =
   | 'requestSessionEnd'
   | 'referenceSpaceStart'
   | 'referenceSpaceEnd'
+  | 'makeXRCompatibleStart'
+  | 'makeXRCompatibleEnd'
   | 'targetFrameRateStart'
   | 'targetFrameRateEnd'
   | 'rendererSetSessionStart'
@@ -25,8 +27,15 @@ export interface XrStartupTrace {
   requestSessionEnd: number | null;
   referenceSpaceStart: number | null;
   referenceSpaceEnd: number | null;
+  makeXRCompatibleStart: number | null;
+  makeXRCompatibleEnd: number | null;
+  makeXRCompatibleError: string | null;
   targetFrameRateStart: number | null;
   targetFrameRateEnd: number | null;
+  targetFrameRateRequestedAt: number | null;
+  targetFrameRateResolvedAt: number | null;
+  targetFrameRateError: string | null;
+  frameratechangeCount: number;
   rendererSetSessionStart: number | null;
   rendererSetSessionEnd: number | null;
   firstAnimationCallbackAt: number | null;
@@ -36,6 +45,9 @@ export interface XrStartupTrace {
   firstVisibleFrameAt: number | null;
   lastCompletedStage: XrStartupStage | null;
   lastError: string | null;
+  contextXrCompatibleBefore: boolean | null;
+  compositorBackend: 'projection-layer' | 'xr-webgl-layer' | 'unknown' | null;
+  enabledFeatures: string[];
 }
 
 export function blankStartupTrace(): XrStartupTrace {
@@ -44,8 +56,15 @@ export function blankStartupTrace(): XrStartupTrace {
     requestSessionEnd: null,
     referenceSpaceStart: null,
     referenceSpaceEnd: null,
+    makeXRCompatibleStart: null,
+    makeXRCompatibleEnd: null,
+    makeXRCompatibleError: null,
     targetFrameRateStart: null,
     targetFrameRateEnd: null,
+    targetFrameRateRequestedAt: null,
+    targetFrameRateResolvedAt: null,
+    targetFrameRateError: null,
+    frameratechangeCount: 0,
     rendererSetSessionStart: null,
     rendererSetSessionEnd: null,
     firstAnimationCallbackAt: null,
@@ -55,6 +74,9 @@ export function blankStartupTrace(): XrStartupTrace {
     firstVisibleFrameAt: null,
     lastCompletedStage: null,
     lastError: null,
+    contextXrCompatibleBefore: null,
+    compositorBackend: null,
+    enabledFeatures: [],
   };
 }
 

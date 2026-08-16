@@ -130,6 +130,7 @@ import { perfTrace, perfSlot } from './perf-trace';
 import { constructStage, resetConstructProfile } from './perf/construct-profile';
 import { bindStoreResourceProfile } from './perf/bind-store-profile';
 import { recordResourceSnapshot } from './xr/gpu-diagnostics';
+import { shouldPauseStoreRenderingOnOcclusion } from './xr/occlusion-policy';
 import { activeResourceProfile, type ResourceProfile } from './perf/resource-profile';
 import { bindStorePosterNotifies, markStoreReady } from './store-poster-notify';
 import { ShelfClasps, type ClaspTarget } from './fixtures/shelf-clasp';
@@ -5596,15 +5597,21 @@ export class StoreScene {
     this.ambientTvs?.resume();
   }
 
-  // Halt rendering loop to yield system resources during video playback
   public pauseRendering() {
-    if (this.xr?.presenting) {
+    if (!shouldPauseStoreRenderingOnOcclusion({
+      phase: this.xr?.phase ?? 'idle',
+      presenting: !!this.xr?.presenting,
+    })) {
       this.onConsoleLog('[System] XR session keeps the animation loop live.', 'system');
       return;
     }
     this.isRendering = false;
     this.renderer.setAnimationLoop(null);
     this.onConsoleLog("[System] Rendering paused. Resources yielded.", "system");
+  }
+
+  public claimXrRenderLoop() {
+    this.isRendering = true;
   }
 
   // Resume rendering loop on playback end

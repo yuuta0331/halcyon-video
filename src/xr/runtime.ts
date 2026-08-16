@@ -12,9 +12,9 @@ import type { MovieSlot } from '../store-layout';
 import type { XrDiagnostics, XrSessionPhase, WalkCollisionFn } from './types';
 import {
   immersiveVrRequestOptions,
-  pickReferenceSpaceType,
   pickXrTargetHz,
   probeImmersiveVrSupported,
+  selectReferenceSpaceTypeFromFeatures,
   XR_TARGET_HZ,
 } from './session-policy';
 import {
@@ -72,6 +72,17 @@ import {
   recordResourceSnapshot,
   setGpuXrMeta,
 } from './gpu-diagnostics';
+import {
+  detectSessionCompositorBackend,
+  ensureXrCompatible,
+  probeXrBindingApis,
+} from './gl-compat';
+import {
+  appendXrJournal,
+  installXrStartupJournal,
+  noteContextAttributes,
+  noteSessionVisibility,
+} from './startup-journal';
 
 export interface XrRuntimeHost {
   renderer: THREE.WebGLRenderer;
@@ -88,6 +99,7 @@ export interface XrRuntimeHost {
   onSessionChange?: (presenting: boolean) => void;
   onLocomotionTick?: () => void;
   setXrAnimationLoop: (enabled: boolean) => void;
+  claimRenderLoop: () => void;
 }
 
 type XrManager = THREE.WebGLRenderer['xr'];
@@ -137,6 +149,15 @@ export class XrRuntime {
   private firstStoreXrRenderAt: number | null = null;
   private foveationRequested = 0;
   private foveationEffective: number | null = null;
+  private targetFrameRateArmed = false;
+  private onFrameRateChange = (): void => {
+    this.startup.frameratechangeCount += 1;
+    appendXrJournal('frameratechange', {
+      frameratechangeCount: this.startup.frameratechangeCount,
+      targetFrameRate: this.targetHz,
+    });
+    this.publishDiagnostics();
+  };
 
   constructor(private readonly host: XrRuntimeHost) {
     this.diagnostics = this.blankDiagnostics();
@@ -195,8 +216,12 @@ export class XrRuntime {
     this.xrFrameCount = 0;
     this.bootProjectionFrames = 0;
     this.firstStoreXrRenderAt = null;
+    this.targetFrameRateArmed = false;
+    installXrStartupJournal('HALCYON');
     this.phase = 'requesting';
+    this.host.claimRenderLoop();
     this.startup = markStartupStage(this.startup, 'requestSessionStart', nowMs());
+    appendXrJournal('requestSession-start', { phase: 'requesting' });
     recordResourceSnapshot('pre-requestSession');
     this.publishDiagnostics();
     const options = immersiveVrRequestOptions({
@@ -208,6 +233,10 @@ export class XrRuntime {
       session = await xr.requestSession('immersive-vr', options);
     } catch (err) {
       this.startup = recordStartupError(this.startup, err);
+      appendXrJournal('requestSession-error', {
+        requestSessionError: this.startup.lastError,
+        phase: 'idle',
+      });
       this.phase = 'idle';
       this.publishDiagnostics();
       throw err;
@@ -218,25 +247,22 @@ export class XrRuntime {
 
     this.session = session;
     session.addEventListener('end', this.onSessionEnd);
+    session.addEventListener('frameratechange', this.onFrameRateChange);
+    session.addEventListener('visibilitychange', () => noteSessionVisibility(session));
+    noteSessionVisibility(session);
 
+    const features = Array.from(
+      (session as XRSession & { enabledFeatures?: ReadonlyArray<string> }).enabledFeatures ?? [],
+    );
+    this.startup.enabledFeatures = features;
     this.startup = markStartupStage(this.startup, 'referenceSpaceStart', nowMs());
-    let spaceType: XrDiagnostics['referenceSpace'];
-    try {
-      spaceType = await pickReferenceSpaceType((type) => session.requestReferenceSpace(type));
-    } catch (err) {
-      this.startup = recordStartupError(this.startup, err);
-      this.phase = 'idle';
-      this.session = null;
-      session.removeEventListener('end', this.onSessionEnd);
-      try { await session.end(); } catch { /* already ending */ }
-      this.publishDiagnostics();
-      throw err;
-    }
-    if (this.startupWasAborted(session)) {
-      throw new Error(this.startup.lastError ?? 'XR session ended during startup');
-    }
+    const spaceType = selectReferenceSpaceTypeFromFeatures(features);
     this.referenceSpace = spaceType;
     this.startup = markStartupStage(this.startup, 'referenceSpaceEnd', nowMs());
+    appendXrJournal('requestSession-end', {
+      enabledFeatures: features,
+      phase: 'binding',
+    }, { referenceSpace: spaceType });
 
     const xrMgr = this.host.renderer.xr as XrManager;
     xrMgr.enabled = true;
@@ -249,19 +275,6 @@ export class XrRuntime {
     this.supportedHz = rates ? Array.from(rates) : null;
     const picked = pickXrTargetHz(rates, XR_TARGET_HZ);
     this.targetHz = picked.requested;
-    const updateRate = (session as XRSession & { updateTargetFrameRate?: (n: number) => Promise<void> }).updateTargetFrameRate;
-    this.startup = markStartupStage(this.startup, 'targetFrameRateStart', nowMs());
-    if (picked.requested && typeof updateRate === 'function') {
-      try {
-        await updateRate.call(session, picked.requested);
-      } catch (err) {
-        this.startup = recordStartupError(this.startup, err);
-      }
-    }
-    if (this.startupWasAborted(session)) {
-      throw new Error(this.startup.lastError ?? 'XR session ended during startup');
-    }
-    this.startup = markStartupStage(this.startup, 'targetFrameRateEnd', nowMs());
 
     this.snapshotDesktop();
     this.rig = new XrPlayerRig(this.host.camera);
@@ -270,15 +283,38 @@ export class XrRuntime {
 
     this.scheduler = reduceFrameScheduler(this.scheduler, 'enter-xr');
     this.phase = 'binding';
+    this.host.claimRenderLoop();
     this.host.setXrAnimationLoop(true);
     this.bootScene ??= createXrBootScene();
+
+    const gl = this.host.renderer.getContext() as WebGL2RenderingContext;
+    const attrs = noteContextAttributes(gl);
+    this.startup.contextXrCompatibleBefore = attrs.xrCompatible;
+    this.startup = markStartupStage(this.startup, 'makeXRCompatibleStart', nowMs());
+    appendXrJournal('makeXRCompatible-start');
+    const compat = await ensureXrCompatible(gl);
+    this.startup.makeXRCompatibleError = compat.error;
+    this.startup = markStartupStage(this.startup, 'makeXRCompatibleEnd', nowMs());
+    appendXrJournal('makeXRCompatible-end', { makeXRCompatibleError: compat.error });
+    const bindings = probeXrBindingApis();
+    appendXrJournal('xr-binding-apis', {}, {
+      hasXRWebGLBinding: bindings.hasXRWebGLBinding,
+      hasCreateProjectionLayer: bindings.hasCreateProjectionLayer,
+    });
+
+    if (this.startupWasAborted(session)) {
+      throw new Error(this.startup.lastError ?? 'XR session ended during startup');
+    }
+
     this.startup = markStartupStage(this.startup, 'rendererSetSessionStart', nowMs());
     recordResourceSnapshot('pre-setSession');
+    appendXrJournal('setSession-start', { phase: 'binding' });
     this.publishDiagnostics();
     try {
       await xrMgr.setSession(session);
     } catch (err) {
       this.startup = recordStartupError(this.startup, err);
+      appendXrJournal('setSession-error', { setSessionError: this.startup.lastError });
       this.publishDiagnostics();
       await this.cleanupAfterEnd();
       throw err;
@@ -288,6 +324,8 @@ export class XrRuntime {
     }
     this.setSessionResolved = true;
     this.startup = markStartupStage(this.startup, 'rendererSetSessionEnd', nowMs());
+    this.startup.compositorBackend = detectSessionCompositorBackend(session);
+    appendXrJournal('setSession-end', { compositorBackend: this.startup.compositorBackend });
     try {
       const setFoveation = (xrMgr as XrManager & { setFoveation?: (n: number) => void }).setFoveation;
       if (typeof setFoveation === 'function' && this.foveationRequested > 0) {
@@ -363,6 +401,7 @@ export class XrRuntime {
     if (this.startup.firstAnimationCallbackAt == null) {
       this.startup = markStartupStage(this.startup, 'firstAnimationCallbackAt', at);
       recordResourceSnapshot('first-XR-callback');
+      appendXrJournal('first-xr-callback', { firstXrCallbackAt: at });
     }
     if (this.host.renderer.xr.isPresenting) {
       this.xrFrameCount++;
@@ -383,6 +422,8 @@ export class XrRuntime {
       this.startup = markStartupStage(this.startup, 'firstDirectRenderEnd', at);
       this.startup = markStartupStage(this.startup, 'firstWorldRenderCompletedAt', at);
       this.startup = markStartupStage(this.startup, 'firstVisibleFrameAt', at);
+      appendXrJournal('first-world-frame', { firstWorldFrameAt: at });
+      this.requestTargetFrameRateBestEffort();
     }
     if (this.phase === 'binding' || this.phase === 'projecting') {
       this.phase = this.setSessionResolved ? 'active' : 'projecting';
@@ -570,6 +611,44 @@ export class XrRuntime {
       quaternion: cam.quaternion.clone(),
       parent: cam.parent,
     };
+  }
+
+  private requestTargetFrameRateBestEffort(): void {
+    if (this.targetFrameRateArmed) return;
+    const session = this.session;
+    if (!session) return;
+    this.targetFrameRateArmed = true;
+    const updateRate = (session as XRSession & { updateTargetFrameRate?: (n: number) => Promise<void> }).updateTargetFrameRate;
+    const requested = this.targetHz;
+    const at = nowMs();
+    this.startup = markStartupStage(this.startup, 'targetFrameRateStart', at);
+    this.startup.targetFrameRateRequestedAt = at;
+    appendXrJournal('targetFrameRate-request', {
+      targetFrameRate: requested,
+      targetFrameRateRequestedAt: at,
+    });
+    if (!requested || typeof updateRate !== 'function') {
+      this.startup = markStartupStage(this.startup, 'targetFrameRateEnd', nowMs());
+      this.startup.targetFrameRateResolvedAt = this.startup.targetFrameRateEnd;
+      return;
+    }
+    void updateRate.call(session, requested).then(
+      () => {
+        const done = nowMs();
+        this.startup = markStartupStage(this.startup, 'targetFrameRateEnd', done);
+        this.startup.targetFrameRateResolvedAt = done;
+        appendXrJournal('targetFrameRate-resolved', { targetFrameRateResolvedAt: done });
+        this.publishDiagnostics();
+      },
+      (err: unknown) => {
+        const message = err instanceof Error ? err.message : String(err);
+        this.startup.targetFrameRateError = message;
+        this.startup = markStartupStage(this.startup, 'targetFrameRateEnd', nowMs());
+        this.startup.targetFrameRateResolvedAt = this.startup.targetFrameRateEnd;
+        appendXrJournal('targetFrameRate-error', { targetFrameRateError: message });
+        this.publishDiagnostics();
+      },
+    );
   }
 
   private restoreDesktopLoop(): void {
@@ -780,7 +859,15 @@ export class XrRuntime {
         frameCount: this.xrFrameCount,
         lastFrameDtMs: this.lastFrameDtMs,
       },
-      flags: { minimal: this.flags.minimal, layers: this.flags.layers, emu: this.flags.emu, bare: this.flags.bare, safe: this.flags.safe },
+      flags: {
+        minimal: this.flags.minimal,
+        layers: this.flags.layers,
+        emu: this.flags.emu,
+        bare: this.flags.bare,
+        safe: this.flags.safe,
+        raw: this.flags.raw,
+        threeBaseline: this.flags.threeBaseline,
+      },
     };
     this.host.onConsole(
       `[XR] compositor=${this.lastCompositor} layers=${caps.types.join(',') || 'none'} maxRenderLayers=${maxLayers ?? 'n/a'}`,
@@ -902,6 +989,7 @@ export class XrRuntime {
     this.ending = true;
     const session = this.session;
     if (session) session.removeEventListener('end', this.onSessionEnd);
+    if (session) session.removeEventListener('frameratechange', this.onFrameRateChange);
     this.restoreDesktopLoop();
     this.layers?.dispose();
     this.layers = null;
@@ -930,6 +1018,7 @@ export class XrRuntime {
     this.mediaBound = false;
     this.setSessionResolved = false;
     this.optionalLayersInited = false;
+    this.targetFrameRateArmed = false;
     this.sessionStartAt = null;
     this.xrFrameCount = 0;
     this.lastFrameAt = null;
@@ -944,6 +1033,7 @@ export class XrRuntime {
     this.host.onConsole('[XR] Immersive VR session ended.', 'system');
     this.host.requestRender();
     this.ending = false;
+    appendXrJournal('session-end', { sessionEnded: true, phase: 'idle' });
     this.publishDiagnostics();
   }
 }

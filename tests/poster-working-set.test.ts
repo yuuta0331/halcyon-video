@@ -5,6 +5,7 @@ import {
   computeDesiredWorkingSet,
   reconcilePosterWindow,
   selectGpuWorkingSet,
+  shouldReconcileWorkingSet,
   shouldUpdateWorkingSet,
   type SpatialTitle,
 } from '../src/poster-working-set.ts';
@@ -78,6 +79,28 @@ test('selected nonresident title evicts stale P1', () => {
   assert.equal(win.peek('stale-a'), null);
   assert.ok(r.entered.includes('selected'));
   assertInv(win, 'selected wins');
+});
+
+test('force recompute does not unpin boot P0 before critical-ready', () => {
+  assert.equal(shouldReconcileWorkingSet(true, true), false);
+  assert.equal(shouldReconcileWorkingSet(true, false), false);
+  assert.equal(shouldReconcileWorkingSet(false, true), true);
+  const win = new PosterResidencyWindow(3);
+  win.acquire('A', 'P0');
+  win.pin('A');
+  win.acquire('B', 'P1');
+  win.acquire('C', 'P1');
+  const r = reconcilePosterWindow(win, new Map([
+    ['C', 'P1'],
+    ['D', 'P1'],
+    ['E', 'P0'],
+  ]), ['A']);
+  assert.equal(win.peek('A') != null, true);
+  assert.equal(win.isPinned('A'), true);
+  assert.equal(win.peek('E') != null, true);
+  assert.equal(win.residentCount, 3);
+  assertInv(win, 'boot pins survive force reconcile');
+  void r;
 });
 
 test('player position changes desired working set across regions', () => {

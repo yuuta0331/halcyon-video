@@ -362,6 +362,11 @@ export class PosterWorkingSetTracker {
   }
 }
 
+export function shouldReconcileWorkingSet(bootPinsActive: boolean, _force = false): boolean {
+  if (bootPinsActive) return false;
+  return true;
+}
+
 export function hashIdList(ids: Iterable<string>): number {
   const s = [...ids].sort().join('|');
   let h = 0;

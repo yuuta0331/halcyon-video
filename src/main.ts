@@ -3529,7 +3529,32 @@ async function main() {
   await installXrEmulatorIfRequested();
   const { xrBareRequested, startBareXr } = await import('./xr/bare');
   if (xrBareRequested()) {
-    await startBareXr();
+    try {
+      await startBareXr();
+    } catch (err) {
+      console.error('[XR] bare start failed:', err);
+      throw err;
+    }
+    return;
+  }
+  const { xrRawRequested, startRawXr } = await import('./xr/raw');
+  if (xrRawRequested()) {
+    try {
+      await startRawXr();
+    } catch (err) {
+      console.error('[XR] raw start failed:', err);
+      throw err;
+    }
+    return;
+  }
+  const { xrThreeBaselineRequested, startThreeBaseline } = await import('./xr/three-baseline');
+  if (xrThreeBaselineRequested()) {
+    try {
+      await startThreeBaseline();
+    } catch (err) {
+      console.error('[XR] three baseline start failed:', err);
+      throw err;
+    }
     return;
   }
   applyDocumentChrome();

@@ -64,6 +64,24 @@ export function createXrTestApi(getDevice: () => XRDevice | null): XrTestApi {
       };
     },
     async enter() {
+      const raw = (window as unknown as { __rawXr?: { enter?: () => Promise<void> } }).__rawXr;
+      if (raw?.enter) {
+        try {
+          await raw.enter();
+          return { ok: true };
+        } catch (err) {
+          return { ok: false, error: err instanceof Error ? err.message : String(err) };
+        }
+      }
+      const three = (window as unknown as { __threeBaseline?: { enter?: () => Promise<void> } }).__threeBaseline;
+      if (three?.enter) {
+        try {
+          await three.enter();
+          return { ok: true };
+        } catch (err) {
+          return { ok: false, error: err instanceof Error ? err.message : String(err) };
+        }
+      }
       const bare = (window as unknown as {
         __bareXr?: { enter?: () => Promise<void> };
       }).__bareXr;
@@ -95,6 +113,24 @@ export function createXrTestApi(getDevice: () => XRDevice | null): XrTestApi {
       }
     },
     async exit() {
+      const raw = (window as unknown as { __rawXr?: { exit?: () => Promise<void> } }).__rawXr;
+      if (raw?.exit) {
+        try {
+          await raw.exit();
+          return { ok: true };
+        } catch (err) {
+          return { ok: false, error: err instanceof Error ? err.message : String(err) };
+        }
+      }
+      const three = (window as unknown as { __threeBaseline?: { exit?: () => Promise<void> } }).__threeBaseline;
+      if (three?.exit) {
+        try {
+          await three.exit();
+          return { ok: true };
+        } catch (err) {
+          return { ok: false, error: err instanceof Error ? err.message : String(err) };
+        }
+      }
       const bare = (window as unknown as { __bareXr?: { exit?: () => Promise<void> } }).__bareXr;
       if (bare?.exit) {
         try {

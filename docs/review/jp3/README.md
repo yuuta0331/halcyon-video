@@ -8,7 +8,7 @@ Do not put Jellyfin/Plex URLs, usernames, tokens, or library titles in this fold
 | File | What it shows |
 |---|---|
 | `README.md` | This index |
-| `hardware.md` | Quest smoke log (**FAILED** at `73abd4c` and `ac94d1d`; Round 3 `b480993`, Round 4 `00b3e08`, and Round 5 HEAD pending) |
+| `hardware.md` | Quest smoke log (**FAILED** at `73abd4c` and `ac94d1d`; Round 3–6 HEADs pending/not executed) |
 | `history/round3-b480993-xr-resource.json` | Historical Round 3 resource evidence (includes impossible 462 residents / 128 slots) |
 | `history/round4-00b3e08-xr-resource.json` | Historical Round 4 static-window evidence (`resident=128`, `evictionCount=0`) |
 | `xr-safe-entrance.png` / `xr-safe-back-section.png` | IWER XR_SAFE store at two distant positions after dynamic walk |
@@ -26,4 +26,4 @@ Evidence classes:
 - UNIT: resource-profile + XR policy tests in this round
 - DESKTOP_BROWSER: desktop full-quality path must remain unchanged
 - IWER_EMULATED: CORE / NO-LAYERS / FULL plus `test:xr-resource` BARE / XR_SAFE
-- QUEST_HARDWARE = FAILED — historical at `73abd4c` and again at `ac94d1d` (waiting environment, no world frame). Round 3 HEAD `b480993`, Round 4 HEAD `00b3e08`, and the current Round 5 HEAD remain NOT_EXECUTED / PENDING. Do not treat emulator evidence as hardware. Current `xr-resource.json` is Round 5 dynamic-working-set evidence.
+- QUEST_HARDWARE = FAILED — historical at `73abd4c` and again at `ac94d1d` (waiting environment, no world frame). Round 3 `b480993`, Round 4 `00b3e08`, Round 5 `90aa400`, and the current Round 6 HEAD remain NOT_EXECUTED / PENDING. Do not treat emulator evidence as hardware. Current `xr-resource.json` remains Round 5+ working-set evidence.

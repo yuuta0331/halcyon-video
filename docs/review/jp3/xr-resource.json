@@ -114,7 +114,7 @@
     },
     {
       "type": "log",
-      "text": "[calibrate] 28.0ms median (ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002488) Direct3D11 vs_5_0 ps_5_0, D3D11)) → high +supersample (963ms)"
+      "text": "[calibrate] 15.6ms median (ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002488) Direct3D11 vs_5_0 ps_5_0, D3D11)) → high +supersample (689ms)"
     },
     {
       "type": "log",
@@ -206,11 +206,11 @@
     },
     {
       "type": "log",
-      "text": "[UI Log] [08:45:09] [System] Jump index — 5 counter/libraries/genres, 8 displays."
+      "text": "[UI Log] [10:40:16] [System] Jump index — 5 counter/libraries/genres, 8 displays."
     },
     {
       "type": "log",
-      "text": "[UI Log] [08:45:09] [System] Inside the store — ◄ ► pick a section, ▼ the displays, ▲ the TVs, OK to go."
+      "text": "[UI Log] [10:40:16] [System] Inside the store — ◄ ► pick a section, ▼ the displays, ▲ the TVs, OK to go."
     },
     {
       "type": "log",
@@ -218,15 +218,15 @@
     },
     {
       "type": "log",
-      "text": "[UI Log] [08:45:27] [System] 3D Store rendering active in Library Select mode."
+      "text": "[UI Log] [10:40:34] [System] 3D Store rendering active in Library Select mode."
     },
     {
       "type": "log",
-      "text": "[UI Log] [08:45:27] [System] Loading critical store textures..."
+      "text": "[UI Log] [10:40:35] [System] Loading critical store textures..."
     },
     {
       "type": "log",
-      "text": "[UI Log] [08:45:27] [XR] immersive-vr is supported. Enter VR is available."
+      "text": "[UI Log] [10:40:35] [XR] immersive-vr is supported. Enter VR is available."
     },
     {
       "type": "log",
@@ -234,31 +234,39 @@
     },
     {
       "type": "log",
-      "text": "[UI Log] [08:45:30] [System] Loading store textures... 0% (1/128)"
+      "text": "[resScale] 1.8fps < 50 — down to 0.85"
     },
     {
       "type": "log",
-      "text": "[UI Log] [08:45:31] [System] Loading store textures... 10% (13/128)"
+      "text": "[resScale] 3.0fps < 50 — down to 0.8"
     },
     {
       "type": "log",
-      "text": "[UI Log] [08:45:31] [System] Loading store textures... 20% (26/128)"
+      "text": "[UI Log] [10:40:39] [System] Loading store textures... 0% (1/128)"
     },
     {
       "type": "log",
-      "text": "[UI Log] [08:45:32] [System] Loading store textures... 30% (39/128)"
+      "text": "[UI Log] [10:40:41] [System] Loading store textures... 10% (13/128)"
     },
     {
       "type": "log",
-      "text": "[warmup] hero material programs drawn+compiled in 2373ms"
+      "text": "[UI Log] [10:40:42] [System] Loading store textures... 20% (26/128)"
     },
     {
       "type": "log",
-      "text": "[UI Log] [08:45:35] [System] Store ready. Remaining covers stream in the background."
+      "text": "[UI Log] [10:40:42] [System] Loading store textures... 30% (39/128)"
     },
     {
       "type": "log",
-      "text": "[resScale] 0.4fps < 50 — down to 0.85"
+      "text": "[warmup] hero material programs drawn+compiled in 2488ms"
+    },
+    {
+      "type": "log",
+      "text": "[UI Log] [10:40:45] [System] Store ready. Remaining covers stream in the background."
+    },
+    {
+      "type": "log",
+      "text": "[UI Log] [10:40:45] [XR] Immersive VR session started."
     },
     {
       "type": "log",
@@ -266,59 +274,51 @@
     },
     {
       "type": "log",
-      "text": "[UI Log] [08:45:35] [XR] Immersive VR session started."
+      "text": "[UI Log] [10:40:46] [System] Loading store textures... 40% (52/128)"
     },
     {
       "type": "log",
-      "text": "[UI Log] [08:45:36] [System] Loading store textures... 40% (52/128)"
+      "text": "[UI Log] [10:40:47] [System] Loading store textures... 50% (64/128)"
     },
     {
       "type": "log",
-      "text": "[UI Log] [08:45:37] [System] Loading store textures... 50% (64/128)"
+      "text": "[UI Log] [10:40:47] [System] Loading store textures... 60% (77/128)"
     },
     {
       "type": "log",
-      "text": "[UI Log] [08:45:37] [System] Loading store textures... 60% (77/128)"
+      "text": "[UI Log] [10:40:48] [System] Loading store textures... 70% (90/128)"
     },
     {
       "type": "log",
-      "text": "[UI Log] [08:45:38] [System] Loading store textures... 70% (90/128)"
+      "text": "[UI Log] [10:40:48] [System] Loading store textures... 80% (103/128)"
     },
     {
       "type": "log",
-      "text": "[UI Log] [08:45:38] [System] Loading store textures... 80% (103/128)"
+      "text": "[UI Log] [10:40:48] [System] Loading store textures... 90% (116/128)"
     },
     {
       "type": "log",
-      "text": "[UI Log] [08:45:39] [System] Loading store textures... 90% (116/128)"
+      "text": "[UI Log] [10:40:49] [System] Loading store textures... 100% (128/128)"
     },
     {
       "type": "log",
-      "text": "[UI Log] [08:45:39] [System] Loading store textures... 100% (128/128)"
+      "text": "[UI Log] [10:40:49] [System] Initial poster working set settled."
     },
     {
       "type": "log",
-      "text": "[UI Log] [08:45:39] [System] Initial poster working set settled."
+      "text": "[resScale] 1.9fps < 50 — down to 0.75"
     },
     {
       "type": "log",
-      "text": "[resScale] 16.3fps < 50 — down to 0.8"
+      "text": "[resScale] 48.3fps < 50 — down to 0.7"
     },
     {
       "type": "log",
-      "text": "[resScale] 49.6fps < 50 — down to 0.75"
+      "text": "[UI Log] [10:41:19] [XR] Immersive VR session ended."
     },
     {
       "type": "log",
-      "text": "[resScale] 47.5fps < 50 — down to 0.7"
-    },
-    {
-      "type": "log",
-      "text": "[UI Log] [08:46:08] [XR] Immersive VR session ended."
-    },
-    {
-      "type": "log",
-      "text": "[UI Log] [08:46:09] [System] Rendering paused. Resources yielded."
+      "text": "[UI Log] [10:41:19] [System] Rendering paused. Resources yielded."
     }
   ],
   "scenarios": [
@@ -342,16 +342,16 @@
           "session": {
             "phase": "active",
             "rendererPresenting": true,
-            "sessionStartAt": 1429.800000000745
+            "sessionStartAt": 1748.3999999985099
           },
           "startup": {
-            "requestSessionStart": 1429.800000000745,
-            "rendererSetSessionStart": 1429.800000000745,
-            "rendererSetSessionEnd": 1430.9000000022352,
-            "firstAnimationCallbackAt": 1435.7000000029802,
-            "firstDirectRenderStart": 1435.800000000745,
-            "firstDirectRenderEnd": 1461.1000000014901,
-            "firstWorldRenderCompletedAt": 1461.1000000014901,
+            "requestSessionStart": 1748.3999999985099,
+            "rendererSetSessionStart": 1748.3999999985099,
+            "rendererSetSessionEnd": 1749.199999999255,
+            "firstAnimationCallbackAt": 1764.699999999255,
+            "firstDirectRenderStart": 1764.800000000745,
+            "firstDirectRenderEnd": 1792.699999999255,
+            "firstWorldRenderCompletedAt": 1792.699999999255,
             "lastError": null
           },
           "flags": {
@@ -360,17 +360,19 @@
             "minimal": false,
             "layers": false,
             "bare": true,
-            "safe": false
+            "safe": false,
+            "raw": false,
+            "threeBaseline": false
           },
           "bare": {
             "bareSessionRequested": true,
-            "bareSetSessionStart": 1429.800000000745,
-            "bareSetSessionEnd": 1430.9000000022352,
-            "firstXrCallbackAt": 1435.7000000029802,
-            "firstRendererRenderStart": 1435.800000000745,
-            "firstRendererRenderEnd": 1461.1000000014901,
-            "firstWorldRenderCompletedAt": 1461.1000000014901,
-            "frameCount": 12,
+            "bareSetSessionStart": 1748.3999999985099,
+            "bareSetSessionEnd": 1749.199999999255,
+            "firstXrCallbackAt": 1764.699999999255,
+            "firstRendererRenderStart": 1764.800000000745,
+            "firstRendererRenderEnd": 1792.699999999255,
+            "firstWorldRenderCompletedAt": 1792.699999999255,
+            "frameCount": 10,
             "contextLost": false,
             "lastError": null,
             "presenting": true
@@ -436,15 +438,15 @@
             "xrFoveationRequested": 1,
             "xrFoveationEffective": null,
             "xrPhase": "active",
-            "xrFrameCount": 12,
-            "firstWorldRenderCompletedAt": 1461.1000000014901,
+            "xrFrameCount": 10,
+            "firstWorldRenderCompletedAt": 1792.699999999255,
             "firstStoreXrRenderAt": null,
             "contextLost": false,
             "lastContextLossAt": null,
             "lastError": null,
             "snapshots": {
               "renderer-created": {
-                "at": 1421.9000000022352,
+                "at": 1739.8999999985099,
                 "classification": "DESKTOP_BROWSER",
                 "resourceProfile": "XR_SAFE",
                 "rendererName": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002488) Direct3D11 vs_5_0 ps_5_0, D3D11)",
@@ -513,7 +515,7 @@
                 "lastError": null
               },
               "pre-requestSession": {
-                "at": 1428,
+                "at": 1747.3999999985099,
                 "classification": "IWER_EMULATED",
                 "resourceProfile": "XR_SAFE",
                 "rendererName": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002488) Direct3D11 vs_5_0 ps_5_0, D3D11)",
@@ -582,7 +584,7 @@
                 "lastError": null
               },
               "requestSession-resolved": {
-                "at": 1429.5,
+                "at": 1748.199999999255,
                 "classification": "IWER_EMULATED",
                 "resourceProfile": "XR_SAFE",
                 "rendererName": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002488) Direct3D11 vs_5_0 ps_5_0, D3D11)",
@@ -651,7 +653,7 @@
                 "lastError": null
               },
               "pre-setSession": {
-                "at": 1429.800000000745,
+                "at": 1748.3999999985099,
                 "classification": "IWER_EMULATED",
                 "resourceProfile": "XR_SAFE",
                 "rendererName": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002488) Direct3D11 vs_5_0 ps_5_0, D3D11)",
@@ -720,7 +722,7 @@
                 "lastError": null
               },
               "setSession-resolved": {
-                "at": 1431,
+                "at": 1749.199999999255,
                 "classification": "IWER_EMULATED",
                 "resourceProfile": "XR_SAFE",
                 "rendererName": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002488) Direct3D11 vs_5_0 ps_5_0, D3D11)",
@@ -789,7 +791,7 @@
                 "lastError": null
               },
               "first-XR-callback": {
-                "at": 1435.800000000745,
+                "at": 1764.800000000745,
                 "classification": "IWER_EMULATED",
                 "resourceProfile": "XR_SAFE",
                 "rendererName": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002488) Direct3D11 vs_5_0 ps_5_0, D3D11)",
@@ -858,7 +860,7 @@
                 "lastError": null
               },
               "first-bare-render": {
-                "at": 1461.2000000029802,
+                "at": 1792.800000000745,
                 "classification": "IWER_EMULATED",
                 "resourceProfile": "XR_SAFE",
                 "rendererName": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002488) Direct3D11 vs_5_0 ps_5_0, D3D11)",
@@ -927,7 +929,7 @@
                 "lastError": null
               },
               "10-XR-frames": {
-                "at": 1513.7000000029802,
+                "at": 1844.8999999985099,
                 "classification": "IWER_EMULATED",
                 "resourceProfile": "XR_SAFE",
                 "rendererName": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002488) Direct3D11 vs_5_0 ps_5_0, D3D11)",
@@ -989,7 +991,7 @@
                 "xrFoveationEffective": null,
                 "xrPhase": "active",
                 "xrFrameCount": 9,
-                "firstWorldRenderCompletedAt": 1461.1000000014901,
+                "firstWorldRenderCompletedAt": 1792.699999999255,
                 "firstStoreXrRenderAt": null,
                 "contextLost": false,
                 "lastContextLossAt": null,
@@ -1059,15 +1061,15 @@
           "xrFoveationRequested": 1,
           "xrFoveationEffective": null,
           "xrPhase": "active",
-          "xrFrameCount": 12,
-          "firstWorldRenderCompletedAt": 1461.1000000014901,
+          "xrFrameCount": 10,
+          "firstWorldRenderCompletedAt": 1792.699999999255,
           "firstStoreXrRenderAt": null,
           "contextLost": false,
           "lastContextLossAt": null,
           "lastError": null,
           "snapshots": {
             "renderer-created": {
-              "at": 1421.9000000022352,
+              "at": 1739.8999999985099,
               "classification": "DESKTOP_BROWSER",
               "resourceProfile": "XR_SAFE",
               "rendererName": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002488) Direct3D11 vs_5_0 ps_5_0, D3D11)",
@@ -1136,7 +1138,7 @@
               "lastError": null
             },
             "pre-requestSession": {
-              "at": 1428,
+              "at": 1747.3999999985099,
               "classification": "IWER_EMULATED",
               "resourceProfile": "XR_SAFE",
               "rendererName": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002488) Direct3D11 vs_5_0 ps_5_0, D3D11)",
@@ -1205,7 +1207,7 @@
               "lastError": null
             },
             "requestSession-resolved": {
-              "at": 1429.5,
+              "at": 1748.199999999255,
               "classification": "IWER_EMULATED",
               "resourceProfile": "XR_SAFE",
               "rendererName": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002488) Direct3D11 vs_5_0 ps_5_0, D3D11)",
@@ -1274,7 +1276,7 @@
               "lastError": null
             },
             "pre-setSession": {
-              "at": 1429.800000000745,
+              "at": 1748.3999999985099,
               "classification": "IWER_EMULATED",
               "resourceProfile": "XR_SAFE",
               "rendererName": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002488) Direct3D11 vs_5_0 ps_5_0, D3D11)",
@@ -1343,7 +1345,7 @@
               "lastError": null
             },
             "setSession-resolved": {
-              "at": 1431,
+              "at": 1749.199999999255,
               "classification": "IWER_EMULATED",
               "resourceProfile": "XR_SAFE",
               "rendererName": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002488) Direct3D11 vs_5_0 ps_5_0, D3D11)",
@@ -1412,7 +1414,7 @@
               "lastError": null
             },
             "first-XR-callback": {
-              "at": 1435.800000000745,
+              "at": 1764.800000000745,
               "classification": "IWER_EMULATED",
               "resourceProfile": "XR_SAFE",
               "rendererName": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002488) Direct3D11 vs_5_0 ps_5_0, D3D11)",
@@ -1481,7 +1483,7 @@
               "lastError": null
             },
             "first-bare-render": {
-              "at": 1461.2000000029802,
+              "at": 1792.800000000745,
               "classification": "IWER_EMULATED",
               "resourceProfile": "XR_SAFE",
               "rendererName": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002488) Direct3D11 vs_5_0 ps_5_0, D3D11)",
@@ -1550,7 +1552,7 @@
               "lastError": null
             },
             "10-XR-frames": {
-              "at": 1513.7000000029802,
+              "at": 1844.8999999985099,
               "classification": "IWER_EMULATED",
               "resourceProfile": "XR_SAFE",
               "rendererName": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002488) Direct3D11 vs_5_0 ps_5_0, D3D11)",
@@ -1612,7 +1614,7 @@
               "xrFoveationEffective": null,
               "xrPhase": "active",
               "xrFrameCount": 9,
-              "firstWorldRenderCompletedAt": 1461.1000000014901,
+              "firstWorldRenderCompletedAt": 1792.699999999255,
               "firstStoreXrRenderAt": null,
               "contextLost": false,
               "lastContextLossAt": null,
@@ -1621,8 +1623,8 @@
           }
         },
         "heap": {
-          "usedJSHeapSize": 17932837,
-          "totalJSHeapSize": 21390029
+          "usedJSHeapSize": 17808437,
+          "totalJSHeapSize": 20641261
         },
         "tti": null
       }
@@ -2107,7 +2109,7 @@
         "scene": true,
         "xrTest": true,
         "bare": false,
-        "tti": 33350.89999999851
+        "tti": 38851.300000000745
       },
       "xr": {
         "entered": {
@@ -2122,24 +2124,38 @@
             "immersiveVrSupported": true,
             "rendererPresenting": true,
             "referenceSpace": "local-floor",
-            "sessionStartAt": 33692.89999999851
+            "sessionStartAt": 39254.800000000745
           },
           "startup": {
-            "requestSessionStart": 33691,
-            "requestSessionEnd": 33692.89999999851,
-            "referenceSpaceStart": 33692.89999999851,
-            "referenceSpaceEnd": 33693.300000000745,
-            "targetFrameRateStart": 33693.39999999851,
-            "targetFrameRateEnd": 33693.800000000745,
-            "rendererSetSessionStart": 33696.5,
-            "rendererSetSessionEnd": 33700.699999999255,
-            "firstAnimationCallbackAt": 33716.60000000149,
-            "firstDirectRenderStart": 33716.89999999851,
-            "firstDirectRenderEnd": 33717.60000000149,
-            "firstWorldRenderCompletedAt": 33717.60000000149,
-            "firstVisibleFrameAt": 33717.60000000149,
-            "lastCompletedStage": "firstVisibleFrameAt",
-            "lastError": null
+            "requestSessionStart": 39253.20000000298,
+            "requestSessionEnd": 39254.800000000745,
+            "referenceSpaceStart": 39254.900000002235,
+            "referenceSpaceEnd": 39254.900000002235,
+            "makeXRCompatibleStart": 39258.300000000745,
+            "makeXRCompatibleEnd": 39258.60000000149,
+            "makeXRCompatibleError": null,
+            "targetFrameRateStart": 39284.300000000745,
+            "targetFrameRateEnd": 39284.900000002235,
+            "targetFrameRateRequestedAt": 39284.300000000745,
+            "targetFrameRateResolvedAt": 39284.900000002235,
+            "targetFrameRateError": null,
+            "frameratechangeCount": 1,
+            "rendererSetSessionStart": 39258.900000002235,
+            "rendererSetSessionEnd": 39261.800000000745,
+            "firstAnimationCallbackAt": 39283.400000002235,
+            "firstDirectRenderStart": 39283.70000000298,
+            "firstDirectRenderEnd": 39284.20000000298,
+            "firstWorldRenderCompletedAt": 39284.20000000298,
+            "firstVisibleFrameAt": 39284.20000000298,
+            "lastCompletedStage": "targetFrameRateEnd",
+            "lastError": null,
+            "contextXrCompatibleBefore": false,
+            "compositorBackend": "unknown",
+            "enabledFeatures": [
+              "local-floor",
+              "viewer",
+              "local"
+            ]
           },
           "layersFeature": "unknown",
           "layerCapabilities": {
@@ -2189,7 +2205,7 @@
               120
             ],
             "framebufferScale": 0.5,
-            "frameCount": 11,
+            "frameCount": 9,
             "lastFrameDtMs": 0.8000000007450581
           },
           "flags": {
@@ -2197,7 +2213,9 @@
             "layers": false,
             "emu": true,
             "bare": false,
-            "safe": true
+            "safe": true,
+            "raw": false,
+            "threeBaseline": false
           }
         },
         "gpu": {
@@ -2231,7 +2249,7 @@
           "posterDesiredCount": 128,
           "posterPinnedCount": 0,
           "bootPinsActive": false,
-          "bootPinsReleasedAt": 33656.300000000745,
+          "bootPinsReleasedAt": 39217.20000000298,
           "posterInitialP0Count": 49,
           "posterInitialP1ResidentCount": 79,
           "posterEnteredWorkingSetCount": 0,
@@ -2261,15 +2279,15 @@
           "xrFoveationRequested": 1,
           "xrFoveationEffective": 1,
           "xrPhase": "active",
-          "xrFrameCount": 11,
-          "firstWorldRenderCompletedAt": 33717.60000000149,
-          "firstStoreXrRenderAt": 34773.89999999851,
+          "xrFrameCount": 9,
+          "firstWorldRenderCompletedAt": 39284.20000000298,
+          "firstStoreXrRenderAt": 39632.70000000298,
           "contextLost": false,
           "lastContextLossAt": null,
           "lastError": null,
           "snapshots": {
             "renderer-created": {
-              "at": 5116.39999999851,
+              "at": 7838.300000000745,
               "classification": "DESKTOP_BROWSER",
               "resourceProfile": "XR_SAFE",
               "rendererName": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002488) Direct3D11 vs_5_0 ps_5_0, D3D11)",
@@ -2338,7 +2356,7 @@
               "lastError": null
             },
             "store-before-heavy-resources": {
-              "at": 5897.5,
+              "at": 8557.800000000745,
               "classification": "DESKTOP_BROWSER",
               "resourceProfile": "XR_SAFE",
               "rendererName": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002488) Direct3D11 vs_5_0 ps_5_0, D3D11)",
@@ -2407,7 +2425,7 @@
               "lastError": null
             },
             "store-ready": {
-              "at": 5899.10000000149,
+              "at": 8559.70000000298,
               "classification": "DESKTOP_BROWSER",
               "resourceProfile": "XR_SAFE",
               "rendererName": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002488) Direct3D11 vs_5_0 ps_5_0, D3D11)",
@@ -2476,7 +2494,7 @@
               "lastError": null
             },
             "pre-requestSession": {
-              "at": 33691.300000000745,
+              "at": 39253.5,
               "classification": "DESKTOP_BROWSER",
               "resourceProfile": "XR_SAFE",
               "rendererName": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002488) Direct3D11 vs_5_0 ps_5_0, D3D11)",
@@ -2507,7 +2525,7 @@
               "posterDesiredCount": 128,
               "posterPinnedCount": 0,
               "bootPinsActive": false,
-              "bootPinsReleasedAt": 33656.300000000745,
+              "bootPinsReleasedAt": 39217.20000000298,
               "posterInitialP0Count": 49,
               "posterInitialP1ResidentCount": 79,
               "posterEnteredWorkingSetCount": 0,
@@ -2545,7 +2563,7 @@
               "lastError": null
             },
             "requestSession-resolved": {
-              "at": 33692.89999999851,
+              "at": 39254.800000000745,
               "classification": "IWER_EMULATED",
               "resourceProfile": "XR_SAFE",
               "rendererName": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002488) Direct3D11 vs_5_0 ps_5_0, D3D11)",
@@ -2576,7 +2594,7 @@
               "posterDesiredCount": 128,
               "posterPinnedCount": 0,
               "bootPinsActive": false,
-              "bootPinsReleasedAt": 33656.300000000745,
+              "bootPinsReleasedAt": 39217.20000000298,
               "posterInitialP0Count": 49,
               "posterInitialP1ResidentCount": 79,
               "posterEnteredWorkingSetCount": 0,
@@ -2614,7 +2632,7 @@
               "lastError": null
             },
             "pre-setSession": {
-              "at": 33696.699999999255,
+              "at": 39259,
               "classification": "IWER_EMULATED",
               "resourceProfile": "XR_SAFE",
               "rendererName": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002488) Direct3D11 vs_5_0 ps_5_0, D3D11)",
@@ -2645,7 +2663,7 @@
               "posterDesiredCount": 128,
               "posterPinnedCount": 0,
               "bootPinsActive": false,
-              "bootPinsReleasedAt": 33656.300000000745,
+              "bootPinsReleasedAt": 39217.20000000298,
               "posterInitialP0Count": 49,
               "posterInitialP1ResidentCount": 79,
               "posterEnteredWorkingSetCount": 0,
@@ -2683,7 +2701,7 @@
               "lastError": null
             },
             "setSession-resolved": {
-              "at": 33700.800000000745,
+              "at": 39261.900000002235,
               "classification": "IWER_EMULATED",
               "resourceProfile": "XR_SAFE",
               "rendererName": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002488) Direct3D11 vs_5_0 ps_5_0, D3D11)",
@@ -2714,7 +2732,7 @@
               "posterDesiredCount": 128,
               "posterPinnedCount": 0,
               "bootPinsActive": false,
-              "bootPinsReleasedAt": 33656.300000000745,
+              "bootPinsReleasedAt": 39217.20000000298,
               "posterInitialP0Count": 49,
               "posterInitialP1ResidentCount": 79,
               "posterEnteredWorkingSetCount": 0,
@@ -2752,7 +2770,7 @@
               "lastError": null
             },
             "first-XR-callback": {
-              "at": 33716.800000000745,
+              "at": 39283.60000000149,
               "classification": "IWER_EMULATED",
               "resourceProfile": "XR_SAFE",
               "rendererName": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002488) Direct3D11 vs_5_0 ps_5_0, D3D11)",
@@ -2783,7 +2801,7 @@
               "posterDesiredCount": 128,
               "posterPinnedCount": 0,
               "bootPinsActive": false,
-              "bootPinsReleasedAt": 33656.300000000745,
+              "bootPinsReleasedAt": 39217.20000000298,
               "posterInitialP0Count": 49,
               "posterInitialP1ResidentCount": 79,
               "posterEnteredWorkingSetCount": 0,
@@ -2821,7 +2839,7 @@
               "lastError": null
             },
             "first-store-XR-render": {
-              "at": 34774,
+              "at": 39632.800000000745,
               "classification": "IWER_EMULATED",
               "resourceProfile": "XR_SAFE",
               "rendererName": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002488) Direct3D11 vs_5_0 ps_5_0, D3D11)",
@@ -2852,7 +2870,7 @@
               "posterDesiredCount": 128,
               "posterPinnedCount": 0,
               "bootPinsActive": false,
-              "bootPinsReleasedAt": 33656.300000000745,
+              "bootPinsReleasedAt": 39217.20000000298,
               "posterInitialP0Count": 49,
               "posterInitialP1ResidentCount": 79,
               "posterEnteredWorkingSetCount": 0,
@@ -2883,8 +2901,8 @@
               "xrFoveationEffective": 1,
               "xrPhase": "active",
               "xrFrameCount": 7,
-              "firstWorldRenderCompletedAt": 33717.60000000149,
-              "firstStoreXrRenderAt": 34773.89999999851,
+              "firstWorldRenderCompletedAt": 39284.20000000298,
+              "firstStoreXrRenderAt": 39632.70000000298,
               "contextLost": false,
               "lastContextLossAt": null,
               "lastError": null
@@ -2892,10 +2910,10 @@
           }
         },
         "heap": {
-          "usedJSHeapSize": 175181421,
-          "totalJSHeapSize": 192833693
+          "usedJSHeapSize": 177726076,
+          "totalJSHeapSize": 208281984
         },
-        "tti": 33350.89999999851
+        "tti": 38851.300000000745
       },
       "locomotion": {
         "before": {
@@ -2904,7 +2922,7 @@
           "yaw": -0.1586552621864014
         },
         "after": {
-          "x": 12.534159215217523,
+          "x": 12.528383142328828,
           "z": 7.1,
           "yaw": -0.15865526218640136
         },
@@ -2939,7 +2957,7 @@
           "posterDesiredCount": 128,
           "posterPinnedCount": 0,
           "bootPinsActive": false,
-          "bootPinsReleasedAt": 33656.300000000745,
+          "bootPinsReleasedAt": 39217.20000000298,
           "posterInitialP0Count": 49,
           "posterInitialP1ResidentCount": 79,
           "posterEnteredWorkingSetCount": 0,
@@ -2969,15 +2987,15 @@
           "xrFoveationRequested": 1,
           "xrFoveationEffective": 1,
           "xrPhase": "active",
-          "xrFrameCount": 23,
-          "firstWorldRenderCompletedAt": 33717.60000000149,
-          "firstStoreXrRenderAt": 34773.89999999851,
+          "xrFrameCount": 21,
+          "firstWorldRenderCompletedAt": 39284.20000000298,
+          "firstStoreXrRenderAt": 39632.70000000298,
           "contextLost": false,
           "lastContextLossAt": null,
           "lastError": null,
           "snapshots": {
             "renderer-created": {
-              "at": 5116.39999999851,
+              "at": 7838.300000000745,
               "classification": "DESKTOP_BROWSER",
               "resourceProfile": "XR_SAFE",
               "rendererName": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002488) Direct3D11 vs_5_0 ps_5_0, D3D11)",
@@ -3046,7 +3064,7 @@
               "lastError": null
             },
             "store-before-heavy-resources": {
-              "at": 5897.5,
+              "at": 8557.800000000745,
               "classification": "DESKTOP_BROWSER",
               "resourceProfile": "XR_SAFE",
               "rendererName": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002488) Direct3D11 vs_5_0 ps_5_0, D3D11)",
@@ -3115,7 +3133,7 @@
               "lastError": null
             },
             "store-ready": {
-              "at": 5899.10000000149,
+              "at": 8559.70000000298,
               "classification": "DESKTOP_BROWSER",
               "resourceProfile": "XR_SAFE",
               "rendererName": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002488) Direct3D11 vs_5_0 ps_5_0, D3D11)",
@@ -3184,7 +3202,7 @@
               "lastError": null
             },
             "pre-requestSession": {
-              "at": 33691.300000000745,
+              "at": 39253.5,
               "classification": "DESKTOP_BROWSER",
               "resourceProfile": "XR_SAFE",
               "rendererName": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002488) Direct3D11 vs_5_0 ps_5_0, D3D11)",
@@ -3215,7 +3233,7 @@
               "posterDesiredCount": 128,
               "posterPinnedCount": 0,
               "bootPinsActive": false,
-              "bootPinsReleasedAt": 33656.300000000745,
+              "bootPinsReleasedAt": 39217.20000000298,
               "posterInitialP0Count": 49,
               "posterInitialP1ResidentCount": 79,
               "posterEnteredWorkingSetCount": 0,
@@ -3253,7 +3271,7 @@
               "lastError": null
             },
             "requestSession-resolved": {
-              "at": 33692.89999999851,
+              "at": 39254.800000000745,
               "classification": "IWER_EMULATED",
               "resourceProfile": "XR_SAFE",
               "rendererName": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002488) Direct3D11 vs_5_0 ps_5_0, D3D11)",
@@ -3284,7 +3302,7 @@
               "posterDesiredCount": 128,
               "posterPinnedCount": 0,
               "bootPinsActive": false,
-              "bootPinsReleasedAt": 33656.300000000745,
+              "bootPinsReleasedAt": 39217.20000000298,
               "posterInitialP0Count": 49,
               "posterInitialP1ResidentCount": 79,
               "posterEnteredWorkingSetCount": 0,
@@ -3322,7 +3340,7 @@
               "lastError": null
             },
             "pre-setSession": {
-              "at": 33696.699999999255,
+              "at": 39259,
               "classification": "IWER_EMULATED",
               "resourceProfile": "XR_SAFE",
               "rendererName": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002488) Direct3D11 vs_5_0 ps_5_0, D3D11)",
@@ -3353,7 +3371,7 @@
               "posterDesiredCount": 128,
               "posterPinnedCount": 0,
               "bootPinsActive": false,
-              "bootPinsReleasedAt": 33656.300000000745,
+              "bootPinsReleasedAt": 39217.20000000298,
               "posterInitialP0Count": 49,
               "posterInitialP1ResidentCount": 79,
               "posterEnteredWorkingSetCount": 0,
@@ -3391,7 +3409,7 @@
               "lastError": null
             },
             "setSession-resolved": {
-              "at": 33700.800000000745,
+              "at": 39261.900000002235,
               "classification": "IWER_EMULATED",
               "resourceProfile": "XR_SAFE",
               "rendererName": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002488) Direct3D11 vs_5_0 ps_5_0, D3D11)",
@@ -3422,7 +3440,7 @@
               "posterDesiredCount": 128,
               "posterPinnedCount": 0,
               "bootPinsActive": false,
-              "bootPinsReleasedAt": 33656.300000000745,
+              "bootPinsReleasedAt": 39217.20000000298,
               "posterInitialP0Count": 49,
               "posterInitialP1ResidentCount": 79,
               "posterEnteredWorkingSetCount": 0,
@@ -3460,7 +3478,7 @@
               "lastError": null
             },
             "first-XR-callback": {
-              "at": 33716.800000000745,
+              "at": 39283.60000000149,
               "classification": "IWER_EMULATED",
               "resourceProfile": "XR_SAFE",
               "rendererName": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002488) Direct3D11 vs_5_0 ps_5_0, D3D11)",
@@ -3491,7 +3509,7 @@
               "posterDesiredCount": 128,
               "posterPinnedCount": 0,
               "bootPinsActive": false,
-              "bootPinsReleasedAt": 33656.300000000745,
+              "bootPinsReleasedAt": 39217.20000000298,
               "posterInitialP0Count": 49,
               "posterInitialP1ResidentCount": 79,
               "posterEnteredWorkingSetCount": 0,
@@ -3529,7 +3547,7 @@
               "lastError": null
             },
             "first-store-XR-render": {
-              "at": 34774,
+              "at": 39632.800000000745,
               "classification": "IWER_EMULATED",
               "resourceProfile": "XR_SAFE",
               "rendererName": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002488) Direct3D11 vs_5_0 ps_5_0, D3D11)",
@@ -3560,7 +3578,7 @@
               "posterDesiredCount": 128,
               "posterPinnedCount": 0,
               "bootPinsActive": false,
-              "bootPinsReleasedAt": 33656.300000000745,
+              "bootPinsReleasedAt": 39217.20000000298,
               "posterInitialP0Count": 49,
               "posterInitialP1ResidentCount": 79,
               "posterEnteredWorkingSetCount": 0,
@@ -3591,8 +3609,8 @@
               "xrFoveationEffective": 1,
               "xrPhase": "active",
               "xrFrameCount": 7,
-              "firstWorldRenderCompletedAt": 33717.60000000149,
-              "firstStoreXrRenderAt": 34773.89999999851,
+              "firstWorldRenderCompletedAt": 39284.20000000298,
+              "firstStoreXrRenderAt": 39632.70000000298,
               "contextLost": false,
               "lastContextLossAt": null,
               "lastError": null
@@ -3630,13 +3648,13 @@
           "posterDesiredCount": 128,
           "posterPinnedCount": 0,
           "bootPinsActive": false,
-          "bootPinsReleasedAt": 33656.300000000745,
+          "bootPinsReleasedAt": 39217.20000000298,
           "posterInitialP0Count": 49,
           "posterInitialP1ResidentCount": 79,
           "posterEnteredWorkingSetCount": 210,
           "posterLeftWorkingSetCount": 210,
-          "posterDecodeJobsStarted": 316,
-          "posterStaleUploadDrops": 9,
+          "posterDecodeJobsStarted": 317,
+          "posterStaleUploadDrops": 7,
           "p0UniqueTitles": 128,
           "p1UniqueTitles": 1521,
           "p2UniqueTitles": 57,
@@ -3646,7 +3664,7 @@
           "posterArrayGpuBytesEstimated": 9437184,
           "posterCpuCacheBytes": 56991744,
           "posterCpuCacheBudget": 75497472,
-          "posterCpuCacheHits": 349,
+          "posterCpuCacheHits": 348,
           "posterCpuCacheMisses": 0,
           "composerAllocated": false,
           "n8aoAllocated": false,
@@ -3660,15 +3678,15 @@
           "xrFoveationRequested": 1,
           "xrFoveationEffective": 1,
           "xrPhase": "active",
-          "xrFrameCount": 2061,
-          "firstWorldRenderCompletedAt": 33717.60000000149,
-          "firstStoreXrRenderAt": 34773.89999999851,
+          "xrFrameCount": 1981,
+          "firstWorldRenderCompletedAt": 39284.20000000298,
+          "firstStoreXrRenderAt": 39632.70000000298,
           "contextLost": false,
           "lastContextLossAt": null,
           "lastError": null,
           "snapshots": {
             "renderer-created": {
-              "at": 5116.39999999851,
+              "at": 7838.300000000745,
               "classification": "DESKTOP_BROWSER",
               "resourceProfile": "XR_SAFE",
               "rendererName": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002488) Direct3D11 vs_5_0 ps_5_0, D3D11)",
@@ -3737,7 +3755,7 @@
               "lastError": null
             },
             "store-before-heavy-resources": {
-              "at": 5897.5,
+              "at": 8557.800000000745,
               "classification": "DESKTOP_BROWSER",
               "resourceProfile": "XR_SAFE",
               "rendererName": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002488) Direct3D11 vs_5_0 ps_5_0, D3D11)",
@@ -3806,7 +3824,7 @@
               "lastError": null
             },
             "store-ready": {
-              "at": 5899.10000000149,
+              "at": 8559.70000000298,
               "classification": "DESKTOP_BROWSER",
               "resourceProfile": "XR_SAFE",
               "rendererName": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002488) Direct3D11 vs_5_0 ps_5_0, D3D11)",
@@ -3875,7 +3893,7 @@
               "lastError": null
             },
             "pre-requestSession": {
-              "at": 33691.300000000745,
+              "at": 39253.5,
               "classification": "DESKTOP_BROWSER",
               "resourceProfile": "XR_SAFE",
               "rendererName": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002488) Direct3D11 vs_5_0 ps_5_0, D3D11)",
@@ -3906,7 +3924,7 @@
               "posterDesiredCount": 128,
               "posterPinnedCount": 0,
               "bootPinsActive": false,
-              "bootPinsReleasedAt": 33656.300000000745,
+              "bootPinsReleasedAt": 39217.20000000298,
               "posterInitialP0Count": 49,
               "posterInitialP1ResidentCount": 79,
               "posterEnteredWorkingSetCount": 0,
@@ -3944,7 +3962,7 @@
               "lastError": null
             },
             "requestSession-resolved": {
-              "at": 33692.89999999851,
+              "at": 39254.800000000745,
               "classification": "IWER_EMULATED",
               "resourceProfile": "XR_SAFE",
               "rendererName": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002488) Direct3D11 vs_5_0 ps_5_0, D3D11)",
@@ -3975,7 +3993,7 @@
               "posterDesiredCount": 128,
               "posterPinnedCount": 0,
               "bootPinsActive": false,
-              "bootPinsReleasedAt": 33656.300000000745,
+              "bootPinsReleasedAt": 39217.20000000298,
               "posterInitialP0Count": 49,
               "posterInitialP1ResidentCount": 79,
               "posterEnteredWorkingSetCount": 0,
@@ -4013,7 +4031,7 @@
               "lastError": null
             },
             "pre-setSession": {
-              "at": 33696.699999999255,
+              "at": 39259,
               "classification": "IWER_EMULATED",
               "resourceProfile": "XR_SAFE",
               "rendererName": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002488) Direct3D11 vs_5_0 ps_5_0, D3D11)",
@@ -4044,7 +4062,7 @@
               "posterDesiredCount": 128,
               "posterPinnedCount": 0,
               "bootPinsActive": false,
-              "bootPinsReleasedAt": 33656.300000000745,
+              "bootPinsReleasedAt": 39217.20000000298,
               "posterInitialP0Count": 49,
               "posterInitialP1ResidentCount": 79,
               "posterEnteredWorkingSetCount": 0,
@@ -4082,7 +4100,7 @@
               "lastError": null
             },
             "setSession-resolved": {
-              "at": 33700.800000000745,
+              "at": 39261.900000002235,
               "classification": "IWER_EMULATED",
               "resourceProfile": "XR_SAFE",
               "rendererName": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002488) Direct3D11 vs_5_0 ps_5_0, D3D11)",
@@ -4113,7 +4131,7 @@
               "posterDesiredCount": 128,
               "posterPinnedCount": 0,
               "bootPinsActive": false,
-              "bootPinsReleasedAt": 33656.300000000745,
+              "bootPinsReleasedAt": 39217.20000000298,
               "posterInitialP0Count": 49,
               "posterInitialP1ResidentCount": 79,
               "posterEnteredWorkingSetCount": 0,
@@ -4151,7 +4169,7 @@
               "lastError": null
             },
             "first-XR-callback": {
-              "at": 33716.800000000745,
+              "at": 39283.60000000149,
               "classification": "IWER_EMULATED",
               "resourceProfile": "XR_SAFE",
               "rendererName": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002488) Direct3D11 vs_5_0 ps_5_0, D3D11)",
@@ -4182,7 +4200,7 @@
               "posterDesiredCount": 128,
               "posterPinnedCount": 0,
               "bootPinsActive": false,
-              "bootPinsReleasedAt": 33656.300000000745,
+              "bootPinsReleasedAt": 39217.20000000298,
               "posterInitialP0Count": 49,
               "posterInitialP1ResidentCount": 79,
               "posterEnteredWorkingSetCount": 0,
@@ -4220,7 +4238,7 @@
               "lastError": null
             },
             "first-store-XR-render": {
-              "at": 34774,
+              "at": 39632.800000000745,
               "classification": "IWER_EMULATED",
               "resourceProfile": "XR_SAFE",
               "rendererName": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002488) Direct3D11 vs_5_0 ps_5_0, D3D11)",
@@ -4251,7 +4269,7 @@
               "posterDesiredCount": 128,
               "posterPinnedCount": 0,
               "bootPinsActive": false,
-              "bootPinsReleasedAt": 33656.300000000745,
+              "bootPinsReleasedAt": 39217.20000000298,
               "posterInitialP0Count": 49,
               "posterInitialP1ResidentCount": 79,
               "posterEnteredWorkingSetCount": 0,
@@ -4282,8 +4300,8 @@
               "xrFoveationEffective": 1,
               "xrPhase": "active",
               "xrFrameCount": 7,
-              "firstWorldRenderCompletedAt": 33717.60000000149,
-              "firstStoreXrRenderAt": 34773.89999999851,
+              "firstWorldRenderCompletedAt": 39284.20000000298,
+              "firstStoreXrRenderAt": 39632.70000000298,
               "contextLost": false,
               "lastContextLossAt": null,
               "lastError": null
@@ -4292,7 +4310,7 @@
         },
         "ws0": {
           "bootPinsActive": false,
-          "bootPinsReleasedAt": 33656.300000000745,
+          "bootPinsReleasedAt": 39217.20000000298,
           "posterPinnedCount": 0,
           "posterWorkingSetVersion": 1,
           "posterWorkingSetUpdates": 0,
@@ -4313,7 +4331,7 @@
           "posterPhysicalSlots": 128,
           "posterStaleUploadDrops": 0,
           "posterDecodeJobsStarted": 126,
-          "posterUploadJobsStarted": 208,
+          "posterUploadJobsStarted": 198,
           "lastDesiredHash": 526879487,
           "lastTransition": null,
           "residencyInvariantOk": true,
@@ -4322,7 +4340,7 @@
         },
         "ws": {
           "bootPinsActive": false,
-          "bootPinsReleasedAt": 33656.300000000745,
+          "bootPinsReleasedAt": 39217.20000000298,
           "posterPinnedCount": 0,
           "posterWorkingSetVersion": 13,
           "posterWorkingSetUpdates": 12,
@@ -4341,9 +4359,9 @@
           "posterResidentHighWaterMark": 128,
           "posterResidentCount": 128,
           "posterPhysicalSlots": 128,
-          "posterStaleUploadDrops": 9,
-          "posterDecodeJobsStarted": 316,
-          "posterUploadJobsStarted": 668,
+          "posterStaleUploadDrops": 7,
+          "posterDecodeJobsStarted": 317,
+          "posterUploadJobsStarted": 667,
           "lastDesiredHash": 1270893904,
           "lastTransition": {
             "before": {
@@ -4352,7 +4370,7 @@
               "nearResidentCount": 128
             },
             "movement": {
-              "distanceMoved": 3.5050499999932936,
+              "distanceMoved": 3.570299999993295,
               "regionChanged": false
             },
             "after": {
@@ -4369,7 +4387,7 @@
         },
         "bootWs": {
           "bootPinsActive": false,
-          "bootPinsReleasedAt": 33656.300000000745,
+          "bootPinsReleasedAt": 39217.20000000298,
           "posterPinnedCount": 0,
           "posterWorkingSetVersion": 1,
           "posterWorkingSetUpdates": 0,
@@ -4390,7 +4408,7 @@
           "posterPhysicalSlots": 128,
           "posterStaleUploadDrops": 0,
           "posterDecodeJobsStarted": 126,
-          "posterUploadJobsStarted": 208,
+          "posterUploadJobsStarted": 198,
           "lastDesiredHash": 526879487,
           "lastTransition": null,
           "residencyInvariantOk": true,
@@ -4420,7 +4438,7 @@
           {
             "name": "aisle-forward",
             "pose": {
-              "x": 15.513162800627837,
+              "x": 15.510816641688534,
               "z": 10.1,
               "yaw": -0.1586552621864014
             },
@@ -4450,8 +4468,8 @@
           {
             "name": "back-section",
             "pose": {
-              "x": 27.138163250869564,
-              "z": 1.5139191986147662,
+              "x": 27.153769217430494,
+              "z": 1.519158234196305,
               "yaw": -0.6822540377847002
             },
             "resident": 128,
@@ -4465,22 +4483,22 @@
           {
             "name": "side-section",
             "pose": {
-              "x": 14.685302581610056,
-              "z": -0.47853850846676127,
+              "x": 14.678246785661877,
+              "z": -0.47692535488667964,
               "yaw": -0.15865526218640136
             },
             "resident": 128,
             "desired": 128,
             "pinned": 0,
-            "eviction": 179,
-            "acquisition": 307,
+            "eviction": 178,
+            "acquisition": 306,
             "invariant": true,
             "version": 11
           },
           {
             "name": "return",
             "pose": {
-              "x": 12.534159215217523,
+              "x": 12.528383142328828,
               "z": 7.1,
               "yaw": -0.15865526218640136
             },
@@ -4495,14 +4513,14 @@
         ],
         "idle": {
           "before": {
-            "decode": 316,
-            "upload": 668,
+            "decode": 317,
+            "upload": 667,
             "evict": 210,
             "cache": 56991744
           },
           "after": {
-            "decode": 316,
-            "upload": 668,
+            "decode": 317,
+            "upload": 667,
             "evict": 210,
             "cache": 56991744
           },
@@ -4520,24 +4538,38 @@
             "immersiveVrSupported": true,
             "rendererPresenting": true,
             "referenceSpace": "local-floor",
-            "sessionStartAt": 33692.89999999851
+            "sessionStartAt": 39254.800000000745
           },
           "startup": {
-            "requestSessionStart": 33691,
-            "requestSessionEnd": 33692.89999999851,
-            "referenceSpaceStart": 33692.89999999851,
-            "referenceSpaceEnd": 33693.300000000745,
-            "targetFrameRateStart": 33693.39999999851,
-            "targetFrameRateEnd": 33693.800000000745,
-            "rendererSetSessionStart": 33696.5,
-            "rendererSetSessionEnd": 33700.699999999255,
-            "firstAnimationCallbackAt": 33716.60000000149,
-            "firstDirectRenderStart": 33716.89999999851,
-            "firstDirectRenderEnd": 33717.60000000149,
-            "firstWorldRenderCompletedAt": 33717.60000000149,
-            "firstVisibleFrameAt": 33717.60000000149,
-            "lastCompletedStage": "firstVisibleFrameAt",
-            "lastError": null
+            "requestSessionStart": 39253.20000000298,
+            "requestSessionEnd": 39254.800000000745,
+            "referenceSpaceStart": 39254.900000002235,
+            "referenceSpaceEnd": 39254.900000002235,
+            "makeXRCompatibleStart": 39258.300000000745,
+            "makeXRCompatibleEnd": 39258.60000000149,
+            "makeXRCompatibleError": null,
+            "targetFrameRateStart": 39284.300000000745,
+            "targetFrameRateEnd": 39284.900000002235,
+            "targetFrameRateRequestedAt": 39284.300000000745,
+            "targetFrameRateResolvedAt": 39284.900000002235,
+            "targetFrameRateError": null,
+            "frameratechangeCount": 1,
+            "rendererSetSessionStart": 39258.900000002235,
+            "rendererSetSessionEnd": 39261.800000000745,
+            "firstAnimationCallbackAt": 39283.400000002235,
+            "firstDirectRenderStart": 39283.70000000298,
+            "firstDirectRenderEnd": 39284.20000000298,
+            "firstWorldRenderCompletedAt": 39284.20000000298,
+            "firstVisibleFrameAt": 39284.20000000298,
+            "lastCompletedStage": "targetFrameRateEnd",
+            "lastError": null,
+            "contextXrCompatibleBefore": false,
+            "compositorBackend": "unknown",
+            "enabledFeatures": [
+              "local-floor",
+              "viewer",
+              "local"
+            ]
           },
           "layersFeature": "unknown",
           "layerCapabilities": {
@@ -4587,7 +4619,7 @@
               120
             ],
             "framebufferScale": 0.5,
-            "frameCount": 3039,
+            "frameCount": 2885,
             "lastFrameDtMs": 0.19999999925494194
           },
           "flags": {
@@ -4595,7 +4627,9 @@
             "layers": false,
             "emu": true,
             "bare": false,
-            "safe": true
+            "safe": true,
+            "raw": false,
+            "threeBaseline": false
           }
         }
       },

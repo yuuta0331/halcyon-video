@@ -16,8 +16,17 @@ export const XR_REQUIRED_FEATURES: readonly string[] = [];
 export const XR_REFERENCE_SPACE_FALLBACK: readonly XrReferenceSpaceType[] = [
   'local-floor',
   'local',
-  'viewer',
 ];
+
+/** Choose Three's configured space from session.enabledFeatures. Do not probe. */
+export function selectReferenceSpaceTypeFromFeatures(
+  enabledFeatures: Iterable<string> | null | undefined,
+): XrReferenceSpaceType {
+  for (const feature of enabledFeatures ?? []) {
+    if (feature === 'local-floor') return 'local-floor';
+  }
+  return 'local';
+}
 
 /** JP-3 baseline. Do not require 90/120. */
 export const XR_TARGET_HZ = 72;
@@ -44,6 +53,7 @@ export function sessionCanStartWithoutLayers(options: XrSessionRequestOptions): 
     && !(options.requiredFeatures ?? []).includes('layers');
 }
 
+/** RAW path only: at most local-floor then local. Halcyon/Three must not probe. */
 export async function pickReferenceSpaceType(
   request: (type: XrReferenceSpaceType) => Promise<unknown>,
 ): Promise<XrReferenceSpaceType> {

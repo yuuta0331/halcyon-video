@@ -56,7 +56,15 @@ export function blankXrDiagnostics(
       frameCount: 0,
       lastFrameDtMs: null,
     },
-    flags: { minimal: flags.minimal, layers: flags.layers, emu: flags.emu, bare: flags.bare, safe: flags.safe },
+    flags: {
+      minimal: flags.minimal,
+      layers: flags.layers,
+      emu: flags.emu,
+      bare: flags.bare,
+      safe: flags.safe,
+      raw: flags.raw,
+      threeBaseline: flags.threeBaseline,
+    },
   };
 }
 

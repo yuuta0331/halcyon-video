@@ -92,6 +92,8 @@ test('bare XR flag is distinct from xrMinimal', () => {
   assert.equal(minimal.bare, false);
   assert.equal(bare.bare, true);
   assert.equal(bare.layers, false);
+  assert.equal(bare.raw, false);
+  assert.equal(bare.threeBaseline, false);
 });
 
 test('no-layers policy omits the layers optional feature', () => {

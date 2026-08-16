@@ -63,8 +63,15 @@ export interface XrDiagnostics {
     requestSessionEnd: number | null;
     referenceSpaceStart: number | null;
     referenceSpaceEnd: number | null;
+    makeXRCompatibleStart: number | null;
+    makeXRCompatibleEnd: number | null;
+    makeXRCompatibleError: string | null;
     targetFrameRateStart: number | null;
     targetFrameRateEnd: number | null;
+    targetFrameRateRequestedAt: number | null;
+    targetFrameRateResolvedAt: number | null;
+    targetFrameRateError: string | null;
+    frameratechangeCount: number;
     rendererSetSessionStart: number | null;
     rendererSetSessionEnd: number | null;
     firstAnimationCallbackAt: number | null;
@@ -74,6 +81,9 @@ export interface XrDiagnostics {
     firstVisibleFrameAt: number | null;
     lastCompletedStage: string | null;
     lastError: string | null;
+    contextXrCompatibleBefore: boolean | null;
+    compositorBackend: 'projection-layer' | 'xr-webgl-layer' | 'unknown' | null;
+    enabledFeatures: string[];
   };
   layersFeature: boolean | 'unknown';
   layerCapabilities: XrLayerCapabilities;
@@ -117,6 +127,8 @@ export interface XrDiagnostics {
     emu: boolean;
     bare: boolean;
     safe: boolean;
+    raw: boolean;
+    threeBaseline: boolean;
   };
 }
 

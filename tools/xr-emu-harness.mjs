@@ -156,6 +156,50 @@ async function shot(page, name) {
   return file;
 }
 
+async function runControlPage(browser, name, search, readyKey) {
+  const page = await browser.newPage();
+  attachConsole(page);
+  const url = `${BASE}/${search}`;
+  await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60_000 });
+  const t0 = Date.now();
+  let boot = null;
+  while (Date.now() - t0 < 60_000) {
+    boot = await page.evaluate((key) => ({
+      ready: !!window[key],
+      xrTest: !!window.__xrTest,
+    }), readyKey).catch((err) => ({ error: String(err) }));
+    if (boot?.ready && boot?.xrTest) break;
+    await new Promise((r) => setTimeout(r, 300));
+  }
+  const xr = await page.evaluate(async () => {
+    const api = window.__xrTest;
+    const entered = api ? await api.enter() : { ok: false, error: 'no __xrTest' };
+    const wait0 = Date.now();
+    let d = window.__xrDiagnostics?.();
+    while (Date.now() - wait0 < 8000) {
+      d = window.__xrDiagnostics?.();
+      if (d?.startup?.firstWorldRenderCompletedAt != null
+        || d?.raw?.firstWorldRenderCompletedAt != null
+        || d?.threeBaseline?.firstWorldRenderCompletedAt != null) break;
+      await new Promise((r) => setTimeout(r, 100));
+    }
+    const last = window.__lastXrStartup?.() ?? null;
+    await api?.exit?.();
+    return { entered, d, last };
+  });
+  const world = xr.d?.startup?.firstWorldRenderCompletedAt != null
+    || xr.d?.raw?.firstWorldRenderCompletedAt != null
+    || xr.d?.threeBaseline?.firstWorldRenderCompletedAt != null;
+  await page.close();
+  return {
+    name,
+    url,
+    boot,
+    pre: xr,
+    pass: !!boot?.ready && !!xr.entered?.ok && world,
+  };
+}
+
 async function runScenario(browser, name, search, body) {
   const page = await browser.newPage();
   attachConsole(page);
@@ -216,6 +260,13 @@ async function main() {
     });
     await barePage.close();
 
+    evidence.scenarios.push(await runControlPage(
+      browser, 'RAW_WEBXR', '?xrRaw=1&xrEmu=1&nogate=1', '__rawXr',
+    ));
+    evidence.scenarios.push(await runControlPage(
+      browser, 'THREE_BASELINE', '?xrThreeBaseline=1&xrEmu=1&nogate=1', '__threeBaseline',
+    ));
+
     evidence.scenarios.push(await runScenario(
       browser, 'CORE_XR', '?demo=1&nogate=1&xrEmu=1&xrMinimal=1',
       async (page) => {
@@ -262,10 +313,66 @@ async function main() {
           && st?.firstDirectRenderEnd != null
           && st.firstDirectRenderEnd >= st.firstDirectRenderStart
           && (st.firstAnimationCallbackAt == null || st.firstDirectRenderStart >= st.firstAnimationCallbackAt);
+        const fpsAfterFirst = st?.targetFrameRateStart == null
+          || st?.firstWorldRenderCompletedAt == null
+          || st.firstWorldRenderCompletedAt <= st.targetFrameRateStart;
         const second = pre.entered2?.ok === true;
         return {
-          pass: iwer && pre.entered?.ok && presenting && firstFrame && pre.exited?.ok && second,
-          iwer, presenting, firstFrame, second, pre, shots: [shot1, shot2],
+          pass: iwer && pre.entered?.ok && presenting && firstFrame && fpsAfterFirst && pre.exited?.ok && second,
+          iwer, presenting, firstFrame, fpsAfterFirst, second, pre, shots: [shot1, shot2],
+        };
+      },
+    ));
+
+    evidence.scenarios.push(await runScenario(
+      browser, 'BLUR_DURING_ENTRY', '?demo=1&nogate=1&xrEmu=1&xrMinimal=1',
+      async (page) => {
+        const pre = await page.evaluate(async () => {
+          const until = Date.now() + 15000;
+          while (!window.__xrTest && Date.now() < until) {
+            await new Promise((r) => setTimeout(r, 150));
+          }
+          const xrNav = navigator.xr;
+          if (!xrNav) return { entered: { ok: false, error: 'no navigator.xr' } };
+          const orig = xrNav.requestSession.bind(xrNav);
+          xrNav.requestSession = async (...args) => {
+            window.dispatchEvent(new Event('blur'));
+            return orig(...args);
+          };
+          const entered = await window.__xrTest.enter();
+          const t0 = Date.now();
+          let d = window.__xrDiagnostics?.();
+          while (Date.now() - t0 < 8000) {
+            d = window.__xrDiagnostics?.();
+            if (d?.startup?.firstWorldRenderCompletedAt != null) break;
+            await new Promise((r) => setTimeout(r, 100));
+          }
+          const perf = window.storeScene?.getPerfInfo?.() ?? null;
+          const frames0 = perf?.frames ?? 0;
+          await new Promise((r) => setTimeout(r, 400));
+          const frames1 = window.storeScene?.getPerfInfo?.()?.frames ?? 0;
+          const journal = window.__xrStartupJournal?.() ?? [];
+          await window.__xrTest?.exit?.();
+          return {
+            entered,
+            world: d?.startup?.firstWorldRenderCompletedAt != null,
+            firstWorldRenderCompletedAt: d?.startup?.firstWorldRenderCompletedAt ?? null,
+            isRendering: perf?.isRendering === true,
+            frameCount: d?.performance?.frameCount ?? 0,
+            framesAdvanced: frames1 > frames0,
+            blurLogged: journal.some((e) => e.type === 'window-blur'),
+            fpsAfterFirst: d?.startup?.targetFrameRateStart == null
+              || d?.startup?.firstWorldRenderCompletedAt == null
+              || d.startup.firstWorldRenderCompletedAt <= d.startup.targetFrameRateStart,
+          };
+        });
+        return {
+          pass: !!pre.entered?.ok
+            && pre.world
+            && pre.isRendering
+            && (pre.frameCount > 0 || pre.framesAdvanced)
+            && pre.fpsAfterFirst !== false,
+          pre,
         };
       },
     ));
