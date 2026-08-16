@@ -22,6 +22,7 @@ import { activeGpuCapabilities, activeResourceProfile, isXrSafeProfile } from '.
 import { choosePosterBankLayout, layersPerBankFromCaps, QUEST_SAFE_POSTER_GPU_BUDGET, type PosterBankLayout } from './perf/poster-bank-layout';
 import { effectivePosterArrayLayerCeiling } from './perf/test-array-layer-ceiling';
 import { storeVisibleWork } from './perf/store-visible-work';
+import { noteBindDrawBank } from './perf/poster-bank-bind-observer';
 import { storeVisibleResidency } from './store-visible-residency';
 import { PosterResidencyWindow, estimatePosterArrayBytes, type PosterLease } from './poster-residency';
 import { pixelStorei } from './xr/gl-state';
@@ -757,6 +758,7 @@ class TextureArrayManager {
   }
 
   public bindDrawBank(bank: number): void {
+    noteBindDrawBank(bank);
     const tex = this.bankTexture(bank) ?? this.highResArray;
     const offset = this.bankCount <= 1 ? 0 : Math.max(0, bank) * this.bankSize;
     const updateUniforms = (mat: any) => {

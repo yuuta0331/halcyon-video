@@ -28,8 +28,8 @@
       "worldReady": true,
       "requiredReady": true,
       "capacityInvariantOk": true,
-      "timeToVisualReady": 36904.59999999404,
-      "startedAt": 3084.9000000059605
+      "timeToVisualReady": 34171.19999998808,
+      "startedAt": 3882
     },
     "gpu": {
       "classification": "DESKTOP_BROWSER",
@@ -79,7 +79,7 @@
       "posterDesiredCount": 2001,
       "posterPinnedCount": 2001,
       "bootPinsActive": false,
-      "bootPinsReleasedAt": 40423.29999999702,
+      "bootPinsReleasedAt": 38331.09999999404,
       "posterInitialP0Count": 2001,
       "posterInitialP1ResidentCount": 0,
       "posterEnteredWorkingSetCount": 0,
@@ -245,7 +245,7 @@
       },
       "snapshots": {
         "renderer-created": {
-          "at": 1510.2000000029802,
+          "at": 1633.2999999970198,
           "classification": "DESKTOP_BROWSER",
           "resourceProfile": "XR_SAFE",
           "rendererName": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002488) Direct3D11 vs_5_0 ps_5_0, D3D11)",
@@ -459,7 +459,7 @@
           }
         },
         "store-before-heavy-resources": {
-          "at": 1593,
+          "at": 2023.8999999910593,
           "classification": "DESKTOP_BROWSER",
           "resourceProfile": "XR_SAFE",
           "rendererName": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002488) Direct3D11 vs_5_0 ps_5_0, D3D11)",
@@ -673,7 +673,7 @@
           }
         },
         "store-ready": {
-          "at": 1596.7999999970198,
+          "at": 2026.8999999910593,
           "classification": "DESKTOP_BROWSER",
           "resourceProfile": "XR_SAFE",
           "rendererName": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002488) Direct3D11 vs_5_0 ps_5_0, D3D11)",
@@ -890,7 +890,7 @@
     },
     "ws": {
       "bootPinsActive": false,
-      "bootPinsReleasedAt": 40423.29999999702,
+      "bootPinsReleasedAt": 38331.09999999404,
       "posterPinnedCount": 2001,
       "posterWorkingSetVersion": 1,
       "posterWorkingSetUpdates": 0,
@@ -920,15 +920,15 @@
     },
     "perf": {
       "FRAME": {
-        "rollingFps": 26.874496006768815,
-        "meanFrameTime": 37.210000133514406,
-        "p95": 113.4000015258789,
-        "p99": 113.4000015258789,
-        "worst": 113.4000015258789,
-        "over1389ms": 18,
-        "longFrames": 18,
+        "rollingFps": 11.837159045704889,
+        "meanFrameTime": 84.47972998747954,
+        "p95": 199.89999389648438,
+        "p99": 230.6999969482422,
+        "worst": 230.6999969482422,
+        "over1389ms": 67,
+        "longFrames": 67,
         "uiMode": null,
-        "samples": 20
+        "samples": 74
       },
       "STORE_READINESS": {
         "state": "STORE_INTERACTIVE",
@@ -939,7 +939,7 @@
         "visualReady": true,
         "worldReady": true,
         "requiredReady": true,
-        "timeToVisualReady": 36904.59999999404
+        "timeToVisualReady": 34171.19999998808
       },
       "STORE_VISIBLE_BASE": {
         "expected": 2001,
@@ -1027,8 +1027,8 @@
       "worldReady": true,
       "requiredReady": true,
       "capacityInvariantOk": true,
-      "timeToVisualReady": 36904.59999999404,
-      "startedAt": 3084.9000000059605
+      "timeToVisualReady": 34171.19999998808,
+      "startedAt": 3882
     },
     "gpu": {
       "classification": "DESKTOP_BROWSER",
@@ -1078,7 +1078,7 @@
       "posterDesiredCount": 2001,
       "posterPinnedCount": 2001,
       "bootPinsActive": false,
-      "bootPinsReleasedAt": 40423.29999999702,
+      "bootPinsReleasedAt": 38331.09999999404,
       "posterInitialP0Count": 2001,
       "posterInitialP1ResidentCount": 0,
       "posterEnteredWorkingSetCount": 0,
@@ -1244,7 +1244,7 @@
       },
       "snapshots": {
         "renderer-created": {
-          "at": 1510.2000000029802,
+          "at": 1633.2999999970198,
           "classification": "DESKTOP_BROWSER",
           "resourceProfile": "XR_SAFE",
           "rendererName": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002488) Direct3D11 vs_5_0 ps_5_0, D3D11)",
@@ -1458,7 +1458,7 @@
           }
         },
         "store-before-heavy-resources": {
-          "at": 1593,
+          "at": 2023.8999999910593,
           "classification": "DESKTOP_BROWSER",
           "resourceProfile": "XR_SAFE",
           "rendererName": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002488) Direct3D11 vs_5_0 ps_5_0, D3D11)",
@@ -1672,7 +1672,7 @@
           }
         },
         "store-ready": {
-          "at": 1596.7999999970198,
+          "at": 2026.8999999910593,
           "classification": "DESKTOP_BROWSER",
           "resourceProfile": "XR_SAFE",
           "rendererName": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002488) Direct3D11 vs_5_0 ps_5_0, D3D11)",
@@ -1889,7 +1889,7 @@
     },
     "ws": {
       "bootPinsActive": false,
-      "bootPinsReleasedAt": 40423.29999999702,
+      "bootPinsReleasedAt": 38331.09999999404,
       "posterPinnedCount": 2001,
       "posterWorkingSetVersion": 1,
       "posterWorkingSetUpdates": 0,
@@ -1938,7 +1938,7 @@
         "visualReady": true,
         "worldReady": true,
         "requiredReady": true,
-        "timeToVisualReady": 36904.59999999404
+        "timeToVisualReady": 34171.19999998808
       },
       "STORE_VISIBLE_BASE": {
         "expected": 2001,

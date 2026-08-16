@@ -474,23 +474,48 @@ async function main() {
         contextLost: gpu?.contextLost === true,
       };
     });
+    const observedBanks = multi.probe?.bindObserver?.banksObserved ?? [];
+    const neg = multi.probe?.negativeControl;
     const multiPass = !!multi.probe?.pass
       && (multi.probe?.catalogBankCount ?? 0) >= 3
       && multi.probe?.samplersPerDraw === 1
       && multi.hardware !== 8
       && multi.effective === 8
-      && multi.contextLost !== true;
+      && multi.contextLost !== true
+      && multi.probe?.probeAssistedExpectedBind === false
+      && multi.probe?.glFatal === false
+      && Array.isArray(multi.probe?.glErrorsAfter)
+      && multi.probe.glErrorsAfter.length === 0
+      && observedBanks.includes(0)
+      && observedBanks.includes(1)
+      && observedBanks.includes(2)
+      && multi.probe?.bindObserver?.oneRenderExercisedMultipleBanks === true
+      && neg?.implemented === true
+      && neg?.suppressedCallbackMismatched === true
+      && neg?.restoredCallbackMatched === true;
+    const bankSwitchEvidence = {
+      classification: 'DESKTOP_BROWSER',
+      evidenceKind: 'PRODUCTION_SHELF_RENDER',
+      pass: multiPass,
+      actualHardwareMaxArrayTextureLayers: multi.hardware,
+      effectiveTestMaxArrayTextureLayers: multi.effective,
+      probeAssistedExpectedBind: multi.probe?.probeAssistedExpectedBind ?? null,
+      adversarialPrecondition: multi.probe?.adversarialPrecondition ?? null,
+      bindObserver: multi.probe?.bindObserver ?? null,
+      negativeControl: neg ?? null,
+      glErrorsBefore: multi.probe?.glErrorsBefore ?? null,
+      glErrorsAfter: multi.probe?.glErrorsAfter ?? null,
+      glFatal: multi.probe?.glFatal ?? null,
+      probe: multi.probe,
+      QUEST_HARDWARE: 'NOT_EXECUTED',
+    };
     fs.writeFileSync(
       path.join(root, 'docs', 'review', 'jp4a', 'jp4a-round4-production-multibank.json'),
-      JSON.stringify({
-        classification: 'DESKTOP_BROWSER',
-        evidenceKind: 'PRODUCTION_SHELF_RENDER',
-        pass: multiPass,
-        actualHardwareMaxArrayTextureLayers: multi.hardware,
-        effectiveTestMaxArrayTextureLayers: multi.effective,
-        probe: multi.probe,
-        QUEST_HARDWARE: 'NOT_EXECUTED',
-      }, null, 2),
+      JSON.stringify(bankSwitchEvidence, null, 2),
+    );
+    fs.writeFileSync(
+      path.join(root, 'docs', 'review', 'jp4a', 'jp4a-round4.1-production-bank-switch.json'),
+      JSON.stringify(bankSwitchEvidence, null, 2),
     );
     evidence.scenarios.push({
       name: 'JP4A_PRODUCTION_MULTIBANK',

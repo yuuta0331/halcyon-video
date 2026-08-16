@@ -926,6 +926,12 @@ async function main() {
           };
         });
         fs.writeFileSync(path.join(jp4aDir, 'iwer-jp4a-round4.json'), JSON.stringify(scrub(result), null, 2));
+        fs.writeFileSync(path.join(jp4aDir, 'iwer-jp4a-round4.1.json'), JSON.stringify(scrub({
+          ...result,
+          round: '4.1',
+          classification: 'IWER_EMULATED',
+          QUEST_HARDWARE: 'NOT_EXECUTED',
+        }), null, 2));
         const pass = result.visualReady === true
           && result.worldReadyBefore === true
           && result.requiredReadyBefore === true

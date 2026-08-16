@@ -1,12 +1,21 @@
 // Controlled DESKTOP_BROWSER production-path multibank evidence.
 // StoreScene stock → applyPosterBankDrawBatches → production InstancedMesh
 // → production case materials / poster shader → onBeforeRender bindDrawBank.
-// Not a custom DataArrayTexture ShaderMaterial probe.
+// Probe never pre-binds the expected bank. Wrong-bank precondition is
+// test-side only; the production callback must make the draw correct.
 
 import * as THREE from 'three';
 import { textureArrayManager } from '../poster-textures';
 import { storeVisibleResidency } from '../store-visible-residency';
 import { posterBankBatchUpperBound } from './poster-bank-batches';
+import { drainGlErrors, glFatalFrom, type GlErrorRecord } from './gl-error-drain';
+import {
+  beginBindDrawBankRecording,
+  observedBanks,
+  takeBindDrawBankRecording,
+  adversarialWrongBank,
+  type BindDrawBankCall,
+} from './poster-bank-bind-observer';
 import { activeGpuCapabilities } from './resource-profile';
 import { testPosterArrayLayerCeiling } from './test-array-layer-ceiling';
 import { colorDistance, uniqueCoverRgb } from './synthetic-cover';
@@ -31,6 +40,27 @@ export interface ProductionMultibankSample {
   renderedRgba: number[];
   distinguishable: boolean;
   blackOrUninitialized: boolean;
+  matchesExpected: boolean;
+  adversarialWrongBank: number;
+  productionBindCalls: number[];
+}
+
+export interface ProductionBindObserverEvidence {
+  oneTraversalCalls: number[];
+  banksObserved: number[];
+  switchCount: number;
+  oneRenderExercisedMultipleBanks: boolean;
+  sampleProductionBindCalls: number[];
+}
+
+export interface ProductionNegativeControlEvidence {
+  implemented: true;
+  movieId: string;
+  targetBank: number;
+  suppressedCallbackMismatched: boolean;
+  restoredCallbackMatched: boolean;
+  suppressedRgba: number[];
+  restoredRgba: number[];
 }
 
 export interface ProductionMultibankResult {
@@ -53,10 +83,21 @@ export interface ProductionMultibankResult {
   blackOrUninitialized: boolean;
   duplicateLiveSourceMeshes: boolean;
   liveFrontMeshCount: number;
+  probeAssistedExpectedBind: false;
+  adversarialPrecondition: string;
+  bindObserver: ProductionBindObserverEvidence;
+  negativeControl: ProductionNegativeControlEvidence | { implemented: false; reason: string };
+  glErrorsBefore: GlErrorRecord[];
+  glErrorsAfter: GlErrorRecord[];
   glFatal: boolean;
   contextLost: boolean;
   pass: boolean;
 }
+
+const MATCH_THRESHOLD = 90;
+const MISMATCH_THRESHOLD = 28;
+const ADVERSARIAL_PRECONDITION =
+  'probe-side bindDrawBank(wrongBank) immediately before renderer.render; expected bank is never pre-bound; production mesh.onBeforeRender must switch';
 
 function uniqueCoverIndex(movieId: string, globalIndex: number): number {
   const m = /^mb_(\d+)$/.exec(movieId);
@@ -70,13 +111,23 @@ function readCenterPixel(renderer: THREE.WebGLRenderer, rt: THREE.WebGLRenderTar
   return [buf[0]!, buf[1]!, buf[2]!, buf[3]!];
 }
 
+function bankSwitchCount(calls: readonly number[]): number {
+  let n = 0;
+  for (let i = 1; i < calls.length; i++) {
+    if (calls[i] !== calls[i - 1]) n++;
+  }
+  return n;
+}
+
 function sampleProductionSlot(
   renderer: THREE.WebGLRenderer,
   storeScene: THREE.Scene,
   slot: MovieSlot,
-  bank: number,
+  targetBank: number,
   expectedRgb: readonly [number, number, number],
-): number[] {
+  opts: { suppressProductionBind?: boolean } = {},
+): { rgba: number[]; calls: BindDrawBankCall[]; wrongBank: number } {
+  const wrongBank = adversarialWrongBank(targetBank, textureArrayManager.bankCount);
   const rt = new THREE.WebGLRenderTarget(48, 48, {
     depthBuffer: true,
     stencilBuffer: false,
@@ -98,36 +149,99 @@ function sampleProductionSlot(
   probe.add(new THREE.HemisphereLight(0xffffff, 0x444444, 2));
   const parent = slot.frontMesh.parent;
   const prevCull = slot.frontMesh.frustumCulled;
+  const prevCallback = slot.frontMesh.onBeforeRender;
   slot.frontMesh.frustumCulled = false;
+  if (opts.suppressProductionBind) {
+    slot.frontMesh.onBeforeRender = () => {};
+  }
   probe.add(slot.frontMesh);
   const prevAuto = renderer.autoClear;
   const prevRt = renderer.getRenderTarget();
   renderer.autoClear = true;
   let best: number[] = [0, 0, 0, 0];
   let bestDist = Infinity;
-  for (const axis of axes) {
-    const normal = axis.clone().applyQuaternion(dummy.quaternion).normalize();
-    cam.position.copy(dummy.position).addScaledVector(normal, 1.05);
-    cam.up.set(0, 1, 0);
-    cam.lookAt(dummy.position);
-    cam.updateMatrixWorld();
-    textureArrayManager.bindDrawBank(bank);
-    renderer.setRenderTarget(rt);
-    renderer.render(probe, cam);
-    const rgba = readCenterPixel(renderer, rt);
-    const dist = colorDistance(rgba, expectedRgb);
-    if (dist < bestDist) {
-      bestDist = dist;
-      best = rgba;
+  const recorded: BindDrawBankCall[] = [];
+  try {
+    for (const axis of axes) {
+      const normal = axis.clone().applyQuaternion(dummy.quaternion).normalize();
+      cam.position.copy(dummy.position).addScaledVector(normal, 1.05);
+      cam.up.set(0, 1, 0);
+      cam.lookAt(dummy.position);
+      cam.updateMatrixWorld();
+      textureArrayManager.bindDrawBank(wrongBank);
+      beginBindDrawBankRecording();
+      renderer.setRenderTarget(rt);
+      renderer.render(probe, cam);
+      recorded.push(...takeBindDrawBankRecording());
+      const rgba = readCenterPixel(renderer, rt);
+      const dist = colorDistance(rgba, expectedRgb);
+      if (dist < bestDist) {
+        bestDist = dist;
+        best = rgba;
+      }
     }
+  } finally {
+    takeBindDrawBankRecording();
+    slot.frontMesh.frustumCulled = prevCull;
+    slot.frontMesh.onBeforeRender = prevCallback;
+    if (parent) parent.add(slot.frontMesh);
+    else storeScene.add(slot.frontMesh);
+    renderer.setRenderTarget(prevRt);
+    renderer.autoClear = prevAuto;
+    rt.dispose();
   }
-  slot.frontMesh.frustumCulled = prevCull;
-  if (parent) parent.add(slot.frontMesh);
-  else storeScene.add(slot.frontMesh);
-  renderer.setRenderTarget(prevRt);
-  renderer.autoClear = prevAuto;
-  rt.dispose();
-  return best;
+  return { rgba: best, calls: recorded, wrongBank };
+}
+
+function livePosterMeshes(scene: ProductionMultibankScene): THREE.InstancedMesh[] {
+  return scene.meshes.filter((m): m is THREE.InstancedMesh =>
+    m instanceof THREE.InstancedMesh && m.userData.posterBank != null);
+}
+
+function observeOneProductionTraversal(scene: ProductionMultibankScene): BindDrawBankCall[] {
+  const meshes = livePosterMeshes(scene);
+  const wanted = [0, 1, 2]
+    .map((bank) => meshes.find((m) => m.userData.posterBank === bank))
+    .filter((m): m is THREE.InstancedMesh => !!m);
+  if (wanted.length < 3) return [];
+  const probe = new THREE.Scene();
+  probe.add(new THREE.AmbientLight(0xffffff, 1));
+  const restored: Array<{ mesh: THREE.InstancedMesh; parent: THREE.Object3D | null; cull: boolean }> = [];
+  const cam = new THREE.PerspectiveCamera(50, 1, 0.1, 200);
+  cam.position.set(0, 4, 12);
+  cam.lookAt(0, 0, 0);
+  cam.updateMatrixWorld();
+  const rt = new THREE.WebGLRenderTarget(32, 32, {
+    depthBuffer: false,
+    stencilBuffer: false,
+    type: THREE.UnsignedByteType,
+    format: THREE.RGBAFormat,
+  });
+  const prevRt = scene.renderer.getRenderTarget();
+  const prevAuto = scene.renderer.autoClear;
+  try {
+    for (const mesh of wanted) {
+      restored.push({ mesh, parent: mesh.parent, cull: mesh.frustumCulled });
+      mesh.frustumCulled = false;
+      probe.add(mesh);
+    }
+    textureArrayManager.bindDrawBank(0);
+    beginBindDrawBankRecording();
+    scene.renderer.autoClear = true;
+    scene.renderer.setRenderTarget(rt);
+    scene.renderer.render(probe, cam);
+    return takeBindDrawBankRecording();
+  } finally {
+    takeBindDrawBankRecording();
+    for (const row of restored) {
+      row.mesh.frustumCulled = row.cull;
+      if (row.parent) row.parent.add(row.mesh);
+      else scene.scene.add(row.mesh);
+    }
+    scene.renderer.setRenderTarget(prevRt);
+    scene.renderer.autoClear = prevAuto;
+    rt.dispose();
+  }
 }
 
 function slotForMovie(scene: ProductionMultibankScene, movieId: string): MovieSlot | null {
@@ -135,6 +249,39 @@ function slotForMovie(scene: ProductionMultibankScene, movieId: string): MovieSl
     if (slot.movie.id === movieId) return slot;
   }
   return null;
+}
+
+function runNegativeControl(
+  scene: ProductionMultibankScene,
+  movieId: string,
+): ProductionNegativeControlEvidence | { implemented: false; reason: string } {
+  const rec = storeVisibleResidency.peek(movieId);
+  const slot = slotForMovie(scene, movieId);
+  if (!rec || !slot) {
+    return { implemented: false, reason: `missing slot/residency for ${movieId}` };
+  }
+  const expectedRgb = uniqueCoverRgb(uniqueCoverIndex(movieId, rec.globalIndex));
+  let suppressedRgba = [0, 0, 0, 0];
+  let restoredRgba = [0, 0, 0, 0];
+  try {
+    suppressedRgba = sampleProductionSlot(
+      scene.renderer, scene.scene, slot, rec.bank, expectedRgb, { suppressProductionBind: true },
+    ).rgba;
+    restoredRgba = sampleProductionSlot(
+      scene.renderer, scene.scene, slot, rec.bank, expectedRgb,
+    ).rgba;
+  } catch (err) {
+    return { implemented: false, reason: String(err) };
+  }
+  return {
+    implemented: true,
+    movieId,
+    targetBank: rec.bank,
+    suppressedCallbackMismatched: colorDistance(suppressedRgba, expectedRgb) >= MISMATCH_THRESHOLD,
+    restoredCallbackMatched: colorDistance(restoredRgba, expectedRgb) < MATCH_THRESHOLD,
+    suppressedRgba,
+    restoredRgba,
+  };
 }
 
 export function runProductionMultibankProbe(scene: ProductionMultibankScene): ProductionMultibankResult {
@@ -148,12 +295,13 @@ export function runProductionMultibankProbe(scene: ProductionMultibankScene): Pr
   const sourceShelfMeshCount = mem.sourcePosterMeshCount;
   const posterRenderBatchCountAfterSplit = mem.renderBatchCount;
   const upper = posterBankBatchUpperBound(sourceShelfMeshCount, catalogBankCount);
-  const liveFronts = scene.meshes.filter((m) => m instanceof THREE.InstancedMesh && m.userData.posterBank != null);
+  const liveFronts = livePosterMeshes(scene);
   const uuids = liveFronts.map((m) => m.uuid);
   const duplicateLiveSourceMeshes = new Set(uuids).size !== uuids.length
     || liveFronts.some((m) => !scene.scene.children.includes(m));
-  const gl = scene.renderer.getContext();
-  const contextLost = !!gl?.isContextLost?.();
+  const gl = scene.renderer.getContext() as WebGLRenderingContext | WebGL2RenderingContext | null;
+  const contextLost = !!gl && 'isContextLost' in gl && gl.isContextLost();
+  const glErrorsBefore = drainGlErrors(gl);
 
   const preferred = ['mb_000', 'mb_007', 'mb_008', 'mb_015', 'mb_016', 'mb_023'];
   const sampleIds: string[] = [];
@@ -174,18 +322,27 @@ export function runProductionMultibankProbe(scene: ProductionMultibankScene): Pr
   }
 
   scene.renderer.info.reset?.();
+  const traversalCalls = observeOneProductionTraversal(scene);
+  const traversalBanks = traversalCalls.map((c) => c.bank);
   const samples: ProductionMultibankSample[] = [];
+  const sampleProductionBindCalls: number[] = [];
   for (const movieId of sampleIds) {
     const rec = storeVisibleResidency.peek(movieId);
     const slot = slotForMovie(scene, movieId);
     if (!rec || !slot) continue;
     const expectedRgb = uniqueCoverRgb(uniqueCoverIndex(movieId, rec.globalIndex));
     let renderedRgba = [0, 0, 0, 0];
+    let productionBindCalls: number[] = [];
+    let wrongBank = adversarialWrongBank(rec.bank, catalogBankCount);
     try {
-      renderedRgba = sampleProductionSlot(scene.renderer, scene.scene, slot, rec.bank, expectedRgb);
+      const hit = sampleProductionSlot(scene.renderer, scene.scene, slot, rec.bank, expectedRgb);
+      renderedRgba = hit.rgba;
+      productionBindCalls = hit.calls.map((c) => c.bank);
+      wrongBank = hit.wrongBank;
     } catch {
       renderedRgba = [0, 0, 0, 0];
     }
+    sampleProductionBindCalls.push(...productionBindCalls);
     const blackOrUninitialized = (renderedRgba[0] ?? 0) < 8
       && (renderedRgba[1] ?? 0) < 8
       && (renderedRgba[2] ?? 0) < 8;
@@ -198,6 +355,9 @@ export function runProductionMultibankProbe(scene: ProductionMultibankScene): Pr
       renderedRgba,
       distinguishable: true,
       blackOrUninitialized,
+      matchesExpected: colorDistance(renderedRgba, expectedRgb) < MATCH_THRESHOLD,
+      adversarialWrongBank: wrongBank,
+      productionBindCalls,
     });
   }
   const rendererDrawCalls = scene.renderer.info.render?.calls ?? 0;
@@ -216,20 +376,52 @@ export function runProductionMultibankProbe(scene: ProductionMultibankScene): Pr
     }
   }
 
+  const negativeId = sampleIds.find((id) => (storeVisibleResidency.peek(id)?.bank ?? 0) >= 2)
+    ?? sampleIds.find((id) => (storeVisibleResidency.peek(id)?.bank ?? 0) >= 1)
+    ?? sampleIds[0]
+    ?? 'mb_016';
+  const negativeControl = runNegativeControl(scene, negativeId);
+
+  const glErrorsAfter = drainGlErrors(gl);
+  const glFatal = glFatalFrom(glErrorsAfter) || contextLost;
+
   const blackOrUninitialized = samples.some((s) => s.blackOrUninitialized);
   const allSampledDistinguishable = samples.length >= 3 && samples.every((s) => s.distinguishable);
   const banksSampled = new Set(samples.map((s) => s.bank));
   const batchBoundOk = posterRenderBatchCountAfterSplit <= upper;
+  const observedFromTraversal = observedBanks(traversalCalls);
+  const observedFromSamples = [...new Set(sampleProductionBindCalls)].sort((a, b) => a - b);
+  const banksObserved = [...new Set([...observedFromTraversal, ...observedFromSamples])].sort((a, b) => a - b);
+  const productionCallbackObserved = samples.every((s) => s.productionBindCalls.includes(s.bank))
+    && observedFromTraversal.includes(0)
+    && observedFromTraversal.includes(1)
+    && observedFromTraversal.includes(2);
+  const noExpectedPreBind = samples.every((s) => s.adversarialWrongBank !== s.bank || catalogBankCount <= 1);
+  const oneRenderExercisedMultipleBanks = new Set(traversalBanks).size >= 3;
+  const negativeOk = negativeControl.implemented === true
+    && negativeControl.suppressedCallbackMismatched
+    && negativeControl.restoredCallbackMatched;
+
   const pass = catalogBankCount >= 3
     && (layout?.samplersPerDraw ?? mem.samplersPerDraw) === 1
     && banksSampled.size >= 3
     && allSampledDistinguishable
+    && samples.every((s) => s.matchesExpected)
     && !crossBankAliasing
     && !blackOrUninitialized
     && batchBoundOk
     && !duplicateLiveSourceMeshes
     && !contextLost
-    && samples.every((s) => s.localLayer >= 0 && s.localLayer < layersPerBank);
+    && !glFatal
+    && glErrorsAfter.length === 0
+    && samples.every((s) => s.localLayer >= 0 && s.localLayer < layersPerBank)
+    && productionCallbackObserved
+    && noExpectedPreBind
+    && oneRenderExercisedMultipleBanks
+    && banksObserved.includes(0)
+    && banksObserved.includes(1)
+    && banksObserved.includes(2)
+    && negativeOk;
 
   return {
     classification: 'DESKTOP_BROWSER',
@@ -251,7 +443,19 @@ export function runProductionMultibankProbe(scene: ProductionMultibankScene): Pr
     blackOrUninitialized,
     duplicateLiveSourceMeshes,
     liveFrontMeshCount: liveFronts.length,
-    glFatal: false,
+    probeAssistedExpectedBind: false,
+    adversarialPrecondition: ADVERSARIAL_PRECONDITION,
+    bindObserver: {
+      oneTraversalCalls: traversalBanks,
+      banksObserved,
+      switchCount: bankSwitchCount(traversalBanks),
+      oneRenderExercisedMultipleBanks,
+      sampleProductionBindCalls,
+    },
+    negativeControl,
+    glErrorsBefore,
+    glErrorsAfter,
+    glFatal,
     contextLost,
     pass,
   };
