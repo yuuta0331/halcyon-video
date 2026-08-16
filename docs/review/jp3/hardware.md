@@ -1,13 +1,52 @@
 # JP-3 Quest 3 hardware smoke
 
-**Current overall status: NOT_READY_FOR_QUEST_ACCEPTANCE / QUEST_HARDWARE_FAILED**
+**Current overall status: JP-3 PASS / QUEST_HARDWARE PASS**
 
-Do not treat emulator evidence as QUEST_HARDWARE. Do not overwrite either
+Do not treat emulator evidence as QUEST_HARDWARE. Do not overwrite any
 historical failure as NOT_EXECUTED.
 
-Round 6 software/emulator XR-entry gates plus the pre-hardware Medium
-cleanup must pass, then exact-head CI. Do not request Quest testing during
-that software work.
+JP-3 architecture acceptance is closed on HEAD
+`195f695a62a1278b79051aac7d884267d5704739`. Post-entry usability findings
+below do not invalidate that acceptance.
+
+## QUEST_HARDWARE PASS — HEAD 195f695
+
+**Status: PASS** (QUEST_HARDWARE, not IWER_EMULATED)
+
+The repository owner executed the complete Meta Quest 3 diagnostic ladder
+against HEAD `195f695a62a1278b79051aac7d884267d5704739` on real Quest 3
+hardware.
+
+Observed:
+
+1. RAW_WEBXR (`?xrRaw=1`) — PASS
+2. THREE_BASELINE (`?xrThreeBaseline=1`) — PASS
+3. BARE (`?xrBare=1`) — PASS
+4. XR_SAFE minimal (`?demo=1&nogate=1&xrSafe=1&xrMinimal=1`) — PASS
+5. XR_SAFE full demo (`?demo=1&nogate=1&xrSafe=1`) — PASS
+6. Real Jellyfin XR_SAFE — PASS
+
+The immersive application world appeared. VR entry is effectively immediate:
+approximately 1 second from entering immersive VR to the application world
+(owner observation).
+
+Quest OS version, Quest Browser version, UA, exact FPS, refresh-rate
+measurements, and hardware screenshots were not supplied and are not
+recorded here.
+
+Merged to master as `351947ad2c36fe7267df4686b7e7726c8de9d1ca`.
+
+## Post-JP-3 known hardware findings
+
+These were found after the architecture ladder passed. They do **not**
+invalidate JP-3 acceptance.
+
+- XR image quality is low / aliasing and jaggies are visible → **JP-5**
+  Quest Optimization. Do not solve this by blindly raising framebuffer scale.
+- Non-poster content appears not to load correctly in VR → **JP-4A**
+  functional parity. Do not silently treat this as an expected XR_SAFE limit.
+- Existing settings UI cannot be opened or operated inside XR → **JP-4A**
+  interaction/UI foundation.
 
 ## Historical hardware failure — HEAD 73abd4c
 
@@ -152,19 +191,18 @@ or tokens in committed evidence.
 
 ## Pre-hardware Medium — diagnostic foveation request contamination
 
-**Status: PENDING hardware on the new HEAD** — independent review of Round 6
-was `APPROVE_WITH_ONE_PRE_HARDWARE_MEDIUM`. BARE (and Halcyon initial
-`requestSession`) could still request `high-fixed-foveation-level`, so a
-future RAW PASS / THREE PASS / BARE FAIL sequence would not be a clean
+**Status: superseded by QUEST_HARDWARE PASS on `195f695`.** Independent review
+of Round 6 was `APPROVE_WITH_ONE_PRE_HARDWARE_MEDIUM`. BARE (and Halcyon
+initial `requestSession`) could still request `high-fixed-foveation-level`,
+so a future RAW PASS / THREE PASS / BARE FAIL sequence would not be a clean
 comparison.
 
 This cleanup makes RAW, THREE_BASELINE, BARE, and Halcyon `xrMinimal`
 initial session requests omit layers and fixed-foveation as entry
 dependencies. Runtime `setFoveation` remains post-session and best-effort.
-This does **not** claim the Quest hang is fixed and is not QUEST_HARDWARE
-evidence.
 
 - HEAD `12b3ad7`: hardware **NOT_EXECUTED / PENDING**
+- HEAD `195f695`: hardware **PASS** (ladder above)
 - Historical FAIL results above are unchanged.
 
 Emulator evidence lives in this folder separately (`iwer-*.png`,
@@ -183,11 +221,12 @@ When that later acceptance pass happens, record:
 - screenshots: Enter VR UI, in-headset store, controller ray, Japanese panel,
   compositor diagnostic, fallback diagnostic, end-VR desktop restore
 
-Final acceptance checklist (prepare, do not execute until software gates pass):
+Final acceptance checklist (executed on HEAD `195f695`; remaining items are
+post-JP-3 / JP-4A / JP-5):
 
-- [ ] Open app in Quest Browser
-- [ ] `?xrBare=1` first world frame
-- [ ] XR_SAFE demo store world frame
+- [x] Open app in Quest Browser
+- [x] `?xrBare=1` first world frame
+- [x] XR_SAFE demo store world frame
 - [ ] Store scale believable
 - [ ] Head motion is HMD pose (no desktop head bob)
 - [ ] Both controllers appear / ray select works
@@ -197,4 +236,5 @@ Final acceptance checklist (prepare, do not execute until software gates pass):
 - [ ] Exit VR, desktop restores, second Enter VR works
 - [ ] No uncaught XR console errors
 - [ ] System-menu pause/resume once
-- [ ] Real Jellyfin content after core demo succeeds
+- [x] Real Jellyfin content after core demo succeeds (entry / world frame;
+      non-poster content and settings UI are JP-4A)
