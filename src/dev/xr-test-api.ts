@@ -28,6 +28,11 @@ export interface XrTestApi {
   setStick(side: 'left' | 'right', x: number, y: number): void;
   trigger(side: 'left' | 'right', pressed?: boolean): void;
   squeeze(side: 'left' | 'right', pressed?: boolean): void;
+  primaryButton(side: 'left' | 'right', pressed?: boolean): void;
+  openMenu(): void;
+  openSettings(): void;
+  uiMode(): string;
+  content(): unknown;
   diagnostics(): unknown;
 }
 
@@ -181,14 +186,39 @@ export function createXrTestApi(getDevice: () => XRDevice | null): XrTestApi {
       c.updateAxes('thumbstick', x, y);
       device!.notifyStateChange();
     },
-    trigger(side, pressed = true) {
-      const device = getDevice();
-      const c = device ? controller(device, side) : undefined;
-      if (!c) return;
-      device!.controlMode = 'programmatic';
-      c.updateButtonValue('trigger', pressed ? 1 : 0);
-      device!.notifyStateChange();
-    },
+  trigger(side, pressed = true) {
+    const device = getDevice();
+    const c = device ? controller(device, side) : undefined;
+    if (!c) return;
+    device!.controlMode = 'programmatic';
+    c.updateButtonValue('trigger', pressed ? 1 : 0);
+    device!.notifyStateChange();
+  },
+  primaryButton(side: 'left' | 'right', pressed = true) {
+    const device = getDevice();
+    const c = device ? controller(device, side) : undefined;
+    if (!c) return;
+    device!.controlMode = 'programmatic';
+    const name = side === 'left' ? 'x-button' : 'a-button';
+    c.updateButtonValue(name, pressed ? 1 : 0);
+    device!.notifyStateChange();
+  },
+  openMenu() {
+    const xr = (window as unknown as { storeScene?: { xr?: { openXrMenu?: () => void } } }).storeScene?.xr;
+    xr?.openXrMenu?.();
+  },
+  openSettings() {
+    const xr = (window as unknown as { storeScene?: { xr?: { openXrSettings?: () => void } } }).storeScene?.xr;
+    xr?.openXrSettings?.();
+  },
+  uiMode() {
+    const xr = (window as unknown as { storeScene?: { xr?: { uiMode?: string } } }).storeScene?.xr;
+    return xr?.uiMode ?? 'WORLD';
+  },
+  content() {
+    const fn = (window as unknown as { __xrContent?: () => unknown }).__xrContent;
+    return typeof fn === 'function' ? fn() : null;
+  },
     squeeze(side, pressed = true) {
       const device = getDevice();
       const c = device ? controller(device, side) : undefined;

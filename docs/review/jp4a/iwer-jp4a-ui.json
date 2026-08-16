@@ -1,0 +1,129 @@
+{
+  "classification": "IWER_EMULATED",
+  "pass": true,
+  "opened": {
+    "entered": {
+      "ok": true
+    },
+    "firstFrame": true,
+    "ray": true,
+    "menuMode": "MENU",
+    "settingsMode": "SETTINGS",
+    "locomotionSuppressed": true,
+    "localeAfterApply": "ja"
+  },
+  "closed": {
+    "worldMode": "WORLD",
+    "locomotionResumed": true,
+    "localeReopen": "ja",
+    "content": {
+      "resourceProfile": "XR_SAFE",
+      "requiredReady": true,
+      "poster": {
+        "allocated": 128,
+        "decoded": 128,
+        "uploaded": 128,
+        "visible": 128,
+        "state": "ready",
+        "role": "required"
+      },
+      "wraps": {
+        "allocated": 1,
+        "decoded": 1,
+        "uploaded": 1,
+        "visible": 0,
+        "state": "pending",
+        "role": "required"
+      },
+      "signage": {
+        "allocated": 97,
+        "decoded": 97,
+        "uploaded": 97,
+        "visible": 97,
+        "state": "ready",
+        "role": "required"
+      },
+      "aisleFascia": {
+        "allocated": 0,
+        "decoded": 0,
+        "uploaded": 0,
+        "visible": 0,
+        "state": "pending",
+        "role": "required"
+      },
+      "brandPack": {
+        "allocated": 1,
+        "decoded": 1,
+        "uploaded": 1,
+        "visible": 1,
+        "state": "ready",
+        "role": "required"
+      },
+      "canvasTextures": {
+        "allocated": 472,
+        "decoded": 472,
+        "uploaded": 472,
+        "visible": 472,
+        "state": "ready",
+        "role": "required"
+      },
+      "fixtureTextures": {
+        "allocated": 7,
+        "decoded": 7,
+        "uploaded": 7,
+        "visible": 7,
+        "state": "ready",
+        "role": "required"
+      },
+      "storeLogos": {
+        "allocated": 2,
+        "decoded": 2,
+        "uploaded": 2,
+        "visible": 2,
+        "state": "ready",
+        "role": "required"
+      },
+      "crt": {
+        "allocated": 0,
+        "decoded": 0,
+        "uploaded": 0,
+        "visible": 0,
+        "state": "pending",
+        "role": "required"
+      },
+      "floorWallMaterials": {
+        "allocated": 1,
+        "decoded": 1,
+        "uploaded": 1,
+        "visible": 1,
+        "state": "ready",
+        "role": "required"
+      },
+      "mediaSurfaces": {
+        "allocated": 2,
+        "decoded": 2,
+        "uploaded": 2,
+        "visible": 2,
+        "state": "ready",
+        "role": "required"
+      },
+      "decorativeFx": {
+        "allocated": 0,
+        "decoded": 0,
+        "uploaded": 0,
+        "visible": 0,
+        "state": "disabled",
+        "role": "decorative"
+      }
+    },
+    "parity": true,
+    "contextLost": false,
+    "posterPhysicalSlots": 128,
+    "posterResidentTitles": 128,
+    "residencyOk": true
+  },
+  "shots": [
+    "iwer-jp4a-settings.png",
+    "iwer-jp4a-japanese.png"
+  ]
+}

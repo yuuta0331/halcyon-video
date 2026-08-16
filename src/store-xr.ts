@@ -6,6 +6,10 @@ import { XrRuntime } from './xr/runtime';
 import * as walk from './store-walk';
 import { updatePosterWorkingSet } from './store-poster-window';
 import { installXrStartupJournal } from './xr/startup-journal';
+import { pumpTextureUploads, textureArrayManager } from './poster-textures';
+import { setXrContentLiveState, xrContentSnapshot } from './xr/content-diagnostics';
+import { classifyObjectName } from './xr/content-classes';
+import { brandPackStatus } from './brand-pack';
 
 export function attachXrRuntime(
   scene: StoreScene,
@@ -27,10 +31,19 @@ export function attachXrRuntime(
     onConsole: (msg, type) => scene.onConsoleLog(msg, type),
     getVideoElement: () => scene.xrVideoGetter?.() ?? null,
     requestRender: () => scene.requestRender(),
+    applyXrSetting: (key, value) => {
+      if (key === 'bb_fps_meter') {
+        void import('./fps-meter').then((m) => m.enableFpsMeter(!!value));
+      }
+      if (key === 'bb_outside' && (value === 'day' || value === 'night' || value === 'sunset')) {
+        scene.setOutsideMode(value);
+      }
+    },
     setXrAnimationLoop: (enabled) => {
       if (enabled) scene.claimXrRenderLoop();
       scene.renderer.setAnimationLoop(enabled
         ? (time?: number) => {
+          pumpTextureUploads();
           scene.xr?.noteXrFrame(typeof time === 'number' ? time : performance.now());
           animate(time);
         }
@@ -47,10 +60,76 @@ export function attachXrRuntime(
       }
       scene.onXrSessionChange?.(presenting);
     },
-    onLocomotionTick: () => updatePosterWorkingSet(scene),
+    onLocomotionTick: () => {
+      updatePosterWorkingSet(scene);
+      publishXrContent(scene);
+    },
   });
   (window as unknown as { __xrDiagnostics?: unknown }).__xrDiagnostics = () => scene.xr?.diagnostics ?? null;
+  (window as unknown as { __xrContent?: unknown }).__xrContent = () => xrContentSnapshot();
+  publishXrContent(scene);
   return xr;
+}
+
+function publishXrContent(scene: StoreScene): void {
+  const poster = textureArrayManager.memorySnapshot();
+  let signage = 0;
+  let fascia = 0;
+  let logos = 0;
+  let fixtures = 0;
+  let canvas = 0;
+  let media = 0;
+  let crt = 0;
+  let floorWall = 0;
+  scene.scene.traverse((obj) => {
+    const data = (obj as { userData?: { isSign?: boolean; propScreen?: boolean } }).userData;
+    const cls = classifyObjectName(obj.name || '');
+    const mesh = obj as {
+      visible?: boolean;
+      material?: { map?: { isCanvasTexture?: boolean; isVideoTexture?: boolean } }
+        | Array<{ map?: { isCanvasTexture?: boolean; isVideoTexture?: boolean } }>;
+    };
+    if (mesh.visible === false) return;
+    const mats = mesh.material
+      ? (Array.isArray(mesh.material) ? mesh.material : [mesh.material])
+      : [];
+    for (const mat of mats) {
+      const map = mat?.map;
+      if (!map) continue;
+      if (map.isCanvasTexture) canvas++;
+      if (map.isVideoTexture) media++;
+    }
+    if (data?.isSign || cls === 'signage') signage++;
+    if (cls === 'aisleFascia') fascia++;
+    if (cls === 'storeLogos') logos++;
+    if (cls === 'fixtureTextures') fixtures++;
+    if (data?.propScreen || cls === 'crt') crt++;
+    if (cls === 'floorWallMaterials') floorWall++;
+    if (cls === 'mediaSurfaces') media++;
+  });
+  const hero = scene.heroFrontMesh;
+  const wrapsAllocated = hero ? 1 : 0;
+  const wrapsVisible = hero?.visible ? 1 : 0;
+  setXrContentLiveState({
+    posterAllocated: poster.physicalSlots || poster.catalogTitleCount,
+    posterDecoded: poster.residentCount,
+    posterUploaded: poster.residentCount,
+    posterVisible: poster.residentCount,
+    wrapsAllocated,
+    wrapsDecoded: wrapsAllocated,
+    wrapsUploaded: wrapsAllocated,
+    wrapsVisible,
+    signageVisible: signage,
+    aisleFasciaVisible: fascia,
+    brandPackReady: brandPackStatus() !== 'failed',
+    canvasTexturesAllocated: canvas,
+    fixtureTexturesVisible: fixtures,
+    storeLogosVisible: logos,
+    crtReady: crt > 0,
+    floorWallReady: floorWall > 0 || canvas > 0,
+    mediaSurfacesReady: media,
+    environmentReady: !!scene.scene.environment,
+  });
 }
 
 export async function probeXr(scene: StoreScene): Promise<boolean> {

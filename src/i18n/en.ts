@@ -515,6 +515,18 @@ export const en = {
   'help.xr.move.hint': 'Left stick moves. Right stick snaps 30°. Collision matches Walk Mode.',
   'help.xr.select.action': 'Point and select',
   'help.xr.select.hint': 'Controller ray + trigger. Physical grabbing is a later phase.',
+  'xr.panel.menu': 'A / X: open the in-headset menu',
+  'xr.menu.title': 'HALCYON VIDEO — MENU',
+  'xr.menu.hint': 'Trigger selects  •  Squeeze closes  •  Stick moves',
+  'xr.menu.settings': 'Settings',
+  'xr.menu.exitVr': 'Exit VR',
+  'xr.menu.close': 'Close menu',
+  'xr.settings.title': 'STORE SETTINGS',
+  'xr.settings.hint': 'Stick changes a value  •  Trigger activates  •  Apply to save',
+  'xr.settings.quality': 'XR graphics',
+  'xr.settings.qualityHint': 'Desktop quality does not apply in XR_SAFE',
+  'xr.settings.apply': 'Apply',
+  'xr.settings.cancel': 'Cancel',
 } as const;
 
 export type MessageKey = keyof typeof en;

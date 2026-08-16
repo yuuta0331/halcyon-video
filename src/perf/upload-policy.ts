@@ -16,3 +16,13 @@ export function setXrUploadMotion(moving: boolean): void {
 export function xrUploadPolicyState(): { presenting: boolean; moving: boolean } {
   return { presenting: xrPresenting, moving: xrMoving };
 }
+
+/**
+ * Quest Browser often pauses window rAF while immersive. GPU upload drain
+ * must ride the XR animation loop in that case, not requestAnimationFrame.
+ */
+export function textureUploadUsesWindowRaf(
+  presenting: boolean = xrPresenting,
+): boolean {
+  return !presenting;
+}

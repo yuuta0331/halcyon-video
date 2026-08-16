@@ -18,7 +18,7 @@
 import * as THREE from 'three';
 import { perfTrace, perfSlot } from './perf-trace';
 import { xrUploadBudget, type PosterPriorityClass } from './perf/store-readiness';
-import { xrUploadPolicyState } from './perf/upload-policy';
+import { textureUploadUsesWindowRaf, xrUploadPolicyState } from './perf/upload-policy';
 import { activeResourceProfile, isXrSafeProfile } from './perf/resource-profile';
 import { PosterResidencyWindow, estimatePosterArrayBytes, type PosterLease } from './poster-residency';
 import { pixelStorei } from './xr/gl-state';
@@ -289,10 +289,21 @@ function processUploads() {
   }
 
   if (pendingUploads() > 0) {
-    requestAnimationFrame(processUploads);
+    if (textureUploadUsesWindowRaf(xr.presenting)) {
+      requestAnimationFrame(processUploads);
+    } else {
+      // Quest Browser often pauses window rAF while immersive. The XR
+      // animation loop pumps this queue instead.
+      isUploading = false;
+    }
   } else {
     isUploading = false;
   }
+}
+
+/** Drain the GPU upload queue from the XR animation loop. */
+export function pumpTextureUploads(): void {
+  if (pendingUploads() > 0) processUploads();
 }
 
 let posterUploadJobsQueued = 0;
@@ -312,7 +323,11 @@ export function queueTextureUpload(task: () => void, lane: 'bulk' | 'priority' =
     // engaged, and perf-trace still caught 73 layer uploads in one frame.
     // One drain per frame, always, so the budget actually budgets.
     isUploading = true;
-    requestAnimationFrame(processUploads);
+    if (textureUploadUsesWindowRaf()) {
+      requestAnimationFrame(processUploads);
+    } else {
+      isUploading = false;
+    }
   }
 }
 

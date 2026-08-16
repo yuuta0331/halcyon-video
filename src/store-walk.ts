@@ -10,6 +10,7 @@ import { recordInspect } from './clerk-recommend';
 import { retailAudio } from './audio';
 import type { StoreScene } from './three-scene';
 import { t } from './i18n';
+import { prefetchInspectCaseArt } from './store-inspect';
 
 // Max reach (ft) for walk-mode click interactions — beyond this a raycast
 // hit is out of arm's-plus-a-step range and the click is ignored.
@@ -363,6 +364,7 @@ export function xrSelectSlot(scene: StoreScene, slot: MovieSlot) {
   scene.selectedCol = slot.col;
   scene.isBrowsingNewReleasesDirectly = false;
   scene.loadAllArtworkForActiveLibrary();
+  prefetchInspectCaseArt(scene, slot.movie);
   retailAudio.playBoxPickup();
   recordInspect(slot.movie);
   if (scene.onSelectionChange) scene.onSelectionChange(slot.movie);

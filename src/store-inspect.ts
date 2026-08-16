@@ -839,3 +839,11 @@ export function heroFocusDistance(scene: StoreScene): number {
   }
   return nearest;
 }
+
+/** XR_SAFE: decode wrap / spine / back for the selected title only. */
+export function prefetchInspectCaseArt(scene: StoreScene, movie: Movie): void {
+  const probeIdx = Math.min(scene.selectedLibraryIdx, 4);
+  createHeroJellyfinMaterials(movie, undefined, false, true, probeIdx);
+  createHeroRentalMaterials(movie, true, probeIdx);
+  scene.ensureHeroCases(movie);
+}

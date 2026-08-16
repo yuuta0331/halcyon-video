@@ -519,6 +519,145 @@ async function main() {
       },
     ));
 
+    evidence.scenarios.push(await runScenario(
+      browser, 'JP4A_UI', '?demo=1&nogate=1&xrEmu=1&xrSafe=1',
+      async (page) => {
+        const jp4aDir = path.join(root, 'docs', 'review', 'jp4a');
+        fs.mkdirSync(jp4aDir, { recursive: true });
+        const shotJp4a = async (name) => {
+          const file = path.join(jp4aDir, name);
+          await page.screenshot({ path: file, type: 'png' });
+          return file;
+        };
+        const opened = await page.evaluate(async () => {
+          const until = Date.now() + 15000;
+          while (!window.__xrTest && Date.now() < until) {
+            await new Promise((r) => setTimeout(r, 150));
+          }
+          const xr = window.__xrTest;
+          const entered = xr ? await xr.enter() : { ok: false, error: 'no __xrTest' };
+          const untilWorld = Date.now() + 8000;
+          while (Date.now() < untilWorld) {
+            const dWait = window.__xrDiagnostics?.();
+            if (dWait?.startup?.firstWorldRenderCompletedAt != null) break;
+            await new Promise((r) => setTimeout(r, 100));
+          }
+          xr?.setControllerPose?.('right', { x: 0.2, y: 1.25, z: -0.25 });
+          await new Promise((r) => setTimeout(r, 200));
+          const d = window.__xrDiagnostics?.();
+          const firstFrame = d?.startup?.firstWorldRenderCompletedAt != null;
+          const ray = !!(window.storeScene?.scene?.getObjectByName?.('xr-target-ray'));
+          xr?.openMenu?.();
+          await new Promise((r) => setTimeout(r, 250));
+          const menuMode = xr?.uiMode?.();
+          const rigBefore = window.storeScene?.xr?.rigPose ?? null;
+          xr?.setStick?.('left', 0, -1);
+          await new Promise((r) => setTimeout(r, 700));
+          xr?.setStick?.('left', 0, 0);
+          const rigDuringMenu = window.storeScene?.xr?.rigPose ?? null;
+          const locomotionSuppressed = !!rigBefore && !!rigDuringMenu
+            && rigBefore.x === rigDuringMenu.x && rigBefore.z === rigDuringMenu.z;
+          xr?.openSettings?.();
+          await new Promise((r) => setTimeout(r, 250));
+          const settingsMode = xr?.uiMode?.();
+          xr?.trigger?.('right', true);
+          await new Promise((r) => setTimeout(r, 150));
+          xr?.trigger?.('right', false);
+          for (let i = 0; i < 5; i++) {
+            xr?.setStick?.('left', 0, -1);
+            await new Promise((r) => setTimeout(r, 150));
+            xr?.setStick?.('left', 0, 0);
+            await new Promise((r) => setTimeout(r, 150));
+          }
+          xr?.trigger?.('right', true);
+          await new Promise((r) => setTimeout(r, 150));
+          xr?.trigger?.('right', false);
+          await new Promise((r) => setTimeout(r, 250));
+          return {
+            entered,
+            firstFrame,
+            ray,
+            menuMode,
+            settingsMode,
+            locomotionSuppressed,
+            localeAfterApply: localStorage.getItem('bb_locale'),
+          };
+        });
+        await shotJp4a('iwer-jp4a-settings.png');
+        const closed = await page.evaluate(async () => {
+          const xr = window.__xrTest;
+          xr?.openMenu?.();
+          await new Promise((r) => setTimeout(r, 150));
+          xr?.squeeze?.('right', true);
+          await new Promise((r) => setTimeout(r, 150));
+          xr?.squeeze?.('right', false);
+          await new Promise((r) => setTimeout(r, 250));
+          const worldMode = xr?.uiMode?.();
+          const rigWorld0 = window.storeScene?.xr?.rigPose ?? null;
+          xr?.setStick?.('left', 0, -1);
+          await new Promise((r) => setTimeout(r, 800));
+          xr?.setStick?.('left', 0, 0);
+          const rigWorld1 = window.storeScene?.xr?.rigPose ?? null;
+          const locomotionResumed = !!rigWorld0 && !!rigWorld1
+            && (rigWorld0.x !== rigWorld1.x || rigWorld0.z !== rigWorld1.z);
+          xr?.openSettings?.();
+          await new Promise((r) => setTimeout(r, 250));
+          const localeReopen = localStorage.getItem('bb_locale');
+          const content = xr?.content?.() ?? window.__xrContent?.() ?? null;
+          const gpu = window.__gpuDiagnostics?.() ?? null;
+          const parity = !!(content
+            && content.poster?.visible > 0
+            && content.decorativeFx?.state === 'disabled'
+            && (content.canvasTextures?.visible > 0 || content.floorWallMaterials?.visible > 0)
+            && (content.signage?.visible > 0 || content.aisleFascia?.visible > 0 || content.storeLogos?.visible > 0));
+          await xr?.exit?.();
+          return {
+            worldMode,
+            locomotionResumed,
+            localeReopen,
+            content,
+            parity,
+            contextLost: gpu?.contextLost === true,
+            posterPhysicalSlots: gpu?.posterPhysicalSlots ?? null,
+            posterResidentTitles: gpu?.posterResidentTitles ?? null,
+            residencyOk: gpu?.posterResidencyInvariantOk ?? null,
+          };
+        });
+        await shotJp4a('iwer-jp4a-japanese.png');
+        const pass = !!opened.entered?.ok
+          && opened.firstFrame
+          && opened.menuMode === 'MENU'
+          && opened.settingsMode === 'SETTINGS'
+          && closed.worldMode === 'WORLD'
+          && opened.locomotionSuppressed === true
+          && closed.locomotionResumed === true
+          && opened.localeAfterApply === 'ja'
+          && closed.localeReopen === 'ja'
+          && closed.parity === true
+          && closed.contextLost !== true
+          && closed.residencyOk !== false;
+        fs.writeFileSync(path.join(jp4aDir, 'iwer-jp4a-ui.json'), JSON.stringify(scrub({
+          classification: 'IWER_EMULATED',
+          pass,
+          opened,
+          closed,
+          shots: ['iwer-jp4a-settings.png', 'iwer-jp4a-japanese.png'],
+        }), null, 2));
+        return {
+          pass,
+          firstFrame: opened.firstFrame,
+          menuMode: opened.menuMode,
+          settingsMode: opened.settingsMode,
+          worldMode: closed.worldMode,
+          locomotionSuppressed: opened.locomotionSuppressed,
+          locomotionResumed: closed.locomotionResumed,
+          localeAfterApply: opened.localeAfterApply,
+          parity: closed.parity,
+          content: closed.content,
+        };
+      },
+    ));
+
     // XR_SAFE TTI on the IWER GPU. `?demo=1&nogate=1` without xrEmu selects
     // DESKTOP_FULL, which overflows this Chromium's 16 texture units (26+
     // samplers) and is not the JP-3 measurement.

@@ -7,6 +7,7 @@ import {
   type GpuCapabilities,
 } from '../perf/resource-profile.ts';
 import { estimatePosterArrayBytes } from '../poster-residency.ts';
+import { xrContentSnapshot, type XrContentSnapshot } from './content-diagnostics.ts';
 
 export type ResourceSnapshotStage =
   | 'renderer-created'
@@ -100,6 +101,7 @@ export interface GpuDiagnostics {
   contextLost: boolean;
   lastContextLossAt: number | null;
   lastError: string | null;
+  xrContent: XrContentSnapshot;
   snapshots: Record<string, unknown>;
 }
 
@@ -348,6 +350,7 @@ export function gpuDiagnosticsSnapshot(): GpuDiagnostics {
     contextLost: !!gl?.isContextLost?.() || lastContextLoss?.isContextLost === true,
     lastContextLossAt: lastContextLoss?.timestamp ?? null,
     lastError,
+    xrContent: xrContentSnapshot(),
     snapshots: Object.fromEntries(snapshots),
   };
 }

@@ -56,6 +56,17 @@ import { classifyXrEnvironment } from './classification';
 import { isIwerActive } from './emu-state';
 import { blankXrDiagnostics, mergeSessionDiagnostics } from './diagnostics';
 import {
+  emptyXrButtonSnapshot,
+  mergeXrButtons,
+  readXrButtons,
+  xrUiActions,
+} from './ui-input';
+import { locomotionAllowed, uiOwnsInput, type XrUiMode } from './ui-mode';
+import { XrUiSession } from './ui-session';
+import { XrUiShell } from './ui-shell';
+import { localStorageSettingsStore } from './local-settings-store';
+import { rayHitsPanelUv } from './ui/hit';
+import {
   blankStartupTrace,
   canExitPhase,
   markStartupStage,
@@ -101,6 +112,7 @@ export interface XrRuntimeHost {
   onLocomotionTick?: () => void;
   setXrAnimationLoop: (enabled: boolean) => void;
   claimRenderLoop: () => void;
+  applyXrSetting?: (key: string, value: unknown) => void;
 }
 
 type XrManager = THREE.WebGLRenderer['xr'];
@@ -151,6 +163,11 @@ export class XrRuntime {
   private foveationRequested = 0;
   private foveationEffective: number | null = null;
   private targetFrameRateArmed = false;
+  private uiSession: XrUiSession | null = null;
+  private uiShell: XrUiShell | null = null;
+  private uiButtons = emptyXrButtonSnapshot();
+  private prevUiButtons = emptyXrButtonSnapshot();
+  private prevUiStick = { x: 0, y: 0 };
   private onFrameRateChange = (): void => {
     this.startup.frameratechangeCount += 1;
     appendXrJournal('frameratechange', {
@@ -172,6 +189,30 @@ export class XrRuntime {
   get rigPose(): { x: number; z: number; yaw: number } | null {
     if (!this.rig) return null;
     return { x: this.rig.x, z: this.rig.z, yaw: this.rig.yaw };
+  }
+
+  get uiMode(): XrUiMode {
+    return this.uiSession?.mode ?? 'WORLD';
+  }
+
+  openXrMenu(): void {
+    this.ensureUi();
+    this.uiSession?.openMenu();
+    this.syncUiShell();
+  }
+
+  openXrSettings(): void {
+    this.openXrMenu();
+    this.uiSession?.applyActions({
+      toggleMenu: false,
+      activate: true,
+      cancel: false,
+      nav: 0,
+      value: 0,
+      suppressLocomotion: true,
+      suppressWorldSelect: true,
+    });
+    this.syncUiShell();
   }
 
   get frameScheduler(): FrameSchedulerState {
@@ -282,6 +323,7 @@ export class XrRuntime {
     this.snapshotDesktop();
     this.rig = new XrPlayerRig(this.host.camera);
     this.rig.attach(this.host.scene);
+    this.ensureUi();
     if (!this.flags.minimal) this.installControllers(xrMgr);
 
     this.scheduler = reduceFrameScheduler(this.scheduler, 'enter-xr');
@@ -361,12 +403,15 @@ export class XrRuntime {
   tick(dt: number): void {
     if (this.ending || !this.presenting || !this.rig) return;
     this.updateControllers();
+    this.tickUi();
     const heading = this.rig.headingYaw();
     const sticks = this.locomotionSticks();
+    const ui = this.uiSession;
+    const suppressMove = ui ? !locomotionAllowed(ui.mode) : false;
     const { step, snap } = stepLocomotion({
-      stickX: sticks.moveX,
-      stickY: sticks.moveY,
-      snapX: sticks.snapX,
+      stickX: suppressMove ? 0 : sticks.moveX,
+      stickY: suppressMove ? 0 : sticks.moveY,
+      snapX: suppressMove ? 0 : sticks.snapX,
       headingYaw: heading,
       dt,
     }, this.snap);
@@ -384,6 +429,7 @@ export class XrRuntime {
     this.panel?.flush();
     setXrUploadMotion(step.moving || snap.cooldown > 0);
     this.host.onLocomotionTick?.();
+    this.syncUiShell();
   }
 
   preRender(): void {
@@ -393,6 +439,7 @@ export class XrRuntime {
     if (this.flags.minimal) return;
     if (this.startup.firstWorldRenderCompletedAt == null) return;
     this.panel?.flush();
+    this.uiShell?.flush();
     this.blitUiLayer();
   }
 
@@ -694,9 +741,11 @@ export class XrRuntime {
 
   private updateControllers(): void {
     const snap = emptyControllerSnapshot();
+    let uiButtons = emptyXrButtonSnapshot();
     const session = this.session;
     if (!session) {
       this.controllers = snap;
+      this.uiButtons = uiButtons;
       return;
     }
     const sources = Array.from(session.inputSources);
@@ -711,11 +760,13 @@ export class XrRuntime {
       side.hasGrip = source.targetRayMode === 'tracked-pointer';
       side.stickX = stick.x;
       side.stickY = stick.y;
-      const buttons = source.gamepad?.buttons;
-      side.select = !!buttons?.[0]?.pressed;
-      side.squeeze = !!buttons?.[1]?.pressed;
+      const mapped = readXrButtons(source.gamepad);
+      side.select = mapped.trigger;
+      side.squeeze = mapped.squeeze;
+      uiButtons = mergeXrButtons(uiButtons, mapped);
     }
     this.controllers = snap;
+    this.uiButtons = uiButtons;
   }
 
   private locomotionSticks(): { moveX: number; moveY: number; snapX: number } {
@@ -731,6 +782,15 @@ export class XrRuntime {
   private handleSelect(controller: THREE.Object3D | null): void {
     if (!controller) return;
     targetRayFromController(controller, this.rayScratch);
+    if (this.uiSession && uiOwnsInput(this.uiSession.mode)) {
+      const row = this.hitUiRow();
+      if (row != null) {
+        if (this.uiSession.mode === 'MENU') this.uiSession.menuIndex = row;
+        else this.uiSession.settingsIndex = row;
+        this.syncUiShell();
+      }
+      return;
+    }
     const slot = this.host.pickSlot(
       this.rayScratch.origin,
       this.rayScratch.direction,
@@ -984,6 +1044,77 @@ export class XrRuntime {
     }
   }
 
+  private ensureUi(): void {
+    if (!this.uiSession) {
+      this.uiSession = new XrUiSession(
+        localStorageSettingsStore(),
+        {
+          exitVr: () => { void this.exit(); },
+          applyLiveSetting: (key, value) => this.host.applyXrSetting?.(key, value),
+        },
+        () => activeResourceProfile().name,
+      );
+    }
+    if (!this.uiShell) this.uiShell = new XrUiShell();
+  }
+
+  private tickUi(): void {
+    if (!this.uiSession) this.ensureUi();
+    const sticks = this.locomotionSticks();
+    const actions = xrUiActions({
+      mode: this.uiSession!.mode,
+      buttons: this.uiButtons,
+      prevButtons: this.prevUiButtons,
+      stickX: sticks.moveX,
+      stickY: sticks.moveY,
+      prevStickX: this.prevUiStick.x,
+      prevStickY: this.prevUiStick.y,
+    });
+    this.prevUiButtons = this.uiButtons;
+    this.prevUiStick = { x: sticks.moveX, y: sticks.moveY };
+    this.uiSession!.applyActions(actions);
+  }
+
+  private syncUiShell(): void {
+    const ui = this.uiSession;
+    const shell = this.uiShell;
+    if (!ui || !shell || !this.rig) return;
+    if (uiOwnsInput(ui.mode)) {
+      shell.setPaint(ui.paint());
+      shell.show(this.rig.xrOrigin);
+      this.panel?.hideMesh();
+    } else {
+      shell.hide();
+      if (this.rig) this.panel?.showMesh(this.rig.xrOrigin);
+    }
+    shell.flush();
+  }
+
+  private hitUiRow(): number | null {
+    const mesh = this.uiShell?.mesh;
+    if (!mesh || !mesh.visible) return null;
+    mesh.updateMatrixWorld(true);
+    const pos = new THREE.Vector3();
+    const quat = new THREE.Quaternion();
+    const scale = new THREE.Vector3();
+    mesh.matrixWorld.decompose(pos, quat, scale);
+    const normal = new THREE.Vector3(0, 0, 1).applyQuaternion(quat);
+    const right = new THREE.Vector3(1, 0, 0).applyQuaternion(quat);
+    const up = new THREE.Vector3(0, 1, 0).applyQuaternion(quat);
+    const uv = rayHitsPanelUv({
+      origin: this.rayScratch.origin,
+      direction: this.rayScratch.direction,
+      panelOrigin: pos,
+      panelNormal: normal,
+      right,
+      up,
+      width: 0.84 * scale.x,
+      height: 0.63 * scale.y,
+    });
+    if (!uv) return null;
+    return this.uiShell!.rowFromUv(uv.v);
+  }
+
   private async cleanupAfterEnd(): Promise<void> {
     if (this.ending && this.phase === 'idle') return;
     this.ending = true;
@@ -997,6 +1128,8 @@ export class XrRuntime {
     this.teardownControllers();
     this.panel?.dispose();
     this.panel = null;
+    this.uiShell?.hide();
+    this.uiSession?.closeToWorld();
     if (this.desktopPose) {
       const cam = this.host.camera;
       if (this.desktopPose.parent) this.desktopPose.parent.add(cam);
