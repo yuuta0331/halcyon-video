@@ -184,6 +184,39 @@ async function posterResidencyProbe(n: number) {
   return textureArrayManager.populateResidencyWindow(n);
 }
 
+async function posterWorkingSetProbe(n: number) {
+  const { computeDesiredWorkingSet } = await import('../poster-working-set');
+  const titles = [];
+  for (let i = 0; i < n; i++) {
+    titles.push({
+      movieId: `t${i}`,
+      x: (i % 50) * 3,
+      z: Math.floor(i / 50) * 3,
+      unitIdx: i % 24,
+      libraryIdx: i % 8,
+      key: `k${i}`,
+    });
+  }
+  const desired = computeDesiredWorkingSet(titles, {
+    playerX: 13,
+    playerZ: 12.5,
+    backWallUnitIdx: 999,
+    p0Radius: 16,
+    p1Radius: 32,
+    storeCenterX: 11,
+    budget: 128,
+  });
+  return {
+    catalogTitles: n,
+    physicalSlots: 128,
+    desiredCount: desired.desiredCount,
+    p0Scheduled: desired.p0Ids.length,
+    p1Scheduled: desired.p1Ids.length,
+    p1CandidateCount: desired.p1CandidateCount,
+    bounded: desired.desiredCount <= 128,
+  };
+}
+
 function onXrFrame(): void {
   if (!renderer || !scene || !camera) return;
   if (diag.firstXrCallbackAt == null) {
@@ -292,6 +325,8 @@ export async function startBareXr(): Promise<void> {
     posterResourceProbe;
   (window as unknown as { __posterResidencyProbe?: (n: number) => Promise<unknown> }).__posterResidencyProbe =
     posterResidencyProbe;
+  (window as unknown as { __posterWorkingSetProbe?: (n: number) => Promise<unknown> }).__posterWorkingSetProbe =
+    posterWorkingSetProbe;
   publish();
 }
 

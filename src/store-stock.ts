@@ -18,8 +18,17 @@ import {
   type PosterPriorityClass,
 } from './perf/store-readiness';
 import { constructStage } from './perf/construct-profile';
-import { setGpuLiveState } from './xr/gpu-diagnostics';
-import { bindBoundedPosterWindow, posterPriorityUniques, slotStreamingClass, titlePosterClass } from './store-poster-window';
+import {
+  bindBoundedPosterWindow,
+  initialWorkingSetSlots,
+  notePosterDecodeJob,
+  posterPriorityUniques,
+  publishGpuPosterState,
+  releaseBootPosterPins,
+  slotStreamingClass,
+  titlePosterClass,
+  updatePosterWorkingSet,
+} from './store-poster-window';
 import { validateCaseFit, type CaseFitPair } from './layout-validator';
 import { retailAudio } from './audio';
 import {
@@ -116,41 +125,14 @@ function assignSlotPosterIndex(scene: StoreScene, slot: MovieSlot): number {
     selectedLibraryIdx: scene.selectedLibraryIdx,
   });
   textureArrayManager.notePriority(slot.movie.id, cls);
-  const acquire = !textureArrayManager.residencyBound || cls === 'P0' || cls === 'P1';
-  return textureArrayManager.getIndex(slot.movie.id, acquire);
+  if (textureArrayManager.residencyBound) {
+    return textureArrayManager.peekIndex(slot.movie.id) ?? 0;
+  }
+  return textureArrayManager.getIndex(slot.movie.id, true);
 }
 
 function publishPosterLiveState(): void {
-  const mem = textureArrayManager.memorySnapshot();
-  const uniques = posterPriorityUniques();
-  setGpuLiveState({
-    poster: {
-      catalogTitleCount: mem.catalogTitleCount,
-      physicalSlots: mem.physicalSlots,
-      residentCount: mem.residentCount,
-      freeCount: mem.freeCount,
-      uniqueOwners: mem.uniqueOwners,
-      residentHighWaterMark: mem.residentHighWaterMark,
-      evictionCount: mem.evictionCount,
-      staleUploadDrops: mem.staleUploadDrops,
-      residencyInvariantOk: mem.residencyInvariantOk,
-      duplicatePhysicalOwners: mem.duplicatePhysicalOwners,
-      freeOwnedCollisions: mem.freeOwnedCollisions,
-      orphanMovieMappings: mem.orphanMovieMappings,
-      orphanSlotMappings: mem.orphanSlotMappings,
-      cpuBytes: mem.cpuBytes,
-      gpuBytes: mem.gpuBytes,
-      cacheBytes: posterPixelCache.byteSize + lowResCache.byteSize,
-      cacheBudget: posterPixelCache.budget + lowResCache.budget,
-      cacheHits: posterPixelCache.hits + lowResCache.hits,
-      cacheMisses: posterPixelCache.misses + lowResCache.misses,
-      p0UniqueTitles: uniques.p0UniqueTitles,
-      p1UniqueTitles: uniques.p1UniqueTitles,
-      p2UniqueTitles: uniques.p2UniqueTitles,
-      p3UniqueTitles: uniques.p3UniqueTitles,
-      p0PlusP1UniqueTitles: uniques.p0PlusP1UniqueTitles,
-    },
-  });
+  publishGpuPosterState();
 }
 
 /**
@@ -603,6 +585,10 @@ export function buildAllMovieBoxes(scene: StoreScene) {
     lastWrittenSpineHex.set(slot, spineColorHex);
 
     slot.loadShelfDetails = (priority = 1, onSettled?: () => void) => {
+      if (textureArrayManager.residencyBound && textureArrayManager.peekIndex(slot.movie.id) == null) {
+        onSettled?.();
+        return;
+      }
       const cls = priority >= 5 ? 'P0' : priority >= 3 ? 'P1' : priority >= 1 ? 'P2' : 'P3';
       textureArrayManager.notePriority(slot.movie.id, cls);
       if (posterPixelCache.has(slot.movie.id)) {
@@ -678,6 +664,7 @@ export function buildAllMovieBoxes(scene: StoreScene) {
         return;
       }
 
+      notePosterDecodeJob();
       posterQueue.load(slot.movie, priority, (pixels) => {
         if (scene.renderer) {
           // Fresh decodes are queued (budgeted, flag flips tied to the real
@@ -1004,43 +991,42 @@ export function buildAllMovieBoxes(scene: StoreScene) {
   for (const slot of allSlots) {
     groups[slotStreamingClass(slot, scene)].push(slot);
   }
-  const uniqueByMovie = (slots: MovieSlot[]) => {
-    const seen = new Set<string>();
-    const out: MovieSlot[] = [];
-    for (const slot of slots) {
-      if (seen.has(slot.movie.id)) continue;
-      seen.add(slot.movie.id);
-      out.push(slot);
-    }
-    return out;
-  };
+  const bootSet = textureArrayManager.residencyBound ? initialWorkingSetSlots(allSlots) : null;
+  const p0Work = bootSet ? bootSet.p0 : groups.P0;
+  const p1Work = bootSet ? bootSet.p1 : groups.P1;
+  const settleTotal = bootSet ? p0Work.length + p1Work.length : total;
   const settle = (slots: MovieSlot[], priority: number) => {
     if (slots.length === 0) return Promise.resolve();
     return Promise.all(slots.map((slot) => new Promise<void>((resolve) => {
       slot.loadShelfDetails(priority, () => {
         loaded++;
-        scene.onTextureLoadProgress?.(loaded, total);
+        scene.onTextureLoadProgress?.(loaded, settleTotal);
         resolve();
       });
     })));
   };
-  scene.onTextureLoadProgress?.(0, total);
-  const p0Work = textureArrayManager.residencyBound ? uniqueByMovie(groups.P0) : groups.P0;
-  if (textureArrayManager.residencyBound) {
+  scene.onTextureLoadProgress?.(0, settleTotal);
+  if (bootSet) {
     const u = posterPriorityUniques();
     console.log(
       `[posters] XR_SAFE P0 unique=${u.p0UniqueTitles} P1 unique=${u.p1UniqueTitles} ` +
-      `slots=${textureArrayManager.maxMovies} p0SettleJobs=${p0Work.length}`,
+      `slots=${textureArrayManager.maxMovies} p0SettleJobs=${p0Work.length} ` +
+      `p1ScheduledAtBoot=${p1Work.length} (bounded working set, not full catalog)`,
     );
   }
   scene.texturesReadyPromise = settle(p0Work, posterPriorityNumber('P0')).then(() => {
     scene.warmupRuntimePrograms();
   });
+  scene.texturesReadyPromise.then(() => {
+    queueMicrotask(() => releaseBootPosterPins());
+  });
   scene.allTexturesSettledPromise = (async () => {
     await scene.texturesReadyPromise;
-    await settle(textureArrayManager.residencyBound ? uniqueByMovie(groups.P1) : groups.P1, posterPriorityNumber('P1'));
-    await settle(textureArrayManager.residencyBound ? uniqueByMovie(groups.P2) : groups.P2, posterPriorityNumber('P2'));
-    await settle(textureArrayManager.residencyBound ? uniqueByMovie(groups.P3) : groups.P3, posterPriorityNumber('P3'));
+    await settle(p1Work, posterPriorityNumber('P1'));
+    if (!textureArrayManager.residencyBound) {
+      await settle(groups.P2, posterPriorityNumber('P2'));
+      await settle(groups.P3, posterPriorityNumber('P3'));
+    }
   })();
 
   // T25 #26 (superseded): the per-rented-title gold filler group is gone —
@@ -1552,6 +1538,11 @@ export function updateLOD(scene: StoreScene) {
   const activeEnvMap = reflectionProbes[probeIdx] || null;
   updateGlobalMaterialsEnvMap(activeEnvMap);
   scene.entrance?.setEnvMap(activeEnvMap);
+
+  if (textureArrayManager.residencyBound) {
+    updatePosterWorkingSet(scene);
+    return;
+  }
 
   // 2. Stream high-resolution covers for the active shelving units
   const currentLibIdx = scene.selectedLibraryIdx;

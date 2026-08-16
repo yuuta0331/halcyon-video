@@ -295,7 +295,14 @@ function processUploads() {
   }
 }
 
+let posterUploadJobsQueued = 0;
+
+export function posterUploadJobsStarted(): number {
+  return posterUploadJobsQueued;
+}
+
 export function queueTextureUpload(task: () => void, lane: 'bulk' | 'priority' = 'bulk') {
+  posterUploadJobsQueued++;
   (lane === 'priority' ? priorityUploadQueue : textureUploadQueue).push(task);
   if (!isUploading) {
     // Defer the drain to the next rAF instead of running synchronously:
@@ -787,6 +794,43 @@ class TextureArrayManager {
     this.residency?.notePriority(movieId, cls);
   }
 
+  public peekIndex(movieId: string): number | null {
+    if (this.residency) return this.residency.peek(movieId);
+    return this.movieToIndex.get(movieId) ?? null;
+  }
+
+  public pin(movieId: string): boolean {
+    return this.residency?.pin(movieId) ?? false;
+  }
+
+  public unpinAll(): void {
+    this.residency?.unpinAll();
+  }
+
+  public pinnedCount(): number {
+    return this.residency?.pinnedCount ?? 0;
+  }
+
+  public residencyResidentCount(): number {
+    return this.residency?.residentCount ?? this.movieToIndex.size;
+  }
+
+  public residencyWindow(): PosterResidencyWindow | null {
+    return this.residency;
+  }
+
+  public syncIndexFromResidency(movieId: string): void {
+    const idx = this.residency?.peek(movieId);
+    if (idx == null) return;
+    const prev = this.movieToIndex.get(movieId);
+    this.movieToIndex.set(movieId, idx);
+    if (prev !== idx) posterIndexNotify?.(movieId, idx);
+  }
+
+  public afterWorkingSetEvict(movieId: string): void {
+    this.afterEvict(movieId);
+  }
+
   public getIndex(movieId: string, acquire = !this.residencyBound): number {
     if (this.residencyBound && this.residency) {
       if (!acquire) return this.residency.peek(movieId) ?? 0;
@@ -894,7 +938,7 @@ class TextureArrayManager {
   // current renderer, which is always the right one.
   public queueLowRes(_renderer: THREE.WebGLRenderer, movieId: string, pixelData: Uint8Array) {
     if (this.residencyBound && this.residency) {
-      const lease = this.captureLease(movieId, true);
+      const lease = this.captureLease(movieId, false);
       if (!lease) return;
       if (this.lowResUploaded.has(lease.index)) return;
       this.lowResUploaded.add(lease.index);
@@ -924,12 +968,13 @@ class TextureArrayManager {
   }
 
   public queueHighRes(_renderer: THREE.WebGLRenderer, movieId: string, pixelData: Uint8Array) {
-    const idx = this.getIndex(movieId, true);
-    if (!this.hasLayer(movieId)) return;
     if (this.residencyBound) {
+      if (!this.residency?.peek(movieId)) return;
       this.queueLowRes(_renderer, movieId, pixelData);
       return;
     }
+    const idx = this.getIndex(movieId, true);
+    if (!this.hasLayer(movieId)) return;
     // An overflow-bank title has no high-res layer; its cover is painted by
     // the low-res path from the same decoded pixels (see updateLowRes's
     // caller in store-stock), so this is not a dropped poster.
@@ -1147,6 +1192,9 @@ class TextureArrayManager {
     uniqueOwners: number;
     residentHighWaterMark: number;
     evictionCount: number;
+    acquisitionCount: number;
+    reacquisitionCount: number;
+    pinnedCount: number;
     staleUploadDrops: number;
     residencyInvariantOk: boolean | null;
     duplicatePhysicalOwners: number;
@@ -1179,6 +1227,9 @@ class TextureArrayManager {
       uniqueOwners: this.residency?.uniquePhysicalOwners() ?? this.movieToIndex.size,
       residentHighWaterMark: this.residency?.residentHighWaterMark ?? this.movieToIndex.size,
       evictionCount: this.residency?.evictionCount ?? 0,
+      acquisitionCount: this.residency?.acquisitionCount ?? this.movieToIndex.size,
+      reacquisitionCount: this.residency?.reacquisitionCount ?? 0,
+      pinnedCount: this.residency?.pinnedCount ?? 0,
       staleUploadDrops: this.staleUploadDrops,
       residencyInvariantOk: inv ? inv.ok : null,
       duplicatePhysicalOwners: inv?.duplicateOwners ?? 0,

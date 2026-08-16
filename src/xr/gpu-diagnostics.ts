@@ -57,6 +57,19 @@ export interface GpuDiagnostics {
   posterOrphanSlotMappings: number | null;
   posterResidentHighWaterMark: number | null;
   posterEvictionCount: number | null;
+  posterAcquisitionCount: number | null;
+  posterReacquisitionCount: number | null;
+  posterWorkingSetUpdates: number | null;
+  posterWorkingSetVersion: number | null;
+  posterDesiredCount: number | null;
+  posterPinnedCount: number | null;
+  bootPinsActive: boolean | null;
+  bootPinsReleasedAt: number | null;
+  posterInitialP0Count: number | null;
+  posterInitialP1ResidentCount: number | null;
+  posterEnteredWorkingSetCount: number | null;
+  posterLeftWorkingSetCount: number | null;
+  posterDecodeJobsStarted: number | null;
   posterStaleUploadDrops: number | null;
   p0UniqueTitles: number | null;
   p1UniqueTitles: number | null;
@@ -122,6 +135,9 @@ export interface GpuLiveState {
     uniqueOwners?: number;
     residentHighWaterMark?: number;
     evictionCount?: number;
+    acquisitionCount?: number;
+    reacquisitionCount?: number;
+    pinnedCount?: number;
     staleUploadDrops?: number;
     residencyInvariantOk?: boolean | null;
     duplicatePhysicalOwners?: number;
@@ -139,6 +155,18 @@ export interface GpuLiveState {
     p2UniqueTitles?: number;
     p3UniqueTitles?: number;
     p0PlusP1UniqueTitles?: number;
+    posterWorkingSetUpdates?: number;
+    posterWorkingSetVersion?: number;
+    posterDesiredCount?: number;
+    posterPinnedCount?: number;
+    bootPinsActive?: boolean;
+    bootPinsReleasedAt?: number | null;
+    posterInitialP0Count?: number;
+    posterInitialP1ResidentCount?: number;
+    posterEnteredWorkingSetCount?: number;
+    posterLeftWorkingSetCount?: number;
+    posterDecodeJobsStarted?: number;
+    lastWorkingSetTransition?: unknown;
   } | null;
 }
 
@@ -277,6 +305,19 @@ export function gpuDiagnosticsSnapshot(): GpuDiagnostics {
     posterOrphanSlotMappings: poster?.orphanSlotMappings ?? null,
     posterResidentHighWaterMark: poster?.residentHighWaterMark ?? null,
     posterEvictionCount: poster?.evictionCount ?? null,
+    posterAcquisitionCount: poster?.acquisitionCount ?? null,
+    posterReacquisitionCount: poster?.reacquisitionCount ?? null,
+    posterWorkingSetUpdates: poster?.posterWorkingSetUpdates ?? null,
+    posterWorkingSetVersion: poster?.posterWorkingSetVersion ?? null,
+    posterDesiredCount: poster?.posterDesiredCount ?? null,
+    posterPinnedCount: poster?.posterPinnedCount ?? poster?.pinnedCount ?? null,
+    bootPinsActive: poster?.bootPinsActive ?? null,
+    bootPinsReleasedAt: poster?.bootPinsReleasedAt ?? null,
+    posterInitialP0Count: poster?.posterInitialP0Count ?? null,
+    posterInitialP1ResidentCount: poster?.posterInitialP1ResidentCount ?? null,
+    posterEnteredWorkingSetCount: poster?.posterEnteredWorkingSetCount ?? null,
+    posterLeftWorkingSetCount: poster?.posterLeftWorkingSetCount ?? null,
+    posterDecodeJobsStarted: poster?.posterDecodeJobsStarted ?? null,
     posterStaleUploadDrops: poster?.staleUploadDrops ?? null,
     p0UniqueTitles: poster?.p0UniqueTitles ?? null,
     p1UniqueTitles: poster?.p1UniqueTitles ?? null,

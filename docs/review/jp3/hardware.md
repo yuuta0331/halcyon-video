@@ -5,9 +5,9 @@
 Do not treat emulator evidence as QUEST_HARDWARE. Do not overwrite either
 historical failure as NOT_EXECUTED.
 
-Round 4 software/emulator resource + residency gates must pass, then exact-head
+Round 5 software/emulator dynamic-working-set gates must pass, then exact-head
 CI, before another headset session is requested. Do not request Quest testing
-during Round 4 implementation.
+during Round 5 implementation.
 
 ## Historical hardware failure — HEAD 73abd4c
 
@@ -81,8 +81,25 @@ gates after the ownership fix:
 - XR_SAFE diagnostic quality agrees with GPU diagnostics
 - HEAD `b480993` hardware remains NOT_EXECUTED / PENDING
 
-Do not request owner Quest testing until exact-head CI on the Round 4 SHA
+Do not request owner Quest testing until exact-head CI on the Round 5 SHA
 is SUCCESS and the result is READY_FOR_RESOURCE_VALIDATED_QUEST_RETEST.
+
+## Correction round 5
+
+**Status: PENDING hardware on the new HEAD** — Round 4 independent review was
+REQUEST_CHANGES (`BLOCKED_DYNAMIC_POSTER_RESIDENCY`). Same-rank P1 could not
+evict older P1, so the 128-slot window filled with boot P0 plus early P1 and
+never rotated. Round 5 separates pin from priority, releases boot P0 pins
+after critical-ready, and reconciles a player-relative unique-title working
+set. Historical Round 4 JSON is at
+`history/round4-00b3e08-xr-resource.json`.
+
+Current `xr-resource.json` must show `evictionCount > 0` after a store walk,
+`p1ScheduledAtBoot` bounded (not hundreds of catalog P1 titles), and
+`bootPinsActive == false` after critical-ready.
+
+- HEAD `00b3e08`: hardware **NOT_EXECUTED / PENDING**
+- Round 5 HEAD: hardware **NOT_EXECUTED / PENDING**
 
 When those gates are green, request **one** hardware session in this order:
 

@@ -257,6 +257,10 @@ test('reveal is wired to P0 critical-ready, not all-texture settlement', () => {
   const stock = readFileSync('src/store-stock.ts', 'utf8');
   assert.match(stock, /texturesReadyPromise = settle\(p0Work/);
   assert.match(stock, /allTexturesSettledPromise/);
+  assert.match(stock, /if \(!textureArrayManager\.residencyBound\)/);
+  assert.match(stock, /await settle\(groups\.P3/);
+  assert.match(stock, /peekIndex\(slot\.movie\.id\)/);
+  assert.doesNotMatch(stock, /cls === 'P0' \|\| cls === 'P1'/);
   const main = readFileSync('src/main.ts', 'utf8');
   const revealIdx = main.indexOf('scene.texturesReadyPromise.then');
   const allIdx = main.indexOf('scene.allTexturesSettledPromise.then');

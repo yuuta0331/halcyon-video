@@ -43,9 +43,32 @@ test('first eviction does not leak reused index into free; second acquire does n
 
   const d = win.acquire('d', 'P1');
   assertStep(win, 'after d');
-  assert.equal(d.ok, false);
-  assert.equal(win.peek('c'), c.index);
-  assert.equal(win.peek('d'), null);
+  assert.equal(d.ok, true);
+  assert.equal(d.evicted, 'c');
+  assert.equal(win.peek('a') != null, true);
+  assert.equal(win.peek('c'), null);
+  assert.equal(win.peek('d'), d.index);
+});
+
+test('incoming P1 evicts oldest unpinned P1 and never a pinned P0', () => {
+  const win = new PosterResidencyWindow(3);
+  win.acquire('p0', 'P0');
+  win.pin('p0');
+  win.acquire('old-1', 'P1');
+  win.acquire('old-2', 'P1');
+  const incoming = win.acquire('new-p1', 'P1');
+  assert.equal(incoming.ok, true);
+  assert.equal(incoming.evicted, 'old-1');
+  assert.equal(win.peek('p0') != null, true);
+  assert.equal(win.isPinned('p0'), true);
+  assert.equal(win.peek('old-1'), null);
+  assert.equal(win.peek('new-p1') != null, true);
+  assertStep(win, 'p1 lru 1');
+  const again = win.acquire('newer-p1', 'P1');
+  assert.equal(again.ok, true);
+  assert.equal(again.evicted, 'old-2');
+  assert.equal(win.peek('p0') != null, true);
+  assertStep(win, 'p1 lru 2');
 });
 
 test('two post-eviction P1 titles occupy distinct physical slots', () => {
@@ -63,19 +86,25 @@ test('two post-eviction P1 titles occupy distinct physical slots', () => {
   assertStep(win, 'd');
 });
 
-test('P0 is protected from P3 and does not evict another P0', () => {
+test('pinned P0 cannot be evicted; unpinned P0 can rotate after pin release', () => {
   const win = new PosterResidencyWindow(2);
   win.acquire('a', 'P0');
   win.acquire('b', 'P0');
+  win.pin('a');
+  win.pin('b');
   const denied = win.acquire('c', 'P0');
   assert.equal(denied.ok, false);
   assert.equal(win.peek('a') != null, true);
   assert.equal(win.peek('b') != null, true);
-  const p3 = win.acquire('d', 'P3');
-  assert.equal(p3.ok, false);
-  win.acquire('e', 'P1');
-  assert.equal(win.peek('a') != null && win.peek('b') != null, true);
-  assertStep(win, 'p0 protected');
+  assert.equal(win.acquire('d', 'P1').ok, false);
+  assert.equal(win.acquire('e', 'P3').ok, false);
+  win.unpinAll();
+  const rotated = win.acquire('f', 'P0');
+  assert.equal(rotated.ok, true);
+  assert.equal(win.residentCount, 2);
+  assert.ok(win.peek('f') != null);
+  assert.equal(win.peek('a') == null || win.peek('b') == null, true);
+  assertStep(win, 'unpinned p0 rotate');
 });
 
 test('P1 evicts P3, explicit release/reacquire is unique, maps stay bidirectional', () => {

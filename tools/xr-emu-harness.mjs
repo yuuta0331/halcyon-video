@@ -371,8 +371,11 @@ async function main() {
       },
     ));
 
+    // XR_SAFE TTI on the IWER GPU. `?demo=1&nogate=1` without xrEmu selects
+    // DESKTOP_FULL, which overflows this Chromium's 16 texture units (26+
+    // samplers) and is not the JP-3 measurement.
     evidence.scenarios.push(await runScenario(
-      browser, 'BOOT_PERF', '?demo=1&nogate=1',
+      browser, 'BOOT_PERF', '?demo=1&nogate=1&xrEmu=1',
       async (page, boot) => {
         const t0 = Date.now();
         let diag = await page.evaluate(() => window.__bootDiagnostics?.());

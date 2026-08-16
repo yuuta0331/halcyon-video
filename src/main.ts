@@ -2711,7 +2711,11 @@ async function initializeStoreScene(preservePosterCache = false) {
 
     scene.allTexturesSettledPromise.then(() => {
       bootMark('allTexturesSettled');
-      logToConsole('[System] All store textures settled.', 'system');
+      if (scene.resourceProfile?.name === 'XR_SAFE') {
+        logToConsole('[System] Initial poster working set settled.', 'system');
+      } else {
+        logToConsole('[System] All store textures settled.', 'system');
+      }
     });
 
   } catch (err: any) {

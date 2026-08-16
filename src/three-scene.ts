@@ -876,7 +876,8 @@ export class StoreScene {
   public onEnterFlatMode?: () => void;
   public onBrowseConfirm?: () => void;
 
-  // Critical-ready (P0 posters settled). All-cover settlement is allTexturesSettledPromise.
+  // Critical-ready (P0 posters settled). allTexturesSettledPromise is the
+  // full catalog on DESKTOP_FULL, or the initial XR_SAFE working set.
   public texturesReadyPromise: Promise<void> = Promise.resolve();
   public allTexturesSettledPromise: Promise<void> = Promise.resolve();
   public onTextureLoadProgress?: (loaded: number, total: number) => void;

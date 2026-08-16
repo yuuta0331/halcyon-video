@@ -86,6 +86,7 @@ export interface XrRuntimeHost {
   getVideoElement?: () => HTMLVideoElement | null;
   requestRender: () => void;
   onSessionChange?: (presenting: boolean) => void;
+  onLocomotionTick?: () => void;
   setXrAnimationLoop: (enabled: boolean) => void;
 }
 
@@ -344,6 +345,7 @@ export class XrRuntime {
     this.rig.setPose(next.x, next.z, next.yaw);
     this.panel?.flush();
     setXrUploadMotion(step.moving || snap.cooldown > 0);
+    this.host.onLocomotionTick?.();
   }
 
   preRender(): void {

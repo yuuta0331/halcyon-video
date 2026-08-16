@@ -2,30 +2,6 @@
   "console": [
     {
       "type": "log",
-      "text": "[Signage Debug] Processing slot: ceiling-nav-games-dept category: ceiling-nav"
-    },
-    {
-      "type": "log",
-      "text": "[Signage Debug] Processing slot: register-left category: register"
-    },
-    {
-      "type": "log",
-      "text": "[Signage Debug] Processing slot: register-next category: register"
-    },
-    {
-      "type": "log",
-      "text": "[Signage Debug] Processing slot: register-middle category: register"
-    },
-    {
-      "type": "log",
-      "text": "[Signage Debug] Processing slot: register-right category: register"
-    },
-    {
-      "type": "log",
-      "text": "[Signage Debug] Processing slot: wall-newrelease-back-left category: wall-newrelease"
-    },
-    {
-      "type": "log",
       "text": "[Signage Debug] Processing slot: wall-newrelease-back-right category: wall-newrelease"
     },
     {
@@ -46,47 +22,63 @@
     },
     {
       "type": "log",
-      "text": "[posters] XR_SAFE P0 unique=49 P1 unique=722 slots=128 p0SettleJobs=49"
+      "text": "[posters] XR_SAFE P0 unique=49 P1 unique=722 slots=128 p0SettleJobs=49 p1ScheduledAtBoot=79 (bounded working set, not full catalog)"
     },
     {
       "type": "log",
-      "text": "[UI Log] [07:47:50] [System] Jump index — 5 counter/libraries/genres, 8 displays."
+      "text": "[UI Log] [09:02:51] [System] Jump index — 5 counter/libraries/genres, 8 displays."
     },
     {
       "type": "log",
-      "text": "[UI Log] [07:47:50] [System] Inside the store — ◄ ► pick a section, ▼ the displays, ▲ the TVs, OK to go."
+      "text": "[UI Log] [09:02:51] [System] Inside the store — ◄ ► pick a section, ▼ the displays, ▲ the TVs, OK to go."
     },
     {
       "type": "log",
-      "text": "[resScale] 0.6fps < 50 — down to 0.95"
+      "text": "[resScale] 0.7fps < 50 — down to 0.95"
     },
     {
       "type": "log",
-      "text": "[UI Log] [07:47:52] [System] 3D Store rendering active in Library Select mode."
+      "text": "[UI Log] [09:02:53] [System] 3D Store rendering active in Library Select mode."
     },
     {
       "type": "log",
-      "text": "[UI Log] [07:47:52] [System] Loading critical store textures..."
+      "text": "[UI Log] [09:02:53] [System] Loading critical store textures..."
     },
     {
       "type": "log",
-      "text": "[UI Log] [07:47:52] [XR] immersive-vr is supported. Enter VR is available."
+      "text": "[UI Log] [09:02:53] [XR] immersive-vr is supported. Enter VR is available."
     },
     {
       "type": "log",
-      "text": "[resScale] 1.0fps < 50 — down to 0.9"
+      "text": "[resScale] 0.9fps < 50 — down to 0.9"
     },
     {
       "type": "log",
-      "text": "[UI Log] [07:47:54] [System] Loading store textures... 0% (1/3692)"
+      "text": "[resScale] 0.8fps < 50 — down to 0.85"
     },
     {
       "type": "log",
-      "text": "[warmup] hero material programs drawn+compiled in 1329ms"
+      "text": "[UI Log] [09:02:55] [System] Loading store textures... 0% (1/128)"
     },
     {
       "type": "log",
-      "text": "[UI Log] [07:47:59] [System] Store ready. Remaining covers stream in the background."
+      "text": "[UI Log] [09:02:58] [System] Loading store textures... 10% (13/128)"
+    },
+    {
+      "type": "log",
+      "text": "[UI Log] [09:02:58] [System] Loading store textures... 20% (26/128)"
+    },
+    {
+      "type": "log",
+      "text": "[UI Log] [09:02:59] [System] Loading store textures... 30% (39/128)"
+    },
+    {
+      "type": "log",
+      "text": "[warmup] hero material programs drawn+compiled in 1334ms"
+    },
+    {
+      "type": "log",
+      "text": "[UI Log] [09:03:00] [System] Store ready. Remaining covers stream in the background."
     },
     {
       "type": "log",
@@ -94,11 +86,23 @@
     },
     {
       "type": "log",
-      "text": "[UI Log] [07:48:00] [XR] Immersive VR session started."
+      "text": "[UI Log] [09:03:00] [XR] Immersive VR session started."
     },
     {
       "type": "log",
-      "text": "[UI Log] [07:48:01] [XR] Immersive VR session ended."
+      "text": "[UI Log] [09:03:02] [XR] Immersive VR session ended."
+    },
+    {
+      "type": "log",
+      "text": "[UI Log] [09:03:02] [System] Loading store textures... 40% (52/128)"
+    },
+    {
+      "type": "log",
+      "text": "[UI Log] [09:03:02] [System] Loading store textures... 50% (64/128)"
+    },
+    {
+      "type": "log",
+      "text": "[UI Log] [09:03:03] [System] Rendering paused. Resources yielded."
     },
     {
       "type": "debug",
@@ -113,12 +117,16 @@
       "text": "[DOM] Multiple forms should be contained in their own form elements; break up complex forms into ones that represent a single action: (More info: https://goo.gl/9p2vKq) %o"
     },
     {
-      "type": "log",
-      "text": "[UI Log] [07:48:03] [System] Initializing HTPC interface..."
+      "type": "info",
+      "text": "[XR] IWER_EMULATED active (Meta Quest 3)."
     },
     {
       "type": "log",
-      "text": "[UI Log] [07:48:03] [System] Demo mode: stocking the store with a placeholder library (no media server)."
+      "text": "[UI Log] [09:03:04] [System] Initializing HTPC interface..."
+    },
+    {
+      "type": "log",
+      "text": "[UI Log] [09:03:04] [System] Demo mode: stocking the store with a placeholder library (no media server)."
     },
     {
       "type": "log",
@@ -134,7 +142,7 @@
     },
     {
       "type": "log",
-      "text": "[calibrate] ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002488) Direct3D11 vs_5_0 ps_5_0, D3D11) → low (cached)"
+      "text": "[calibrate] ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002488) Direct3D11 vs_5_0 ps_5_0, D3D11) → high +supersample (cached)"
     },
     {
       "type": "log",
@@ -143,10 +151,6 @@
     {
       "type": "log",
       "text": "[GPU] WebGL renderer: ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002488) Direct3D11 vs_5_0 ps_5_0, D3D11)"
-    },
-    {
-      "type": "log",
-      "text": "[AO] ssaoEnabled: false engine: - (bb_ssao=null)"
     },
     {
       "type": "log",
@@ -217,108 +221,104 @@
       "text": "[Signage Debug] Processing slot: promo-previously-viewed category: ceiling-promo"
     },
     {
-      "type": "warn",
-      "text": "THREE.WebGLShadowMap: PCFSoftShadowMap has been deprecated. Using PCFShadowMap instead."
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLProgram: Program Info Log: (210,81-129): warning X4122: sum of 0.996094 and -2.98545e-017 cannot be represented accurately in double precision\n(209,37-61): warning X4122: sum of 1 and -1.49272e-017 cannot be represented accurately in double precision\n(210,82-106): warning X4122: sum of 1 and -1.49272e-017 cannot be represented accurately in double precision\n(209,37-61): warning X4122: sum of 1 and -1.66644e-018 cannot be represented accurately in double precision\n(210,82-106): warning X4122: sum of 1 and -1.66644e-018 cannot be represented accurately in double precision\n\n\n\u0000"
-    },
-    {
       "type": "log",
       "text": "[System debug] Unique movies count: 2001 libraries count: 3"
     },
     {
       "type": "log",
-      "text": "[UI Log] [07:48:33] [System] Jump index — 5 counter/libraries/genres, 8 displays."
+      "text": "[posters] XR_SAFE P0 unique=49 P1 unique=722 slots=128 p0SettleJobs=49 p1ScheduledAtBoot=79 (bounded working set, not full catalog)"
     },
     {
       "type": "log",
-      "text": "[UI Log] [07:48:33] [System] Inside the store — ◄ ► pick a section, ▼ the displays, ▲ the TVs, OK to go."
+      "text": "[UI Log] [09:03:07] [System] Jump index — 5 counter/libraries/genres, 8 displays."
     },
     {
       "type": "log",
-      "text": "[resScale] 0.0fps < 50 — down to 0.95"
-    },
-    {
-      "type": "warn",
-      "text": "THREE.WebGLProgram: Program Info Log: (190,12-86): warning X3595: gradient instruction used in a loop with varying iteration; partial derivatives may have undefined value\n(190,12-86): warning X3595: gradient instruction used in a loop with varying iteration; partial derivatives may have undefined value\n(411,1): warning X4000: use of potentially uninitialized variable (f_ApplyFXAA)\n\n\n\u0000"
+      "text": "[UI Log] [09:03:07] [System] Inside the store — ◄ ► pick a section, ▼ the displays, ▲ the TVs, OK to go."
     },
     {
       "type": "log",
-      "text": "[UI Log] [07:48:40] [System] 3D Store rendering active in Library Select mode."
+      "text": "[resScale] 0.6fps < 50 — down to 0.95"
     },
     {
       "type": "log",
-      "text": "[UI Log] [07:48:40] [System] Loading critical store textures..."
+      "text": "[UI Log] [09:03:09] [System] 3D Store rendering active in Library Select mode."
     },
     {
       "type": "log",
-      "text": "[resScale] 0.3fps < 50 — down to 0.9"
+      "text": "[UI Log] [09:03:09] [System] Loading critical store textures..."
     },
     {
       "type": "log",
-      "text": "[resScale] 0.2fps < 50 — down to 0.85"
+      "text": "[UI Log] [09:03:09] [XR] immersive-vr is supported. Enter VR is available."
     },
     {
       "type": "log",
-      "text": "[UI Log] [07:48:52] [System] Loading store textures... 0% (1/3692)"
+      "text": "[resScale] 0.8fps < 50 — down to 0.9"
     },
     {
       "type": "log",
-      "text": "[warmup] hero material programs drawn+compiled in 10631ms"
+      "text": "[resScale] 1.8fps < 50 — down to 0.85"
     },
     {
       "type": "log",
-      "text": "[UI Log] [07:49:04] [System] Loading store textures... 10% (370/3692)"
+      "text": "[UI Log] [09:03:12] [System] Loading store textures... 0% (1/128)"
     },
     {
       "type": "log",
-      "text": "[UI Log] [07:49:06] [System] Store ready. Remaining covers stream in the background."
+      "text": "[UI Log] [09:03:13] [System] Loading store textures... 10% (13/128)"
     },
     {
       "type": "log",
-      "text": "[UI Log] [07:49:07] [System] Loading store textures... 20% (739/3692)"
+      "text": "[UI Log] [09:03:13] [System] Loading store textures... 20% (26/128)"
     },
     {
       "type": "log",
-      "text": "[UI Log] [07:49:09] [System] Loading store textures... 30% (1108/3692)"
+      "text": "[UI Log] [09:03:14] [System] Loading store textures... 30% (39/128)"
     },
     {
       "type": "log",
-      "text": "[UI Log] [07:49:13] [System] Loading store textures... 40% (1477/3692)"
+      "text": "[warmup] hero material programs drawn+compiled in 1068ms"
     },
     {
       "type": "log",
-      "text": "[UI Log] [07:49:14] [System] Loading store textures... 50% (1846/3692)"
+      "text": "[UI Log] [09:03:15] [System] Store ready. Remaining covers stream in the background."
     },
     {
       "type": "log",
-      "text": "[UI Log] [07:49:14] [System] Loading store textures... 60% (2216/3692)"
+      "text": "[UI Log] [09:03:15] [System] Loading store textures... 40% (52/128)"
     },
     {
       "type": "log",
-      "text": "[UI Log] [07:49:16] [System] Loading store textures... 70% (2585/3692)"
+      "text": "[UI Log] [09:03:16] [System] Loading store textures... 50% (64/128)"
     },
     {
       "type": "log",
-      "text": "[UI Log] [07:49:17] [System] Loading store textures... 80% (2954/3692)"
+      "text": "[UI Log] [09:03:16] [System] Loading store textures... 60% (77/128)"
     },
     {
       "type": "log",
-      "text": "[UI Log] [07:49:19] [System] Loading store textures... 90% (3323/3692)"
+      "text": "[UI Log] [09:03:16] [System] Loading store textures... 70% (90/128)"
     },
     {
       "type": "log",
-      "text": "[UI Log] [07:49:20] [System] Loading store textures... 100% (3692/3692)"
+      "text": "[UI Log] [09:03:16] [System] Loading store textures... 80% (103/128)"
     },
     {
       "type": "log",
-      "text": "[UI Log] [07:49:20] [System] All store textures settled."
+      "text": "[UI Log] [09:03:16] [System] Loading store textures... 90% (116/128)"
     },
     {
       "type": "log",
-      "text": "[UI Log] [07:49:20] [System] Rendering paused. Resources yielded."
+      "text": "[UI Log] [09:03:16] [System] Loading store textures... 100% (128/128)"
+    },
+    {
+      "type": "log",
+      "text": "[UI Log] [09:03:16] [System] Initial poster working set settled."
+    },
+    {
+      "type": "log",
+      "text": "[UI Log] [09:03:16] [System] Rendering paused. Resources yielded."
     }
   ],
   "serious": [
@@ -406,16 +406,16 @@
         "session": {
           "phase": "active",
           "rendererPresenting": true,
-          "sessionStartAt": 1653.9000000022352
+          "sessionStartAt": 1401.800000000745
         },
         "startup": {
-          "requestSessionStart": 1653.9000000022352,
-          "rendererSetSessionStart": 1653.9000000022352,
-          "rendererSetSessionEnd": 1655,
-          "firstAnimationCallbackAt": 1659,
-          "firstDirectRenderStart": 1659.1000000014901,
-          "firstDirectRenderEnd": 1699.1000000014901,
-          "firstWorldRenderCompletedAt": 1699.1000000014901,
+          "requestSessionStart": 1401.800000000745,
+          "rendererSetSessionStart": 1401.800000000745,
+          "rendererSetSessionEnd": 1402.5,
+          "firstAnimationCallbackAt": 1412.8999999985099,
+          "firstDirectRenderStart": 1413,
+          "firstDirectRenderEnd": 1439.3999999985099,
+          "firstWorldRenderCompletedAt": 1439.3999999985099,
           "lastError": null
         },
         "flags": {
@@ -428,13 +428,13 @@
         },
         "bare": {
           "bareSessionRequested": true,
-          "bareSetSessionStart": 1653.9000000022352,
-          "bareSetSessionEnd": 1655,
-          "firstXrCallbackAt": 1659,
-          "firstRendererRenderStart": 1659.1000000014901,
-          "firstRendererRenderEnd": 1699.1000000014901,
-          "firstWorldRenderCompletedAt": 1699.1000000014901,
-          "frameCount": 10,
+          "bareSetSessionStart": 1401.800000000745,
+          "bareSetSessionEnd": 1402.5,
+          "firstXrCallbackAt": 1412.8999999985099,
+          "firstRendererRenderStart": 1413,
+          "firstRendererRenderEnd": 1439.3999999985099,
+          "firstWorldRenderCompletedAt": 1439.3999999985099,
+          "frameCount": 12,
           "contextLost": false,
           "lastError": null,
           "presenting": true
@@ -463,6 +463,19 @@
           "posterOrphanSlotMappings": null,
           "posterResidentHighWaterMark": null,
           "posterEvictionCount": null,
+          "posterAcquisitionCount": null,
+          "posterReacquisitionCount": null,
+          "posterWorkingSetUpdates": null,
+          "posterWorkingSetVersion": null,
+          "posterDesiredCount": null,
+          "posterPinnedCount": null,
+          "bootPinsActive": null,
+          "bootPinsReleasedAt": null,
+          "posterInitialP0Count": null,
+          "posterInitialP1ResidentCount": null,
+          "posterEnteredWorkingSetCount": null,
+          "posterLeftWorkingSetCount": null,
+          "posterDecodeJobsStarted": null,
           "posterStaleUploadDrops": null,
           "p0UniqueTitles": null,
           "p1UniqueTitles": null,
@@ -487,15 +500,15 @@
           "xrFoveationRequested": 1,
           "xrFoveationEffective": null,
           "xrPhase": "active",
-          "xrFrameCount": 10,
-          "firstWorldRenderCompletedAt": 1699.1000000014901,
+          "xrFrameCount": 12,
+          "firstWorldRenderCompletedAt": 1439.3999999985099,
           "firstStoreXrRenderAt": null,
           "contextLost": false,
           "lastContextLossAt": null,
           "lastError": null,
           "snapshots": {
             "renderer-created": {
-              "at": 1339.9000000022352,
+              "at": 1394.5999999977648,
               "classification": "DESKTOP_BROWSER",
               "resourceProfile": "XR_SAFE",
               "rendererName": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002488) Direct3D11 vs_5_0 ps_5_0, D3D11)",
@@ -519,6 +532,19 @@
               "posterOrphanSlotMappings": null,
               "posterResidentHighWaterMark": null,
               "posterEvictionCount": null,
+              "posterAcquisitionCount": null,
+              "posterReacquisitionCount": null,
+              "posterWorkingSetUpdates": null,
+              "posterWorkingSetVersion": null,
+              "posterDesiredCount": null,
+              "posterPinnedCount": null,
+              "bootPinsActive": null,
+              "bootPinsReleasedAt": null,
+              "posterInitialP0Count": null,
+              "posterInitialP1ResidentCount": null,
+              "posterEnteredWorkingSetCount": null,
+              "posterLeftWorkingSetCount": null,
+              "posterDecodeJobsStarted": null,
               "posterStaleUploadDrops": null,
               "p0UniqueTitles": null,
               "p1UniqueTitles": null,
@@ -551,7 +577,7 @@
               "lastError": null
             },
             "pre-requestSession": {
-              "at": 1652.1000000014901,
+              "at": 1400.699999999255,
               "classification": "IWER_EMULATED",
               "resourceProfile": "XR_SAFE",
               "rendererName": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002488) Direct3D11 vs_5_0 ps_5_0, D3D11)",
@@ -575,6 +601,19 @@
               "posterOrphanSlotMappings": null,
               "posterResidentHighWaterMark": null,
               "posterEvictionCount": null,
+              "posterAcquisitionCount": null,
+              "posterReacquisitionCount": null,
+              "posterWorkingSetUpdates": null,
+              "posterWorkingSetVersion": null,
+              "posterDesiredCount": null,
+              "posterPinnedCount": null,
+              "bootPinsActive": null,
+              "bootPinsReleasedAt": null,
+              "posterInitialP0Count": null,
+              "posterInitialP1ResidentCount": null,
+              "posterEnteredWorkingSetCount": null,
+              "posterLeftWorkingSetCount": null,
+              "posterDecodeJobsStarted": null,
               "posterStaleUploadDrops": null,
               "p0UniqueTitles": null,
               "p1UniqueTitles": null,
@@ -607,7 +646,7 @@
               "lastError": null
             },
             "requestSession-resolved": {
-              "at": 1653.6000000014901,
+              "at": 1401.5,
               "classification": "IWER_EMULATED",
               "resourceProfile": "XR_SAFE",
               "rendererName": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002488) Direct3D11 vs_5_0 ps_5_0, D3D11)",
@@ -631,6 +670,19 @@
               "posterOrphanSlotMappings": null,
               "posterResidentHighWaterMark": null,
               "posterEvictionCount": null,
+              "posterAcquisitionCount": null,
+              "posterReacquisitionCount": null,
+              "posterWorkingSetUpdates": null,
+              "posterWorkingSetVersion": null,
+              "posterDesiredCount": null,
+              "posterPinnedCount": null,
+              "bootPinsActive": null,
+              "bootPinsReleasedAt": null,
+              "posterInitialP0Count": null,
+              "posterInitialP1ResidentCount": null,
+              "posterEnteredWorkingSetCount": null,
+              "posterLeftWorkingSetCount": null,
+              "posterDecodeJobsStarted": null,
               "posterStaleUploadDrops": null,
               "p0UniqueTitles": null,
               "p1UniqueTitles": null,
@@ -663,7 +715,7 @@
               "lastError": null
             },
             "pre-setSession": {
-              "at": 1653.9000000022352,
+              "at": 1401.800000000745,
               "classification": "IWER_EMULATED",
               "resourceProfile": "XR_SAFE",
               "rendererName": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002488) Direct3D11 vs_5_0 ps_5_0, D3D11)",
@@ -687,6 +739,19 @@
               "posterOrphanSlotMappings": null,
               "posterResidentHighWaterMark": null,
               "posterEvictionCount": null,
+              "posterAcquisitionCount": null,
+              "posterReacquisitionCount": null,
+              "posterWorkingSetUpdates": null,
+              "posterWorkingSetVersion": null,
+              "posterDesiredCount": null,
+              "posterPinnedCount": null,
+              "bootPinsActive": null,
+              "bootPinsReleasedAt": null,
+              "posterInitialP0Count": null,
+              "posterInitialP1ResidentCount": null,
+              "posterEnteredWorkingSetCount": null,
+              "posterLeftWorkingSetCount": null,
+              "posterDecodeJobsStarted": null,
               "posterStaleUploadDrops": null,
               "p0UniqueTitles": null,
               "p1UniqueTitles": null,
@@ -719,7 +784,7 @@
               "lastError": null
             },
             "setSession-resolved": {
-              "at": 1655,
+              "at": 1402.5,
               "classification": "IWER_EMULATED",
               "resourceProfile": "XR_SAFE",
               "rendererName": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002488) Direct3D11 vs_5_0 ps_5_0, D3D11)",
@@ -743,6 +808,19 @@
               "posterOrphanSlotMappings": null,
               "posterResidentHighWaterMark": null,
               "posterEvictionCount": null,
+              "posterAcquisitionCount": null,
+              "posterReacquisitionCount": null,
+              "posterWorkingSetUpdates": null,
+              "posterWorkingSetVersion": null,
+              "posterDesiredCount": null,
+              "posterPinnedCount": null,
+              "bootPinsActive": null,
+              "bootPinsReleasedAt": null,
+              "posterInitialP0Count": null,
+              "posterInitialP1ResidentCount": null,
+              "posterEnteredWorkingSetCount": null,
+              "posterLeftWorkingSetCount": null,
+              "posterDecodeJobsStarted": null,
               "posterStaleUploadDrops": null,
               "p0UniqueTitles": null,
               "p1UniqueTitles": null,
@@ -775,7 +853,7 @@
               "lastError": null
             },
             "first-XR-callback": {
-              "at": 1659.1000000014901,
+              "at": 1413,
               "classification": "IWER_EMULATED",
               "resourceProfile": "XR_SAFE",
               "rendererName": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002488) Direct3D11 vs_5_0 ps_5_0, D3D11)",
@@ -799,6 +877,19 @@
               "posterOrphanSlotMappings": null,
               "posterResidentHighWaterMark": null,
               "posterEvictionCount": null,
+              "posterAcquisitionCount": null,
+              "posterReacquisitionCount": null,
+              "posterWorkingSetUpdates": null,
+              "posterWorkingSetVersion": null,
+              "posterDesiredCount": null,
+              "posterPinnedCount": null,
+              "bootPinsActive": null,
+              "bootPinsReleasedAt": null,
+              "posterInitialP0Count": null,
+              "posterInitialP1ResidentCount": null,
+              "posterEnteredWorkingSetCount": null,
+              "posterLeftWorkingSetCount": null,
+              "posterDecodeJobsStarted": null,
               "posterStaleUploadDrops": null,
               "p0UniqueTitles": null,
               "p1UniqueTitles": null,
@@ -831,7 +922,7 @@
               "lastError": null
             },
             "first-bare-render": {
-              "at": 1699.1000000014901,
+              "at": 1439.3999999985099,
               "classification": "IWER_EMULATED",
               "resourceProfile": "XR_SAFE",
               "rendererName": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002488) Direct3D11 vs_5_0 ps_5_0, D3D11)",
@@ -855,6 +946,19 @@
               "posterOrphanSlotMappings": null,
               "posterResidentHighWaterMark": null,
               "posterEvictionCount": null,
+              "posterAcquisitionCount": null,
+              "posterReacquisitionCount": null,
+              "posterWorkingSetUpdates": null,
+              "posterWorkingSetVersion": null,
+              "posterDesiredCount": null,
+              "posterPinnedCount": null,
+              "bootPinsActive": null,
+              "bootPinsReleasedAt": null,
+              "posterInitialP0Count": null,
+              "posterInitialP1ResidentCount": null,
+              "posterEnteredWorkingSetCount": null,
+              "posterLeftWorkingSetCount": null,
+              "posterDecodeJobsStarted": null,
               "posterStaleUploadDrops": null,
               "p0UniqueTitles": null,
               "p1UniqueTitles": null,
@@ -887,7 +991,7 @@
               "lastError": null
             },
             "10-XR-frames": {
-              "at": 1755.2000000029802,
+              "at": 1494.5,
               "classification": "IWER_EMULATED",
               "resourceProfile": "XR_SAFE",
               "rendererName": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002488) Direct3D11 vs_5_0 ps_5_0, D3D11)",
@@ -911,6 +1015,19 @@
               "posterOrphanSlotMappings": null,
               "posterResidentHighWaterMark": null,
               "posterEvictionCount": null,
+              "posterAcquisitionCount": null,
+              "posterReacquisitionCount": null,
+              "posterWorkingSetUpdates": null,
+              "posterWorkingSetVersion": null,
+              "posterDesiredCount": null,
+              "posterPinnedCount": null,
+              "bootPinsActive": null,
+              "bootPinsReleasedAt": null,
+              "posterInitialP0Count": null,
+              "posterInitialP1ResidentCount": null,
+              "posterEnteredWorkingSetCount": null,
+              "posterLeftWorkingSetCount": null,
+              "posterDecodeJobsStarted": null,
               "posterStaleUploadDrops": null,
               "p0UniqueTitles": null,
               "p1UniqueTitles": null,
@@ -936,7 +1053,7 @@
               "xrFoveationEffective": null,
               "xrPhase": "active",
               "xrFrameCount": 9,
-              "firstWorldRenderCompletedAt": 1699.1000000014901,
+              "firstWorldRenderCompletedAt": 1439.3999999985099,
               "firstStoreXrRenderAt": null,
               "contextLost": false,
               "lastContextLossAt": null,
@@ -962,22 +1079,22 @@
           "immersiveVrSupported": true,
           "rendererPresenting": true,
           "referenceSpace": "local-floor",
-          "sessionStartAt": 46034.099999997765
+          "sessionStartAt": 34551
         },
         "startup": {
-          "requestSessionStart": 46032.099999997765,
-          "requestSessionEnd": 46034.099999997765,
-          "referenceSpaceStart": 46034.199999999255,
-          "referenceSpaceEnd": 46034.39999999851,
-          "targetFrameRateStart": 46034.699999999255,
-          "targetFrameRateEnd": 46035.199999999255,
-          "rendererSetSessionStart": 46038.79999999702,
-          "rendererSetSessionEnd": 46040.29999999702,
-          "firstAnimationCallbackAt": 46047.599999997765,
-          "firstDirectRenderStart": 46047.79999999702,
-          "firstDirectRenderEnd": 46048.5,
-          "firstWorldRenderCompletedAt": 46048.5,
-          "firstVisibleFrameAt": 46048.5,
+          "requestSessionStart": 34549.599999997765,
+          "requestSessionEnd": 34551,
+          "referenceSpaceStart": 34551,
+          "referenceSpaceEnd": 34551.199999999255,
+          "targetFrameRateStart": 34551.300000000745,
+          "targetFrameRateEnd": 34551.699999999255,
+          "rendererSetSessionStart": 34554.699999999255,
+          "rendererSetSessionEnd": 34602.800000000745,
+          "firstAnimationCallbackAt": 34607,
+          "firstDirectRenderStart": 34607.199999999255,
+          "firstDirectRenderEnd": 34607.800000000745,
+          "firstWorldRenderCompletedAt": 34607.800000000745,
+          "firstVisibleFrameAt": 34607.800000000745,
           "lastCompletedStage": "firstVisibleFrameAt",
           "lastError": null
         },
@@ -1030,7 +1147,7 @@
           ],
           "framebufferScale": 0.5,
           "frameCount": 5,
-          "lastFrameDtMs": 2.300000000745058
+          "lastFrameDtMs": 1.4000000022351742
         },
         "flags": {
           "minimal": true,
@@ -1056,22 +1173,22 @@
           "immersiveVrSupported": true,
           "rendererPresenting": true,
           "referenceSpace": "local-floor",
-          "sessionStartAt": 12687
+          "sessionStartAt": 10431.300000000745
         },
         "startup": {
-          "requestSessionStart": 12685.60000000149,
-          "requestSessionEnd": 12687,
-          "referenceSpaceStart": 12687.10000000149,
-          "referenceSpaceEnd": 12687.300000000745,
-          "targetFrameRateStart": 12687.5,
-          "targetFrameRateEnd": 12688,
-          "rendererSetSessionStart": 12690.400000002235,
-          "rendererSetSessionEnd": 12719.70000000298,
-          "firstAnimationCallbackAt": 12733.60000000149,
-          "firstDirectRenderStart": 12733.900000002235,
-          "firstDirectRenderEnd": 12734.60000000149,
-          "firstWorldRenderCompletedAt": 12734.60000000149,
-          "firstVisibleFrameAt": 12734.60000000149,
+          "requestSessionStart": 10430,
+          "requestSessionEnd": 10431.300000000745,
+          "referenceSpaceStart": 10431.300000000745,
+          "referenceSpaceEnd": 10431.5,
+          "targetFrameRateStart": 10431.60000000149,
+          "targetFrameRateEnd": 10432,
+          "rendererSetSessionStart": 10435.400000002235,
+          "rendererSetSessionEnd": 12500,
+          "firstAnimationCallbackAt": 12504.800000000745,
+          "firstDirectRenderStart": 12505,
+          "firstDirectRenderEnd": 12505.5,
+          "firstWorldRenderCompletedAt": 12505.5,
+          "firstVisibleFrameAt": 12505.5,
           "lastCompletedStage": "firstVisibleFrameAt",
           "lastError": null
         },
@@ -1123,8 +1240,8 @@
             120
           ],
           "framebufferScale": 0.5,
-          "frameCount": 63,
-          "lastFrameDtMs": 0.5
+          "frameCount": 65,
+          "lastFrameDtMs": 0.30000000074505806
         },
         "flags": {
           "minimal": false,
@@ -1151,22 +1268,22 @@
           "immersiveVrSupported": true,
           "rendererPresenting": true,
           "referenceSpace": "local-floor",
-          "sessionStartAt": 11895.699999999255
+          "sessionStartAt": 11780.699999999255
         },
         "startup": {
-          "requestSessionStart": 11893.79999999702,
-          "requestSessionEnd": 11895.699999999255,
-          "referenceSpaceStart": 11895.79999999702,
-          "referenceSpaceEnd": 11896,
-          "targetFrameRateStart": 11896.199999999255,
-          "targetFrameRateEnd": 11896.699999999255,
-          "rendererSetSessionStart": 11914.199999999255,
-          "rendererSetSessionEnd": 11915.099999997765,
-          "firstAnimationCallbackAt": 11950.39999999851,
-          "firstDirectRenderStart": 11950.599999997765,
-          "firstDirectRenderEnd": 11951.29999999702,
-          "firstWorldRenderCompletedAt": 11951.29999999702,
-          "firstVisibleFrameAt": 11951.29999999702,
+          "requestSessionStart": 11779.699999999255,
+          "requestSessionEnd": 11780.699999999255,
+          "referenceSpaceStart": 11780.800000000745,
+          "referenceSpaceEnd": 11780.89999999851,
+          "targetFrameRateStart": 11781,
+          "targetFrameRateEnd": 11781.5,
+          "rendererSetSessionStart": 11784,
+          "rendererSetSessionEnd": 11788.300000000745,
+          "firstAnimationCallbackAt": 11802.39999999851,
+          "firstDirectRenderStart": 11802.599999997765,
+          "firstDirectRenderEnd": 11803,
+          "firstWorldRenderCompletedAt": 11803,
+          "firstVisibleFrameAt": 11803,
           "lastCompletedStage": "firstVisibleFrameAt",
           "lastError": null
         },
@@ -1218,8 +1335,8 @@
             120
           ],
           "framebufferScale": 0.5,
-          "frameCount": 5,
-          "lastFrameDtMs": 1.1000000014901161
+          "frameCount": 3,
+          "lastFrameDtMs": 3
         },
         "flags": {
           "minimal": false,
@@ -1233,112 +1350,108 @@
     {
       "name": "BOOT_PERF",
       "pass": true,
-      "url": "http://127.0.0.1:17425/?demo=1&nogate=1",
+      "url": "http://127.0.0.1:17425/?demo=1&nogate=1&xrEmu=1",
       "waitedForFullTextures": true,
       "diag": {
         "marks": {
-          "appStart": 381,
-          "credentialStart": 494.0999999977648,
-          "credentialEnd": 494.0999999977648,
-          "catalogStart": 494.0999999977648,
-          "catalogEnd": 524,
-          "sidecarsStart": 524.0999999977648,
-          "sidecarsEnd": 524.0999999977648,
-          "baseFontsStart": 524.1999999992549,
-          "brandPackStart": 524.2999999970198,
-          "brandPackEnd": 565,
-          "baseFontsEnd": 565,
-          "cjkFontsStart": 565,
-          "cjkFontsEnd": 611.5999999977648,
-          "qualityCalibrationStart": 1084.8999999985099,
-          "qualityCalibrationEnd": 1096.5,
-          "threeSceneImportStart": 1096.5,
-          "threeSceneImportEnd": 1227.7999999970198,
-          "storeSceneConstructStart": 1227.7999999970198,
-          "storeSceneConstructEnd": 37090.89999999851,
-          "criticalTextureReady": 61277.79999999702,
-          "storeInteractive": 61277.79999999702,
-          "allTexturesSettled": 76903.29999999702
+          "appStart": 329.30000000074506,
+          "credentialStart": 480.8999999985099,
+          "credentialEnd": 480.8999999985099,
+          "catalogStart": 480.8999999985099,
+          "catalogEnd": 501.0999999977648,
+          "sidecarsStart": 501.0999999977648,
+          "sidecarsEnd": 501.0999999977648,
+          "baseFontsStart": 501.30000000074506,
+          "brandPackStart": 501.30000000074506,
+          "brandPackEnd": 538.1999999992549,
+          "baseFontsEnd": 538.1999999992549,
+          "cjkFontsStart": 538.1999999992549,
+          "cjkFontsEnd": 581.1999999992549,
+          "qualityCalibrationStart": 1589.800000000745,
+          "qualityCalibrationEnd": 1601.8999999985099,
+          "threeSceneImportStart": 1601.8999999985099,
+          "threeSceneImportEnd": 1721,
+          "storeSceneConstructStart": 1721,
+          "storeSceneConstructEnd": 5901.89999999851,
+          "criticalTextureReady": 11809.699999999255,
+          "storeInteractive": 11809.699999999255,
+          "allTexturesSettled": 12881.699999999255
         },
-        "qualityCalibrationMs": 11.600000001490116,
-        "storeSceneConstructMs": 35863.10000000149,
-        "timeToInteractive": 60896.79999999702,
-        "timeToFullTextures": 76522.29999999702,
+        "qualityCalibrationMs": 12.099999997764826,
+        "storeSceneConstructMs": 4180.89999999851,
+        "timeToInteractive": 11480.39999999851,
+        "timeToFullTextures": 12552.39999999851,
         "criticalReadyBeforeAllTextures": true,
         "construct": {
           "stages": [
             {
               "name": "initThree",
-              "ms": 100.40000000223517
+              "ms": 95.69999999925494
             },
             {
               "name": "setupLighting",
-              "ms": 0.6000000014901161
+              "ms": 0.5
             },
             {
               "name": "exterior",
-              "ms": 35.400000002235174
+              "ms": 34.20000000298023
             },
             {
               "name": "carpetTextures",
-              "ms": 147.89999999850988
+              "ms": 152.10000000149012
             },
             {
               "name": "wallTextures",
-              "ms": 87.59999999776483
+              "ms": 79.30000000074506
             },
             {
               "name": "aisleShelving",
-              "ms": 22.399999998509884
+              "ms": 24.799999997019768
             },
             {
               "name": "floorAO",
-              "ms": 0.9000000022351742
+              "ms": 0.8999999985098839
             },
             {
               "name": "signage",
-              "ms": 221.69999999925494
+              "ms": 212.5
             },
             {
               "name": "buildStore",
-              "ms": 1461.4000000022352
+              "ms": 1421.5
             },
             {
               "name": "bakeEnvironment",
-              "ms": 27148.699999999255
+              "ms": 0
             },
             {
               "name": "textureArrayInit",
-              "ms": 57.5
+              "ms": 0.5
             },
             {
               "name": "buildAllMovieBoxes",
-              "ms": 229
+              "ms": 142.90000000223517
             },
             {
               "name": "rebuildMovieBoxes",
-              "ms": 20
-            },
-            {
-              "name": "reflectionProbes",
-              "ms": 284.9000000022352
+              "ms": 17.599999997764826
             }
           ],
           "top3": [
             {
-              "name": "bakeEnvironment",
-              "ms": 27148.699999999255
-            },
-            {
               "name": "buildStore",
-              "ms": 1461.4000000022352
+              "ms": 1421.5
             },
             {
-              "name": "reflectionProbes",
-              "ms": 284.9000000022352
+              "name": "signage",
+              "ms": 212.5
+            },
+            {
+              "name": "carpetTextures",
+              "ms": 152.10000000149012
             }
           ],
-          "totalMs": 29818.40000000596
+          "totalMs": 2182.5
         }
       }
     }

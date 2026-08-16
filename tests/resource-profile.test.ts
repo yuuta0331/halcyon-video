@@ -118,8 +118,10 @@ test('residency window evicts P3 before P0 and promotes on acquire', () => {
   assert.equal(win.peek('b'), null);
   assert.equal(win.peek('c'), 1);
   const fourth = win.acquire('d', 'P1');
-  assert.equal(fourth.ok, false);
-  assert.equal(win.peek('c'), 1);
+  assert.equal(fourth.ok, true);
+  assert.equal(fourth.evicted, 'c');
+  assert.equal(win.peek('a'), 0);
+  assert.equal(win.peek('c'), null);
   assert.equal(win.validateInvariants().ok, true);
 });
 
@@ -193,6 +195,13 @@ test('GPU diagnostics expose residency invariants and fail-closed counts', () =>
       p2UniqueTitles: 100,
       p3UniqueTitles: 200,
       p0PlusP1UniqueTitles: 120,
+      posterWorkingSetVersion: 1,
+      posterPinnedCount: 0,
+      bootPinsActive: false,
+      posterInitialP0Count: 40,
+      posterInitialP1ResidentCount: 80,
+      acquisitionCount: 90,
+      reacquisitionCount: 2,
     },
   });
   const gpu = gpuDiagnosticsSnapshot();
@@ -201,5 +210,7 @@ test('GPU diagnostics expose residency invariants and fail-closed counts', () =>
   assert.equal(gpu.posterResidencyInvariantOk, true);
   assert.equal(gpu.posterDuplicatePhysicalOwners, 0);
   assert.equal(gpu.p0UniqueTitles, 40);
+  assert.equal(gpu.bootPinsActive, false);
+  assert.equal(gpu.posterWorkingSetVersion, 1);
   assert.ok((gpu.p0UniqueTitles ?? 0) <= (gpu.posterPhysicalSlots ?? 0));
 });

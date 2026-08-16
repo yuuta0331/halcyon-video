@@ -94,15 +94,21 @@ export class PosterResidencyWindow {
   /** Resident-only. Evicted/released IDs are removed so this cannot grow with catalog walk. */
   private readonly priority = new Map<string, PosterPriorityClass>();
   private readonly recency: string[] = [];
+  private readonly pinned = new Set<string>();
+  private readonly recentEvicted: string[] = [];
   private free: number[] = [];
   private _highWater = 0;
   private _evictionCount = 0;
+  private _acquisitionCount = 0;
+  private _reacquisitionCount = 0;
+  private readonly evictedRingCap: number;
 
   constructor(slots: number) {
     this.slots = Math.max(1, slots);
     this.slotMovie = Array.from({ length: this.slots }, () => null);
     this.generation = Array.from({ length: this.slots }, () => 0);
     this.free = Array.from({ length: this.slots }, (_, i) => this.slots - 1 - i);
+    this.evictedRingCap = Math.max(8, this.slots * 2);
   }
 
   get residentCount(): number {
@@ -119,6 +125,40 @@ export class PosterResidencyWindow {
 
   get evictionCount(): number {
     return this._evictionCount;
+  }
+
+  get acquisitionCount(): number {
+    return this._acquisitionCount;
+  }
+
+  get reacquisitionCount(): number {
+    return this._reacquisitionCount;
+  }
+
+  get pinnedCount(): number {
+    return this.pinned.size;
+  }
+
+  pin(movieId: string): boolean {
+    if (!this.movieToSlot.has(movieId)) return false;
+    this.pinned.add(movieId);
+    return true;
+  }
+
+  unpin(movieId: string): void {
+    this.pinned.delete(movieId);
+  }
+
+  unpinAll(): void {
+    this.pinned.clear();
+  }
+
+  isPinned(movieId: string): boolean {
+    return this.pinned.has(movieId);
+  }
+
+  residentIds(): string[] {
+    return [...this.movieToSlot.keys()];
   }
 
   peek(movieId: string): number | null {
@@ -190,6 +230,7 @@ export class PosterResidencyWindow {
     if (idx === undefined) return null;
     this.movieToSlot.delete(movieId);
     this.priority.delete(movieId);
+    this.pinned.delete(movieId);
     this.slotMovie[idx] = null;
     this.generation[idx]++;
     this.free.push(idx);
@@ -249,6 +290,10 @@ export class PosterResidencyWindow {
     for (const id of this.priority.keys()) {
       if (!this.movieToSlot.has(id)) stalePriorityEntries++;
     }
+    let stalePinEntries = 0;
+    for (const id of this.pinned) {
+      if (!this.movieToSlot.has(id)) stalePinEntries++;
+    }
     const ok = residentCount <= slotCount
       && freeCount + residentCount === slotCount
       && duplicateOwners === 0
@@ -259,6 +304,7 @@ export class PosterResidencyWindow {
       && outOfRangeIndices === 0
       && duplicateFreeEntries === 0
       && stalePriorityEntries === 0
+      && stalePinEntries === 0
       && this.uniquePhysicalOwners() === residentCount;
     return {
       ok,
@@ -289,7 +335,9 @@ export class PosterResidencyWindow {
   ): void {
     this.movieToSlot.delete(victimId);
     this.priority.delete(victimId);
+    this.pinned.delete(victimId);
     this.removeRecency(victimId);
+    this.noteEvicted(victimId);
     this._evictionCount++;
     this.bindNew(incomingId, index, cls);
   }
@@ -300,7 +348,18 @@ export class PosterResidencyWindow {
     this.movieToSlot.set(movieId, index);
     this.priority.set(movieId, cls);
     this.touch(movieId);
+    this._acquisitionCount++;
+    const evictedAt = this.recentEvicted.indexOf(movieId);
+    if (evictedAt >= 0) {
+      this._reacquisitionCount++;
+      this.recentEvicted.splice(evictedAt, 1);
+    }
     if (this.movieToSlot.size > this._highWater) this._highWater = this.movieToSlot.size;
+  }
+
+  private noteEvicted(movieId: string): void {
+    this.recentEvicted.push(movieId);
+    if (this.recentEvicted.length > this.evictedRingCap) this.recentEvicted.shift();
   }
 
   private touch(movieId: string): void {
@@ -318,14 +377,11 @@ export class PosterResidencyWindow {
     let best: { id: string; rank: number; age: number } | null = null;
     for (let i = 0; i < this.recency.length; i++) {
       const id = this.recency[i];
+      if (this.pinned.has(id)) continue;
       const rank = PRIORITY_RANK[this.priority.get(id) ?? 'P3'];
-      // P2/P3 cannot evict protected P0/P1.
-      if (rank <= 1 && incomingRank > 1) continue;
-      // Cannot evict a strictly higher-priority resident.
+      // Never evict a strictly higher-priority unpinned resident.
+      // Same-rank unpinned titles are fair game (LRU / least recently touched).
       if (rank < incomingRank) continue;
-      // P0 must not evict P0 (and P1 must not evict P1) or critical-ready
-      // working-set titles steal slots from each other.
-      if (rank === incomingRank && rank <= 1) continue;
       if (!best || rank > best.rank || (rank === best.rank && i < best.age)) {
         best = { id, rank, age: i };
       }

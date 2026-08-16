@@ -4,6 +4,7 @@
 import type { StoreScene } from './three-scene';
 import { XrRuntime } from './xr/runtime';
 import * as walk from './store-walk';
+import { updatePosterWorkingSet } from './store-poster-window';
 
 export function attachXrRuntime(
   scene: StoreScene,
@@ -42,6 +43,7 @@ export function attachXrRuntime(
       }
       scene.onXrSessionChange?.(presenting);
     },
+    onLocomotionTick: () => updatePosterWorkingSet(scene),
   });
   (window as unknown as { __xrDiagnostics?: unknown }).__xrDiagnostics = () => scene.xr?.diagnostics ?? null;
   return xr;
