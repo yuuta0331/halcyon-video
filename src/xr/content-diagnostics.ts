@@ -96,6 +96,26 @@ export function resetXrContentLiveStateForTests(): void {
   live = {};
 }
 
+/** Test helper: record every WORLD_REQUIRED class as actually displayable. */
+export function seedCanonicalWorldReadyForTests(
+  over: XrContentLiveCounts = {},
+): void {
+  live = {
+    posterAllocated: 1,
+    posterDecoded: 1,
+    posterUploaded: 1,
+    posterVisible: 1,
+    signageVisible: 1,
+    aisleFasciaVisible: 1,
+    brandPackReady: true,
+    canvasTexturesAllocated: 1,
+    fixtureTexturesVisible: 1,
+    storeLogosVisible: 1,
+    floorWallReady: true,
+    ...over,
+  };
+}
+
 export function noteOnDemandWrapRequest(titleId: string): void {
   live = {
     ...live,

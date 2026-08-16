@@ -770,22 +770,35 @@ async function main() {
             gpu: window.__gpuDiagnostics?.(),
             ws: window.__posterWorkingSet?.(),
             perf: window.__xrPerfDiagnostics?.(),
+            content: window.__xrContent?.() ?? window.__gpuDiagnostics?.()?.xrContent ?? null,
           };
           return {
             start,
             before,
             after,
             visualReady: after.ready?.visualReady === true,
+            worldReady: after.ready?.worldReady === true || after.content?.worldReady === true,
+            requiredReady: after.ready?.requiredReady === true || after.content?.requiredReady === true,
+            content: after.content,
             evictionDelta: (after.gpu?.posterEvictionCount ?? 0) - (before.gpu?.posterEvictionCount ?? 0),
             reacqDelta: (after.gpu?.posterReacquisitionCount ?? 0) - (before.gpu?.posterReacquisitionCount ?? 0),
             decodeDelta: (after.ws?.posterDecodeJobsStarted ?? 0) - (before.ws?.posterDecodeJobsStarted ?? 0),
             uploadDelta: (after.ws?.posterUploadJobsStarted ?? 0) - (before.ws?.posterUploadJobsStarted ?? 0),
             residentBefore: before.gpu?.posterResidentTitles ?? null,
             residentAfter: after.gpu?.posterResidentTitles ?? null,
+            posterWidth: after.gpu?.posterBaseWidth ?? after.gpu?.shelfWidth ?? null,
+            posterHeight: after.gpu?.posterBaseHeight ?? after.gpu?.shelfHeight ?? null,
+            cpuBytes: after.gpu?.posterCpuBytesAllocated ?? after.gpu?.posterArrayCpuBytesEstimated ?? null,
+            cpuBytesActive: after.gpu?.posterCpuBytesActive ?? null,
+            realUploads: after.ready?.postersUploaded ?? null,
+            fallbacks: after.ready?.postersFallback ?? null,
+            QUEST_HARDWARE: 'NOT_EXECUTED',
           };
         });
         fs.writeFileSync(path.join(jp4aDir, 'jp4a-normal-stable-store.json'), JSON.stringify(scrub(walked), null, 2));
         const pass = walked.visualReady === true
+          && walked.worldReady === true
+          && walked.requiredReady === true
           && walked.evictionDelta === 0
           && walked.reacqDelta === 0
           && walked.decodeDelta === 0
@@ -797,7 +810,7 @@ async function main() {
     ));
 
     evidence.scenarios.push(await runScenario(
-      browser, 'JP4A_ROUND2_XR', '?demo=1&nogate=1&xrEmu=1&xrSafe=1',
+      browser, 'JP4A_ROUND3_XR', '?demo=1&nogate=1&xrEmu=1&xrSafe=1',
       async (page) => {
         const jp4aDir = path.join(root, 'docs', 'review', 'jp4a');
         fs.mkdirSync(jp4aDir, { recursive: true });
@@ -808,6 +821,8 @@ async function main() {
             await new Promise((r) => setTimeout(r, 200));
           }
           const visualReady = window.__storeReadiness?.()?.visualReady === true;
+          const readySnap = window.__storeReadiness?.();
+          const contentBefore = window.__xrContent?.() ?? window.__gpuDiagnostics?.()?.xrContent ?? null;
           const xr = window.__xrTest;
           const entered = xr ? await xr.enter() : { ok: false, error: 'no __xrTest' };
           const untilWorld = Date.now() + 8000;
@@ -857,6 +872,12 @@ async function main() {
           await new Promise((r) => setTimeout(r, 80));
           xr?.squeeze?.('right', false);
           await new Promise((r) => setTimeout(r, 200));
+          for (let i = 0; i < 3 && xr?.uiMode?.() !== 'WORLD'; i++) {
+            xr?.squeeze?.('right', true);
+            await new Promise((r) => setTimeout(r, 80));
+            xr?.squeeze?.('right', false);
+            await new Promise((r) => setTimeout(r, 200));
+          }
           const worldMode = xr?.uiMode?.();
           await new Promise((r) => setTimeout(r, 3000));
           const gpu1 = window.__gpuDiagnostics?.();
@@ -866,6 +887,8 @@ async function main() {
           await xr?.exit?.();
           return {
             visualReady,
+            worldReadyBefore: contentBefore?.worldReady === true || readySnap?.worldReady === true,
+            requiredReadyBefore: contentBefore?.requiredReady === true || readySnap?.requiredReady === true,
             entered,
             framebufferScale: gpu1?.xrFramebufferScaleRequested ?? gpu0?.xrFramebufferScaleRequested,
             foveation: gpu1?.xrFoveationRequested ?? gpu0?.xrFoveationRequested,
@@ -883,12 +906,16 @@ async function main() {
             content,
             perf,
             classification: 'IWER_EMULATED',
+            QUEST_HARDWARE: 'NOT_EXECUTED',
           };
         });
-        fs.writeFileSync(path.join(jp4aDir, 'iwer-jp4a-round2.json'), JSON.stringify(scrub(result), null, 2));
+        fs.writeFileSync(path.join(jp4aDir, 'iwer-jp4a-round3.json'), JSON.stringify(scrub(result), null, 2));
         const pass = result.visualReady === true
+          && result.worldReadyBefore === true
+          && result.requiredReadyBefore === true
           && !!result.entered?.ok
           && result.framebufferScale === 0.8
+          && result.foveation === 0.5
           && result.evictionDelta === 0
           && result.reacqDelta === 0
           && result.fpsOn === true

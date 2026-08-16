@@ -167,6 +167,18 @@ async function main() {
         && ws?.evictionWindow === false
         && (ws?.desiredCount ?? 0) === n;
     };
+    const cap2001 = await barePage.evaluate(async () => {
+      const fn = window.__posterCapacityPlan;
+      return fn ? fn(2001, 256) : { error: 'no plan' };
+    });
+    const cap4000 = await barePage.evaluate(async () => {
+      const fn = window.__posterCapacityPlan;
+      return fn ? fn(4000, 256) : { error: 'no plan' };
+    });
+    const gpuMulti = await barePage.evaluate(async () => {
+      const fn = window.__posterUniqueMultibankProbe;
+      return fn ? fn() : { error: 'no probe' };
+    });
     evidence.scenarios.push({
       name: 'BARE',
       pass: !!bareXr.entered?.ok && bareXr.d?.startup?.firstWorldRenderCompletedAt != null,
@@ -176,6 +188,7 @@ async function main() {
     for (const n of [200, 1000, 2000, 4000]) {
       evidence.scenarios.push({
         name: `XR_SAFE_${n}`,
+        evidenceKind: probes[n]?.evidenceKind ?? (probes[n]?.skippedGpuAlloc ? 'PLANNING_ONLY' : 'REAL_GPU_ALLOCATION'),
         pass: layoutOk(n),
         probe: probes[n],
         populated: populated[n],
@@ -184,11 +197,46 @@ async function main() {
     }
     evidence.scenarios.push({
       name: 'POSTER_WINDOW',
+      evidenceKind: 'PLANNING_ONLY',
       pass: [200, 1000, 2000, 4000].every((n) => layoutOk(n)),
       probes,
       populated,
       workingSets,
       bytes: [200, 1000, 2000, 4000].map((n) => probes[n]?.cpuBytes ?? null),
+    });
+    evidence.scenarios.push({
+      name: 'JP4A_CAPACITY_256_2001',
+      classification: 'SOFTWARE_PLANNING_TEST',
+      evidenceKind: 'PLANNING_ONLY',
+      pass: cap2001?.capacityOk === true
+        && cap2001?.bankCount >= 8
+        && cap2001?.actuallyRenderableTitles === 2001
+        && cap2001?.samplersPerDraw === 1
+        && cap2001?.evictionWindow === false,
+      plan: cap2001,
+    });
+    evidence.scenarios.push({
+      name: 'JP4A_CAPACITY_256_4000',
+      classification: 'SOFTWARE_PLANNING_TEST',
+      evidenceKind: 'PLANNING_ONLY',
+      pass: cap4000?.capacityOk === true
+        && cap4000?.bankCount >= 16
+        && cap4000?.actuallyRenderableTitles === 4000
+        && cap4000?.samplersPerDraw === 1,
+      plan: cap4000,
+    });
+    evidence.scenarios.push({
+      name: 'JP4A_REAL_GPU_MULTIBANK',
+      classification: gpuMulti?.classification ?? 'DESKTOP_BROWSER',
+      evidenceKind: 'REAL_GPU_ALLOCATION',
+      pass: gpuMulti?.evidenceKind === 'REAL_GPU_ALLOCATION'
+        && gpuMulti?.bankCount > 1
+        && gpuMulti?.aliased === false
+        && gpuMulti?.contextLost === false
+        && gpuMulti?.glFatal === false
+        && gpuMulti?.uniqueSamples === gpuMulti?.uniqueTextureCount
+        && gpuMulti?.sampled === gpuMulti?.uniqueTextureCount,
+      probe: gpuMulti,
     });
     await barePage.close();
 
@@ -347,6 +395,16 @@ async function main() {
       sampler: consoleLog.filter(isSamplerOrGlFatal).map((e) => ({ ...e, text: redact(e.text) })),
       unexpectedSerious: unexpectedSerious().map((e) => ({ ...e, text: redact(e.text) })),
     }, null, 2));
+    const jp4aDir = path.join(root, 'docs', 'review', 'jp4a');
+    fs.mkdirSync(jp4aDir, { recursive: true });
+    for (const name of ['JP4A_CAPACITY_256_2001', 'JP4A_CAPACITY_256_4000', 'JP4A_REAL_GPU_MULTIBANK']) {
+      const s = evidence.scenarios.find((x) => x.name === name);
+      if (!s) continue;
+      fs.writeFileSync(
+        path.join(jp4aDir, `${name.toLowerCase().replace(/_/g, '-')}.json`),
+        JSON.stringify(s, null, 2),
+      );
+    }
     await browser.close();
     killChild(child);
   }

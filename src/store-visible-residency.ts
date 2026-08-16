@@ -19,10 +19,12 @@ export interface StoreVisibleInvariants {
   ok: boolean;
   expectedCount: number;
   mappedCount: number;
+  actuallyRenderableCount: number;
   missingCount: number;
   duplicateOwners: number;
   evictionCount: number;
   reacquisitionCount: number;
+  capacityInvariantOk: boolean;
 }
 
 export class StoreVisibleResidency {
@@ -57,7 +59,7 @@ export class StoreVisibleResidency {
       maxArrayTextureLayers: caps.maxArrayTextureLayers,
       gpuBudgetBytes,
     });
-    const next = stablePosterMapping(ids, this.layout.layersPerBank);
+    const next = stablePosterMapping(ids, this.layout);
     this.mapping = next;
     this.ownerByKey.clear();
     for (const [id, rec] of next) {
@@ -75,6 +77,10 @@ export class StoreVisibleResidency {
   }
 
   get expectedCount(): number {
+    return this.layout?.uniqueTitles ?? this.mapping.size;
+  }
+
+  get actuallyRenderableCount(): number {
     return this.mapping.size;
   }
 
@@ -123,14 +129,22 @@ export class StoreVisibleResidency {
       if (seen.has(key)) duplicateOwners++;
       else seen.add(key);
     }
+    const expected = this.layout?.uniqueTitles ?? this.mapping.size;
+    const mapped = this.mapping.size;
+    const capacityOk = this.layout?.capacityOk !== false
+      && mapped === expected
+      && duplicateOwners === 0
+      && this.evictionCount === 0;
     return {
-      ok: duplicateOwners === 0 && this.evictionCount === 0,
-      expectedCount: this.mapping.size,
-      mappedCount: this.mapping.size,
-      missingCount: 0,
+      ok: capacityOk,
+      expectedCount: expected,
+      mappedCount: mapped,
+      actuallyRenderableCount: mapped,
+      missingCount: Math.max(0, expected - mapped),
       duplicateOwners,
       evictionCount: this.evictionCount,
       reacquisitionCount: this.reacquisitionCount,
+      capacityInvariantOk: capacityOk,
     };
   }
 }

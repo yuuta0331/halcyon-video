@@ -48,8 +48,22 @@ export interface GpuDiagnostics {
   rendererGeometries: number | null;
   rendererPrograms: number | null;
   posterCatalogTitles: number | null;
-  posterPhysicalSlots: number | null;
+  posterExpectedTitles: number | null;
+  posterLogicalMappedTitles: number | null;
+  posterActuallyRenderableTitles: number | null;
   posterResidentTitles: number | null;
+  posterBankCount: number | null;
+  posterLayersPerBank: number | null;
+  posterRenderBatchCount: number | null;
+  posterSamplersPerDraw: number | null;
+  posterBaseWidth: number | null;
+  posterBaseHeight: number | null;
+  posterCpuBytesEstimated: number | null;
+  posterCpuBytesActive: number | null;
+  posterCpuBytesAllocated: number | null;
+  posterGpuBytesEstimated: number | null;
+  posterCapacityInvariantOk: boolean | null;
+  posterPhysicalSlots: number | null;
   posterFreeSlots: number | null;
   posterResidencyInvariantOk: boolean | null;
   posterDuplicatePhysicalOwners: number | null;
@@ -169,6 +183,19 @@ export interface GpuLiveState {
     posterLeftWorkingSetCount?: number;
     posterDecodeJobsStarted?: number;
     lastWorkingSetTransition?: unknown;
+    cpuBytesActive?: number;
+    cpuBytesAllocated?: number;
+    expectedTitles?: number;
+    logicalMappedTitles?: number;
+    actuallyRenderableTitles?: number;
+    bankCount?: number;
+    layersPerBank?: number;
+    renderBatchCount?: number;
+    samplersPerDraw?: number;
+    arrayLayerCeiling?: number;
+    capacityInvariantOk?: boolean;
+    shelfWidth?: number;
+    shelfHeight?: number;
   } | null;
 }
 
@@ -297,8 +324,22 @@ export function gpuDiagnosticsSnapshot(): GpuDiagnostics {
     rendererGeometries: mem?.geometries ?? null,
     rendererPrograms: programs?.length ?? null,
     posterCatalogTitles: poster?.catalogTitleCount ?? null,
-    posterPhysicalSlots: poster?.physicalSlots ?? posterEst.physicalPosterSlots,
+    posterExpectedTitles: poster?.expectedTitles ?? poster?.catalogTitleCount ?? null,
+    posterLogicalMappedTitles: poster?.logicalMappedTitles ?? null,
+    posterActuallyRenderableTitles: poster?.actuallyRenderableTitles ?? null,
     posterResidentTitles: poster?.residentCount ?? null,
+    posterBankCount: poster?.bankCount ?? null,
+    posterLayersPerBank: poster?.layersPerBank ?? null,
+    posterRenderBatchCount: poster?.renderBatchCount ?? null,
+    posterSamplersPerDraw: poster?.samplersPerDraw ?? 1,
+    posterBaseWidth: poster?.shelfWidth ?? null,
+    posterBaseHeight: poster?.shelfHeight ?? null,
+    posterCpuBytesEstimated: poster?.cpuBytes ?? posterEst.posterArrayCpuBytesEstimated,
+    posterCpuBytesActive: poster?.cpuBytesActive ?? null,
+    posterCpuBytesAllocated: poster?.cpuBytesAllocated ?? poster?.cpuBytes ?? null,
+    posterGpuBytesEstimated: poster?.gpuBytes ?? posterEst.posterArrayGpuBytesEstimated,
+    posterCapacityInvariantOk: poster?.capacityInvariantOk ?? poster?.residencyInvariantOk ?? null,
+    posterPhysicalSlots: poster?.physicalSlots ?? posterEst.physicalPosterSlots,
     posterFreeSlots: poster?.freeCount ?? null,
     posterResidencyInvariantOk: poster?.residencyInvariantOk ?? null,
     posterDuplicatePhysicalOwners: poster?.duplicatePhysicalOwners ?? null,

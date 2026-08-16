@@ -207,6 +207,14 @@ test('DESKTOP_FULL still enables decorative effects in policy', () => {
   resetResourceProfileForTests();
 });
 
+test('STORE_INTERACTIVE implies STORE_VISUAL_READY implies worldReady', () => {
+  resetXrContentLiveStateForTests();
+  setXrContentLiveState(worldReadyCounts());
+  const snap = xrContentSnapshot('XR_SAFE');
+  assert.equal(snap.worldReady, true);
+  assert.equal(snap.requiredReady, true);
+});
+
 test('requiredXrSafeContentClasses still lists world plus on-demand content', () => {
   const all = requiredXrSafeContentClasses();
   assert.ok(all.includes('poster'));

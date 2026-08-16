@@ -33,6 +33,8 @@ import {
   publishStoreReadinessWindow,
   storeVisualReadyPromise,
 } from './store-visual-ready';
+import { applyPosterBankDrawBatches } from './store-poster-bank-draws';
+import { publishStoreWorldContent } from './store-xr';
 import { validateCaseFit, type CaseFitPair } from './layout-validator';
 import { retailAudio } from './audio';
 import {
@@ -980,6 +982,8 @@ export function buildAllMovieBoxes(scene: StoreScene) {
 
   const allSlots = Array.from(scene.slotsByPosition.values());
   bindBoundedPosterWindow(scene, allSlots);
+  applyPosterBankDrawBatches(scene);
+  publishStoreWorldContent(scene);
 
   // Mark attributes as needing update so they are uploaded to GPU
   scene.unitSideFrontMeshMap.forEach(mesh => {
@@ -1004,9 +1008,8 @@ export function buildAllMovieBoxes(scene: StoreScene) {
   const uniqueIds = uniqueWork.map((slot) => slot.movie.id);
   beginStoreVisibleLoading({
     posterIds: uniqueIds,
-    signageExpected: 0,
-    otherExpected: 0,
   });
+  publishStoreWorldContent(scene);
   publishStoreReadinessWindow();
   let loaded = 0;
   const settleTotal = uniqueWork.length;
@@ -1047,6 +1050,7 @@ export function buildAllMovieBoxes(scene: StoreScene) {
       }
     }
     await storeVisualReadyPromise();
+    publishStoreWorldContent(scene);
     scene.warmupRuntimePrograms();
   })();
   scene.texturesReadyPromise.then(() => {

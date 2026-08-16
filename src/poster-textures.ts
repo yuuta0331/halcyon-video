@@ -19,7 +19,8 @@ import * as THREE from 'three';
 import { perfTrace, perfSlot } from './perf-trace';
 import { type PosterPriorityClass } from './perf/store-readiness';
 import { activeGpuCapabilities, activeResourceProfile, isXrSafeProfile } from './perf/resource-profile';
-import { choosePosterBankLayout, QUEST_SAFE_POSTER_GPU_BUDGET, type PosterBankLayout } from './perf/poster-bank-layout';
+import { choosePosterBankLayout, layersPerBankFromCaps, QUEST_SAFE_POSTER_GPU_BUDGET, type PosterBankLayout } from './perf/poster-bank-layout';
+import { storeVisibleResidency } from './store-visible-residency';
 import { PosterResidencyWindow, estimatePosterArrayBytes, type PosterLease } from './poster-residency';
 import { pixelStorei } from './xr/gl-state';
 
@@ -453,6 +454,21 @@ function missingCoverPixels(w: number, h: number): Uint8Array {
   return data;
 }
 
+/** Distinct RGBA poster used by the real-GPU multi-bank probe. */
+export function uniquePosterPattern(w: number, h: number, seed: number): Uint8Array {
+  const data = new Uint8Array(Math.max(1, w) * Math.max(1, h) * 4);
+  const r = 16 + ((seed * 37) % 220);
+  const g = 16 + ((seed * 91) % 220);
+  const b = 16 + ((seed * 53) % 220);
+  for (let i = 0; i < data.length; i += 4) {
+    data[i] = r;
+    data[i + 1] = g;
+    data[i + 2] = b;
+    data[i + 3] = 255;
+  }
+  return data;
+}
+
 function allocPosterBank(
   w: number,
   h: number,
@@ -489,8 +505,10 @@ class TextureArrayManager {
   public residencyBound = false;
   public mappingsFrozen = false;
   public bankCount = 1;
+  public arrayLayerCeiling = 256;
   public extraBanks: THREE.DataArrayTexture[] = [];
   public lastLayout: PosterBankLayout | null = null;
+  public renderBatchCount = 1;
   public shelfWidth = 160;
   public shelfHeight = 240;
   private residency: PosterResidencyWindow | null = null;
@@ -508,7 +526,7 @@ class TextureArrayManager {
     return this.lowResBase === 0 || idx < this.bankSize;
   }
 
-  public init(totalMovies: number, renderer?: THREE.WebGLRenderer) {
+  public init(totalMovies: number, renderer?: THREE.WebGLRenderer, capsOverride?: { maxArrayTextureLayers?: number }) {
     // ── Rebuild fast path ────────────────────────────────────────────────
     // A no-reload rebuild (quality/AO/theme/arrangement/render-mode change)
     // constructs a fresh WebGLRenderer, so the GPU-side layers die with the old
@@ -535,7 +553,7 @@ class TextureArrayManager {
 
     const haveArrays = !!(this.lowResArray && this.highResArray && this.loadedFlagsTexture)
       || !!(bounded && this.highResArray && this.loadedFlagsTexture);
-    if (haveArrays && !posterLayersInvalid && bounded && this.residency
+    if (!capsOverride && haveArrays && !posterLayersInvalid && bounded && this.residency
         && this.maxMovies >= totalMovies && this.mappingsFrozen) {
       const maxAniso = renderer ? Math.min(8, renderer.capabilities.getMaxAnisotropy()) : 0;
       if (this.highResArray) {
@@ -577,10 +595,13 @@ class TextureArrayManager {
     this.fallbackIds.clear();
     this.moviePriority.clear();
     if (bounded) {
-      const capsLayers = activeGpuCapabilities()?.maxArrayTextureLayers ?? maxArrayLayers(renderer);
+      const capsLayers = capsOverride?.maxArrayTextureLayers
+        ?? activeGpuCapabilities()?.maxArrayTextureLayers
+        ?? maxArrayLayers(renderer);
+      this.arrayLayerCeiling = layersPerBankFromCaps(capsLayers);
       const layout = choosePosterBankLayout({
         uniqueTitles: Math.max(1, totalMovies),
-        maxArrayTextureLayers: capsLayers,
+        maxArrayTextureLayers: this.arrayLayerCeiling,
         gpuBudgetBytes: QUEST_SAFE_POSTER_GPU_BUDGET,
       });
       this.lastLayout = layout;
@@ -706,9 +727,7 @@ class TextureArrayManager {
           u.lowResMapArray.value = this.lowResArray ?? this.highResArray;
           u.highResMapArray.value = this.highResArray;
           u.shelfMapArray.value = this.highResArray;
-          if (u.shelfMapArray1) u.shelfMapArray1.value = this.bankTexture(1) ?? this.highResArray;
-          if (u.shelfMapArray2) u.shelfMapArray2.value = this.bankTexture(2) ?? this.highResArray;
-          if (u.shelfMapArray3) u.shelfMapArray3.value = this.bankTexture(3) ?? this.highResArray;
+          if (u.posterBankOffset) u.posterBankOffset.value = 0;
           if (u.posterBankSize) u.posterBankSize.value = this.bankSize;
           if (u.posterBankCount) u.posterBankCount.value = this.bankCount;
           u.posterLowResBase.value = this.lowResBase;
@@ -723,7 +742,20 @@ class TextureArrayManager {
   public bankTexture(bank: number): THREE.DataArrayTexture | null {
     if (bank <= 0) return this.highResArray;
     if (bank === 1) return this.lowResArray ?? this.highResArray;
-    return this.extraBanks[bank - 2] ?? this.highResArray;
+    return this.extraBanks[bank - 2] ?? null;
+  }
+
+  public bindDrawBank(bank: number): void {
+    const tex = this.bankTexture(bank) ?? this.highResArray;
+    const offset = this.bankCount <= 1 ? 0 : Math.max(0, bank) * this.bankSize;
+    const updateUniforms = (mat: any) => {
+      if (!mat?.userData?.compiledUniformsList) return;
+      for (const u of mat.userData.compiledUniformsList) {
+        if (u.shelfMapArray) u.shelfMapArray.value = tex;
+        if (u.posterBankOffset) u.posterBankOffset.value = offset;
+      }
+    };
+    for (const mat of caseMaterialUniformProvider?.() ?? []) updateUniforms(mat);
   }
 
   public freezeStableMappings(): void {
@@ -1174,6 +1206,15 @@ class TextureArrayManager {
     shelfHeight: number;
     bankCount: number;
     layersPerBank: number;
+    renderBatchCount: number;
+    samplersPerDraw: number;
+    arrayLayerCeiling: number;
+    expectedTitles: number;
+    logicalMappedTitles: number;
+    actuallyRenderableTitles: number;
+    cpuBytesActive: number;
+    cpuBytesAllocated: number;
+    capacityInvariantOk: boolean;
     evictionWindow: false;
     cpuBytes: number;
     gpuBytes: number;
@@ -1191,10 +1232,26 @@ class TextureArrayManager {
       + (this.lowResArray && this.lowResArray !== this.highResArray ? layerBytes(this.lowResArray) : 0)
       + this.extraBanks.reduce((sum, tex) => sum + layerBytes(tex), 0);
     const inv = this.residency?.validateInvariants() ?? null;
+    const visBound = !!storeVisibleResidency.layout;
+    const vis = visBound ? storeVisibleResidency.validate() : null;
+    const expected = this.lastLayout?.uniqueTitles ?? vis?.expectedCount ?? this.catalogTitleCount;
+    const mapped = vis?.mappedCount ?? this.movieToIndex.size;
+    let renderable = visBound ? 0 : this.movieToIndex.size;
+    if (visBound) {
+      for (const rec of storeVisibleResidency.cloneMappings().values()) {
+        if (rec.bank >= 0 && rec.bank < this.bankCount && this.bankTexture(rec.bank)) renderable++;
+      }
+    }
+    const resident = this.residency?.residentCount ?? this.movieToIndex.size;
+    const capacityInvariantOk = visBound
+      ? !!(vis?.capacityInvariantOk && expected === mapped && mapped === renderable
+        && (resident === 0 || resident === mapped) && (inv ? inv.ok : true))
+      : (inv ? inv.ok : true);
+    const cpuActive = this.shelfWidth * this.shelfHeight * 4 * Math.max(0, expected);
     return {
       catalogTitleCount: this.catalogTitleCount,
       physicalSlots: this.maxMovies,
-      residentCount: this.residency?.residentCount ?? this.movieToIndex.size,
+      residentCount: resident,
       freeCount: this.residency?.freeCount ?? Math.max(0, this.maxMovies - this.movieToIndex.size),
       uniqueOwners: this.residency?.uniquePhysicalOwners() ?? this.movieToIndex.size,
       residentHighWaterMark: this.residency?.residentHighWaterMark ?? this.movieToIndex.size,
@@ -1203,8 +1260,8 @@ class TextureArrayManager {
       reacquisitionCount: this.residency?.reacquisitionCount ?? 0,
       pinnedCount: this.residency?.pinnedCount ?? 0,
       staleUploadDrops: this.staleUploadDrops,
-      residencyInvariantOk: inv ? inv.ok : null,
-      duplicatePhysicalOwners: inv?.duplicateOwners ?? 0,
+      residencyInvariantOk: visBound ? capacityInvariantOk : (inv ? inv.ok : null),
+      duplicatePhysicalOwners: inv?.duplicateOwners ?? vis?.duplicateOwners ?? 0,
       freeOwnedCollisions: inv?.freeOwnedCollisions ?? 0,
       orphanMovieMappings: inv?.orphanMovieMappings ?? 0,
       orphanSlotMappings: inv?.orphanSlotMappings ?? 0,
@@ -1212,6 +1269,15 @@ class TextureArrayManager {
       shelfHeight: this.shelfHeight,
       bankCount: this.bankCount,
       layersPerBank: this.bankSize,
+      renderBatchCount: this.renderBatchCount,
+      samplersPerDraw: 1,
+      arrayLayerCeiling: this.arrayLayerCeiling,
+      expectedTitles: expected,
+      logicalMappedTitles: mapped,
+      actuallyRenderableTitles: renderable,
+      cpuBytesActive: cpuActive,
+      cpuBytesAllocated: cpu,
+      capacityInvariantOk,
       evictionWindow: false as const,
       cpuBytes: cpu,
       gpuBytes: Math.round(cpu * 4 / 3),
@@ -1256,6 +1322,21 @@ class TextureArrayManager {
 
   public debugPeekLease(movieId: string): PosterLease | null {
     return this.residency?.peekLease(movieId) ?? null;
+  }
+
+  public debugUploadUniquePattern(
+    renderer: THREE.WebGLRenderer,
+    movieId: string,
+    seed: number,
+  ): boolean {
+    const idx = this.peekIndex(movieId);
+    if (idx == null || !this.residencyBound) return false;
+    const lease = this.residency?.peekLease(movieId);
+    if (!lease) return false;
+    const pixels = uniquePosterPattern(this.shelfWidth, this.shelfHeight, seed);
+    this.commitShelfLease(renderer, lease, pixels);
+    this.setLoadedForLease(lease, 255);
+    return true;
   }
 }
 

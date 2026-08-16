@@ -95,7 +95,13 @@ test('XR_SAFE catalog layout covers titles with stable banks, not a 128 eviction
     assert.ok(layout.totalLayers >= Math.min(n, layout.bankCount * layout.layersPerBank));
     assert.ok(layout.cpuBytesEstimated > 0);
     assert.ok(layout.gpuBytesEstimated > 0);
+    assert.equal(layout.samplersPerDraw, 1);
   }
+  const at256_2001 = choosePosterBankLayout({ uniqueTitles: 2001, maxArrayTextureLayers: 256 });
+  const at256_4000 = choosePosterBankLayout({ uniqueTitles: 4000, maxArrayTextureLayers: 256 });
+  assert.ok(at256_2001.bankCount >= 8);
+  assert.equal(at256_4000.bankCount, 16);
+  assert.equal(at256_4000.capacityOk, true);
   const small = choosePosterBankLayout({ uniqueTitles: 200, maxArrayTextureLayers: capsLayers });
   const large = choosePosterBankLayout({ uniqueTitles: 1000, maxArrayTextureLayers: capsLayers });
   assert.ok(large.bankCount >= small.bankCount);
@@ -144,6 +150,7 @@ test('XR_SAFE estimated sampler use fits a 16-unit GPU', () => {
   const profile = xrSafeProfile(blankGpuCapabilities({ maxTextures: 16 }));
   assert.ok(profile.estimatedFragmentSamplers <= 16);
   assert.equal(profile.singleShelfPosterSampler, true);
+  assert.equal(estimateXrSafeFragmentSamplers(), 4);
 });
 
 test('XR_SAFE poster policy is stable-store-visible; quality drops before eviction', () => {

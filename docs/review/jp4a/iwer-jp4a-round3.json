@@ -1,0 +1,265 @@
+{
+  "visualReady": true,
+  "worldReadyBefore": true,
+  "requiredReadyBefore": true,
+  "entered": {
+    "ok": true
+  },
+  "framebufferScale": 0.8,
+  "foveation": 0.5,
+  "menuLegend": [
+    "↑↓ スティック   項目移動",
+    "トリガー / A・X   決定",
+    "グリップ          戻る",
+    "←→ スティック   値変更"
+  ],
+  "menuAfterUp": {
+    "title": "ハルシオンビデオ — メニュー",
+    "hint": "トリガーで決定  •  グリップで閉じる  •  スティックで移動",
+    "legend": [
+      "↑↓ スティック   項目移動",
+      "トリガー / A・X   決定",
+      "グリップ          戻る",
+      "←→ スティック   値変更"
+    ],
+    "rows": [
+      {
+        "label": "設定",
+        "value": "",
+        "selected": false,
+        "status": false
+      },
+      {
+        "label": "VRを終了",
+        "value": "",
+        "selected": false,
+        "status": false
+      },
+      {
+        "label": "メニューを閉じる",
+        "value": "",
+        "selected": true,
+        "status": false
+      }
+    ]
+  },
+  "menuAfterDown": {
+    "title": "ハルシオンビデオ — メニュー",
+    "hint": "トリガーで決定  •  グリップで閉じる  •  スティックで移動",
+    "legend": [
+      "↑↓ スティック   項目移動",
+      "トリガー / A・X   決定",
+      "グリップ          戻る",
+      "←→ スティック   値変更"
+    ],
+    "rows": [
+      {
+        "label": "設定",
+        "value": "",
+        "selected": true,
+        "status": false
+      },
+      {
+        "label": "VRを終了",
+        "value": "",
+        "selected": false,
+        "status": false
+      },
+      {
+        "label": "メニューを閉じる",
+        "value": "",
+        "selected": false,
+        "status": false
+      }
+    ]
+  },
+  "afterPrimary": "SETTINGS",
+  "fpsOn": true,
+  "fpsHud": true,
+  "worldMode": "WORLD",
+  "evictionDelta": 0,
+  "reacqDelta": 0,
+  "decodeDelta": 0,
+  "contextLost": false,
+  "content": {
+    "resourceProfile": "XR_SAFE",
+    "worldReady": true,
+    "requiredReady": true,
+    "onDemandWrapsReady": false,
+    "decorativeDisabled": true,
+    "poster": {
+      "allocated": 2001,
+      "decoded": 2001,
+      "uploaded": 2001,
+      "visible": 2001,
+      "state": "ready",
+      "requirement": "WORLD_REQUIRED",
+      "activation": "idle",
+      "role": "required"
+    },
+    "wraps": {
+      "allocated": 0,
+      "decoded": 0,
+      "uploaded": 0,
+      "visible": 0,
+      "state": "pending",
+      "requirement": "ON_DEMAND_REQUIRED",
+      "activation": "idle",
+      "role": "required"
+    },
+    "signage": {
+      "allocated": 97,
+      "decoded": 97,
+      "uploaded": 97,
+      "visible": 97,
+      "state": "ready",
+      "requirement": "WORLD_REQUIRED",
+      "activation": "idle",
+      "role": "required"
+    },
+    "aisleFascia": {
+      "allocated": 97,
+      "decoded": 97,
+      "uploaded": 97,
+      "visible": 97,
+      "state": "ready",
+      "requirement": "WORLD_REQUIRED",
+      "activation": "idle",
+      "representedBy": "signage",
+      "role": "required"
+    },
+    "brandPack": {
+      "allocated": 1,
+      "decoded": 1,
+      "uploaded": 1,
+      "visible": 1,
+      "state": "ready",
+      "requirement": "WORLD_REQUIRED",
+      "activation": "idle",
+      "role": "required"
+    },
+    "canvasTextures": {
+      "allocated": 472,
+      "decoded": 472,
+      "uploaded": 472,
+      "visible": 472,
+      "state": "ready",
+      "requirement": "WORLD_REQUIRED",
+      "activation": "idle",
+      "role": "required"
+    },
+    "fixtureTextures": {
+      "allocated": 8,
+      "decoded": 8,
+      "uploaded": 8,
+      "visible": 8,
+      "state": "ready",
+      "requirement": "WORLD_REQUIRED",
+      "activation": "idle",
+      "role": "required"
+    },
+    "storeLogos": {
+      "allocated": 2,
+      "decoded": 2,
+      "uploaded": 2,
+      "visible": 2,
+      "state": "ready",
+      "requirement": "WORLD_REQUIRED",
+      "activation": "idle",
+      "role": "required"
+    },
+    "crt": {
+      "allocated": 0,
+      "decoded": 0,
+      "uploaded": 0,
+      "visible": 0,
+      "state": "pending",
+      "requirement": "ON_DEMAND_REQUIRED",
+      "activation": "idle",
+      "role": "required"
+    },
+    "floorWallMaterials": {
+      "allocated": 1,
+      "decoded": 1,
+      "uploaded": 1,
+      "visible": 1,
+      "state": "ready",
+      "requirement": "WORLD_REQUIRED",
+      "activation": "idle",
+      "role": "required"
+    },
+    "mediaSurfaces": {
+      "allocated": 0,
+      "decoded": 0,
+      "uploaded": 0,
+      "visible": 0,
+      "state": "pending",
+      "requirement": "ON_DEMAND_REQUIRED",
+      "activation": "idle",
+      "role": "required"
+    },
+    "decorativeFx": {
+      "allocated": 0,
+      "decoded": 0,
+      "uploaded": 0,
+      "visible": 0,
+      "state": "disabled",
+      "requirement": "DECORATIVE",
+      "activation": "idle",
+      "role": "decorative"
+    }
+  },
+  "perf": {
+    "FRAME": {
+      "rollingFps": 10.298661144923436,
+      "meanFrameTime": 97.10000027459243,
+      "p95": 103.5,
+      "p99": 109.9000015258789,
+      "worst": 160.8000030517578,
+      "over1389ms": 115,
+      "longFrames": 115,
+      "uiMode": null,
+      "samples": 116
+    },
+    "STORE_READINESS": {
+      "state": "STORE_INTERACTIVE",
+      "visibleBaseTotal": 2001,
+      "visibleBaseUploaded": 18,
+      "visibleBaseFallback": 1983,
+      "visualReady": true,
+      "timeToVisualReady": 60991.10000000149
+    },
+    "UPLOAD": {
+      "pendingUploads": 1655,
+      "totalUploads": 4020,
+      "staleDrops": 0
+    },
+    "GPU": {
+      "textures": 149,
+      "geometries": 596,
+      "programs": 55,
+      "textureHighWater": 2001,
+      "creates": 2001,
+      "disposes": 0,
+      "residentBaseTitleCount": 2001,
+      "textureBankCount": 1,
+      "selectedBaseShelfResolution": {
+        "w": 96,
+        "h": 144
+      },
+      "estimatedCpuPosterBytes": 110647296,
+      "estimatedGpuPosterBytes": 147529728
+    },
+    "RESIDENCY": {
+      "baseResidentCount": 2001,
+      "baseExpectedCount": 2001,
+      "evictionCount": 0,
+      "reacquisitionCount": 0,
+      "duplicateMappingCount": 0,
+      "invalidFreeOwnedCollisionCount": 0,
+      "mappingOk": true
+    }
+  },
+  "classification": "IWER_EMULATED",
+  "QUEST_HARDWARE": "NOT_EXECUTED"
+}

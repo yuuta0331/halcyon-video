@@ -7,10 +7,11 @@ import * as walk from './store-walk';
 import { posterArtSample, updatePosterWorkingSet } from './store-poster-window';
 import { installXrStartupJournal } from './xr/startup-journal';
 import { pumpTextureUploads, textureArrayManager } from './poster-textures';
-import { setXrContentLiveState, xrContentSnapshot } from './xr/content-diagnostics';
+import { setXrContentLiveState, xrContentLiveState, xrContentSnapshot } from './xr/content-diagnostics';
 import { classifyObjectName } from './xr/content-classes';
 import { brandPackStatus } from './brand-pack';
 import { publishXrPerfDiagnostics } from './xr/perf-diagnostics.ts';
+import { noteStoreWorldClassProgress, refreshStoreVisualReady } from './store-visual-ready';
 
 export function attachXrRuntime(
   scene: StoreScene,
@@ -69,6 +70,10 @@ export function attachXrRuntime(
   return xr;
 }
 
+export function publishStoreWorldContent(scene: StoreScene): void {
+  publishXrContent(scene);
+}
+
 function publishXrContent(scene: StoreScene): void {
   const poster = textureArrayManager.memorySnapshot();
   let signage = 0;
@@ -107,11 +112,13 @@ function publishXrContent(scene: StoreScene): void {
   if (scene.storefrontLogo3D) logos = Math.max(logos, 1);
   fixtures = Math.max(fixtures, scene.slottedFixtures.length);
   const art = posterArtSample();
+  const prev = xrContentLiveState();
+  const posterReady = Math.max(art.withArtCount, prev.posterUploaded ?? 0, prev.posterVisible ?? 0);
   setXrContentLiveState({
-    posterAllocated: poster.physicalSlots || poster.catalogTitleCount,
-    posterDecoded: art.withArtCount,
-    posterUploaded: art.withArtCount,
-    posterVisible: art.withArtCount,
+    posterAllocated: Math.max(poster.catalogTitleCount, poster.physicalSlots, posterReady, prev.posterAllocated ?? 0),
+    posterDecoded: posterReady,
+    posterUploaded: posterReady,
+    posterVisible: posterReady,
     signageVisible: signage,
     aisleFasciaVisible: signage,
     brandPackReady: brandPackStatus() !== 'failed',
@@ -125,6 +132,15 @@ function publishXrContent(scene: StoreScene): void {
     mediaActivated: media > 0,
     environmentReady: !!scene.scene.environment,
   });
+  const snap = xrContentSnapshot();
+  const extras = ['brandPack', 'canvasTextures', 'fixtureTextures', 'storeLogos', 'floorWallMaterials'] as const;
+  noteStoreWorldClassProgress({
+    signageExpected: signage,
+    signageReady: snap.signage.state === 'ready' ? signage : 0,
+    otherExpected: extras.length,
+    otherReady: extras.filter((cls) => snap[cls].state === 'ready').length,
+  });
+  refreshStoreVisualReady();
 }
 
 export async function probeXr(scene: StoreScene): Promise<boolean> {

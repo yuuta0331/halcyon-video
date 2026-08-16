@@ -44,7 +44,7 @@ const CLASSES: XrContentClassPolicy[] = [
     requirement: 'WORLD_REQUIRED',
     desktopFull: true,
     xrSafe: true,
-    reason: 'Shelf face art working set. XR_SAFE uses a 128-slot unique-title window.',
+    reason: 'Shelf face art. STORE_VISIBLE_BASE stays resident for the store scene; quality may drop, residency must not.',
   },
   {
     cls: 'wraps',

@@ -149,9 +149,10 @@ export function choosePhysicalPosterSlots(caps: GpuCapabilities): number {
 }
 
 export function estimateXrSafeFragmentSamplers(): number {
-  // MeshStandardMaterial: map + envMap + loaded-flag LUT + up to 4 shelf banks.
+  // MeshStandardMaterial: map + envMap + loaded-flag LUT + one shelf bank.
+  // Catalog banks are swapped per draw; they do not consume extra samplers.
   // Shadows off. No clearcoat / transmission / AO / dual-resolution preview.
-  return 7;
+  return 4;
 }
 
 export function desktopFullProfile(): ResourceProfile {

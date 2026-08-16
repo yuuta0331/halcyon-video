@@ -107,6 +107,19 @@ export function publishGpuPosterState(): void {
       orphanSlotMappings: mem.orphanSlotMappings,
       cpuBytes: mem.cpuBytes,
       gpuBytes: mem.gpuBytes,
+      cpuBytesActive: mem.cpuBytesActive,
+      cpuBytesAllocated: mem.cpuBytesAllocated,
+      expectedTitles: mem.expectedTitles,
+      logicalMappedTitles: mem.logicalMappedTitles,
+      actuallyRenderableTitles: mem.actuallyRenderableTitles,
+      bankCount: mem.bankCount,
+      layersPerBank: mem.layersPerBank,
+      renderBatchCount: mem.renderBatchCount,
+      samplersPerDraw: mem.samplersPerDraw,
+      arrayLayerCeiling: mem.arrayLayerCeiling,
+      capacityInvariantOk: mem.capacityInvariantOk,
+      shelfWidth: mem.shelfWidth,
+      shelfHeight: mem.shelfHeight,
       cacheBytes: posterPixelCache.byteSize + lowResCache.byteSize,
       cacheBudget: posterPixelCache.budget + lowResCache.budget,
       cacheHits: posterPixelCache.hits + lowResCache.hits,
@@ -205,7 +218,7 @@ export function bindBoundedPosterWindow(_scene: StoreScene, slots: MovieSlot[]):
   cacheSpatial(slots);
   const uniqueIds = [...new Set(slots.map((slot) => slot.movie.id))].sort();
   storeVisibleResidency.bindCatalog(uniqueIds, {
-    maxArrayTextureLayers: Math.max(textureArrayManager.bankSize, uniqueIds.length),
+    maxArrayTextureLayers: textureArrayManager.arrayLayerCeiling,
   });
 
   for (const id of uniqueIds) {
