@@ -784,6 +784,13 @@ async function main() {
             reacqDelta: (after.gpu?.posterReacquisitionCount ?? 0) - (before.gpu?.posterReacquisitionCount ?? 0),
             decodeDelta: (after.ws?.posterDecodeJobsStarted ?? 0) - (before.ws?.posterDecodeJobsStarted ?? 0),
             uploadDelta: (after.ws?.posterUploadJobsStarted ?? 0) - (before.ws?.posterUploadJobsStarted ?? 0),
+            baseUploadDelta: (after.ready?.pendingBaseUpload ?? after.perf?.STORE_VISIBLE_BASE?.pendingUpload ?? 0)
+              - (before.ready?.pendingBaseUpload ?? before.perf?.STORE_VISIBLE_BASE?.pendingUpload ?? 0),
+            baseDecodeDelta: (after.ready?.pendingBaseDecode ?? 0) - (before.ready?.pendingBaseDecode ?? 0),
+            fallbackReplacementDelta: (after.ready?.fallbackReplacementCount ?? 0)
+              - (before.ready?.fallbackReplacementCount ?? 0),
+            pendingBaseAtReady: before.ready?.pendingBaseWork ?? before.perf?.STORE_VISIBLE_BASE?.pendingWork ?? null,
+            pendingBaseUploadAtReady: before.ready?.pendingBaseUpload ?? null,
             residentBefore: before.gpu?.posterResidentTitles ?? null,
             residentAfter: after.gpu?.posterResidentTitles ?? null,
             posterWidth: after.gpu?.posterBaseWidth ?? after.gpu?.shelfWidth ?? null,
@@ -803,6 +810,9 @@ async function main() {
           && walked.reacqDelta === 0
           && walked.decodeDelta === 0
           && walked.uploadDelta === 0
+          && (walked.baseUploadDelta ?? 0) === 0
+          && (walked.fallbackReplacementDelta ?? 0) === 0
+          && (walked.pendingBaseAtReady ?? 0) === 0
           && walked.residentBefore === walked.residentAfter
           && (walked.residentAfter ?? 0) > 0;
         return { pass, ...walked };
@@ -810,7 +820,7 @@ async function main() {
     ));
 
     evidence.scenarios.push(await runScenario(
-      browser, 'JP4A_ROUND3_XR', '?demo=1&nogate=1&xrEmu=1&xrSafe=1',
+      browser, 'JP4A_ROUND4_XR', '?demo=1&nogate=1&xrEmu=1&xrSafe=1',
       async (page) => {
         const jp4aDir = path.join(root, 'docs', 'review', 'jp4a');
         fs.mkdirSync(jp4aDir, { recursive: true });
@@ -822,7 +832,11 @@ async function main() {
           }
           const visualReady = window.__storeReadiness?.()?.visualReady === true;
           const readySnap = window.__storeReadiness?.();
+          const perfBefore = window.__xrPerfDiagnostics?.();
           const contentBefore = window.__xrContent?.() ?? window.__gpuDiagnostics?.()?.xrContent ?? null;
+          const pendingBaseAtEntry = readySnap?.pendingBaseWork ?? perfBefore?.STORE_VISIBLE_BASE?.pendingWork ?? null;
+          const pendingBaseUploadAtEntry = readySnap?.pendingBaseUpload
+            ?? perfBefore?.STORE_VISIBLE_BASE?.pendingUpload ?? null;
           const xr = window.__xrTest;
           const entered = xr ? await xr.enter() : { ok: false, error: 'no __xrTest' };
           const untilWorld = Date.now() + 8000;
@@ -887,6 +901,8 @@ async function main() {
           await xr?.exit?.();
           return {
             visualReady,
+            pendingBaseAtEntry,
+            pendingBaseUploadAtEntry,
             worldReadyBefore: contentBefore?.worldReady === true || readySnap?.worldReady === true,
             requiredReadyBefore: contentBefore?.requiredReady === true || readySnap?.requiredReady === true,
             entered,
@@ -909,10 +925,12 @@ async function main() {
             QUEST_HARDWARE: 'NOT_EXECUTED',
           };
         });
-        fs.writeFileSync(path.join(jp4aDir, 'iwer-jp4a-round3.json'), JSON.stringify(scrub(result), null, 2));
+        fs.writeFileSync(path.join(jp4aDir, 'iwer-jp4a-round4.json'), JSON.stringify(scrub(result), null, 2));
         const pass = result.visualReady === true
           && result.worldReadyBefore === true
           && result.requiredReadyBefore === true
+          && (result.pendingBaseAtEntry ?? 0) === 0
+          && (result.pendingBaseUploadAtEntry ?? 0) === 0
           && !!result.entered?.ok
           && result.framebufferScale === 0.8
           && result.foveation === 0.5

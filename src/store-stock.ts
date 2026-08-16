@@ -8,7 +8,7 @@
 import * as THREE from 'three';
 import { Movie } from './jellyfin';
 import { buildGoldClamshellFillers, getGoldCaseMaterials, repaintGoldCase } from './fixtures/gold-clamshell';
-import { posterQueue, CASE_MEDIUM, CASE_HEIGHT, CASE_DEPTH, textureArrayManager, createClonedCaseGeometry, getGlobalFrontMaterials, getGlobalBackMaterials, updateGlobalMaterialsEnvMap, leftmostColorCache, posterPixelCache, reflectionProbes, isGlobalMaterial, lowResCache, createProgramWarmupMaterials, gameShapeKey, gameDimsForShape, gameCaseDims, gameRentalDims, rentalBottomLift, rentalBoxDepth, rentalBoxHeight, SERIES_DEPTH_MULT } from './video-case';
+import { posterQueue, CASE_MEDIUM, CASE_HEIGHT, CASE_DEPTH, textureArrayManager, createClonedCaseGeometry, getGlobalFrontMaterials, getGlobalBackMaterials, updateGlobalMaterialsEnvMap, leftmostColorCache, posterPixelCache, reflectionProbes, isGlobalMaterial, lowResCache, createProgramWarmupMaterials, gameShapeKey, gameDimsForShape, gameCaseDims, gameRentalDims, rentalBottomLift, rentalBoxDepth, rentalBoxHeight, SERIES_DEPTH_MULT, setUploadTurbo } from './video-case';
 import { AISLE_SHELF_HEIGHTS, WALL_SHELF_HEIGHTS, LEAN_ANGLE, STAGGER_OFFSET, UNIT_SIDE_CAPACITY, BACK_WALL_UNIT_IDX, sideEntrySlot, COPY_X_JITTER_RANGE, EXTRA_COPY_DEPTH_STEP, extraCopiesCount, isUnstockedTitle, seededRandom01, MovieSlot } from './store-layout';
 import {
   classifySlotPriority,
@@ -31,9 +31,12 @@ import {
   isStoreVisualReady,
   noteStoreVisibleResolved,
   publishStoreReadinessWindow,
+  refreshStoreVisualReady,
   storeVisualReadyPromise,
 } from './store-visual-ready';
+import { storeVisibleWork } from './perf/store-visible-work';
 import { applyPosterBankDrawBatches } from './store-poster-bank-draws';
+import { publishProductionMultibankProbe } from './perf/production-multibank-probe';
 import { publishStoreWorldContent } from './store-xr';
 import { validateCaseFit, type CaseFitPair } from './layout-validator';
 import { retailAudio } from './audio';
@@ -592,7 +595,7 @@ export function buildAllMovieBoxes(scene: StoreScene) {
 
     slot.loadShelfDetails = (priority = 1, onSettled?: () => void) => {
       if (textureArrayManager.residencyBound && textureArrayManager.peekIndex(slot.movie.id) == null) {
-        textureArrayManager.uploadMissingCoverFallback(slot.movie.id);
+        textureArrayManager.commitStableFallback(slot.movie.id);
         noteStoreVisibleResolved(slot.movie.id, 'fallback');
         onSettled?.();
         return;
@@ -604,26 +607,14 @@ export function buildAllMovieBoxes(scene: StoreScene) {
         const lowResBitmap = lowResCache.get(slot.movie.id);
 
         if (scene.renderer) {
-          // updateLOD() re-runs this on every browse keypress once caches
-          // are warm; queueLowRes/queueHighRes dedupe at queue time so the
-          // re-runs are no-ops (issues #98/#104), and the budgeted upload
-          // queue keeps a warm-cache shelf reveal from paying dozens of
-          // synchronous GPU uploads in a single frame.
           if (lowResBitmap) {
             textureArrayManager.queueLowRes(scene.renderer, slot.movie.id, lowResBitmap);
           }
-          // Background priority normally leaves the full-res upload for later —
-          // except for a title whose only layer IS the full-res one (an
-          // overflowed catalog, see poster-textures.ts POSTER_BANKS), where
-          // skipping it means the case never paints at all.
           if ((priority >= 1 || textureArrayManager.usesHighResOnly(slot.movie.id)) && highResBitmap) {
             textureArrayManager.queueHighRes(scene.renderer, slot.movie.id, highResBitmap);
           }
         }
-
         const hexColor = leftmostColorCache.get(slot.movie.id) || '#0f172a';
-        // Skip the write + full-buffer re-upload when the colour already in
-        // the attribute is identical (the warm-cache case on every keypress).
         if (lastWrittenSpineHex.get(slot) !== hexColor) {
           lastWrittenSpineHex.set(slot, hexColor);
           scratchSpineColor.set(hexColor);
@@ -639,62 +630,44 @@ export function buildAllMovieBoxes(scene: StoreScene) {
           }
         }
         onSettled?.();
-        if (textureArrayManager.hasArt(slot.movie.id)) {
-          noteStoreVisibleResolved(slot.movie.id, 'uploaded');
-        }
         return;
       }
 
-      // A posterPixelCache MISS here can mean two different things at real
-      // catalog scale: this title was never decoded (needs a real decode), or
-      // it WAS decoded and its art already reached the GPU array — only its
-      // CPU pixel-cache entry got evicted to stay under budget. Once a GPU
-      // array layer is uploaded it is never evicted (unlike posterPixelCache/
-      // lowResCache), so in the second case the shelf already looks correct
-      // and redecoding would only refill a CPU cache this call doesn't need.
-      // Skipping that redundant redecode matters because updateLOD() re-runs
-      // loadShelfDetails on every browse keypress for every slot it touches
-      // — without this check, a bounded cache turned that into "every aisle
-      // change re-decodes its shelves in a churn storm" (observed 2026-08-05).
-      // Check whichever resolution THIS call actually needs: background
-      // priority only needs low-res on screen, full priority needs high-res
-      // specifically (matches the priority gate above).
       const needsHighRes = priority >= 1 || textureArrayManager.usesHighResOnly(slot.movie.id);
       const alreadyOnGPU = needsHighRes
         ? textureArrayManager.hasHighRes(slot.movie.id)
         : textureArrayManager.hasArt(slot.movie.id);
       if (alreadyOnGPU) {
-        noteStoreVisibleResolved(slot.movie.id, 'uploaded');
         onSettled?.();
         return;
       }
 
       if (!slot.movie.posterUrl) {
-        textureArrayManager.uploadMissingCoverFallback(slot.movie.id);
+        textureArrayManager.commitStableFallback(slot.movie.id);
         noteStoreVisibleResolved(slot.movie.id, 'fallback');
         onSettled?.();
         return;
       }
 
+      const generation = storeVisibleWork.currentGeneration();
+      const scope = storeVisibleWork.scopeFor(slot.movie.id);
       notePosterDecodeJob();
+      storeVisibleWork.noteDecodeStart(scope);
+      let queuedReal = false;
       posterQueue.load(slot.movie, priority, (pixels) => {
+        if (!storeVisibleWork.allowsGpuMutation(slot.movie.id, generation)) return;
         if (scene.renderer) {
-          // Fresh decodes are queued (budgeted, flag flips tied to the real
-          // upload) by the posterQueue completion handler itself — these
-          // dedupe to no-ops there, and catch the cached-pixels path where
-          // that handler never ran (e.g. warm cache after a rebuild).
           const lowResBitmap = lowResCache.get(slot.movie.id);
           if (lowResBitmap) {
             textureArrayManager.queueLowRes(scene.renderer, slot.movie.id, lowResBitmap);
+            queuedReal = true;
           }
           if (priority >= 1 || textureArrayManager.usesHighResOnly(slot.movie.id)) {
             textureArrayManager.queueHighRes(scene.renderer, slot.movie.id, pixels);
+            queuedReal = true;
           }
         }
         const hexColor = leftmostColorCache.get(slot.movie.id) || '#0f172a';
-        // Same skip as the warm-cache path above: fresh decodes usually DO
-        // change the colour (placeholder navy → real spine hex), but a
-        // re-fire with identical colour must not re-upload two buffers.
         if (lastWrittenSpineHex.get(slot) !== hexColor) {
           lastWrittenSpineHex.set(slot, hexColor);
           scratchSpineColor.set(hexColor);
@@ -712,8 +685,9 @@ export function buildAllMovieBoxes(scene: StoreScene) {
         slot.needsInitialMatrixUpdate = true;
         scene.dirtySlots.add(slot);
       }, () => {
-        if (!textureArrayManager.hasArt(slot.movie.id)) {
-          textureArrayManager.uploadMissingCoverFallback(slot.movie.id);
+        storeVisibleWork.noteDecodeEnd(scope);
+        if (!queuedReal && !textureArrayManager.hasArt(slot.movie.id)) {
+          textureArrayManager.commitStableFallback(slot.movie.id);
           noteStoreVisibleResolved(slot.movie.id, 'fallback');
         }
         onSettled?.();
@@ -983,6 +957,7 @@ export function buildAllMovieBoxes(scene: StoreScene) {
   const allSlots = Array.from(scene.slotsByPosition.values());
   bindBoundedPosterWindow(scene, allSlots);
   applyPosterBankDrawBatches(scene);
+  publishProductionMultibankProbe(scene);
   publishStoreWorldContent(scene);
 
   // Mark attributes as needing update so they are uploaded to GPU
@@ -1030,28 +1005,29 @@ export function buildAllMovieBoxes(scene: StoreScene) {
     `shelf=${textureArrayManager.shelfWidth}x${textureArrayManager.shelfHeight}`,
   );
   scene.texturesReadyPromise = (async () => {
-    await settle(uniqueWork, posterPriorityNumber('P0'));
-    const deadline = (typeof performance !== 'undefined' ? performance.now() : Date.now()) + 90_000;
-    while (!isStoreVisualReady() && (typeof performance !== 'undefined' ? performance.now() : Date.now()) < deadline) {
-      for (const id of uniqueIds) {
-        if (textureArrayManager.hasArt(id)) {
+    setUploadTurbo(true);
+    try {
+      await settle(uniqueWork, posterPriorityNumber('P0'));
+      const deadline = (typeof performance !== 'undefined' ? performance.now() : Date.now()) + 90_000;
+      while (!isStoreVisualReady() && (typeof performance !== 'undefined' ? performance.now() : Date.now()) < deadline) {
+        refreshStoreVisualReady();
+        if (isStoreVisualReady()) break;
+        await new Promise((r) => setTimeout(r, 50));
+      }
+      if (!isStoreVisualReady()) {
+        for (const id of uniqueIds) {
+          if (storeVisibleWork.terminalState(id) === 'REAL_READY') continue;
+          textureArrayManager.commitStableFallback(id);
           noteStoreVisibleResolved(id, textureArrayManager.isFallback(id) ? 'fallback' : 'uploaded');
         }
+        refreshStoreVisualReady();
       }
-      if (isStoreVisualReady()) break;
-      await new Promise((r) => setTimeout(r, 50));
+      await storeVisualReadyPromise();
+      publishStoreWorldContent(scene);
+      scene.warmupRuntimePrograms();
+    } finally {
+      setUploadTurbo(false);
     }
-    if (!isStoreVisualReady()) {
-      for (const id of uniqueIds) {
-        if (!textureArrayManager.hasArt(id)) {
-          textureArrayManager.uploadMissingCoverFallback(id);
-        }
-        noteStoreVisibleResolved(id, textureArrayManager.isFallback(id) ? 'fallback' : 'uploaded');
-      }
-    }
-    await storeVisualReadyPromise();
-    publishStoreWorldContent(scene);
-    scene.warmupRuntimePrograms();
   })();
   scene.texturesReadyPromise.then(() => {
     queueMicrotask(() => releaseBootPosterPins());

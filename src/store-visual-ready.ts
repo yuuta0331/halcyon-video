@@ -4,6 +4,7 @@
 
 import { t, tfill } from './i18n/index.ts';
 import { storeVisibleResidency } from './store-visible-residency.ts';
+import { storeVisibleWork } from './perf/store-visible-work.ts';
 import {
   resetXrContentLiveStateForTests,
   setXrContentLiveState,
@@ -25,6 +26,15 @@ export interface StoreVisibleProgress {
   postersUploaded: number;
   postersFallback: number;
   postersResolved: number;
+  postersMissing: number;
+  pendingBaseWork: number;
+  pendingBaseUpload: number;
+  pendingBaseDecode: number;
+  onDemandPendingWork: number;
+  lateRealUploadRejected: number;
+  staleGenerationDrops: number;
+  fallbackReplacementCount: number;
+  workGeneration: number;
   signageExpected: number;
   signageReady: number;
   otherExpected: number;
@@ -55,7 +65,7 @@ function nowMs(): number {
 function postersResolved(): number {
   let n = 0;
   for (const id of expectedIds) {
-    if (resolved.has(id)) n++;
+    if (storeVisibleWork.terminalState(id)) n++;
   }
   return n;
 }
@@ -63,7 +73,7 @@ function postersResolved(): number {
 function postersUploaded(): number {
   let n = 0;
   for (const id of expectedIds) {
-    if (resolved.get(id) === 'uploaded') n++;
+    if (storeVisibleWork.terminalState(id) === 'REAL_READY' || resolved.get(id) === 'uploaded') n++;
   }
   return n;
 }
@@ -71,7 +81,8 @@ function postersUploaded(): number {
 function postersFallback(): number {
   let n = 0;
   for (const id of expectedIds) {
-    if (resolved.get(id) === 'fallback') n++;
+    if (storeVisibleWork.terminalState(id) === 'STABLE_FALLBACK') n++;
+    else if (resolved.get(id) === 'fallback' && storeVisibleWork.terminalState(id) !== 'REAL_READY') n++;
   }
   return n;
 }
@@ -99,6 +110,7 @@ function worldClassesReady(): boolean {
 function computeVisualReady(): boolean {
   if (state === 'STORE_GEOMETRY_READY' && startedAt == null) return false;
   if (postersResolved() < expectedIds.size) return false;
+  if (storeVisibleWork.scopedPending('STORE_VISIBLE_BASE').work > 0) return false;
   if (!capacityOk()) return false;
   if (signageExpected > 0 && signageReady < signageExpected) return false;
   if (otherExpected > 0 && otherReady < otherExpected) return false;
@@ -127,6 +139,7 @@ export function resetStoreVisualReady(): void {
   startedAt = null;
   readyAt = null;
   waiters = [];
+  storeVisibleWork.reset();
   resetXrContentLiveStateForTests();
 }
 
@@ -139,6 +152,7 @@ export function beginStoreVisibleLoading(input: {
 }): void {
   expectedIds = new Set(input.posterIds);
   resolved.clear();
+  storeVisibleWork.beginScene(expectedIds);
   signageExpected = Math.max(0, input.signageExpected ?? 0);
   signageReady = Math.max(0, input.signageReady ?? 0);
   otherExpected = Math.max(0, input.otherExpected ?? 0);
@@ -162,10 +176,27 @@ export function noteStoreWorldClassProgress(input: {
   maybeReady();
 }
 
-export function noteStoreVisibleResolved(movieId: string, kind: StoreVisibleResolveKind): void {
+export function noteStoreVisibleResolved(
+  movieId: string,
+  kind: StoreVisibleResolveKind,
+  opts?: { terminal?: boolean },
+): void {
   if (!expectedIds.has(movieId)) return;
   const prev = resolved.get(movieId);
-  if (prev === 'uploaded' && kind === 'fallback') return;
+  if (kind === 'uploaded') {
+    if (storeVisibleWork.isStableFallback(movieId)) {
+      storeVisibleWork.noteLateRealRejected();
+      return;
+    }
+    if (!storeVisibleWork.commitTerminal(movieId, 'REAL_READY')) return;
+    if (prev === 'fallback') storeVisibleWork.noteFallbackReplacedByReal();
+  } else {
+    if (prev === 'uploaded' && storeVisibleWork.terminalState(movieId) === 'REAL_READY') return;
+    const terminal = opts?.terminal ?? true;
+    if (terminal) {
+      if (!storeVisibleWork.commitTerminal(movieId, 'STABLE_FALLBACK')) return;
+    }
+  }
   if (prev === kind) return;
   resolved.set(movieId, kind);
   maybeReady();
@@ -206,6 +237,7 @@ export function storeVisibleProgress(): StoreVisibleProgress {
   const uploaded = postersUploaded();
   const fallback = postersFallback();
   const resolvedCount = postersResolved();
+  const work = storeVisibleWork.snapshot();
   const snap = xrContentSnapshot();
   const others = remainingWorldReadyCount();
   return {
@@ -214,6 +246,15 @@ export function storeVisibleProgress(): StoreVisibleProgress {
     postersUploaded: uploaded,
     postersFallback: fallback,
     postersResolved: resolvedCount,
+    postersMissing: Math.max(0, postersExpected - resolvedCount),
+    pendingBaseWork: work.pendingWork,
+    pendingBaseUpload: work.pendingUpload,
+    pendingBaseDecode: work.pendingDecode,
+    onDemandPendingWork: work.onDemandPendingWork,
+    lateRealUploadRejected: work.lateRealUploadRejected,
+    staleGenerationDrops: work.staleGenerationDrops,
+    fallbackReplacementCount: work.fallbackReplacementCount,
+    workGeneration: work.generation,
     signageExpected: Math.max(signageExpected, snap.signage.visible, snap.signage.allocated),
     signageReady: snap.signage.state === 'ready'
       ? Math.max(signageReady, snap.signage.visible, snap.signage.uploaded)

@@ -3,6 +3,7 @@ import { getCurrentWindow } from '@tauri-apps/api/window';
 import { measureDisplayHz } from './display-hz';
 import { installDebugLog, debugLogPath } from './debug-log';
 import { bootMark, installBootDiagnostics } from './perf/boot-diagnostics';
+import { readResourceFlags } from './perf/resource-profile';
 import { installXrEmulatorIfRequested } from './dev/install-xr-emu';
 
 // Before anything else that might fail: a packaged build has no devtools and
@@ -236,7 +237,7 @@ async function loadDiscoveryMovies(): Promise<void> {
   // Demo: no Jellyseerr server, but the shelved suggestions and the clerk's
   // "want me to order it?" dialog should still be showcased.
   if (isDemoMode) {
-    discoveryMovies = buildDemoDiscovery(24);
+    discoveryMovies = readResourceFlags().multibank ? [] : buildDemoDiscovery(24);
     return;
   }
   const TIMEOUT_MS = 15_000;

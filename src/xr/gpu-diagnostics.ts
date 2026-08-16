@@ -6,6 +6,7 @@ import {
   activeResourceProfile,
   type GpuCapabilities,
 } from '../perf/resource-profile.ts';
+import { testPosterArrayLayerCeiling } from '../perf/test-array-layer-ceiling.ts';
 import { estimatePosterArrayBytes } from '../poster-residency.ts';
 import { xrContentSnapshot, type XrContentSnapshot } from './content-diagnostics.ts';
 
@@ -42,6 +43,8 @@ export interface GpuDiagnostics {
   maxTextureSize: number | null;
   maxCubemapSize: number | null;
   maxArrayTextureLayers: number | null;
+  effectiveTestMaxArrayTextureLayers: number | null;
+  hardwareMaxArrayTextureLayers: number | null;
   maxRenderbufferSize: number | null;
   maxSamples: number | null;
   rendererTextures: number | null;
@@ -55,6 +58,7 @@ export interface GpuDiagnostics {
   posterBankCount: number | null;
   posterLayersPerBank: number | null;
   posterRenderBatchCount: number | null;
+  posterSourceMeshCount: number | null;
   posterSamplersPerDraw: number | null;
   posterBaseWidth: number | null;
   posterBaseHeight: number | null;
@@ -193,6 +197,8 @@ export interface GpuLiveState {
     renderBatchCount?: number;
     samplersPerDraw?: number;
     arrayLayerCeiling?: number;
+    hardwareMaxArrayTextureLayers?: number;
+    sourcePosterMeshCount?: number;
     capacityInvariantOk?: boolean;
     shelfWidth?: number;
     shelfHeight?: number;
@@ -318,6 +324,8 @@ export function gpuDiagnosticsSnapshot(): GpuDiagnostics {
     maxTextureSize: caps?.maxTextureSize ?? null,
     maxCubemapSize: caps?.maxCubemapSize ?? null,
     maxArrayTextureLayers: caps?.maxArrayTextureLayers ?? null,
+    hardwareMaxArrayTextureLayers: caps?.maxArrayTextureLayers ?? null,
+    effectiveTestMaxArrayTextureLayers: testPosterArrayLayerCeiling(),
     maxRenderbufferSize: caps?.maxRenderbufferSize ?? null,
     maxSamples: caps?.maxSamples ?? null,
     rendererTextures: mem?.textures ?? null,
@@ -331,6 +339,7 @@ export function gpuDiagnosticsSnapshot(): GpuDiagnostics {
     posterBankCount: poster?.bankCount ?? null,
     posterLayersPerBank: poster?.layersPerBank ?? null,
     posterRenderBatchCount: poster?.renderBatchCount ?? null,
+    posterSourceMeshCount: poster?.sourcePosterMeshCount ?? null,
     posterSamplersPerDraw: poster?.samplersPerDraw ?? 1,
     posterBaseWidth: poster?.shelfWidth ?? null,
     posterBaseHeight: poster?.shelfHeight ?? null,

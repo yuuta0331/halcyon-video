@@ -1,0 +1,89 @@
+{
+  "classification": "DESKTOP_BROWSER",
+  "evidenceKind": "STORE_VISIBLE_BASE_DRAIN",
+  "pass": true,
+  "snapshot": {
+    "classification": "DESKTOP_BROWSER",
+    "STORE_VISIBLE_BASE": {
+      "expected": 2001,
+      "realReady": 2001,
+      "stableFallback": 0,
+      "missing": 0,
+      "pendingWorkAtVisualReady": 0,
+      "pendingUploadAtVisualReady": 0,
+      "pendingDecodeAtVisualReady": 0,
+      "lateRealUploadRejected": 0,
+      "staleGenerationDrops": 0
+    },
+    "STORE": {
+      "visualReady": true,
+      "worldReady": true,
+      "requiredReady": true,
+      "interactive": true,
+      "state": "STORE_INTERACTIVE"
+    },
+    "RESIDENCY": {
+      "mapped": 2001,
+      "actuallyRenderable": 2001,
+      "resident": 2001,
+      "invariantOk": true
+    },
+    "GPU": {
+      "contextLost": false,
+      "maxArrayTextureLayers": 2048,
+      "effectiveTestMaxArrayTextureLayers": null
+    },
+    "UPLOAD": {
+      "pendingUploads": 0,
+      "pendingBaseUploads": 0,
+      "pendingOnDemandUploads": 0,
+      "totalUploads": 4020,
+      "staleDrops": 0,
+      "work": {
+        "generation": 2,
+        "expected": 2001,
+        "realReady": 2001,
+        "stableFallback": 0,
+        "missing": 0,
+        "pendingDecode": 0,
+        "pendingUpload": 0,
+        "pendingWork": 0,
+        "onDemandPendingWork": 0,
+        "lateRealUploadRejected": 0,
+        "staleGenerationDrops": 0,
+        "fallbackReplacementCount": 0
+      }
+    },
+    "ws": {
+      "bootPinsActive": false,
+      "bootPinsReleasedAt": 57483.19999998808,
+      "posterPinnedCount": 2001,
+      "posterWorkingSetVersion": 1,
+      "posterWorkingSetUpdates": 0,
+      "posterDesiredCount": 2001,
+      "posterInitialP0Count": 2001,
+      "posterInitialP1ResidentCount": 0,
+      "posterInitialP1CandidateCount": 0,
+      "posterInitialWorkingSetCount": 2001,
+      "p1ScheduledAtBoot": 0,
+      "p1RejectedAtBoot": 0,
+      "posterEnteredWorkingSetCount": 0,
+      "posterLeftWorkingSetCount": 0,
+      "posterAcquisitionCount": 2001,
+      "posterReacquisitionCount": 0,
+      "posterEvictionCount": 0,
+      "posterResidentHighWaterMark": 2001,
+      "posterResidentCount": 2001,
+      "posterPhysicalSlots": 2001,
+      "posterStaleUploadDrops": 0,
+      "posterDecodeJobsStarted": 2001,
+      "posterUploadJobsStarted": 4020,
+      "lastDesiredHash": -214624913,
+      "lastTransition": null,
+      "residencyInvariantOk": true,
+      "duplicatePhysicalOwners": 0,
+      "freeOwnedCollisions": 0
+    }
+  },
+  "QUEST_HARDWARE": "NOT_EXECUTED"
+}

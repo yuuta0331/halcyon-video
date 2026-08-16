@@ -1,0 +1,147 @@
+{
+  "name": "JP4A_PRODUCTION_MULTIBANK",
+  "classification": "DESKTOP_BROWSER",
+  "evidenceKind": "PRODUCTION_SHELF_RENDER",
+  "pass": true,
+  "probe": {
+    "classification": "DESKTOP_BROWSER",
+    "evidenceKind": "PRODUCTION_SHELF_RENDER",
+    "actualHardwareMaxArrayTextureLayers": 2048,
+    "effectiveTestMaxArrayTextureLayers": 8,
+    "catalogTitleCount": 24,
+    "catalogBankCount": 3,
+    "layersPerBank": 8,
+    "sourceShelfMeshCount": 3,
+    "posterRenderBatchCountAfterSplit": 9,
+    "posterBatchUpperBound": 9,
+    "batchBoundOk": true,
+    "rendererDrawCalls": 144,
+    "samplersPerDraw": 1,
+    "sampled": [
+      {
+        "movieId": "mb_000",
+        "globalPosterIndex": 0,
+        "bank": 0,
+        "localLayer": 0,
+        "expectedRgb": [
+          255,
+          24,
+          24
+        ],
+        "renderedRgba": [
+          255,
+          40,
+          40,
+          255
+        ],
+        "distinguishable": true,
+        "blackOrUninitialized": false
+      },
+      {
+        "movieId": "mb_007",
+        "globalPosterIndex": 7,
+        "bank": 0,
+        "localLayer": 7,
+        "expectedRgb": [
+          180,
+          32,
+          255
+        ],
+        "renderedRgba": [
+          255,
+          51,
+          255,
+          255
+        ],
+        "distinguishable": true,
+        "blackOrUninitialized": false
+      },
+      {
+        "movieId": "mb_008",
+        "globalPosterIndex": 8,
+        "bank": 1,
+        "localLayer": 0,
+        "expectedRgb": [
+          24,
+          255,
+          160
+        ],
+        "renderedRgba": [
+          40,
+          255,
+          232,
+          255
+        ],
+        "distinguishable": true,
+        "blackOrUninitialized": false
+      },
+      {
+        "movieId": "mb_015",
+        "globalPosterIndex": 15,
+        "bank": 1,
+        "localLayer": 7,
+        "expectedRgb": [
+          40,
+          40,
+          120
+        ],
+        "renderedRgba": [
+          27,
+          38,
+          65,
+          255
+        ],
+        "distinguishable": true,
+        "blackOrUninitialized": false
+      },
+      {
+        "movieId": "mb_016",
+        "globalPosterIndex": 16,
+        "bank": 2,
+        "localLayer": 0,
+        "expectedRgb": [
+          255,
+          90,
+          24
+        ],
+        "renderedRgba": [
+          255,
+          133,
+          40,
+          255
+        ],
+        "distinguishable": true,
+        "blackOrUninitialized": false
+      },
+      {
+        "movieId": "mb_023",
+        "globalPosterIndex": 23,
+        "bank": 2,
+        "localLayer": 7,
+        "expectedRgb": [
+          255,
+          160,
+          80
+        ],
+        "renderedRgba": [
+          255,
+          232,
+          119,
+          255
+        ],
+        "distinguishable": true,
+        "blackOrUninitialized": false
+      }
+    ],
+    "allSampledDistinguishable": true,
+    "crossBankAliasing": false,
+    "blackOrUninitialized": false,
+    "duplicateLiveSourceMeshes": false,
+    "liveFrontMeshCount": 18,
+    "glFatal": false,
+    "contextLost": false,
+    "pass": true
+  },
+  "actualHardwareMaxArrayTextureLayers": 2048,
+  "effectiveTestMaxArrayTextureLayers": 8
+}

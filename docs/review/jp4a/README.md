@@ -15,6 +15,11 @@ merge `351947a`. This slice does not reopen that verdict.
 | `investigation.md` | Content-class inventory and root cause |
 | `quest-smoke-checklist.md` | Prepared Quest 3 smoke (do not run until independent review) |
 | `iwer-jp4a-ui.json` | Isolated IWER menu/settings/parity harness (written by `test:xr-emu`) |
+| `jp4a-round4-review.md` | Round 4 independent-review package (not Quest-ready) |
+| `jp4a-round4-preload-stability.json` | DESKTOP_BROWSER STORE_VISIBLE_BASE drain |
+| `jp4a-round4-production-multibank.json` | DESKTOP_BROWSER production shelf 3+ bank render |
+| `iwer-jp4a-round4.json` | IWER_EMULATED Round 4 XR flow (not Quest) |
+| `jp4a-normal-stable-store.json` | Non-XR / desktop walk residency after reveal |
 
 Related: visual quality / aliasing is **JP-5** (`docs/review/jp5/`).
 Do not start JP-4B until JP-4A is accepted.

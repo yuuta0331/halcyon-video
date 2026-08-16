@@ -3,6 +3,8 @@
 import { fpsMeterReadout } from '../fps-meter.ts';
 import { pendingTextureUploads, posterUploadJobsStarted } from '../perf/texture-upload-queue.ts';
 import { storeVisibleProgress } from '../store-visual-ready.ts';
+import { storeVisibleWork } from '../perf/store-visible-work.ts';
+import { pendingScopedTextureUploads } from '../perf/texture-upload-queue.ts';
 import { storeVisibleResidency } from '../store-visible-residency.ts';
 import { textureArrayManager } from '../poster-textures.ts';
 import { gpuDiagnosticsSnapshot } from './gpu-diagnostics.ts';
@@ -31,13 +33,33 @@ export function xrPerfDiagnostics(): Record<string, unknown> {
       visibleBaseTotal: ready.postersExpected,
       visibleBaseUploaded: ready.postersUploaded,
       visibleBaseFallback: ready.postersFallback,
+      visibleBaseMissing: ready.postersMissing,
       visualReady: ready.visualReady,
+      worldReady: ready.worldReady,
+      requiredReady: ready.requiredReady,
       timeToVisualReady: ready.timeToVisualReady,
+    },
+    STORE_VISIBLE_BASE: {
+      expected: ready.postersExpected,
+      realReady: ready.postersUploaded,
+      stableFallback: ready.postersFallback,
+      missing: ready.postersMissing,
+      pendingWork: ready.pendingBaseWork,
+      pendingUpload: ready.pendingBaseUpload,
+      pendingDecode: ready.pendingBaseDecode,
+      pendingWorkQueued: pendingScopedTextureUploads('STORE_VISIBLE_BASE'),
+      lateRealUploadRejected: ready.lateRealUploadRejected,
+      staleGenerationDrops: ready.staleGenerationDrops,
+      fallbackReplacementCount: ready.fallbackReplacementCount,
+      generation: ready.workGeneration,
     },
     UPLOAD: {
       pendingUploads: pendingTextureUploads(),
+      pendingBaseUploads: pendingScopedTextureUploads('STORE_VISIBLE_BASE'),
+      pendingOnDemandUploads: pendingScopedTextureUploads('ON_DEMAND'),
       totalUploads: posterUploadJobsStarted(),
       staleDrops: mem.staleUploadDrops,
+      work: storeVisibleWork.snapshot(),
     },
     GPU: {
     textures: gpu.rendererTextures,

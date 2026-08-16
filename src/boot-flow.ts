@@ -27,7 +27,8 @@ import {
   closeMembershipCardPicker,
   type MembershipLoginSession,
 } from './membership-cards';
-import { buildDemoLibraries, buildDemoGames } from './demo-library';
+import { buildDemoLibraries, buildDemoGames, buildUniqueCoverLibraries } from './demo-library';
+import { readResourceFlags } from './perf/resource-profile';
 import { getSetting } from './settings';
 import { bootMark } from './perf/boot-diagnostics';
 import { isDemoMode } from './demo-mode';
@@ -468,8 +469,14 @@ export function startDemoAndLoad() {
   bootMark('credentialStart');
   bootMark('credentialEnd');
   bootMark('catalogStart');
-  deps.setLibraries(buildDemoLibraries(900));
-  deps.setGames(buildDemoGames(60));
+  const flags = readResourceFlags();
+  if (flags.multibank) {
+    deps.setLibraries(buildUniqueCoverLibraries(flags.catalog ?? 24));
+    deps.setGames([]);
+  } else {
+    deps.setLibraries(buildDemoLibraries(900));
+    deps.setGames(buildDemoGames(60));
+  }
   bootMark('catalogEnd');
   bootMark('sidecarsStart');
   bootMark('sidecarsEnd');

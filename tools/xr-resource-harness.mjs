@@ -246,6 +246,70 @@ async function main() {
       waitUntil: 'domcontentloaded', timeout: 60_000,
     });
     const storeBoot = await waitReady(storePage);
+    const preloadSnap = await storePage.evaluate(() => {
+      const ready = window.__storeReadiness?.() ?? null;
+      const perf = window.__xrPerfDiagnostics?.() ?? null;
+      const gpu = window.__gpuDiagnostics?.() ?? null;
+      const ws = window.__posterWorkingSet?.() ?? null;
+      return {
+        classification: 'DESKTOP_BROWSER',
+        STORE_VISIBLE_BASE: {
+          expected: ready?.postersExpected ?? null,
+          realReady: ready?.postersUploaded ?? null,
+          stableFallback: ready?.postersFallback ?? null,
+          missing: ready?.postersMissing ?? null,
+          pendingWorkAtVisualReady: ready?.pendingBaseWork ?? null,
+          pendingUploadAtVisualReady: ready?.pendingBaseUpload ?? null,
+          pendingDecodeAtVisualReady: ready?.pendingBaseDecode ?? null,
+          lateRealUploadRejected: ready?.lateRealUploadRejected ?? null,
+          staleGenerationDrops: ready?.staleGenerationDrops ?? null,
+        },
+        STORE: {
+          visualReady: ready?.visualReady ?? null,
+          worldReady: ready?.worldReady ?? null,
+          requiredReady: ready?.requiredReady ?? null,
+          interactive: ready?.state === 'STORE_INTERACTIVE' || ready?.state === 'STORE_VISUAL_READY',
+          state: ready?.state ?? null,
+        },
+        RESIDENCY: {
+          mapped: gpu?.posterLogicalMappedTitles ?? null,
+          actuallyRenderable: gpu?.posterActuallyRenderableTitles ?? null,
+          resident: gpu?.posterResidentTitles ?? null,
+          invariantOk: gpu?.posterCapacityInvariantOk ?? gpu?.posterResidencyInvariantOk ?? null,
+        },
+        GPU: {
+          contextLost: gpu?.contextLost ?? null,
+          maxArrayTextureLayers: gpu?.maxArrayTextureLayers ?? null,
+          effectiveTestMaxArrayTextureLayers: gpu?.effectiveTestMaxArrayTextureLayers ?? null,
+        },
+        UPLOAD: perf?.UPLOAD ?? null,
+        ws,
+      };
+    });
+    fs.mkdirSync(path.join(root, 'docs', 'review', 'jp4a'), { recursive: true });
+    fs.writeFileSync(
+      path.join(root, 'docs', 'review', 'jp4a', 'jp4a-round4-preload-stability.json'),
+      JSON.stringify({
+        classification: 'DESKTOP_BROWSER',
+        evidenceKind: 'STORE_VISIBLE_BASE_DRAIN',
+        pass: preloadSnap.STORE?.visualReady === true
+          && (preloadSnap.STORE_VISIBLE_BASE?.pendingWorkAtVisualReady ?? 1) === 0
+          && (preloadSnap.STORE_VISIBLE_BASE?.pendingUploadAtVisualReady ?? 1) === 0
+          && (preloadSnap.STORE_VISIBLE_BASE?.missing ?? 1) === 0
+          && preloadSnap.GPU?.contextLost !== true,
+        snapshot: preloadSnap,
+        QUEST_HARDWARE: 'NOT_EXECUTED',
+      }, null, 2),
+    );
+    evidence.scenarios.push({
+      name: 'JP4A_PRELOAD_STABILITY',
+      classification: 'DESKTOP_BROWSER',
+      pass: preloadSnap.STORE?.visualReady === true
+        && (preloadSnap.STORE_VISIBLE_BASE?.pendingWorkAtVisualReady ?? 1) === 0
+        && (preloadSnap.STORE_VISIBLE_BASE?.pendingUploadAtVisualReady ?? 1) === 0
+        && (preloadSnap.STORE_VISIBLE_BASE?.missing ?? 1) === 0,
+      snapshot: preloadSnap,
+    });
     const storeXr = await enterAndWaitWorld(storePage, { store: true });
     await storePage.screenshot({ path: path.join(outDir, 'xr-safe-entrance.png') }).catch(() => {});
     const locomotion = await storePage.evaluate(async () => {
@@ -388,6 +452,56 @@ async function main() {
       bootNoCatalogSweep,
     });
     await storePage.close();
+
+    const multiPage = await browser.newPage();
+    attachConsole(multiPage);
+    await multiPage.goto(`${BASE}/?demo=1&nogate=1&xrEmu=1&xrSafe=1&xrMultibank=1&xrCatalog=24&xrPosterLayers=8`, {
+      waitUntil: 'domcontentloaded', timeout: 60_000,
+    });
+    await waitReady(multiPage);
+    const multi = await multiPage.evaluate(async () => {
+      const until = Date.now() + 30000;
+      while (Date.now() < until) {
+        if (window.__storeReadiness?.()?.visualReady && window.__productionMultibankProbe) break;
+        await new Promise((r) => setTimeout(r, 200));
+      }
+      const probe = window.__productionMultibankProbe?.() ?? null;
+      const gpu = window.__gpuDiagnostics?.() ?? null;
+      return {
+        probe,
+        hardware: gpu?.maxArrayTextureLayers ?? gpu?.hardwareMaxArrayTextureLayers ?? null,
+        effective: gpu?.effectiveTestMaxArrayTextureLayers ?? null,
+        contextLost: gpu?.contextLost === true,
+      };
+    });
+    const multiPass = !!multi.probe?.pass
+      && (multi.probe?.catalogBankCount ?? 0) >= 3
+      && multi.probe?.samplersPerDraw === 1
+      && multi.hardware !== 8
+      && multi.effective === 8
+      && multi.contextLost !== true;
+    fs.writeFileSync(
+      path.join(root, 'docs', 'review', 'jp4a', 'jp4a-round4-production-multibank.json'),
+      JSON.stringify({
+        classification: 'DESKTOP_BROWSER',
+        evidenceKind: 'PRODUCTION_SHELF_RENDER',
+        pass: multiPass,
+        actualHardwareMaxArrayTextureLayers: multi.hardware,
+        effectiveTestMaxArrayTextureLayers: multi.effective,
+        probe: multi.probe,
+        QUEST_HARDWARE: 'NOT_EXECUTED',
+      }, null, 2),
+    );
+    evidence.scenarios.push({
+      name: 'JP4A_PRODUCTION_MULTIBANK',
+      classification: 'DESKTOP_BROWSER',
+      evidenceKind: 'PRODUCTION_SHELF_RENDER',
+      pass: multiPass,
+      probe: multi.probe,
+      actualHardwareMaxArrayTextureLayers: multi.hardware,
+      effectiveTestMaxArrayTextureLayers: multi.effective,
+    });
+    await multiPage.close();
   } finally {
     fs.writeFileSync(path.join(outDir, 'xr-resource.json'), JSON.stringify({
       console: consoleLog.slice(-80).map((e) => ({ ...e, text: redact(e.text) })),
@@ -397,7 +511,13 @@ async function main() {
     }, null, 2));
     const jp4aDir = path.join(root, 'docs', 'review', 'jp4a');
     fs.mkdirSync(jp4aDir, { recursive: true });
-    for (const name of ['JP4A_CAPACITY_256_2001', 'JP4A_CAPACITY_256_4000', 'JP4A_REAL_GPU_MULTIBANK']) {
+    for (const name of [
+      'JP4A_CAPACITY_256_2001',
+      'JP4A_CAPACITY_256_4000',
+      'JP4A_REAL_GPU_MULTIBANK',
+      'JP4A_PRODUCTION_MULTIBANK',
+      'JP4A_PRELOAD_STABILITY',
+    ]) {
       const s = evidence.scenarios.find((x) => x.name === name);
       if (!s) continue;
       fs.writeFileSync(

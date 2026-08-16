@@ -117,6 +117,8 @@ export function publishGpuPosterState(): void {
       renderBatchCount: mem.renderBatchCount,
       samplersPerDraw: mem.samplersPerDraw,
       arrayLayerCeiling: mem.arrayLayerCeiling,
+      hardwareMaxArrayTextureLayers: mem.hardwareMaxArrayTextureLayers,
+      sourcePosterMeshCount: mem.sourcePosterMeshCount,
       capacityInvariantOk: mem.capacityInvariantOk,
       shelfWidth: mem.shelfWidth,
       shelfHeight: mem.shelfHeight,

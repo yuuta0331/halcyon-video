@@ -21,6 +21,8 @@ export interface ResourceFlags {
   emu: boolean;
   catalog: number | null;
   posterProbe: boolean;
+  multibank: boolean;
+  posterLayers: number | null;
 }
 
 export interface PosterPolicy {
@@ -74,6 +76,8 @@ export function readResourceFlags(
   const q = new URLSearchParams(search.startsWith('?') ? search.slice(1) : search);
   const catalogRaw = q.get('xrCatalog');
   const catalog = catalogRaw ? Number(catalogRaw) : NaN;
+  const layersRaw = q.get('xrPosterLayers');
+  const posterLayers = layersRaw ? Number(layersRaw) : NaN;
   return {
     bare: q.get('xrBare') === '1',
     safe: q.get('xrSafe') === '1',
@@ -81,6 +85,8 @@ export function readResourceFlags(
     emu: q.get('xrEmu') === '1',
     catalog: Number.isFinite(catalog) && catalog > 0 ? Math.floor(catalog) : null,
     posterProbe: q.get('xrPosterProbe') === '1',
+    multibank: q.get('xrMultibank') === '1',
+    posterLayers: Number.isFinite(posterLayers) && posterLayers > 0 ? Math.floor(posterLayers) : null,
   };
 }
 

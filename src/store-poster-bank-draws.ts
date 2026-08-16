@@ -5,12 +5,18 @@
 import * as THREE from 'three';
 import type { MovieSlot } from './store-layout';
 import { textureArrayManager } from './poster-textures';
+import {
+  groupSlotsByPosterBank,
+} from './perf/poster-bank-batches';
+
+export { groupSlotsByPosterBank, posterBankBatchUpperBound } from './perf/poster-bank-batches';
 
 export interface PosterBankDrawScene {
   scene: THREE.Scene;
   meshes: THREE.Object3D[];
   slotsByPosition: Map<string, MovieSlot>;
   unitSideFrontMeshMap: Map<string, THREE.InstancedMesh>;
+  unitSideBackMeshMap?: Map<string, THREE.InstancedMesh>;
 }
 
 const scratchMatrix = new THREE.Matrix4();
@@ -48,10 +54,67 @@ function resizeInstancedAttrs(oldGeo: THREE.BufferGeometry, count: number): THRE
   return geo;
 }
 
+function retireMesh(scene: PosterBankDrawScene, mesh: THREE.InstancedMesh): void {
+  scene.scene.remove(mesh);
+  const idx = scene.meshes.indexOf(mesh);
+  if (idx >= 0) scene.meshes.splice(idx, 1);
+  mesh.geometry.dispose();
+}
+
+function splitMeshGroup(
+  scene: PosterBankDrawScene,
+  oldMesh: THREE.InstancedMesh,
+  group: MovieSlot[],
+  bank: number,
+  sourceIndex: (slot: MovieSlot) => number,
+  assign: (slot: MovieSlot, mesh: THREE.InstancedMesh, i: number) => void,
+): THREE.InstancedMesh {
+  const geo = resizeInstancedAttrs(oldMesh.geometry, group.length);
+  const mesh = new THREE.InstancedMesh(geo, oldMesh.material, group.length);
+  mesh.castShadow = oldMesh.castShadow;
+  mesh.receiveShadow = oldMesh.receiveShadow;
+  mesh.frustumCulled = oldMesh.frustumCulled;
+  (mesh.instanceMatrix.array as Float32Array).fill(0);
+  group.forEach((slot, i) => {
+    const src = sourceIndex(slot);
+    oldMesh.getMatrixAt(src, scratchMatrix);
+    mesh.setMatrixAt(i, scratchMatrix);
+    copyInstancedAttr(
+      oldMesh.geometry.getAttribute('aTextureIndex'),
+      src,
+      mesh.geometry.getAttribute('aTextureIndex') as THREE.BufferAttribute,
+      i,
+    );
+    copyInstancedAttr(
+      oldMesh.geometry.getAttribute('aSpineColor'),
+      src,
+      mesh.geometry.getAttribute('aSpineColor') as THREE.BufferAttribute,
+      i,
+    );
+    copyInstancedAttr(
+      oldMesh.geometry.getAttribute('aPosterCropSkip'),
+      src,
+      mesh.geometry.getAttribute('aPosterCropSkip') as THREE.BufferAttribute,
+      i,
+    );
+    assign(slot, mesh, i);
+  });
+  mesh.instanceMatrix.needsUpdate = true;
+  for (const name of ['aTextureIndex', 'aSpineColor', 'aPosterCropSkip']) {
+    const attr = mesh.geometry.getAttribute(name);
+    if (attr) attr.needsUpdate = true;
+  }
+  bindBank(mesh, bank);
+  scene.scene.add(mesh);
+  scene.meshes.push(mesh);
+  return mesh;
+}
+
 export function applyPosterBankDrawBatches(scene: PosterBankDrawScene): number {
   const bankCount = Math.max(1, textureArrayManager.bankCount);
   const bankSize = Math.max(1, textureArrayManager.bankSize);
-  const fronts = [...scene.unitSideFrontMeshMap.values()];
+  const fronts = [...new Set(scene.unitSideFrontMeshMap.values())];
+  textureArrayManager.sourcePosterMeshCount = fronts.length;
   if (bankCount <= 1) {
     for (const mesh of fronts) bindBank(mesh, 0);
     textureArrayManager.renderBatchCount = Math.max(1, fronts.length);
@@ -66,72 +129,53 @@ export function applyPosterBankDrawBatches(scene: PosterBankDrawScene): number {
   }
 
   let batches = 0;
-  for (const [oldMesh, slots] of slotsByMesh) {
-    const groups = new Map<number, MovieSlot[]>();
-    for (const slot of slots) {
-      const idx = textureArrayManager.peekIndex(slot.movie.id) ?? 0;
-      const bank = Math.min(bankCount - 1, Math.max(0, Math.floor(idx / bankSize)));
-      const list = groups.get(bank) ?? [];
-      list.push(slot);
-      groups.set(bank, list);
-    }
+  for (const [oldFront, slots] of slotsByMesh) {
+    const groups = groupSlotsByPosterBank(
+      slots,
+      (id) => textureArrayManager.peekIndex(id),
+      bankSize,
+      bankCount,
+    );
     if (groups.size <= 1) {
-      bindBank(oldMesh, [...groups.keys()][0] ?? 0);
+      bindBank(oldFront, [...groups.keys()][0] ?? 0);
+      const back = slots[0]?.backMesh;
+      if (back && back !== oldFront) bindBank(back, [...groups.keys()][0] ?? 0);
       batches++;
       continue;
     }
 
-    const key = [...scene.unitSideFrontMeshMap.entries()].find(([, mesh]) => mesh === oldMesh)?.[0];
+    const srcIdx = new Map<MovieSlot, number>();
+    for (const slot of slots) srcIdx.set(slot, slot.instanceIdx);
+    const frontKey = [...scene.unitSideFrontMeshMap.entries()].find(([, mesh]) => mesh === oldFront)?.[0];
+    const oldBack = slots[0]?.backMesh;
+    const backKey = oldBack && scene.unitSideBackMeshMap
+      ? [...scene.unitSideBackMeshMap.entries()].find(([, mesh]) => mesh === oldBack)?.[0]
+      : undefined;
     let first = true;
     for (const [bank, group] of groups) {
-      const geo = resizeInstancedAttrs(oldMesh.geometry, group.length);
-      const mesh = new THREE.InstancedMesh(geo, oldMesh.material, group.length);
-      mesh.castShadow = oldMesh.castShadow;
-      mesh.receiveShadow = oldMesh.receiveShadow;
-      mesh.frustumCulled = oldMesh.frustumCulled;
-      (mesh.instanceMatrix.array as Float32Array).fill(0);
-      group.forEach((slot, i) => {
-        oldMesh.getMatrixAt(slot.instanceIdx, scratchMatrix);
-        mesh.setMatrixAt(i, scratchMatrix);
-        copyInstancedAttr(
-          oldMesh.geometry.getAttribute('aTextureIndex'),
-          slot.instanceIdx,
-          mesh.geometry.getAttribute('aTextureIndex') as THREE.BufferAttribute,
-          i,
-        );
-        copyInstancedAttr(
-          oldMesh.geometry.getAttribute('aSpineColor'),
-          slot.instanceIdx,
-          mesh.geometry.getAttribute('aSpineColor') as THREE.BufferAttribute,
-          i,
-        );
-        copyInstancedAttr(
-          oldMesh.geometry.getAttribute('aPosterCropSkip'),
-          slot.instanceIdx,
-          mesh.geometry.getAttribute('aPosterCropSkip') as THREE.BufferAttribute,
-          i,
-        );
+      const sourceIndex = (slot: MovieSlot) => srcIdx.get(slot) ?? slot.instanceIdx;
+      const front = splitMeshGroup(scene, oldFront, group, bank, sourceIndex, (slot, mesh, i) => {
         slot.frontMesh = mesh;
         slot.instanceIdx = i;
       });
-      mesh.instanceMatrix.needsUpdate = true;
-      for (const name of ['aTextureIndex', 'aSpineColor', 'aPosterCropSkip']) {
-        const attr = mesh.geometry.getAttribute(name);
-        if (attr) attr.needsUpdate = true;
+      if (frontKey && first) {
+        scene.unitSideFrontMeshMap.set(frontKey, front);
       }
-      bindBank(mesh, bank);
-      scene.scene.add(mesh);
-      scene.meshes.push(mesh);
-      if (key && first) {
-        scene.unitSideFrontMeshMap.set(key, mesh);
-        first = false;
+      if (oldBack && oldBack !== oldFront) {
+        const back = splitMeshGroup(scene, oldBack, group, bank, sourceIndex, (slot, mesh) => {
+          slot.backMesh = mesh;
+        });
+        if (backKey && first && scene.unitSideBackMeshMap) {
+          scene.unitSideBackMeshMap.set(backKey, back);
+        }
       }
+      first = false;
       batches++;
     }
-    scene.scene.remove(oldMesh);
-    const idx = scene.meshes.indexOf(oldMesh);
-    if (idx >= 0) scene.meshes.splice(idx, 1);
-    oldMesh.geometry.dispose();
+    retireMesh(scene, oldFront);
+    if (oldBack && oldBack !== oldFront && scene.meshes.includes(oldBack)) {
+      retireMesh(scene, oldBack);
+    }
   }
 
   for (const mesh of scene.unitSideFrontMeshMap.values()) {

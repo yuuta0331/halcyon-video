@@ -9,11 +9,34 @@ import {
   uploadPumpOwner,
   type UploadPumpOwner,
 } from './texture-upload-scheduler.ts';
+import {
+  storeVisibleWork,
+  setStoreVisibleGenerationListener,
+  type UploadScope,
+} from './store-visible-work.ts';
+import { refreshStoreVisualReady } from '../store-visual-ready.ts';
 
-const priorityUploadQueue: Array<() => void> = [];
-const textureUploadQueue: Array<() => void> = [];
+export type TextureUploadMeta = {
+  scope?: UploadScope;
+  generation?: number;
+  movieId?: string;
+};
+
+type QueuedUpload = {
+  run: () => void;
+  scope: UploadScope;
+  generation: number;
+  movieId: string | null;
+};
+
+const priorityUploadQueue: QueuedUpload[] = [];
+const textureUploadQueue: QueuedUpload[] = [];
 const pendingUploads = () => priorityUploadQueue.length + textureUploadQueue.length;
 let isUploading = false;
+
+setStoreVisibleGenerationListener(() => {
+  dropQueuedUploadsForGeneration(storeVisibleWork.currentGeneration());
+});
 
 setUploadPumpOwnerListener((next) => {
   if (next === 'page' && pendingUploads() > 0) {
@@ -41,6 +64,71 @@ let rebuildDraining = false;
 export function beginRebuildDrain() { rebuildDraining = true; }
 
 export function pendingTextureUploads(): number { return pendingUploads(); }
+
+export function pendingScopedTextureUploads(scope: UploadScope): number {
+  let n = 0;
+  for (const q of priorityUploadQueue) if (q.scope === scope) n++;
+  for (const q of textureUploadQueue) if (q.scope === scope) n++;
+  return n;
+}
+
+function wrapTask(task: () => void, meta?: TextureUploadMeta): QueuedUpload {
+  const scope: UploadScope = meta?.scope ?? 'OTHER';
+  const generation = meta?.generation ?? storeVisibleWork.currentGeneration();
+  const movieId = meta?.movieId ?? null;
+  storeVisibleWork.noteUploadQueued(scope);
+  return {
+    scope,
+    generation,
+    movieId,
+    run: () => {
+      try {
+        if (movieId && !storeVisibleWork.allowsGpuMutation(movieId, generation)) {
+          if (generation !== storeVisibleWork.currentGeneration()) {
+            storeVisibleWork.noteStaleGenerationDrop();
+          }
+          if (storeVisibleWork.isStableFallback(movieId)) {
+            storeVisibleWork.noteLateRealRejected();
+          }
+          return;
+        }
+        task();
+      } finally {
+        storeVisibleWork.noteUploadFinished(scope);
+        refreshStoreVisualReady();
+      }
+    },
+  };
+}
+
+function dropFrom(queue: QueuedUpload[], pred: (item: QueuedUpload) => boolean): number {
+  let n = 0;
+  for (let i = queue.length - 1; i >= 0; i--) {
+    const item = queue[i]!;
+    if (!pred(item)) continue;
+    queue.splice(i, 1);
+    storeVisibleWork.noteUploadFinished(item.scope);
+    if (item.movieId && storeVisibleWork.isStableFallback(item.movieId)) {
+      storeVisibleWork.noteLateRealRejected();
+    } else if (item.generation !== storeVisibleWork.currentGeneration()) {
+      storeVisibleWork.noteStaleGenerationDrop();
+    }
+    n++;
+  }
+  if (n > 0) refreshStoreVisualReady();
+  return n;
+}
+
+/** Cancel queued GPU work for a title so STABLE_FALLBACK cannot be overwritten. */
+export function dropQueuedUploadsForMovie(movieId: string): number {
+  return dropFrom(priorityUploadQueue, (q) => q.movieId === movieId)
+    + dropFrom(textureUploadQueue, (q) => q.movieId === movieId);
+}
+
+export function dropQueuedUploadsForGeneration(generation: number): number {
+  const pred = (q: QueuedUpload) => q.generation !== generation;
+  return dropFrom(priorityUploadQueue, pred) + dropFrom(textureUploadQueue, pred);
+}
 
 function processUploads(source: UploadPumpOwner = 'page') {
   if (source !== uploadPumpOwner()) return;
@@ -75,16 +163,14 @@ function processUploads(source: UploadPumpOwner = 'page') {
     (count === 0 || performance.now() - start < budget)
   ) {
     const preferPriority = xr.presenting && (xr.moving || priorityUploadQueue.length > 0);
-    const task = preferPriority
+    const item = preferPriority
       ? (priorityUploadQueue.shift() ?? (xrBudget.bulkMaxPerFrame > 0 ? textureUploadQueue.shift() : undefined))
       : (priorityUploadQueue.length > 0 ? priorityUploadQueue.shift() : textureUploadQueue.shift());
-    if (!task) break;
-    if (task) {
-      try {
-        task();
-      } catch (err) {
-        console.warn('Texture upload task failed:', err);
-      }
+    if (!item) break;
+    try {
+      item.run();
+    } catch (err) {
+      console.warn('Texture upload task failed:', err);
     }
     count++;
   }
@@ -113,15 +199,21 @@ export function resetTextureUploadQueueForTests(): void {
   isUploading = false;
   posterUploadJobsQueued = 0;
   rebuildDraining = false;
+  storeVisibleWork.resetUploadPendingForTests();
 }
 
 export function posterUploadJobsStarted(): number {
   return posterUploadJobsQueued;
 }
 
-export function queueTextureUpload(task: () => void, lane: 'bulk' | 'priority' = 'bulk') {
+export function queueTextureUpload(
+  task: () => void,
+  lane: 'bulk' | 'priority' = 'bulk',
+  meta?: TextureUploadMeta,
+) {
   posterUploadJobsQueued++;
-  (lane === 'priority' ? priorityUploadQueue : textureUploadQueue).push(task);
+  const item = wrapTask(task, meta);
+  (lane === 'priority' ? priorityUploadQueue : textureUploadQueue).push(item);
   if (!isUploading) {
     isUploading = true;
     if (uploadPumpOwner() === 'page' && textureUploadUsesWindowRaf()) {

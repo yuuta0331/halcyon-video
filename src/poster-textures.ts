@@ -20,6 +20,8 @@ import { perfTrace, perfSlot } from './perf-trace';
 import { type PosterPriorityClass } from './perf/store-readiness';
 import { activeGpuCapabilities, activeResourceProfile, isXrSafeProfile } from './perf/resource-profile';
 import { choosePosterBankLayout, layersPerBankFromCaps, QUEST_SAFE_POSTER_GPU_BUDGET, type PosterBankLayout } from './perf/poster-bank-layout';
+import { effectivePosterArrayLayerCeiling } from './perf/test-array-layer-ceiling';
+import { storeVisibleWork } from './perf/store-visible-work';
 import { storeVisibleResidency } from './store-visible-residency';
 import { PosterResidencyWindow, estimatePosterArrayBytes, type PosterLease } from './poster-residency';
 import { pixelStorei } from './xr/gl-state';
@@ -47,6 +49,8 @@ export function setCaseMaterialUniformProvider(fn: () => any[]) {
 // re-uploads is what held the overlay up for the entire drain.
 import {
   beginRebuildDrain,
+  dropQueuedUploadsForGeneration,
+  dropQueuedUploadsForMovie,
   notifyUserActivity,
   pendingTextureUploads,
   posterUploadJobsStarted,
@@ -58,6 +62,7 @@ import {
 
 export {
   beginRebuildDrain,
+  dropQueuedUploadsForMovie,
   notifyUserActivity,
   pendingTextureUploads,
   posterUploadJobsStarted,
@@ -506,6 +511,8 @@ class TextureArrayManager {
   public mappingsFrozen = false;
   public bankCount = 1;
   public arrayLayerCeiling = 256;
+  public hardwareMaxArrayTextureLayers = 256;
+  public sourcePosterMeshCount = 0;
   public extraBanks: THREE.DataArrayTexture[] = [];
   public lastLayout: PosterBankLayout | null = null;
   public renderBatchCount = 1;
@@ -594,10 +601,14 @@ class TextureArrayManager {
     this.mappingsFrozen = false;
     this.fallbackIds.clear();
     this.moviePriority.clear();
+    storeVisibleWork.invalidateGeneration();
+    dropQueuedUploadsForGeneration(storeVisibleWork.currentGeneration());
     if (bounded) {
-      const capsLayers = capsOverride?.maxArrayTextureLayers
-        ?? activeGpuCapabilities()?.maxArrayTextureLayers
+      const hardwareLayers = activeGpuCapabilities()?.maxArrayTextureLayers
         ?? maxArrayLayers(renderer);
+      this.hardwareMaxArrayTextureLayers = hardwareLayers;
+      const capsLayers = capsOverride?.maxArrayTextureLayers
+        ?? effectivePosterArrayLayerCeiling(hardwareLayers);
       this.arrayLayerCeiling = layersPerBankFromCaps(capsLayers);
       const layout = choosePosterBankLayout({
         uniqueTitles: Math.max(1, totalMovies),
@@ -764,6 +775,22 @@ class TextureArrayManager {
 
   public isFallback(movieId: string): boolean {
     return this.fallbackIds.has(movieId);
+  }
+
+  /**
+   * Terminal STORE_VISIBLE_BASE fallback for the current scene generation.
+   * Paints stable fallback pixels, then rejects any later real decode/upload
+   * for this title until the next store-scene generation.
+   */
+  public commitStableFallback(movieId: string): void {
+    if (storeVisibleWork.terminalState(movieId) === 'REAL_READY') return;
+    if (storeVisibleWork.terminalState(movieId) === 'STABLE_FALLBACK') {
+      dropQueuedUploadsForMovie(movieId);
+      return;
+    }
+    this.uploadMissingCoverFallback(movieId);
+    storeVisibleWork.commitTerminal(movieId, 'STABLE_FALLBACK');
+    dropQueuedUploadsForMovie(movieId);
   }
 
   public uploadMissingCoverFallback(movieId: string): void {
@@ -935,19 +962,31 @@ class TextureArrayManager {
   // current renderer, which is always the right one.
   public queueLowRes(_renderer: THREE.WebGLRenderer, movieId: string, pixelData: Uint8Array) {
     if (this.residencyBound && this.residency) {
+      if (storeVisibleWork.isStableFallback(movieId)) {
+        storeVisibleWork.noteLateRealRejected();
+        return;
+      }
       const lease = this.captureLease(movieId, false);
       if (!lease) return;
-      if (this.lowResUploaded.has(lease.index)) return;
+      if (this.lowResUploaded.has(lease.index) && !this.fallbackIds.has(movieId)) return;
       this.lowResUploaded.add(lease.index);
+      const generation = storeVisibleWork.currentGeneration();
+      const scope = storeVisibleWork.scopeFor(movieId);
       queueTextureUpload(() => {
         if (!this.residency?.isLeaseCurrent(lease)) {
           this.staleUploadDrops++;
           return;
         }
+        if (!storeVisibleWork.allowsGpuMutation(movieId, generation)) {
+          this.staleUploadDrops++;
+          return;
+        }
         const r = getUploadRenderer();
-        if (r) this.commitShelfLease(r, lease, pixelData);
+        if (!r || !this.commitShelfLease(r, lease, pixelData)) return;
+        this.fallbackIds.delete(movieId);
         this.setLoadedForLease(lease, 255);
-      }, 'priority');
+        posterLoadedNotify?.(movieId);
+      }, 'priority', { scope, generation, movieId });
       return;
     }
     const idx = this.getIndex(movieId, true);
@@ -1000,18 +1039,24 @@ class TextureArrayManager {
     this.lowResUploaded.add(idx);
   }
 
-  private commitShelfLease(renderer: THREE.WebGLRenderer, lease: PosterLease, pixelData: Uint8Array) {
+  private commitShelfLease(renderer: THREE.WebGLRenderer, lease: PosterLease, pixelData: Uint8Array): boolean {
     if (!this.residency?.isLeaseCurrent(lease)) {
       this.staleUploadDrops++;
-      return;
+      return false;
+    }
+    if (storeVisibleWork.isStableFallback(lease.movieId)) {
+      this.staleUploadDrops++;
+      storeVisibleWork.noteLateRealRejected();
+      return false;
     }
     const bank = this.bankCount <= 1 ? 0 : Math.floor(lease.index / this.bankSize);
     const layer = this.bankCount <= 1 ? lease.index : lease.index - bank * this.bankSize;
     const tex = this.bankTexture(bank);
-    if (!tex) return;
+    if (!tex) return false;
     const pixels = shelfPixelsFromDecoded(pixelData, this.shelfWidth, this.shelfHeight);
     updateTextureArrayLayer(renderer, tex, layer, pixels);
     this.lowResUploaded.add(lease.index);
+    return true;
   }
 
   public updateLowRes(renderer: THREE.WebGLRenderer, movieId: string, pixelData: Uint8Array) {
@@ -1209,6 +1254,8 @@ class TextureArrayManager {
     renderBatchCount: number;
     samplersPerDraw: number;
     arrayLayerCeiling: number;
+    hardwareMaxArrayTextureLayers: number;
+    sourcePosterMeshCount: number;
     expectedTitles: number;
     logicalMappedTitles: number;
     actuallyRenderableTitles: number;
@@ -1272,6 +1319,8 @@ class TextureArrayManager {
       renderBatchCount: this.renderBatchCount,
       samplersPerDraw: 1,
       arrayLayerCeiling: this.arrayLayerCeiling,
+      hardwareMaxArrayTextureLayers: this.hardwareMaxArrayTextureLayers,
+      sourcePosterMeshCount: this.sourcePosterMeshCount,
       expectedTitles: expected,
       logicalMappedTitles: mapped,
       actuallyRenderableTitles: renderable,
@@ -1334,7 +1383,7 @@ class TextureArrayManager {
     const lease = this.residency?.peekLease(movieId);
     if (!lease) return false;
     const pixels = uniquePosterPattern(this.shelfWidth, this.shelfHeight, seed);
-    this.commitShelfLease(renderer, lease, pixels);
+    if (!this.commitShelfLease(renderer, lease, pixels)) return false;
     this.setLoadedForLease(lease, 255);
     return true;
   }
