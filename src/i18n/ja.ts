@@ -526,4 +526,17 @@ export const ja: Partial<Messages> = {
   'xr.settings.qualityHint': 'デスクトップ画質は XR_SAFE では無効です',
   'xr.settings.apply': '適用',
   'xr.settings.cancel': 'キャンセル',
+
+  'xr.controls.stickNav': '↑↓ スティック   項目移動',
+  'xr.controls.confirm': 'トリガー / A・X   決定',
+  'xr.controls.back': 'グリップ          戻る',
+  'xr.controls.stickValue': '←→ スティック   値変更',
+  'xr.menu.legend': '↑↓ スティック 項目移動  •  トリガー / A・X 決定  •  グリップ 戻る  •  ←→ スティック 値変更',
+  'xr.settings.legend': '↑↓ スティック 項目移動  •  トリガー / A・X 決定  •  グリップ 戻る  •  ←→ スティック 値変更',
+
+  'store.preload.title': '店舗を準備しています',
+  'store.preload.posters': 'ポスター {done} / {total}',
+  'store.preload.signage': '看板 {done} / {total}',
+  'store.preload.other': 'その他 {done} / {total}',
+  'store.preload.waitVr': '店舗の準備が終わるまで VR には入れません。',
 };

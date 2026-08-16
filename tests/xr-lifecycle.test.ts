@@ -255,21 +255,18 @@ test('session end during startup aborts enter; IWER UA is not Quest hardware', (
   }), 'IWER_EMULATED');
 });
 
-test('reveal is wired to P0 critical-ready, not all-texture settlement', () => {
+test('reveal waits for STORE_VISUAL_READY, not P0-only settlement', () => {
   const stock = readFileSync('src/store-stock.ts', 'utf8');
-  assert.match(stock, /texturesReadyPromise = settle\(p0Work/);
+  assert.match(stock, /storeVisualReadyPromise/);
+  assert.match(stock, /beginStoreVisibleLoading/);
+  assert.match(stock, /STORE_VISIBLE_BASE/);
   assert.match(stock, /allTexturesSettledPromise/);
-  assert.match(stock, /if \(!textureArrayManager\.residencyBound\)/);
-  assert.match(stock, /await settle\(groups\.P3/);
   assert.match(stock, /peekIndex\(slot\.movie\.id\)/);
-  assert.doesNotMatch(stock, /cls === 'P0' \|\| cls === 'P1'/);
   const main = readFileSync('src/main.ts', 'utf8');
   const revealIdx = main.indexOf('scene.texturesReadyPromise.then');
-  const allIdx = main.indexOf('scene.allTexturesSettledPromise.then');
   assert.ok(revealIdx > 0);
-  assert.ok(allIdx > revealIdx);
-  assert.match(main.slice(revealIdx, allIdx), /hideBootOverlay/);
-  assert.doesNotMatch(main.slice(allIdx, allIdx + 180), /hideBootOverlay/);
+  const hideIdx = main.indexOf('hideBootOverlay();', revealIdx);
+  assert.ok(hideIdx > revealIdx);
 });
 
 test('setSession ordering A: XR callback before setSession resolves', async () => {

@@ -4,12 +4,13 @@
 import type { StoreScene } from './three-scene';
 import { XrRuntime } from './xr/runtime';
 import * as walk from './store-walk';
-import { updatePosterWorkingSet } from './store-poster-window';
+import { posterArtSample, updatePosterWorkingSet } from './store-poster-window';
 import { installXrStartupJournal } from './xr/startup-journal';
 import { pumpTextureUploads, textureArrayManager } from './poster-textures';
 import { setXrContentLiveState, xrContentSnapshot } from './xr/content-diagnostics';
 import { classifyObjectName } from './xr/content-classes';
 import { brandPackStatus } from './brand-pack';
+import { publishXrPerfDiagnostics } from './xr/perf-diagnostics.ts';
 
 export function attachXrRuntime(
   scene: StoreScene,
@@ -63,34 +64,9 @@ export function attachXrRuntime(
   });
   (window as unknown as { __xrDiagnostics?: unknown }).__xrDiagnostics = () => scene.xr?.diagnostics ?? null;
   (window as unknown as { __xrContent?: unknown }).__xrContent = () => xrContentSnapshot();
+  publishXrPerfDiagnostics();
   publishXrContent(scene);
   return xr;
-}
-
-function wrapMapReady(map: { image?: { width?: number; complete?: boolean } } | undefined): boolean {
-  const img = map?.image;
-  if (!img) return false;
-  if (typeof img.complete === 'boolean' && img.complete === false) return false;
-  return (img.width ?? 1) > 0;
-}
-
-function heroWrapCounts(scene: StoreScene): {
-  allocated: number; decoded: number; uploaded: number; visible: number;
-} {
-  const meshes = [scene.heroFrontMesh, scene.heroBackMesh];
-  let allocated = 0;
-  let uploaded = 0;
-  let visible = 0;
-  for (const mesh of meshes) {
-    if (!mesh) continue;
-    allocated += 1;
-    if (mesh.visible) visible += 1;
-    const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
-    for (const mat of mats as Array<{ map?: { image?: { width?: number; complete?: boolean } } }>) {
-      if (wrapMapReady(mat?.map)) uploaded += 1;
-    }
-  }
-  return { allocated, decoded: uploaded, uploaded, visible };
 }
 
 function publishXrContent(scene: StoreScene): void {
@@ -130,16 +106,12 @@ function publishXrContent(scene: StoreScene): void {
   });
   if (scene.storefrontLogo3D) logos = Math.max(logos, 1);
   fixtures = Math.max(fixtures, scene.slottedFixtures.length);
-  const wraps = heroWrapCounts(scene);
+  const art = posterArtSample();
   setXrContentLiveState({
     posterAllocated: poster.physicalSlots || poster.catalogTitleCount,
-    posterDecoded: poster.residentCount,
-    posterUploaded: poster.residentCount,
-    posterVisible: poster.residentCount,
-    wrapsAllocated: wraps.allocated,
-    wrapsDecoded: wraps.decoded,
-    wrapsUploaded: wraps.uploaded,
-    wrapsVisible: wraps.visible,
+    posterDecoded: art.withArtCount,
+    posterUploaded: art.withArtCount,
+    posterVisible: art.withArtCount,
     signageVisible: signage,
     aisleFasciaVisible: signage,
     brandPackReady: brandPackStatus() !== 'failed',

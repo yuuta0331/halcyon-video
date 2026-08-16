@@ -24,7 +24,7 @@ export interface ResourceFlags {
 }
 
 export interface PosterPolicy {
-  mode: 'catalog-wide-progressive' | 'bounded-residency';
+  mode: 'catalog-wide-progressive' | 'bounded-residency' | 'stable-store-visible';
   physicalSlots: number;
   shelfWidth: number;
   shelfHeight: number;
@@ -61,8 +61,8 @@ const DESKTOP_SHELF_CACHE = 64 * 1024 * 1024;
 const XR_HERO_CACHE = 48 * 1024 * 1024;
 const XR_SHELF_CACHE = 24 * 1024 * 1024;
 
-const XR_SAFE_FRAMEBUFFER_SCALE = 0.5;
-const XR_SAFE_FOVEATION = 1;
+const XR_SAFE_FRAMEBUFFER_SCALE = 0.8;
+const XR_SAFE_FOVEATION = 0.5;
 const DESKTOP_XR_FRAMEBUFFER_SCALE = 0.7;
 
 let active: ResourceProfile | null = null;
@@ -141,20 +141,17 @@ export function readGpuCapabilities(input: {
 }
 
 /**
- * Physical poster slots are a memory budget, not the driver layer ceiling.
- * MAX_ARRAY_TEXTURE_LAYERS is only an upper clamp.
+ * Layers per DataArrayTexture bank. Catalog-visible titles that exceed one
+ * bank use additional stable banks — never a runtime LRU window.
  */
 export function choosePhysicalPosterSlots(caps: GpuCapabilities): number {
-  const layerCeiling = Math.max(1, Math.min(256, caps.maxArrayTextureLayers));
-  if (caps.maxTextures <= 16) return Math.min(128, layerCeiling);
-  if (caps.maxTextures <= 24) return Math.min(192, layerCeiling);
-  return Math.min(256, layerCeiling);
+  return Math.max(1, Math.min(2048, caps.maxArrayTextureLayers));
 }
 
 export function estimateXrSafeFragmentSamplers(): number {
-  // MeshStandardMaterial: map + envMap + one shelf array + loaded-flag LUT.
-  // Shadows off. No clearcoat / transmission / AO / second poster array.
-  return 4;
+  // MeshStandardMaterial: map + envMap + loaded-flag LUT + up to 4 shelf banks.
+  // Shadows off. No clearcoat / transmission / AO / dual-resolution preview.
+  return 7;
 }
 
 export function desktopFullProfile(): ResourceProfile {
@@ -212,7 +209,7 @@ export function xrSafeProfile(caps: GpuCapabilities): ResourceProfile {
     framebufferScale: XR_SAFE_FRAMEBUFFER_SCALE,
     foveation: XR_SAFE_FOVEATION,
     poster: {
-      mode: 'bounded-residency',
+      mode: 'stable-store-visible',
       physicalSlots: slots,
       shelfWidth: 96,
       shelfHeight: 144,

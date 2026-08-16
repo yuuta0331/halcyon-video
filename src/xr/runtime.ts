@@ -18,6 +18,8 @@ import {
   XR_TARGET_HZ,
 } from './session-policy';
 import { trySetRuntimeFoveation } from './runtime-foveation';
+import { foveationForUiMode } from './quality-policy.ts';
+import { isStoreVisualReady } from '../store-visual-ready.ts';
 import {
   competingLoops,
   initialFrameScheduler,
@@ -64,6 +66,7 @@ import {
 import { locomotionAllowed, uiOwnsInput, type XrUiMode } from './ui-mode';
 import { XrUiSession } from './ui-session';
 import { XrUiShell } from './ui-shell';
+import { XrFpsHud } from './fps-panel.ts';
 import { rayHitsPanelUv } from './ui/hit';
 import {
   blankStartupTrace,
@@ -161,9 +164,11 @@ export class XrRuntime {
   private firstStoreXrRenderAt: number | null = null;
   private foveationRequested = 0;
   private foveationEffective: number | null = null;
+  private lastFoveationMode: XrUiMode | null = null;
   private targetFrameRateArmed = false;
   private uiSession: XrUiSession | null = null;
   private uiShell: XrUiShell | null = null;
+  private fpsHud: XrFpsHud | null = null;
   private uiButtons = emptyXrButtonSnapshot();
   private prevUiButtons = emptyXrButtonSnapshot();
   private prevUiStick = { x: 0, y: 0 };
@@ -274,6 +279,9 @@ export class XrRuntime {
    * the first awaited XR call so the UA gesture is not consumed by font I/O.
    */
   async enter(): Promise<void> {
+    if (!isStoreVisualReady()) {
+      throw new Error('STORE_VISIBLE_LOADING');
+    }
     if (!this.canEnter()) {
       throw new Error('WebXR immersive-vr is not available');
     }
@@ -1084,6 +1092,7 @@ export class XrRuntime {
       );
     }
     if (!this.uiShell) this.uiShell = new XrUiShell();
+    if (!this.fpsHud) this.fpsHud = new XrFpsHud();
   }
 
   private tickUi(): void {
@@ -1101,6 +1110,25 @@ export class XrRuntime {
     this.prevUiButtons = this.uiButtons;
     this.prevUiStick = { x: sticks.moveX, y: sticks.moveY };
     this.uiSession!.applyActions(actions);
+    this.applyUiFoveation();
+  }
+
+  private applyUiFoveation(): void {
+    const mode = this.uiSession?.mode ?? 'WORLD';
+    if (mode === this.lastFoveationMode) return;
+    this.lastFoveationMode = mode;
+    const value = foveationForUiMode(mode);
+    this.foveationRequested = value;
+    const xrMgr = this.host.renderer.xr as XrManager;
+    const result = trySetRuntimeFoveation(xrMgr, value);
+    if (result.ok) {
+      const getFoveation = (xrMgr as XrManager & { getFoveation?: () => number }).getFoveation;
+      if (typeof getFoveation === 'function') {
+        try { this.foveationEffective = getFoveation.call(xrMgr); } catch { /* diagnostic */ }
+      } else {
+        this.foveationEffective = value;
+      }
+    }
   }
 
   private syncUiShell(): void {
@@ -1116,6 +1144,8 @@ export class XrRuntime {
       if (this.rig) this.panel?.showMesh(this.rig.xrOrigin);
     }
     shell.flush();
+    this.fpsHud?.sync(this.rig.xrOrigin);
+    this.applyUiFoveation();
   }
 
   private hitUiRow(): number | null {
@@ -1157,6 +1187,8 @@ export class XrRuntime {
     this.panel?.dispose();
     this.panel = null;
     this.uiShell?.hide();
+    this.fpsHud?.dispose();
+    this.fpsHud = null;
     this.uiSession?.closeToWorld();
     if (this.desktopPose) {
       const cam = this.host.camera;

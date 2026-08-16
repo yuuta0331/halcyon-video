@@ -64,6 +64,7 @@ import {
   initBootFlow,
   showBootOverlay,
   hideBootOverlay,
+  updateStorePreloadOverlay,
   showLoginOrCards,
   switchMember,
   startDemoAndLoad,
@@ -2465,6 +2466,7 @@ async function initializeStoreScene(preservePosterCache = false) {
 
     let lastLoggedPct = -1;
     scene.onTextureLoadProgress = (loaded, total) => {
+      updateStorePreloadOverlay();
       if (total === 0) return;
       const pct = Math.floor((loaded / total) * 100);
       if (pct !== lastLoggedPct && (pct % 10 === 0 || loaded === total)) {

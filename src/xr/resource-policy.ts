@@ -6,8 +6,9 @@ import {
   type ResourceProfile,
 } from '../perf/resource-profile.ts';
 import { XR_TARGET_HZ } from './session-policy.ts';
+import { clampXrSafeFramebufferScale } from './quality-policy.ts';
 
-export const XR_SAFE_FRAMEBUFFER_SCALE = 0.5;
+export { XR_SAFE_FRAMEBUFFER_SCALE } from './quality-policy.ts';
 export const XR_DESKTOP_FRAMEBUFFER_SCALE = 0.7;
 
 export interface XrQualityPolicy {
@@ -30,7 +31,9 @@ export function xrQualityPolicy(
   return {
     n8ao: profile.n8ao,
     postprocessing: profile.composer ? 'desktop' : 'none',
-    framebufferScale: profile.framebufferScale,
+    framebufferScale: profile.name === 'XR_SAFE'
+      ? clampXrSafeFramebufferScale(profile.framebufferScale)
+      : profile.framebufferScale,
     foveation: profile.foveation,
     targetHz: XR_TARGET_HZ,
     shadows: profile.shadows,

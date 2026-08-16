@@ -14,6 +14,7 @@ import {
   normalizeUrl,
   JellyfinLibrary,
 } from './jellyfin';
+import { markStoreInteractive, storePreloadStatusLines } from './store-visual-ready.ts';
 import {
   activeProvider as provider,
   resetActiveProvider,
@@ -292,6 +293,22 @@ export function hideBootOverlay() {
   if (overlay) {
     overlay.classList.remove('visible');
   }
+  markStoreInteractive();
+}
+
+export function updateStorePreloadOverlay(): void {
+  if (typeof document === 'undefined') return;
+  let el = document.getElementById('store-preload-status');
+  const overlay = document.getElementById('boot-overlay');
+  if (!overlay) return;
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'store-preload-status';
+    el.style.cssText = 'margin-top:12px;font-family:var(--font-mono, ui-monospace, Menlo, Consolas, monospace);font-size:13px;line-height:1.45;color:#e8e0d0;letter-spacing:0.04em;';
+    overlay.querySelector('.boot-card')?.appendChild(el);
+  }
+  const status = storePreloadStatusLines();
+  el.textContent = `${status.title}\n${status.lines.join('\n')}`;
 }
 
 // Re-shown after a manual login (the boot overlay is only up by default on the

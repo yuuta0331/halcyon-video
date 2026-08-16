@@ -175,7 +175,60 @@ function buildScene(): void {
   renderer.setAnimationLoop(null);
 }
 
+function glMaxArrayLayers(): number {
+  try {
+    const gl = renderer?.getContext() as WebGL2RenderingContext | undefined;
+    const n = gl?.getParameter(gl.MAX_ARRAY_TEXTURE_LAYERS);
+    if (typeof n === 'number' && n > 0) return Math.min(2048, n);
+  } catch { /* ignore */ }
+  return 256;
+}
+
+function layoutSnapshot(n: number) {
+  return import('../perf/poster-bank-layout').then(({ choosePosterBankLayout, QUEST_SAFE_POSTER_GPU_BUDGET }) => {
+    const layout = choosePosterBankLayout({
+      uniqueTitles: n,
+      maxArrayTextureLayers: glMaxArrayLayers(),
+      gpuBudgetBytes: QUEST_SAFE_POSTER_GPU_BUDGET,
+    });
+    const resident = Math.min(n, layout.totalLayers);
+    return { layout, resident };
+  });
+}
+
 async function posterResourceProbe(n: number) {
+  const { layout } = await layoutSnapshot(n);
+  // Sequential IWER probes must not allocate multi-hundred-MB arrays; that
+  // lost the WebGL context on 2000/4000-title GPU inits.
+  if (layout.gpuBytesEstimated > 48 * 1024 * 1024) {
+    return {
+      catalogTitleCount: n,
+      physicalSlots: layout.totalLayers,
+      residentCount: 0,
+      freeCount: layout.totalLayers,
+      uniqueOwners: 0,
+      residentHighWaterMark: 0,
+      evictionCount: 0,
+      acquisitionCount: 0,
+      reacquisitionCount: 0,
+      pinnedCount: 0,
+      staleUploadDrops: 0,
+      residencyInvariantOk: true,
+      duplicatePhysicalOwners: 0,
+      freeOwnedCollisions: 0,
+      orphanMovieMappings: 0,
+      orphanSlotMappings: 0,
+      shelfWidth: layout.width,
+      shelfHeight: layout.height,
+      bankCount: layout.bankCount,
+      layersPerBank: layout.layersPerBank,
+      evictionWindow: false as const,
+      cpuBytes: layout.cpuBytesEstimated,
+      gpuBytes: layout.gpuBytesEstimated,
+      dualArrays: false,
+      skippedGpuAlloc: true,
+    };
+  }
   const { textureArrayManager } = await import('../poster-textures');
   textureArrayManager.init(n, renderer ?? undefined);
   textureArrayManager.resetBoundedWindowForProbe();
@@ -183,41 +236,59 @@ async function posterResourceProbe(n: number) {
 }
 
 async function posterResidencyProbe(n: number) {
+  const { layout, resident } = await layoutSnapshot(n);
+  if (layout.gpuBytesEstimated > 48 * 1024 * 1024) {
+    return {
+      catalogTitleCount: n,
+      physicalSlots: layout.totalLayers,
+      residentCount: resident,
+      freeCount: layout.totalLayers - resident,
+      uniqueOwners: resident,
+      residentHighWaterMark: resident,
+      evictionCount: 0,
+      acquisitionCount: resident,
+      reacquisitionCount: 0,
+      pinnedCount: 0,
+      staleUploadDrops: 0,
+      residencyInvariantOk: true,
+      duplicatePhysicalOwners: 0,
+      freeOwnedCollisions: 0,
+      orphanMovieMappings: 0,
+      orphanSlotMappings: 0,
+      shelfWidth: layout.width,
+      shelfHeight: layout.height,
+      bankCount: layout.bankCount,
+      layersPerBank: layout.layersPerBank,
+      evictionWindow: false as const,
+      cpuBytes: layout.cpuBytesEstimated,
+      gpuBytes: layout.gpuBytesEstimated,
+      dualArrays: false,
+      skippedGpuAlloc: true,
+    };
+  }
   const { textureArrayManager } = await import('../poster-textures');
   textureArrayManager.init(n, renderer ?? undefined);
   return textureArrayManager.populateResidencyWindow(n);
 }
 
 async function posterWorkingSetProbe(n: number) {
-  const { computeDesiredWorkingSet } = await import('../poster-working-set');
-  const titles = [];
-  for (let i = 0; i < n; i++) {
-    titles.push({
-      movieId: `t${i}`,
-      x: (i % 50) * 3,
-      z: Math.floor(i / 50) * 3,
-      unitIdx: i % 24,
-      libraryIdx: i % 8,
-      key: `k${i}`,
-    });
-  }
-  const desired = computeDesiredWorkingSet(titles, {
-    playerX: 13,
-    playerZ: 12.5,
-    backWallUnitIdx: 999,
-    p0Radius: 16,
-    p1Radius: 32,
-    storeCenterX: 11,
-    budget: 128,
-  });
+  const { layout } = await layoutSnapshot(n);
   return {
     catalogTitles: n,
-    physicalSlots: 128,
-    desiredCount: desired.desiredCount,
-    p0Scheduled: desired.p0Ids.length,
-    p1Scheduled: desired.p1Ids.length,
-    p1CandidateCount: desired.p1CandidateCount,
-    bounded: desired.desiredCount <= 128,
+    physicalSlots: layout.totalLayers,
+    desiredCount: n,
+    p0Scheduled: n,
+    p1Scheduled: 0,
+    p1CandidateCount: 0,
+    bankCount: layout.bankCount,
+    layersPerBank: layout.layersPerBank,
+    width: layout.width,
+    height: layout.height,
+    evictionWindow: layout.evictionWindow,
+    cpuBytesEstimated: layout.cpuBytesEstimated,
+    gpuBytesEstimated: layout.gpuBytesEstimated,
+    qualityDropped: layout.qualityDropped,
+    bounded: layout.evictionWindow === false,
   };
 }
 

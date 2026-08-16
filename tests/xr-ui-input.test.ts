@@ -33,6 +33,59 @@ test('XR UI input mode suppresses locomotion', () => {
   assert.equal(actions.suppressLocomotion, true);
 });
 
+test('MENU stickY=-1 is previous/up and stickY=+1 is next/down', () => {
+  const up = xrUiActions({
+    mode: 'MENU',
+    buttons: emptyXrButtonSnapshot(),
+    prevButtons: emptyXrButtonSnapshot(),
+    stickX: 0, stickY: -1, prevStickX: 0, prevStickY: 0,
+  });
+  assert.equal(up.nav, -1);
+  const down = xrUiActions({
+    mode: 'SETTINGS',
+    buttons: emptyXrButtonSnapshot(),
+    prevButtons: emptyXrButtonSnapshot(),
+    stickX: 0, stickY: 1, prevStickX: 0, prevStickY: 0,
+  });
+  assert.equal(down.nav, 1);
+});
+
+test('MENU A/X activates and does not toggle-close', () => {
+  const menu = xrUiActions({
+    mode: 'MENU',
+    buttons: { ...emptyXrButtonSnapshot(), primary: true },
+    prevButtons: emptyXrButtonSnapshot(),
+    stickX: 0, stickY: 0, prevStickX: 0, prevStickY: 0,
+  });
+  assert.equal(menu.toggleMenu, false);
+  assert.equal(menu.activate, true);
+  const world = xrUiActions({
+    mode: 'WORLD',
+    buttons: { ...emptyXrButtonSnapshot(), primary: true },
+    prevButtons: emptyXrButtonSnapshot(),
+    stickX: 0, stickY: 0, prevStickX: 0, prevStickY: 0,
+  });
+  assert.equal(world.toggleMenu, true);
+  assert.equal(world.activate, false);
+});
+
+test('MENU trigger activates and grip cancels', () => {
+  const trigger = xrUiActions({
+    mode: 'SETTINGS',
+    buttons: { ...emptyXrButtonSnapshot(), trigger: true },
+    prevButtons: emptyXrButtonSnapshot(),
+    stickX: 0, stickY: 0, prevStickX: 0, prevStickY: 0,
+  });
+  assert.equal(trigger.activate, true);
+  const grip = xrUiActions({
+    mode: 'MENU',
+    buttons: { ...emptyXrButtonSnapshot(), squeeze: true },
+    prevButtons: emptyXrButtonSnapshot(),
+    stickX: 0, stickY: 0, prevStickX: 0, prevStickY: 0,
+  });
+  assert.equal(grip.cancel, true);
+});
+
 test('XR UI input mode suppresses world slot selection', () => {
   assert.equal(worldSelectAllowed('MENU'), false);
   assert.equal(worldSelectAllowed('SETTINGS'), false);

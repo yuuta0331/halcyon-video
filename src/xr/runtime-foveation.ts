@@ -4,7 +4,7 @@ export function trySetRuntimeFoveation(
   xrMgr: { setFoveation?: (n: number) => void } | null | undefined,
   value: number,
 ): { attempted: boolean; ok: boolean } {
-  if (!xrMgr || typeof xrMgr.setFoveation !== 'function' || !(value > 0)) {
+  if (!xrMgr || typeof xrMgr.setFoveation !== 'function' || !Number.isFinite(value) || value < 0) {
     return { attempted: false, ok: true };
   }
   try {

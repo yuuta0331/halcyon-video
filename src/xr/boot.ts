@@ -2,6 +2,7 @@
 // HUD buttons can light up without feeding that file-budget.
 // Do not import three-scene — main loads that module dynamically.
 
+import { isStoreVisualReady, storePreloadStatusLines } from '../store-visual-ready';
 import { t } from '../i18n';
 import { applyXrEntryVisibility, xrEntryShouldShow } from './entry';
 
@@ -44,8 +45,18 @@ export async function toggleXrSession(scene: XrEntryScene | null): Promise<void>
   if (!scene) return;
   try {
     if (scene.xr?.presenting) await scene.exitXr();
-    else await scene.enterXr();
+    else if (!isStoreVisualReady()) {
+      const status = storePreloadStatusLines();
+      console.warn('[XR]', status.title, status.lines.join(' · '));
+      return;
+    } else await scene.enterXr();
   } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (msg === 'STORE_VISIBLE_LOADING') {
+      const status = storePreloadStatusLines();
+      console.warn('[XR]', t('store.preload.waitVr'), status.lines.join(' · '));
+      return;
+    }
     console.warn('[XR] session request failed:', err);
   }
   syncXrEntryLabels(!!scene.xr?.presenting);

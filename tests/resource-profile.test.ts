@@ -10,7 +10,8 @@ import {
   setActiveResourceProfile,
   xrSafeProfile,
 } from '../src/perf/resource-profile.ts';
-import { PosterResidencyWindow, desktopPosterArrayBytes, estimatePosterArrayBytes } from '../src/poster-residency.ts';
+import { PosterResidencyWindow, desktopPosterArrayBytes } from '../src/poster-residency.ts';
+import { choosePosterBankLayout } from '../src/perf/poster-bank-layout.ts';
 import { xrQualityPolicy } from '../src/xr/quality.ts';
 import { XR_TARGET_HZ } from '../src/xr/session-policy.ts';
 import { blankXrDiagnostics } from '../src/xr/diagnostics.ts';
@@ -67,39 +68,38 @@ test('XR_SAFE stays valid at maxTextures 16 and array-layer 256/512', () => {
     assert.equal(profile.reflectionProbes, false);
     assert.equal(profile.environmentBake, 'bootstrap');
     assert.equal(profile.singleShelfPosterSampler, true);
-    assert.ok(profile.poster.physicalSlots <= 256);
-    assert.ok(profile.poster.physicalSlots <= layers);
+    assert.equal(profile.poster.mode, 'stable-store-visible');
+    assert.equal(profile.poster.physicalSlots, Math.min(2048, layers));
     assert.ok(estimateXrSafeFragmentSamplers() <= caps.maxTextures);
-    assert.notEqual(profile.poster.physicalSlots, layers);
   }
 });
 
-test('physical poster slots are not sized by MAX_ARRAY_TEXTURE_LAYERS', () => {
+test('physical poster slots follow the array-layer ceiling per bank', () => {
   const a = choosePhysicalPosterSlots(blankGpuCapabilities({ maxTextures: 16, maxArrayTextureLayers: 256 }));
   const b = choosePhysicalPosterSlots(blankGpuCapabilities({ maxTextures: 16, maxArrayTextureLayers: 512 }));
   const c = choosePhysicalPosterSlots(blankGpuCapabilities({ maxTextures: 16, maxArrayTextureLayers: 2048 }));
-  assert.equal(a, b);
-  assert.equal(b, c);
-  assert.equal(a, 128);
+  assert.equal(a, 256);
+  assert.equal(b, 512);
+  assert.equal(c, 2048);
 });
 
-test('XR_SAFE poster allocation stays bounded from 200 to 4000 titles', () => {
-  const caps = blankGpuCapabilities({ maxTextures: 16, maxArrayTextureLayers: 256 });
-  const profile = xrSafeProfile(caps);
-  const bytes: number[] = [];
+test('XR_SAFE catalog layout covers titles with stable banks, not a 128 eviction window', () => {
+  const capsLayers = 256;
   for (const n of [200, 1000, 2000, 4000]) {
-    const snap = estimatePosterArrayBytes(profile.poster);
-    bytes.push(snap.posterArrayCpuBytesEstimated);
-    assert.equal(snap.physicalPosterSlots, profile.poster.physicalSlots);
-    assert.ok(snap.posterArrayCpuBytesEstimated < 40 * 1024 * 1024, `cpu ${snap.posterArrayCpuBytesEstimated} for ${n}`);
-    assert.equal(snap.posterShelfResolution.w, 96);
-    assert.equal(snap.dualArrays, false);
+    const layout = choosePosterBankLayout({
+      uniqueTitles: n,
+      maxArrayTextureLayers: capsLayers,
+    });
+    assert.equal(layout.evictionWindow, false);
+    assert.ok(layout.bankCount >= 1);
+    assert.ok(layout.totalLayers >= Math.min(n, layout.bankCount * layout.layersPerBank));
+    assert.ok(layout.cpuBytesEstimated > 0);
+    assert.ok(layout.gpuBytesEstimated > 0);
   }
-  assert.equal(bytes[0], bytes[1]);
-  assert.equal(bytes[1], bytes[2]);
-  assert.equal(bytes[2], bytes[3]);
-  const growth = bytes[3] / bytes[1];
-  assert.ok(growth < 1.1, `4000 vs 1000 grew ${growth}`);
+  const small = choosePosterBankLayout({ uniqueTitles: 200, maxArrayTextureLayers: capsLayers });
+  const large = choosePosterBankLayout({ uniqueTitles: 1000, maxArrayTextureLayers: capsLayers });
+  assert.ok(large.bankCount >= small.bankCount);
+  assert.ok(large.cpuBytesEstimated > small.cpuBytesEstimated);
 });
 
 test('desktop catalog-wide arrays still scale with title count', () => {
@@ -132,8 +132,8 @@ test('XR_SAFE quality policy is a real lightweight graph', () => {
   assert.equal(policy.resourceProfile, 'XR_SAFE');
   assert.equal(policy.n8ao, false);
   assert.equal(policy.postprocessing, 'none');
-  assert.equal(policy.framebufferScale, 0.5);
-  assert.equal(policy.foveation, 1);
+  assert.equal(policy.framebufferScale, 0.8);
+  assert.equal(policy.foveation, 0.5);
   assert.equal(policy.shadows, false);
   assert.equal(policy.compositionLayers, false);
   assert.equal(policy.targetHz, XR_TARGET_HZ);
@@ -146,11 +146,11 @@ test('XR_SAFE estimated sampler use fits a 16-unit GPU', () => {
   assert.equal(profile.singleShelfPosterSampler, true);
 });
 
-test('XR_SAFE estimated poster bytes do not use the driver layer ceiling', () => {
+test('XR_SAFE poster policy is stable-store-visible; quality drops before eviction', () => {
   const profile = xrSafeProfile(blankGpuCapabilities({ maxTextures: 16, maxArrayTextureLayers: 2048 }));
-  const est = estimatePosterArrayBytes(profile.poster);
-  assert.equal(est.physicalPosterSlots, 128);
-  assert.ok(est.posterArrayCpuBytesEstimated < 20 * 1024 * 1024);
+  assert.equal(profile.poster.mode, 'stable-store-visible');
+  assert.equal(profile.poster.physicalSlots, 2048);
+  assert.equal(profile.framebufferScale, 0.8);
 });
 
 test('XR_SAFE diagnostic quality agrees with the resource policy', () => {
@@ -159,11 +159,11 @@ test('XR_SAFE diagnostic quality agrees with the resource policy', () => {
   const d = blankXrDiagnostics(readXrFlags('?xrSafe=1&xrEmu=1'));
   assert.equal(d.quality.n8ao, false);
   assert.equal(d.quality.postprocessing, 'none');
-  assert.equal(d.quality.framebufferScale, 0.5);
+  assert.equal(d.quality.framebufferScale, 0.8);
   const gpu = gpuDiagnosticsSnapshot();
   assert.equal(gpu.n8aoAllocated, false);
   assert.equal(gpu.composerAllocated, false);
-  assert.equal(gpu.xrFramebufferScaleRequested, 0.5);
+  assert.equal(gpu.xrFramebufferScaleRequested, 0.8);
   assert.equal(d.quality.n8ao, gpu.n8aoAllocated);
   assert.equal(d.quality.framebufferScale, gpu.xrFramebufferScaleRequested);
 });

@@ -84,11 +84,14 @@ export function xrUiActions(input: {
     return now > 0 ? 1 as const : -1 as const;
   };
   const ui = uiOwnsInput(input.mode);
+  const triggerRise = rising(input.buttons.trigger, input.prevButtons.trigger);
+  const primaryRise = rising(input.buttons.primary, input.prevButtons.primary);
   return {
-    toggleMenu: rising(input.buttons.primary, input.prevButtons.primary),
-    activate: ui && rising(input.buttons.trigger, input.prevButtons.trigger),
+    toggleMenu: !ui && primaryRise,
+    activate: ui && (triggerRise || primaryRise),
     cancel: ui && rising(input.buttons.squeeze, input.prevButtons.squeeze),
-    nav: ui ? stickEdge(-input.stickY, -input.prevStickY) : 0,
+    // WebXR: stickY < 0 is physical UP → previous row; stickY > 0 is DOWN.
+    nav: ui ? stickEdge(input.stickY, input.prevStickY) : 0,
     value: ui && input.mode === 'SETTINGS' ? stickEdge(input.stickX, input.prevStickX) : 0,
     suppressLocomotion: !locomotionAllowed(input.mode),
     suppressWorldSelect: !worldSelectAllowed(input.mode),

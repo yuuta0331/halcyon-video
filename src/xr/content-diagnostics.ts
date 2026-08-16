@@ -66,6 +66,8 @@ export interface XrContentLiveCounts {
   wrapsVisible?: number;
   wrapsRequested?: boolean;
   wrapsTitleId?: string | null;
+  wrapsRequestGeneration?: number;
+  wrapsReadyGeneration?: number;
   signageVisible?: number;
   aisleFasciaVisible?: number;
   brandPackReady?: boolean;
@@ -94,14 +96,29 @@ export function resetXrContentLiveStateForTests(): void {
   live = {};
 }
 
-/** Selected-title wrap prefetch started. Does not mark the wrap ready. */
 export function noteOnDemandWrapRequest(titleId: string): void {
   live = {
     ...live,
     wrapsRequested: true,
     wrapsTitleId: titleId,
+    wrapsRequestGeneration: (live.wrapsRequestGeneration ?? 0) + 1,
+    wrapsReadyGeneration: 0,
     wrapsUploaded: 0,
     wrapsDecoded: 0,
+    wrapsAllocated: 0,
+  };
+}
+
+export function noteOnDemandWrapUploaded(counts: {
+  allocated: number; decoded: number; uploaded: number; visible: number;
+}): void {
+  live = {
+    ...live,
+    wrapsAllocated: counts.allocated,
+    wrapsDecoded: counts.decoded,
+    wrapsUploaded: counts.uploaded,
+    wrapsVisible: counts.visible,
+    wrapsReadyGeneration: counts.uploaded > 0 ? (live.wrapsRequestGeneration ?? 0) : 0,
   };
 }
 
@@ -133,10 +150,12 @@ function onDemandState(
   enabled: boolean,
   activated: boolean,
   counts: { allocated: number; decoded: number; uploaded: number; visible: number },
+  generation?: { request: number; ready: number },
 ): XrContentState {
   if (!enabled) return 'disabled';
   if (!activated) return 'pending';
-  if (counts.uploaded > 0 || counts.decoded > 0 || counts.allocated > 0) return 'ready';
+  if (generation && generation.ready !== generation.request) return 'pending';
+  if (counts.uploaded > 0) return 'ready';
   return 'pending';
 }
 
@@ -164,12 +183,13 @@ function snapOnDemand(
   counts: { allocated: number; decoded: number; uploaded: number; visible: number },
   profile: ResourceProfileName,
   activated: boolean,
+  generation?: { request: number; ready: number },
 ): XrContentClassSnapshot {
   const enabled = profile === 'XR_SAFE' ? xrSafeClassEnabled(cls) : true;
   const requirement = requirementOf(cls);
   return {
     ...counts,
-    state: onDemandState(enabled, activated, counts),
+    state: onDemandState(enabled, activated, counts, generation),
     requirement,
     activation: activated ? 'requested' : 'idle',
     role: roleOf(requirement),
@@ -217,7 +237,10 @@ export function xrContentSnapshot(
     decoded: counts.wrapsDecoded ?? 0,
     uploaded: counts.wrapsUploaded ?? 0,
     visible: counts.wrapsVisible ?? 0,
-  }, profileName, wrapsActivated);
+  }, profileName, wrapsActivated, {
+    request: counts.wrapsRequestGeneration ?? 0,
+    ready: counts.wrapsReadyGeneration ?? 0,
+  });
   const signageN = counts.signageVisible ?? 0;
   const signage = snapWorld('signage', {
     allocated: signageN, decoded: signageN, uploaded: signageN, visible: signageN,

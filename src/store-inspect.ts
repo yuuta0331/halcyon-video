@@ -19,7 +19,7 @@ import { isDiscoveryRequested } from './jellyseerr';
 import { SP_HERO, CT_HERO, updatedMeshes } from './scene-shared';
 import { getGoldCaseMaterials } from './fixtures/gold-clamshell';
 import type { StoreScene } from './three-scene';
-import { noteOnDemandWrapRequest, setXrContentLiveState } from './xr/content-diagnostics';
+import { noteOnDemandWrapRequest, noteOnDemandWrapUploaded } from './xr/content-diagnostics';
 
 // Whether the current hero back materials are the NR gold case — part of the
 // ensureHeroCases rebuild key alongside heroMovieId, so stepping between an
@@ -862,12 +862,5 @@ export function prefetchInspectCaseArt(scene: StoreScene, movie: Movie): void {
       if (img && img.complete !== false && (img.width ?? 1) > 0) uploaded += 1;
     }
   }
-  setXrContentLiveState({
-    wrapsRequested: true,
-    wrapsTitleId: movie.id,
-    wrapsAllocated: allocated,
-    wrapsDecoded: uploaded,
-    wrapsUploaded: uploaded,
-    wrapsVisible: visible,
-  });
+  noteOnDemandWrapUploaded({ allocated, decoded: uploaded, uploaded, visible });
 }

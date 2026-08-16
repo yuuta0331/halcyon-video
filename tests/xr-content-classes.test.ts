@@ -13,6 +13,7 @@ import {
 import {
   decorativeExpectedDisabled,
   noteOnDemandWrapRequest,
+  noteOnDemandWrapUploaded,
   onDemandReady,
   requiredContentVisible,
   requiredWorldContentParity,
@@ -80,12 +81,12 @@ test('resource profile still obeys existing sampler/memory policy', () => {
   resetResourceProfileForTests();
   const profile = xrSafeProfile(blankGpuCapabilities({ maxTextures: 16 }));
   setActiveResourceProfile(profile);
-  assert.equal(profile.poster.physicalSlots, 128);
+  assert.equal(profile.poster.physicalSlots, 256);
   assert.ok(estimateXrSafeFragmentSamplers() <= 16);
   assert.equal(profile.composer, false);
   assert.equal(profile.n8ao, false);
   assert.equal(profile.liveMirrors, false);
-  assert.equal(profile.framebufferScale, 0.5);
+  assert.equal(profile.framebufferScale, 0.8);
   resetResourceProfileForTests();
 });
 
@@ -159,11 +160,22 @@ test('selected wrap starts lazy and becomes ready after request plus upload', ()
   assert.equal(requested.wraps.state, 'pending');
   assert.equal(onDemandReady(requested, 'wraps'), false);
 
-  setXrContentLiveState({ wrapsAllocated: 1, wrapsDecoded: 1, wrapsUploaded: 1, wrapsVisible: 0 });
+  setXrContentLiveState({ wrapsAllocated: 1, wrapsDecoded: 0, wrapsUploaded: 0, wrapsVisible: 0 });
+  assert.equal(xrContentSnapshot('XR_SAFE').wraps.state, 'pending');
+  setXrContentLiveState({ wrapsAllocated: 1, wrapsDecoded: 1, wrapsUploaded: 0, wrapsVisible: 0 });
+  assert.equal(xrContentSnapshot('XR_SAFE').wraps.state, 'pending');
+
+  noteOnDemandWrapUploaded({ allocated: 1, decoded: 1, uploaded: 1, visible: 0 });
   const ready = xrContentSnapshot('XR_SAFE');
   assert.equal(ready.wraps.state, 'ready');
   assert.equal(onDemandReady(ready, 'wraps'), true);
   assert.equal(ready.onDemandWrapsReady, true);
+
+  noteOnDemandWrapRequest('title-2');
+  const stale = xrContentSnapshot('XR_SAFE');
+  assert.equal(stale.wraps.state, 'pending');
+  noteOnDemandWrapUploaded({ allocated: 1, decoded: 1, uploaded: 1, visible: 1 });
+  assert.equal(xrContentSnapshot('XR_SAFE').wraps.state, 'ready');
 });
 
 test('diagnostics do not overclaim fascia or CRT readiness', () => {

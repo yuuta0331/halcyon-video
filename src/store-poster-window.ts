@@ -1,31 +1,24 @@
-// Bound XR_SAFE poster residency to unique titles after stock is placed.
-// Boot P0 is pinned until critical-ready; afterwards a player-relative
-// working set rotates through the physical window.
+// STORE_VISIBLE_BASE residency after stock is placed.
+// Player pose / yaw must not unload shelf-visible catalog art.
 
-import { BACK_WALL_UNIT_IDX, type MovieSlot } from './store-layout';
 import {
   classifySlotPriority,
-  capP0UniqueToBudget,
-  countPriorityUniques,
   DEFAULT_PRIORITY_CONTEXT,
   uniqueTitlePriority,
-  posterPriorityNumber,
   type PosterPriorityClass,
   type PriorityUniqueCounts,
 } from './perf/store-readiness';
+import { BACK_WALL_UNIT_IDX, type MovieSlot } from './store-layout';
 import { textureArrayManager, posterPixelCache, lowResCache } from './video-case';
 import { posterUploadJobsStarted } from './poster-textures';
+import { storeVisibleResidency } from './store-visible-residency';
 import { setGpuLiveState } from './xr/gpu-diagnostics';
 import type { StoreScene } from './three-scene';
 import {
-  computeDesiredWorkingSet,
   hashIdList,
-  reconcilePosterWindow,
   selectGpuWorkingSet,
-  shouldReconcileWorkingSet,
   PosterWorkingSetTracker,
   type SpatialTitle,
-  type WorkingSetQuery,
 } from './poster-working-set';
 
 let lastTitlePriority = new Map<string, PosterPriorityClass>();
@@ -183,64 +176,11 @@ function cacheSpatial(slots: MovieSlot[]): SpatialTitle[] {
   return spatialCache;
 }
 
-function playerPose(scene: StoreScene): {
-  x: number;
-  z: number;
-  yaw: number;
-  selectedMovieId: string | null;
-  selectedKey: string | null;
-  selectedLibraryIdx: number;
-} {
-  const presenting = !!scene.xr?.presenting;
-  const rig = presenting ? scene.xr?.rigPose : null;
-  const x = rig?.x ?? scene.camera.position.x;
-  const z = rig?.z ?? scene.camera.position.z;
-  const yaw = rig?.yaw ?? 0;
-  const selected = scene.getSelectedMovie?.() ?? null;
-  return {
-    x,
-    z,
-    yaw,
-    selectedMovieId: selected?.id ?? null,
-    selectedKey: `${scene.selectedLibraryIdx}_${scene.selectedUnitIdx}_front_${scene.selectedShelf}_${scene.selectedCol}`,
-    selectedLibraryIdx: scene.selectedLibraryIdx,
-  };
-}
-
-function queryFromPose(
-  pose: ReturnType<typeof playerPose>,
-): WorkingSetQuery {
-  return {
-    playerX: pose.x,
-    playerZ: pose.z,
-    yaw: pose.yaw,
-    selectedMovieId: pose.selectedMovieId,
-    selectedLibraryIdx: pose.selectedLibraryIdx,
-    selectedKey: pose.selectedKey,
-    backWallUnitIdx: BACK_WALL_UNIT_IDX,
-    p0Radius: DEFAULT_PRIORITY_CONTEXT.p0Radius,
-    p1Radius: DEFAULT_PRIORITY_CONTEXT.p1Radius,
-    storeCenterX: DEFAULT_PRIORITY_CONTEXT.storeCenterX,
-    budget: textureArrayManager.maxMovies,
-  };
-}
-
 function stampResidentIndices(slots: MovieSlot[]): void {
   for (const slot of slots) {
     const peeked = textureArrayManager.peekIndex(slot.movie.id);
     if (peeked == null) continue;
     writeSlotIndex(slot, peeked);
-  }
-}
-
-function loadEntered(scene: StoreScene, movieIds: Iterable<string>, priority: number): void {
-  const seen = new Set<string>();
-  for (const id of movieIds) {
-    if (seen.has(id)) continue;
-    seen.add(id);
-    const slots = scene.slotsByMovieId.get(id);
-    const slot = slots?.[0];
-    slot?.loadShelfDetails(priority);
   }
 }
 
@@ -255,40 +195,38 @@ function publishWorkingSetWindow(): void {
 }
 
 /**
- * Classify unique titles from boot spawn, cap P0, pin boot P0, acquire only
- * enough nearest P1 to fill remaining slots, stamp resident indices.
+ * Map every unique STORE_VISIBLE_BASE title to a stable bank/layer and pin
+ * the mapping for the store scene. Pose-driven reconcile is not used.
  */
-export function bindBoundedPosterWindow(scene: StoreScene, slots: MovieSlot[]): void {
+export function bindBoundedPosterWindow(_scene: StoreScene, slots: MovieSlot[]): void {
   if (!textureArrayManager.residencyBound) return;
   tracker.reset();
   decodeJobsStarted = 0;
   cacheSpatial(slots);
-  const ctx = priorityContext(scene);
-  const items = slots.map((slot) => {
-    const dx = slot.restingX - ctx.spawnX;
-    const dz = slot.restingZ - ctx.spawnZ;
-    return {
-      movieId: slot.movie.id,
-      dist: Math.hypot(dx, dz),
-      cls: classifySlotPriority(slot, ctx),
-    };
+  const uniqueIds = [...new Set(slots.map((slot) => slot.movie.id))].sort();
+  storeVisibleResidency.bindCatalog(uniqueIds, {
+    maxArrayTextureLayers: Math.max(textureArrayManager.bankSize, uniqueIds.length),
   });
-  const budget = textureArrayManager.maxMovies;
-  const best = uniqueTitlePriority(items);
-  lastTitlePriority = capP0UniqueToBudget(best, budget);
-  lastUniques = countPriorityUniques(lastTitlePriority);
-  const desired = selectGpuWorkingSet(best, budget);
-  tracker.noteBoot(desired);
 
-  for (const id of desired.p0Ids) {
+  for (const id of uniqueIds) {
     textureArrayManager.notePriority(id, 'P0');
     textureArrayManager.getIndex(id, true);
     textureArrayManager.pin(id);
   }
-  for (const id of desired.p1Ids) {
-    textureArrayManager.notePriority(id, 'P1');
-    textureArrayManager.getIndex(id, true);
-  }
+  textureArrayManager.freezeStableMappings();
+  lastTitlePriority = new Map(uniqueIds.map((id) => [id, 'P0' as PosterPriorityClass]));
+  lastUniques = {
+    p0UniqueTitles: uniqueIds.length,
+    p1UniqueTitles: 0,
+    p2UniqueTitles: 0,
+    p3UniqueTitles: 0,
+    p0PlusP1UniqueTitles: uniqueIds.length,
+  };
+  const desired = selectGpuWorkingSet(
+    uniqueTitlePriority(uniqueIds.map((id) => ({ movieId: id, dist: 0, cls: 'P0' as PosterPriorityClass }))),
+    textureArrayManager.maxMovies,
+  );
+  tracker.noteBoot(desired);
   stampResidentIndices(slots);
   publishGpuPosterState();
   publishWorkingSetWindow();
@@ -297,67 +235,24 @@ export function bindBoundedPosterWindow(scene: StoreScene, slots: MovieSlot[]): 
 export function releaseBootPosterPins(): void {
   if (!textureArrayManager.residencyBound) return;
   if (!tracker.state.bootPinsActive) return;
-  textureArrayManager.unpinAll();
   tracker.releaseBootPins();
   publishGpuPosterState();
   publishWorkingSetWindow();
 }
 
-export function updatePosterWorkingSet(scene: StoreScene, opts: { force?: boolean } = {}): void {
-  if (!textureArrayManager.residencyBound) return;
-  if (!shouldReconcileWorkingSet(tracker.state.bootPinsActive, !!opts.force)) return;
-  if (spatialCache.length === 0) {
-    cacheSpatial(Array.from(scene.slotsByPosition.values()));
-  }
-  const pose = playerPose(scene);
-  if (!tracker.needsUpdate(pose, !!opts.force)) return;
-  const q = queryFromPose(pose);
-  const desired = computeDesiredWorkingSet(spatialCache, q);
-  lastTitlePriority = new Map<string, PosterPriorityClass>();
-  for (const [id, rec] of desired.classified) lastTitlePriority.set(id, rec.cls);
-  for (const [id, cls] of desired.desired) lastTitlePriority.set(id, cls);
-  lastUniques = countPriorityUniques(lastTitlePriority);
-
-  const beforeResident = textureArrayManager.residencyResidentCount();
-  const win = textureArrayManager.residencyWindow();
-  if (!win) return;
-  const result = reconcilePosterWindow(win, desired.desired, []);
-  for (const id of result.left) textureArrayManager.afterWorkingSetEvict(id);
-  for (const [id, cls] of desired.desired) {
-    textureArrayManager.notePriority(id, cls);
-    textureArrayManager.syncIndexFromResidency(id);
-  }
-  stampResidentIndices(Array.from(scene.slotsByPosition.values()));
-  loadEntered(scene, result.entered, posterPriorityNumber('P1'));
-  if (pose.selectedMovieId && desired.desired.has(pose.selectedMovieId)) {
-    loadEntered(scene, [pose.selectedMovieId], posterPriorityNumber('P0'));
-  }
-  const near = desired.p0Ids.length + desired.p1Ids.length;
-  tracker.commitUpdate(pose, result, {
-    beforeResidentCount: beforeResident,
-    afterResidentCount: textureArrayManager.residencyResidentCount(),
-    nearResidentCount: near,
-    desiredIds: [...desired.desired.keys()],
-  });
-  publishGpuPosterState();
-  scene.requestRender?.();
-  publishWorkingSetWindow();
+export function updatePosterWorkingSet(_scene: StoreScene, _opts: { force?: boolean } = {}): void {
+  // Pose / yaw / region must not control STORE_VISIBLE_BASE residency.
 }
 
 export function promoteSelectedPoster(scene: StoreScene, movieId: string): void {
   if (!textureArrayManager.residencyBound) return;
   textureArrayManager.notePriority(movieId, 'P0');
-  textureArrayManager.getIndex(movieId, true);
   const slots = scene.slotsByMovieId.get(movieId);
   if (slots) {
     for (const slot of slots) {
       const idx = textureArrayManager.peekIndex(movieId);
       if (idx != null) writeSlotIndex(slot, idx);
     }
-  }
-  loadEntered(scene, [movieId], posterPriorityNumber('P0'));
-  if (shouldReconcileWorkingSet(tracker.state.bootPinsActive, true)) {
-    updatePosterWorkingSet(scene, { force: true });
   }
 }
 
@@ -367,21 +262,12 @@ export function slotStreamingClass(slot: MovieSlot, scene: StoreScene): PosterPr
 }
 
 export function initialWorkingSetSlots(allSlots: MovieSlot[]): { p0: MovieSlot[]; p1: MovieSlot[] } {
-  const p0Ids = new Set(tracker.state.bootP0Ids);
-  const p1Ids = new Set(tracker.state.initialP1Ids);
-  const seen0 = new Set<string>();
-  const seen1 = new Set<string>();
+  const seen = new Set<string>();
   const p0: MovieSlot[] = [];
-  const p1: MovieSlot[] = [];
   for (const slot of allSlots) {
-    const id = slot.movie.id;
-    if (p0Ids.has(id) && !seen0.has(id)) {
-      seen0.add(id);
-      p0.push(slot);
-    } else if (p1Ids.has(id) && !seen1.has(id)) {
-      seen1.add(id);
-      p1.push(slot);
-    }
+    if (seen.has(slot.movie.id)) continue;
+    seen.add(slot.movie.id);
+    p0.push(slot);
   }
-  return { p0, p1 };
+  return { p0, p1: [] };
 }

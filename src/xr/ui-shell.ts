@@ -17,7 +17,7 @@ export function paintXrUi(ctx: CanvasRenderingContext2D, paint: XrUiPaint): void
   ctx.lineWidth = 10;
   ctx.strokeRect(8, 8, w - 16, h - 16);
 
-  const texts = [paint.title, paint.hint, ...paint.rows.flatMap((r) => [r.label, r.value])];
+  const texts = [paint.title, paint.hint, ...(paint.legend ?? []), ...paint.rows.flatMap((r) => [r.label, r.value])];
   if (xrUiNeedsCjk(texts)) ensureCjkFont();
 
   ctx.textBaseline = 'top';
@@ -27,7 +27,7 @@ export function paintXrUi(ctx: CanvasRenderingContext2D, paint: XrUiPaint): void
   ctx.fillStyle = '#c9a227';
   ctx.fillRect(48, 80, 280, 4);
 
-  ctx.fillStyle = '#9aa3b5';
+  ctx.fillStyle = '#d7deea';
   ctx.font = `22px ${xrUiFontStack(paint.hint)}`;
   const hintLines = layoutXrLines(paint.hint, w - 96, (s) => ctx.measureText(s).width, 2);
   let hy = 96;
@@ -36,28 +36,40 @@ export function paintXrUi(ctx: CanvasRenderingContext2D, paint: XrUiPaint): void
     hy += 28;
   }
 
+  const legend = paint.legend ?? [];
+  const legendH = legend.length > 0 ? legend.length * 24 + 16 : 0;
   const bodyTop = 160;
-  const bodyBottom = h - 56;
+  const bodyBottom = h - 40 - legendH;
   const rowH = paint.rows.length > 0 ? (bodyBottom - bodyTop) / paint.rows.length : 48;
   paint.rows.forEach((row, i) => {
     const y = bodyTop + i * rowH;
     if (row.selected) {
-      ctx.fillStyle = 'rgba(201,162,39,0.22)';
+      ctx.fillStyle = 'rgba(201,162,39,0.28)';
       ctx.fillRect(32, y, w - 64, rowH - 6);
     }
-    ctx.fillStyle = row.status ? '#8b93a7' : '#e8e0d0';
-    ctx.font = `28px ${xrUiFontStack(row.label)}`;
+    ctx.fillStyle = row.status ? '#9aa3b5' : '#f4efe4';
+    ctx.font = `30px ${xrUiFontStack(row.label)}`;
     const label = clipXrLabel(row.label, 560, (s) => ctx.measureText(s).width);
     ctx.fillText(label, 48, y + 10);
     if (row.value) {
-      ctx.fillStyle = row.status ? '#6e778a' : '#c9a227';
-      ctx.font = `26px ${xrUiFontStack(row.value)}`;
+      ctx.fillStyle = row.status ? '#8b93a7' : '#e0c15a';
+      ctx.font = `28px ${xrUiFontStack(row.value)}`;
       const value = clipXrLabel(row.value, 360, (s) => ctx.measureText(s).width);
       ctx.textAlign = 'right';
       ctx.fillText(value, w - 48, y + 10);
       ctx.textAlign = 'left';
     }
   });
+
+  if (legend.length) {
+    ctx.fillStyle = '#3a4558';
+    ctx.fillRect(32, h - 32 - legendH, w - 64, 2);
+    ctx.fillStyle = '#e8e0d0';
+    ctx.font = `22px ${xrUiFontStack(legend[0] ?? '')}`;
+    legend.forEach((line, i) => {
+      ctx.fillText(clipXrLabel(line, w - 96, (s) => ctx.measureText(s).width), 48, h - 28 - legendH + 8 + i * 24);
+    });
+  }
 }
 
 export class XrUiShell {
@@ -65,7 +77,7 @@ export class XrUiShell {
   readonly texture: THREE.CanvasTexture;
   readonly mesh: THREE.Mesh;
   private dirty = true;
-  private paintState: XrUiPaint = { title: '', hint: '', rows: [] };
+  private paintState: XrUiPaint = { title: '', hint: '', legend: [], rows: [] };
   private cjkArmed = false;
 
   constructor() {

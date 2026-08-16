@@ -1,11 +1,15 @@
 import * as THREE from 'three';
-import { setPosterIndexNotify, setPosterLoadedNotify } from './video-case';
+import { setPosterIndexNotify, setPosterLoadedNotify, textureArrayManager } from './video-case';
+import { noteStoreVisibleResolved } from './store-visual-ready';
 import { recordResourceSnapshot, setGpuLiveState } from './xr/gpu-diagnostics';
 import type { StoreScene } from './three-scene';
 
 /** Cover-loaded / residency-index callbacks that re-dirty the wearing slots. */
 export function bindStorePosterNotifies(scene: StoreScene): void {
   setPosterLoadedNotify((movieId) => {
+    if (textureArrayManager.hasArt(movieId)) {
+      noteStoreVisibleResolved(movieId, textureArrayManager.isFallback(movieId) ? 'fallback' : 'uploaded');
+    }
     const slots = scene.slotsByMovieId.get(movieId);
     if (!slots) return;
     for (const slot of slots) {

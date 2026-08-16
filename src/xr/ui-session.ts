@@ -36,6 +36,7 @@ export interface XrUiPaintRow {
 export interface XrUiPaint {
   title: string;
   hint: string;
+  legend: string[];
   rows: XrUiPaintRow[];
 }
 
@@ -159,11 +160,18 @@ export class XrUiSession {
   }
 
   paint(): XrUiPaint {
+    const legend = [
+      t('xr.controls.stickNav'),
+      t('xr.controls.confirm'),
+      t('xr.controls.back'),
+      t('xr.controls.stickValue'),
+    ];
     if (this.mode === 'SETTINGS') {
       const rows = this.settingsRows();
       return {
         title: t('xr.settings.title'),
         hint: t('xr.settings.hint'),
+        legend,
         rows: rows.map((row, i) => ({
           label: row.label,
           value: row.value,
@@ -176,6 +184,7 @@ export class XrUiSession {
     return {
       title: t('xr.menu.title'),
       hint: t('xr.menu.hint'),
+      legend,
       rows: rows.map((row, i) => ({
         label: t(row.labelKey),
         value: '',

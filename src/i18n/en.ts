@@ -527,6 +527,19 @@ export const en = {
   'xr.settings.qualityHint': 'Desktop quality does not apply in XR_SAFE',
   'xr.settings.apply': 'Apply',
   'xr.settings.cancel': 'Cancel',
+
+  'xr.controls.stickNav': '↑↓ Stick     move between items',
+  'xr.controls.confirm': 'Trigger / A·X     confirm',
+  'xr.controls.back': 'Grip     back',
+  'xr.controls.stickValue': '←→ Stick     change a value',
+  'xr.menu.legend': '↑↓ Stick  move  •  Trigger / A·X  confirm  •  Grip  back  •  ←→ Stick  change value',
+  'xr.settings.legend': '↑↓ Stick  move  •  Trigger / A·X  confirm  •  Grip  back  •  ←→ Stick  change value',
+
+  'store.preload.title': 'Preparing the store',
+  'store.preload.posters': 'Posters {done} / {total}',
+  'store.preload.signage': 'Signs {done} / {total}',
+  'store.preload.other': 'Other {done} / {total}',
+  'store.preload.waitVr': 'Enter VR when the store is ready.',
 } as const;
 
 export type MessageKey = keyof typeof en;

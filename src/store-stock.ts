@@ -15,20 +15,24 @@ import {
   DEFAULT_PRIORITY_CONTEXT,
   navigationPriority,
   posterPriorityNumber,
-  type PosterPriorityClass,
 } from './perf/store-readiness';
 import { constructStage } from './perf/construct-profile';
 import {
   bindBoundedPosterWindow,
   initialWorkingSetSlots,
   notePosterDecodeJob,
-  posterPriorityUniques,
   publishGpuPosterState,
   releaseBootPosterPins,
-  slotStreamingClass,
   titlePosterClass,
   updatePosterWorkingSet,
 } from './store-poster-window';
+import {
+  beginStoreVisibleLoading,
+  isStoreVisualReady,
+  noteStoreVisibleResolved,
+  publishStoreReadinessWindow,
+  storeVisualReadyPromise,
+} from './store-visual-ready';
 import { validateCaseFit, type CaseFitPair } from './layout-validator';
 import { retailAudio } from './audio';
 import {
@@ -586,6 +590,8 @@ export function buildAllMovieBoxes(scene: StoreScene) {
 
     slot.loadShelfDetails = (priority = 1, onSettled?: () => void) => {
       if (textureArrayManager.residencyBound && textureArrayManager.peekIndex(slot.movie.id) == null) {
+        textureArrayManager.uploadMissingCoverFallback(slot.movie.id);
+        noteStoreVisibleResolved(slot.movie.id, 'fallback');
         onSettled?.();
         return;
       }
@@ -631,6 +637,9 @@ export function buildAllMovieBoxes(scene: StoreScene) {
           }
         }
         onSettled?.();
+        if (textureArrayManager.hasArt(slot.movie.id)) {
+          noteStoreVisibleResolved(slot.movie.id, 'uploaded');
+        }
         return;
       }
 
@@ -653,13 +662,14 @@ export function buildAllMovieBoxes(scene: StoreScene) {
         ? textureArrayManager.hasHighRes(slot.movie.id)
         : textureArrayManager.hasArt(slot.movie.id);
       if (alreadyOnGPU) {
+        noteStoreVisibleResolved(slot.movie.id, 'uploaded');
         onSettled?.();
         return;
       }
 
       if (!slot.movie.posterUrl) {
-        // Nothing to fetch for this slot — settle immediately so callers awaiting
-        // full-catalog readiness don't hang on titles with no artwork.
+        textureArrayManager.uploadMissingCoverFallback(slot.movie.id);
+        noteStoreVisibleResolved(slot.movie.id, 'fallback');
         onSettled?.();
         return;
       }
@@ -699,7 +709,13 @@ export function buildAllMovieBoxes(scene: StoreScene) {
         }
         slot.needsInitialMatrixUpdate = true;
         scene.dirtySlots.add(slot);
-      }, onSettled);
+      }, () => {
+        if (!textureArrayManager.hasArt(slot.movie.id)) {
+          textureArrayManager.uploadMissingCoverFallback(slot.movie.id);
+          noteStoreVisibleResolved(slot.movie.id, 'fallback');
+        }
+        onSettled?.();
+      });
     };
 
     slot.loadFullDetails = () => {
@@ -983,18 +999,17 @@ export function buildAllMovieBoxes(scene: StoreScene) {
   // 7. Build static extra-copy cases for high-rated films.
   scene.rebuildExtraCopies();
 
-  // 8. Progressive poster streaming: reveal on CRITICAL (P0) readiness.
-  // Distant covers keep placeholder spines and continue in the background.
-  const total = allSlots.length;
+  // 8. Preload every STORE_VISIBLE_BASE unique title before reveal.
+  const uniqueWork = initialWorkingSetSlots(allSlots).p0;
+  const uniqueIds = uniqueWork.map((slot) => slot.movie.id);
+  beginStoreVisibleLoading({
+    posterIds: uniqueIds,
+    signageExpected: 0,
+    otherExpected: 0,
+  });
+  publishStoreReadinessWindow();
   let loaded = 0;
-  const groups: Record<PosterPriorityClass, MovieSlot[]> = { P0: [], P1: [], P2: [], P3: [] };
-  for (const slot of allSlots) {
-    groups[slotStreamingClass(slot, scene)].push(slot);
-  }
-  const bootSet = textureArrayManager.residencyBound ? initialWorkingSetSlots(allSlots) : null;
-  const p0Work = bootSet ? bootSet.p0 : groups.P0;
-  const p1Work = bootSet ? bootSet.p1 : groups.P1;
-  const settleTotal = bootSet ? p0Work.length + p1Work.length : total;
+  const settleTotal = uniqueWork.length;
   const settle = (slots: MovieSlot[], priority: number) => {
     if (slots.length === 0) return Promise.resolve();
     return Promise.all(slots.map((slot) => new Promise<void>((resolve) => {
@@ -1006,28 +1021,38 @@ export function buildAllMovieBoxes(scene: StoreScene) {
     })));
   };
   scene.onTextureLoadProgress?.(0, settleTotal);
-  if (bootSet) {
-    const u = posterPriorityUniques();
-    console.log(
-      `[posters] XR_SAFE P0 unique=${u.p0UniqueTitles} P1 unique=${u.p1UniqueTitles} ` +
-      `slots=${textureArrayManager.maxMovies} p0SettleJobs=${p0Work.length} ` +
-      `p1ScheduledAtBoot=${p1Work.length} (bounded working set, not full catalog)`,
-    );
-  }
-  scene.texturesReadyPromise = settle(p0Work, posterPriorityNumber('P0')).then(() => {
+  console.log(
+    `[posters] STORE_VISIBLE_BASE unique=${uniqueIds.length} ` +
+    `layers=${textureArrayManager.maxMovies} banks=${textureArrayManager.bankCount} ` +
+    `shelf=${textureArrayManager.shelfWidth}x${textureArrayManager.shelfHeight}`,
+  );
+  scene.texturesReadyPromise = (async () => {
+    await settle(uniqueWork, posterPriorityNumber('P0'));
+    const deadline = (typeof performance !== 'undefined' ? performance.now() : Date.now()) + 90_000;
+    while (!isStoreVisualReady() && (typeof performance !== 'undefined' ? performance.now() : Date.now()) < deadline) {
+      for (const id of uniqueIds) {
+        if (textureArrayManager.hasArt(id)) {
+          noteStoreVisibleResolved(id, textureArrayManager.isFallback(id) ? 'fallback' : 'uploaded');
+        }
+      }
+      if (isStoreVisualReady()) break;
+      await new Promise((r) => setTimeout(r, 50));
+    }
+    if (!isStoreVisualReady()) {
+      for (const id of uniqueIds) {
+        if (!textureArrayManager.hasArt(id)) {
+          textureArrayManager.uploadMissingCoverFallback(id);
+        }
+        noteStoreVisibleResolved(id, textureArrayManager.isFallback(id) ? 'fallback' : 'uploaded');
+      }
+    }
+    await storeVisualReadyPromise();
     scene.warmupRuntimePrograms();
-  });
+  })();
   scene.texturesReadyPromise.then(() => {
     queueMicrotask(() => releaseBootPosterPins());
   });
-  scene.allTexturesSettledPromise = (async () => {
-    await scene.texturesReadyPromise;
-    await settle(p1Work, posterPriorityNumber('P1'));
-    if (!textureArrayManager.residencyBound) {
-      await settle(groups.P2, posterPriorityNumber('P2'));
-      await settle(groups.P3, posterPriorityNumber('P3'));
-    }
-  })();
+  scene.allTexturesSettledPromise = scene.texturesReadyPromise;
 
   // T25 #26 (superseded): the per-rented-title gold filler group is gone —
   // the NR wall back meshes above wear the gold materials for every slot.

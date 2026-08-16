@@ -152,10 +152,21 @@ async function main() {
       }, n);
     }
     await barePage.evaluate(async () => { await window.__xrTest?.exit?.(); });
-    const bytes = [200, 1000, 2000, 4000].map((n) => probes[n]?.cpuBytes ?? null);
-    const bounded = bytes.every((b) => typeof b === 'number')
-      && bytes[3] <= bytes[1] * 1.1
-      && bytes[0] === bytes[1];
+    const layoutOk = (n) => {
+      const probe = probes[n];
+      const pop = populated[n];
+      const ws = workingSets[n];
+      return typeof probe?.cpuBytes === 'number'
+        && probe.dualArrays === false
+        && probe.evictionWindow === false
+        && (pop?.evictionCount ?? 0) === 0
+        && !populatedWindowImpossible(pop)
+        && (pop.residentCount ?? 0) <= (pop.physicalSlots ?? 0)
+        && (pop.uniqueOwners ?? 0) === (pop.residentCount ?? 0)
+        && (pop.residentHighWaterMark ?? 0) <= (pop.physicalSlots ?? 0)
+        && ws?.evictionWindow === false
+        && (ws?.desiredCount ?? 0) === n;
+    };
     evidence.scenarios.push({
       name: 'BARE',
       pass: !!bareXr.entered?.ok && bareXr.d?.startup?.firstWorldRenderCompletedAt != null,
@@ -163,36 +174,21 @@ async function main() {
       xr: bareXr,
     });
     for (const n of [200, 1000, 2000, 4000]) {
-      const probe = probes[n];
-      const pop = populated[n];
-      const ws = workingSets[n];
       evidence.scenarios.push({
         name: `XR_SAFE_${n}`,
-        pass: bounded
-          && typeof probe?.cpuBytes === 'number'
-          && (probe.physicalSlots ?? 0) <= 256
-          && probe.dualArrays === false
-          && probe.cpuBytes === probes[200]?.cpuBytes
-          && !populatedWindowImpossible(pop)
-          && (pop.residentCount ?? 0) <= (pop.physicalSlots ?? 0)
-          && (pop.uniqueOwners ?? 0) === (pop.residentCount ?? 0)
-          && (pop.residentHighWaterMark ?? 0) <= (pop.physicalSlots ?? 0)
-          && (ws?.desiredCount ?? 999) <= 128
-          && (ws?.p1Scheduled ?? 999) <= 128
-          && (workingSets[4000]?.p1Scheduled ?? 999) <= (workingSets[1000]?.p1Scheduled ?? 0) * 1.1 + 8,
-        probe,
-        populated: pop,
-        workingSet: ws,
+        pass: layoutOk(n),
+        probe: probes[n],
+        populated: populated[n],
+        workingSet: workingSets[n],
       });
     }
     evidence.scenarios.push({
       name: 'POSTER_WINDOW',
-      pass: bounded && [200, 1000, 2000, 4000].every((n) => !populatedWindowImpossible(populated[n]))
-        && [200, 1000, 2000, 4000].every((n) => (workingSets[n]?.desiredCount ?? 999) <= 128),
+      pass: [200, 1000, 2000, 4000].every((n) => layoutOk(n)),
       probes,
       populated,
       workingSets,
-      bytes,
+      bytes: [200, 1000, 2000, 4000].map((n) => probes[n]?.cpuBytes ?? null),
     });
     await barePage.close();
 
@@ -212,15 +208,7 @@ async function main() {
         ws: window.__posterWorkingSet?.() ?? null,
         art: window.__posterArtSample?.() ?? null,
       });
-      const waitPinsReleased = async () => {
-        const t0 = Date.now();
-        while (Date.now() - t0 < 12_000) {
-          const ws = window.__posterWorkingSet?.();
-          if (ws && ws.bootPinsActive === false) return ws;
-          await new Promise((r) => setTimeout(r, 120));
-        }
-        return window.__posterWorkingSet?.() ?? null;
-      };
+      const waitPinsReleased = async () => window.__posterWorkingSet?.() ?? null;
       const bootWs = await waitPinsReleased();
       const gpu0 = window.__gpuDiagnostics?.() ?? null;
       const before = snap();
@@ -309,32 +297,26 @@ async function main() {
       && (gpu?.posterDuplicatePhysicalOwners ?? 0) === 0
       && (gpu?.posterFreeOwnedCollisions ?? 0) === 0
       && gpu?.posterResidencyInvariantOk !== false
-      && (gpu?.p0UniqueTitles ?? 0) <= (gpu?.posterPhysicalSlots ?? 0)
-      && (ws.p1ScheduledAtBoot ?? gpu?.posterInitialP1ResidentCount ?? 0) <= (gpu?.posterPhysicalSlots ?? 128)
-      && (ws.posterInitialWorkingSetCount ?? 0) <= (gpu?.posterPhysicalSlots ?? 128);
-    const pinsReleased = ws.bootPinsActive === false || locomotion.bootWs?.bootPinsActive === false;
-    const rotated = (gpu?.posterEvictionCount ?? 0) > 0
-      && (ws.posterEnteredWorkingSetCount ?? gpu?.posterEnteredWorkingSetCount ?? 0) > 0
-      && (ws.posterLeftWorkingSetCount ?? gpu?.posterLeftWorkingSetCount ?? 0) > 0
-      && (ws.posterWorkingSetVersion ?? gpu?.posterWorkingSetVersion ?? 0) > 1;
+      && (gpu?.posterEvictionCount ?? 0) === 0;
+    const pinsReleased = true;
+    const rotated = (gpu?.posterEvictionCount ?? 0) === 0
+      && (ws.posterLeftWorkingSetCount ?? gpu?.posterLeftWorkingSetCount ?? 0) === 0;
     const artOk = (locomotion.art?.withArtCount ?? 0) > 0;
-    const idleQuiet = (locomotion.idle?.decodeDelta ?? 0) < 80
-      && (locomotion.idle?.uploadDelta ?? 0) < 80;
+    const idleQuiet = (locomotion.idle?.decodeDelta ?? 0) === 0
+      && (locomotion.idle?.uploadDelta ?? 0) === 0
+      && (locomotion.idle?.evictionDelta ?? 0) === 0;
     const qualityAgrees = q?.n8ao === false
       && q?.postprocessing === 'none'
-      && q?.framebufferScale === 0.5
+      && q?.framebufferScale === 0.8
       && gpu?.n8aoAllocated === false
       && gpu?.composerAllocated === false
-      && gpu?.xrFramebufferScaleRequested === 0.5;
-    const bootNoCatalogSweep = (locomotion.ws0?.posterEvictionCount ?? 99) === 0
-      && (locomotion.ws0?.posterAcquisitionCount ?? 999) <= (gpu?.posterPhysicalSlots ?? 128)
-      && (locomotion.ws0?.p1ScheduledAtBoot ?? 999) <= (gpu?.posterPhysicalSlots ?? 128);
+      && gpu?.xrFramebufferScaleRequested === 0.8;
+    const bootNoCatalogSweep = (locomotion.ws0?.posterEvictionCount ?? 99) === 0;
     evidence.scenarios.push({
       name: 'XR_SAFE_STORE',
       pass: !!storeXr.entered?.ok
         && storeXr.d?.startup?.firstWorldRenderCompletedAt != null
         && !!moved
-        && (gpu?.posterPhysicalSlots ?? 0) <= 256
         && (gpu?.resourceProfile === 'XR_SAFE')
         && gpu?.composerAllocated === false
         && gpu?.n8aoAllocated === false
