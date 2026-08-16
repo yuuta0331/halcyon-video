@@ -1,4 +1,5 @@
 import { t } from '../i18n/index.ts';
+import { cycleValueIds } from '../settings-registry.ts';
 import { xrControlKeys, xrQualityStatusLabel, xrStatusKeys } from './settings-policy.ts';
 import type { XrSettingsDraft } from './settings-session.ts';
 
@@ -13,15 +14,14 @@ export interface XrSettingsRow {
   value: string;
 }
 
-const LOCALE_CYCLE = ['en', 'ja'] as const;
-const OUTSIDE_CYCLE = ['day', 'night', 'sunset'] as const;
-
 export function localeCycleValues(): readonly string[] {
-  return LOCALE_CYCLE;
+  const ids = cycleValueIds('bb_locale');
+  return ids.length ? ids : ['en', 'ja'];
 }
 
 export function outsideCycleValues(): readonly string[] {
-  return OUTSIDE_CYCLE;
+  const ids = cycleValueIds('bb_outside');
+  return ids.length ? ids : ['day', 'night', 'sunset'];
 }
 
 export function xrSettingsTitle(): string {

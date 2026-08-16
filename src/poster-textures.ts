@@ -17,8 +17,7 @@
 
 import * as THREE from 'three';
 import { perfTrace, perfSlot } from './perf-trace';
-import { xrUploadBudget, type PosterPriorityClass } from './perf/store-readiness';
-import { textureUploadUsesWindowRaf, xrUploadPolicyState } from './perf/upload-policy';
+import { type PosterPriorityClass } from './perf/store-readiness';
 import { activeResourceProfile, isXrSafeProfile } from './perf/resource-profile';
 import { PosterResidencyWindow, estimatePosterArrayBytes, type PosterLease } from './poster-residency';
 import { pixelStorei } from './xr/gl-state';
@@ -44,10 +43,27 @@ export function setCaseMaterialUniformProvider(fn: () => any[]) {
 // poster's settle callback — and texturesReadyPromise (the boot overlay) waits
 // on those. Letting a few hundred fresh decodes sit behind a few thousand
 // re-uploads is what held the overlay up for the entire drain.
-const priorityUploadQueue: Array<() => void> = [];
-const textureUploadQueue: Array<() => void> = [];
-const pendingUploads = () => priorityUploadQueue.length + textureUploadQueue.length;
-let isUploading = false;
+import {
+  beginRebuildDrain,
+  notifyUserActivity,
+  pendingTextureUploads,
+  posterUploadJobsStarted,
+  pumpTextureUploads,
+  queueTextureUpload,
+  resetTextureUploadQueueForTests,
+  setUploadTurbo,
+} from './perf/texture-upload-queue';
+
+export {
+  beginRebuildDrain,
+  notifyUserActivity,
+  pendingTextureUploads,
+  posterUploadJobsStarted,
+  pumpTextureUploads,
+  queueTextureUpload,
+  resetTextureUploadQueueForTests,
+  setUploadTurbo,
+};
 
 // Poster DataArrayTextures (low/high-res) are mip-mapped for distance LOD, but
 // every layer upload goes through raw gl.texSubImage3D (see
@@ -184,152 +200,6 @@ export function uploadTextureNow(texture: THREE.Texture) {
   }
 }
 
-// Per-frame budget for GPU texture uploads. Each initTexture() upload + mipmap
-// build of a 320x480 poster costs real GPU/main-thread time, so we cap how much
-// of the frame we're willing to spend on it. Keeping this well under the ~16ms
-// frame leaves headroom for the scene render and keeps interactions smooth even
-// while many covers stream in.
-// Normal (interactive) limits — keeps the render loop smooth.
-const UPLOAD_BUDGET_MS = 4;
-const UPLOAD_MAX_PER_FRAME = 4;
-// Burst limits — used when the queue is large AND the user hasn't touched an
-// input recently (initial boot wave, or streaming while standing still): drain
-// fast, nobody is trying to move. Backs off automatically once the queue
-// drains below the threshold.
-const UPLOAD_BURST_BUDGET_MS = 12;
-const UPLOAD_BURST_MAX_PER_FRAME = 16;
-const UPLOAD_BURST_THRESHOLD = 20;
-// Browsing produces near-continuous input, so this cooldown effectively locks
-// the queue to the polite budget while the user is actually interacting —
-// walking into a fresh aisle used to flip the queue into burst mode and spend
-// 12ms/frame on uploads mid-walk.
-const BURST_INPUT_COOLDOWN_MS = 2000;
-let lastUserActivityTime = -Infinity;
-
-/** InputManager funnels every keyboard/mouse/gamepad activity here. */
-export function notifyUserActivity() {
-  lastUserActivityTime = performance.now();
-}
-
-// Test-harness override (see harness.ts's ?fast=1): lift the per-frame caps so a
-// headless software-GL run — where a frame can take seconds, making any per-FRAME
-// cap glacial — drains the whole queue in a few frames. Interactive smoothness,
-// which these caps protect, is irrelevant there.
-let uploadTurbo = false;
-export function setUploadTurbo(on: boolean) { uploadTurbo = on; }
-
-// Set for the duration of a no-reload scene rebuild: nothing is interactive
-// behind the boot overlay, so the queue should drain at burst rate immediately
-// rather than waiting out BURST_INPUT_COOLDOWN_MS from the keypress that
-// triggered the rebuild. Self-clearing — processUploads drops it when the
-// queue empties, so a caller can never leave it stuck on.
-let rebuildDraining = false;
-export function beginRebuildDrain() { rebuildDraining = true; }
-
-/** Upload tasks still queued — for verification scripts and boot diagnostics. */
-export function pendingTextureUploads(): number { return pendingUploads(); }
-
-function processUploads() {
-  if (pendingUploads() === 0) {
-    isUploading = false;
-    rebuildDraining = false;
-    return;
-  }
-  isUploading = true;
-
-  // During a no-reload rebuild the store sits behind the boot overlay and the
-  // user cannot interact with anything, so the polite interactive budget only
-  // makes them wait longer. The input-idle test can't work that out on its own:
-  // the keypress that closed the settings drawer is recent, so it would pin the
-  // queue to 4/frame through the first two seconds of exactly the drain we want
-  // to rush. Cleared in the empty branch above.
-  const xr = xrUploadPolicyState();
-  const xrBudget = xrUploadBudget({
-    presenting: xr.presenting,
-    moving: xr.moving,
-    highPriorityPending: priorityUploadQueue.length > 0,
-  });
-  const burst = !xr.presenting && (rebuildDraining ||
-    (pendingUploads() > UPLOAD_BURST_THRESHOLD &&
-      performance.now() - lastUserActivityTime > BURST_INPUT_COOLDOWN_MS));
-  const budget = uploadTurbo ? 1000
-    : xr.presenting ? xrBudget.budgetMs
-    : burst ? UPLOAD_BURST_BUDGET_MS : UPLOAD_BUDGET_MS;
-  const maxPerFrame = uploadTurbo ? Infinity
-    : xr.presenting ? xrBudget.maxPerFrame
-    : burst ? UPLOAD_BURST_MAX_PER_FRAME : UPLOAD_MAX_PER_FRAME;
-
-  const start = performance.now();
-  let count = 0;
-  // Drain tasks until we exceed the time budget or the per-frame count cap.
-  // Because the upload tasks now call uploadTextureNow() (initTexture), the
-  // performance.now() check genuinely reflects GPU upload cost and throttles it.
-  while (
-    pendingUploads() > 0 &&
-    count < maxPerFrame &&
-    (count === 0 || performance.now() - start < budget)
-  ) {
-    const preferPriority = xr.presenting && (xr.moving || priorityUploadQueue.length > 0);
-    const task = preferPriority
-      ? (priorityUploadQueue.shift() ?? (xrBudget.bulkMaxPerFrame > 0 ? textureUploadQueue.shift() : undefined))
-      : (priorityUploadQueue.length > 0 ? priorityUploadQueue.shift() : textureUploadQueue.shift());
-    if (!task) break;
-    // A task may throw (e.g. initTexture on a lost/exhausted GL context). It must
-    // not propagate out of the loop: that would skip the reschedule below and
-    // leave isUploading stuck true, permanently wedging every later upload so
-    // those posters never load. Isolate each task so one failure is survivable.
-    if (task) {
-      try {
-        task();
-      } catch (err) {
-        console.warn('Texture upload task failed:', err);
-      }
-    }
-    count++;
-  }
-
-  if (pendingUploads() > 0) {
-    if (textureUploadUsesWindowRaf(xr.presenting)) {
-      requestAnimationFrame(processUploads);
-    } else {
-      // Quest Browser often pauses window rAF while immersive. The XR
-      // animation loop pumps this queue instead.
-      isUploading = false;
-    }
-  } else {
-    isUploading = false;
-  }
-}
-
-/** Drain the GPU upload queue from the XR animation loop. */
-export function pumpTextureUploads(): void {
-  if (pendingUploads() > 0) processUploads();
-}
-
-let posterUploadJobsQueued = 0;
-
-export function posterUploadJobsStarted(): number {
-  return posterUploadJobsQueued;
-}
-
-export function queueTextureUpload(task: () => void, lane: 'bulk' | 'priority' = 'bulk') {
-  posterUploadJobsQueued++;
-  (lane === 'priority' ? priorityUploadQueue : textureUploadQueue).push(task);
-  if (!isUploading) {
-    // Defer the drain to the next rAF instead of running synchronously:
-    // completions arriving one-per-event (e.g. 8 decode workers finishing a
-    // wave in a single event-loop turn) used to each drain their own task
-    // immediately — the queue never accumulated, the per-frame cap never
-    // engaged, and perf-trace still caught 73 layer uploads in one frame.
-    // One drain per frame, always, so the budget actually budgets.
-    isUploading = true;
-    if (textureUploadUsesWindowRaf()) {
-      requestAnimationFrame(processUploads);
-    } else {
-      isUploading = false;
-    }
-  }
-}
 
 export function updateTextureArrayLayer(
   renderer: THREE.WebGLRenderer,

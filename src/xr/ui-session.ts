@@ -1,4 +1,5 @@
 import { t } from '../i18n/index.ts';
+import type { SettingsApplyTarget } from '../settings-registry.ts';
 import { menuActionAt, moveMenuIndex, xrMenuRows, type XrMenuAction } from './menu.ts';
 import {
   localeCycleValues,
@@ -14,7 +15,6 @@ import {
   readXrDraft,
   stepDraftCycle,
   toggleDraftValue,
-  type SettingsStore,
   type XrSettingsDraft,
 } from './settings-session.ts';
 import type { XrUiActions } from './ui-input.ts';
@@ -22,7 +22,6 @@ import {
   backFromSettings,
   closeUiToWorld,
   initialXrUiMode,
-  openMenuFromWorld,
   openSettingsFromMenu,
   type XrUiMode,
 } from './ui-mode.ts';
@@ -42,7 +41,7 @@ export interface XrUiPaint {
 
 export interface XrUiHost {
   exitVr(): void;
-  applyLiveSetting?(key: string, value: unknown): void;
+  getSettingsScene(): SettingsApplyTarget | null;
 }
 
 export class XrUiSession {
@@ -51,31 +50,27 @@ export class XrUiSession {
   settingsIndex = 0;
   draft: XrSettingsDraft;
   lastApplied: Record<string, unknown>;
-  private readonly store: SettingsStore;
   private readonly host: XrUiHost;
   private readonly resourceProfile: () => string;
 
   constructor(
-    store: SettingsStore,
     host: XrUiHost,
     resourceProfile: () => string,
   ) {
-    this.store = store;
     this.host = host;
     this.resourceProfile = resourceProfile;
-    this.draft = readXrDraft(store);
+    this.draft = readXrDraft();
     this.lastApplied = { ...this.draft.values };
   }
 
   openMenu(): void {
-    this.mode = openMenuFromWorld(this.mode === 'WORLD' ? 'WORLD' : 'WORLD');
     this.mode = 'MENU';
     this.menuIndex = 0;
   }
 
   closeToWorld(): void {
     this.mode = closeUiToWorld(this.mode);
-    this.draft = readXrDraft(this.store);
+    this.draft = readXrDraft();
   }
 
   toggleMenu(): void {
@@ -91,7 +86,7 @@ export class XrUiSession {
     if (this.mode === 'WORLD') return;
     if (actions.cancel) {
       if (this.mode === 'SETTINGS') {
-        this.draft = cancelXrDraft(this.store);
+        this.draft = cancelXrDraft();
         this.mode = backFromSettings(this.mode);
       } else {
         this.closeToWorld();
@@ -127,7 +122,7 @@ export class XrUiSession {
       return;
     }
     if (action === 'cancel') {
-      this.draft = cancelXrDraft(this.store);
+      this.draft = cancelXrDraft();
       this.mode = backFromSettings(this.mode);
       return;
     }
@@ -140,10 +135,22 @@ export class XrUiSession {
   }
 
   apply(): void {
-    this.draft = applyXrDraft(this.store, this.draft);
+    this.draft = applyXrDraft(this.draft, this.host.getSettingsScene());
     this.lastApplied = { ...this.draft.values };
-    for (const [key, value] of Object.entries(this.draft.values)) {
-      this.host.applyLiveSetting?.(key, value);
+  }
+
+  cancel(): void {
+    this.draft = cancelXrDraft();
+    this.mode = backFromSettings(this.mode);
+  }
+
+  cycleControl(key: string, dir: -1 | 1 = 1): void {
+    if (key === 'bb_locale') {
+      this.draft = stepDraftCycle(this.draft, { key: 'bb_locale', values: [...localeCycleValues()] }, dir);
+    } else if (key === 'bb_outside') {
+      this.draft = stepDraftCycle(this.draft, { key: 'bb_outside', values: [...outsideCycleValues()] }, dir);
+    } else if (key === 'bb_fps_meter') {
+      this.draft = toggleDraftValue(this.draft, 'bb_fps_meter');
     }
   }
 
@@ -184,7 +191,7 @@ export class XrUiSession {
 
   private runMenuAction(action: XrMenuAction): void {
     if (action === 'open-settings') {
-      this.draft = readXrDraft(this.store);
+      this.draft = readXrDraft();
       this.settingsIndex = 0;
       this.mode = openSettingsFromMenu('MENU');
       return;

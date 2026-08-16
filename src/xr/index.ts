@@ -73,5 +73,6 @@ export { XrRuntime } from './runtime';
 export type { XrRuntimeHost } from './runtime';
 export { xrUiActions, XR_STANDARD_BUTTON } from './ui-input';
 export { uiOwnsInput, locomotionAllowed, worldSelectAllowed } from './ui-mode';
-export { xrContentSnapshot, requiredWorldContentParity } from './content-diagnostics';
+export { xrContentSnapshot, requiredWorldContentParity, worldRequiredReady, onDemandReady } from './content-diagnostics';
+export { worldRequiredContentClasses, onDemandRequiredContentClasses } from './content-classes';
 export { xrSettingExposure, xrDesktopQualityAffectsXr } from './settings-policy';

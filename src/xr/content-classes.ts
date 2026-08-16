@@ -1,5 +1,10 @@
 // XR_SAFE may disable expensive visual EFFECTS. It must not drop CONTENT
 // required to read and use the rental store. This module is the inventory.
+//
+// Requirement is a lifecycle, not a boolean "required vs decorative":
+//   WORLD_REQUIRED      — must be ready before the store is world-usable
+//   ON_DEMAND_REQUIRED  — must become ready after its activation trigger
+//   DECORATIVE          — intentionally off under XR_SAFE
 
 export type XrContentClass =
   | 'poster'
@@ -15,97 +20,106 @@ export type XrContentClass =
   | 'mediaSurfaces'
   | 'decorativeFx';
 
+export type XrContentRequirement = 'WORLD_REQUIRED' | 'ON_DEMAND_REQUIRED' | 'DECORATIVE';
+
+/** @deprecated Use XrContentRequirement. Kept as a coarse filter. */
 export type XrContentRole = 'required' | 'decorative';
 
 export interface XrContentClassPolicy {
   cls: XrContentClass;
-  role: XrContentRole;
+  requirement: XrContentRequirement;
   desktopFull: boolean;
   xrSafe: boolean;
+  /**
+   * When set, this class is not counted from its own name-prefix heuristic.
+   * Aisle fascia lettering is the same `userData.isSign` meshes as signage.
+   */
+  representedBy?: XrContentClass;
   reason: string;
 }
 
 const CLASSES: XrContentClassPolicy[] = [
   {
     cls: 'poster',
-    role: 'required',
+    requirement: 'WORLD_REQUIRED',
     desktopFull: true,
     xrSafe: true,
-    reason: 'Shelf face art. XR_SAFE uses a 128-slot unique-title window.',
+    reason: 'Shelf face art working set. XR_SAFE uses a 128-slot unique-title window.',
   },
   {
     cls: 'wraps',
-    role: 'required',
+    requirement: 'ON_DEMAND_REQUIRED',
     desktopFull: true,
     xrSafe: true,
-    reason: 'Case sleeve / spine / back print. Required to identify a title in hand.',
+    reason: 'Selected-title sleeve / spine / back. Prefetched on select, not at boot.',
   },
   {
     cls: 'signage',
-    role: 'required',
+    requirement: 'WORLD_REQUIRED',
     desktopFull: true,
     xrSafe: true,
-    reason: 'Overhead category signs. Required to navigate the store.',
+    reason: 'Overhead category signs (`userData.isSign`). Required to navigate the store.',
   },
   {
     cls: 'aisleFascia',
-    role: 'required',
+    requirement: 'WORLD_REQUIRED',
     desktopFull: true,
     xrSafe: true,
-    reason: 'Aisle / genre fascia lettering.',
+    representedBy: 'signage',
+    reason: 'Genre / aisle fascia is the same isSign lettering as signage, not a separate name-prefix mesh class.',
   },
   {
     cls: 'brandPack',
-    role: 'required',
+    requirement: 'WORLD_REQUIRED',
     desktopFull: true,
     xrSafe: true,
     reason: 'Store identity images. Separate from locale chrome.',
   },
   {
     cls: 'canvasTextures',
-    role: 'required',
+    requirement: 'WORLD_REQUIRED',
     desktopFull: true,
     xrSafe: true,
     reason: 'Procedural store surfaces (carpet, walls, ceiling, labels).',
   },
   {
     cls: 'fixtureTextures',
-    role: 'required',
+    requirement: 'WORLD_REQUIRED',
     desktopFull: true,
     xrSafe: true,
     reason: 'Display fixtures, bins, letterboards, promo stands.',
   },
   {
     cls: 'storeLogos',
-    role: 'required',
+    requirement: 'WORLD_REQUIRED',
     desktopFull: true,
     xrSafe: true,
     reason: 'Storefront and in-store logo marks.',
   },
   {
     cls: 'crt',
-    role: 'required',
+    requirement: 'ON_DEMAND_REQUIRED',
     desktopFull: true,
     xrSafe: true,
-    reason: 'Counter CRT terminal surface. Settings are also reachable from XR UI.',
+    reason: 'Counter CRT terminal. Lazy / activation-driven; XR settings UI does not need it.',
   },
   {
     cls: 'floorWallMaterials',
-    role: 'required',
+    requirement: 'WORLD_REQUIRED',
     desktopFull: true,
     xrSafe: true,
     reason: 'Floor / wall / shell materials. Effects (AO, shadows) stay off.',
   },
   {
     cls: 'mediaSurfaces',
-    role: 'required',
+    requirement: 'ON_DEMAND_REQUIRED',
     desktopFull: true,
     xrSafe: true,
-    reason: 'Ceiling TV / CRT picture as a mesh VideoTexture. XRMediaBinding stays off.',
+    reason: 'Ceiling TV / CRT picture as a mesh VideoTexture. Bound on activation; XRMediaBinding stays off.',
   },
   {
     cls: 'decorativeFx',
-    role: 'decorative',
+    requirement: 'DECORATIVE',
     desktopFull: true,
     xrSafe: false,
     reason: 'N8AO/GTAO, composer, live mirrors, reflection probes, full env bake, case clearcoat maps.',
@@ -116,12 +130,25 @@ export function xrContentClassPolicies(): readonly XrContentClassPolicy[] {
   return CLASSES;
 }
 
-export function requiredXrSafeContentClasses(): XrContentClass[] {
-  return CLASSES.filter((c) => c.role === 'required').map((c) => c.cls);
+export function contentClassPolicy(cls: XrContentClass): XrContentClassPolicy | undefined {
+  return CLASSES.find((c) => c.cls === cls);
+}
+
+export function worldRequiredContentClasses(): XrContentClass[] {
+  return CLASSES.filter((c) => c.requirement === 'WORLD_REQUIRED').map((c) => c.cls);
+}
+
+export function onDemandRequiredContentClasses(): XrContentClass[] {
+  return CLASSES.filter((c) => c.requirement === 'ON_DEMAND_REQUIRED').map((c) => c.cls);
 }
 
 export function decorativeXrSafeContentClasses(): XrContentClass[] {
-  return CLASSES.filter((c) => c.role === 'decorative').map((c) => c.cls);
+  return CLASSES.filter((c) => c.requirement === 'DECORATIVE').map((c) => c.cls);
+}
+
+/** Classes that must be enabled in XR_SAFE (world + on-demand content). */
+export function requiredXrSafeContentClasses(): XrContentClass[] {
+  return CLASSES.filter((c) => c.requirement !== 'DECORATIVE').map((c) => c.cls);
 }
 
 export function xrSafeClassEnabled(cls: XrContentClass): boolean {
@@ -148,7 +175,8 @@ export function classifyObjectName(name: string): XrContentClass | null {
   if (n.includes('carpet') || n.includes('wall') || n.includes('ceiling') || n.includes('floor')) {
     return 'floorWallMaterials';
   }
-  if (n.includes('fixture') || n.includes('prop') || n.includes('riser') || n.includes('bin')) {
+  if (n.includes('fixture') || n.includes('prop') || n.includes('riser') || n.includes('bin')
+    || n.includes('drape-table') || n.includes('endcap') || n.includes('display')) {
     return 'fixtureTextures';
   }
   if (n.includes('brand')) return 'brandPack';

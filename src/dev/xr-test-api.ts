@@ -31,6 +31,12 @@ export interface XrTestApi {
   primaryButton(side: 'left' | 'right', pressed?: boolean): void;
   openMenu(): void;
   openSettings(): void;
+  applySettings(): void;
+  cancelSettings(): void;
+  cycleSetting(key: string, dir?: -1 | 1): void;
+  uiPaint(): unknown;
+  settingsDraft(): Record<string, unknown> | null;
+  selectFirstTitle(): { ok: boolean; titleId?: string };
   uiMode(): string;
   content(): unknown;
   diagnostics(): unknown;
@@ -210,6 +216,38 @@ export function createXrTestApi(getDevice: () => XRDevice | null): XrTestApi {
   openSettings() {
     const xr = (window as unknown as { storeScene?: { xr?: { openXrSettings?: () => void } } }).storeScene?.xr;
     xr?.openXrSettings?.();
+  },
+  applySettings() {
+    const xr = (window as unknown as { storeScene?: { xr?: { applyXrSettings?: () => void } } }).storeScene?.xr;
+    xr?.applyXrSettings?.();
+  },
+  cancelSettings() {
+    const xr = (window as unknown as { storeScene?: { xr?: { cancelXrSettings?: () => void } } }).storeScene?.xr;
+    xr?.cancelXrSettings?.();
+  },
+  cycleSetting(key, dir = 1) {
+    const xr = (window as unknown as { storeScene?: { xr?: { cycleXrControl?: (k: string, d: -1 | 1) => void } } }).storeScene?.xr;
+    xr?.cycleXrControl?.(key, dir);
+  },
+  uiPaint() {
+    const xr = (window as unknown as { storeScene?: { xr?: { xrUiPaint?: () => unknown } } }).storeScene?.xr;
+    return xr?.xrUiPaint?.() ?? null;
+  },
+  settingsDraft() {
+    const xr = (window as unknown as { storeScene?: { xr?: { xrSettingsDraft?: () => Record<string, unknown> | null } } }).storeScene?.xr;
+    return xr?.xrSettingsDraft?.() ?? null;
+  },
+  selectFirstTitle() {
+    const scene = (window as unknown as {
+      storeScene?: {
+        slotsByPosition?: Map<string, { movie: { id: string } }>;
+        xr?: { selectWorldSlot?: (slot: unknown) => void };
+      };
+    }).storeScene;
+    const slot = scene?.slotsByPosition ? [...scene.slotsByPosition.values()][0] : null;
+    if (!slot || !scene?.xr?.selectWorldSlot) return { ok: false };
+    scene.xr.selectWorldSlot(slot);
+    return { ok: true, titleId: slot.movie.id };
   },
   uiMode() {
     const xr = (window as unknown as { storeScene?: { xr?: { uiMode?: string } } }).storeScene?.xr;

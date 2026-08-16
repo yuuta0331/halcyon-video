@@ -1,11 +1,19 @@
-// Draft / apply / cancel over the existing settings store. No second database.
+// Draft / apply / cancel over the canonical settings registry.
+// XR owns presentation; src/settings.ts owns persist + apply semantics.
 
-import { setLocale, type Locale } from '../i18n/locale.ts';
+import {
+  commitSetting,
+  cycleValueIds,
+  getSetting,
+  settingValuesEqual,
+  type SettingsApplyTarget,
+} from '../settings-registry.ts';
+import { registerLiveChromeSettings } from '../settings-live-chrome.ts';
 import { xrControlKeys, xrSettingExposure } from './settings-policy.ts';
 
-export interface SettingsStore {
-  get(key: string): unknown;
-  set(key: string, value: unknown): void;
+export interface XrSettingsDraft {
+  values: Record<string, unknown>;
+  dirty: boolean;
 }
 
 export interface CycleDef {
@@ -13,14 +21,10 @@ export interface CycleDef {
   values: string[];
 }
 
-export interface XrSettingsDraft {
-  values: Record<string, unknown>;
-  dirty: boolean;
-}
-
-export function readXrDraft(store: SettingsStore, keys: readonly string[] = xrControlKeys()): XrSettingsDraft {
+export function readXrDraft(keys: readonly string[] = xrControlKeys()): XrSettingsDraft {
+  registerLiveChromeSettings();
   const values: Record<string, unknown> = {};
-  for (const key of keys) values[key] = store.get(key);
+  for (const key of keys) values[key] = getSetting(key);
   return { values, dirty: false };
 }
 
@@ -46,38 +50,35 @@ export function stepDraftCycle(
   return { values: { ...draft.values, [def.key]: next }, dirty: true };
 }
 
+export function canonicalCycleDef(key: string): CycleDef {
+  const values = cycleValueIds(key);
+  return { key, values: values.length ? values : [String(getSetting(key) ?? '')] };
+}
+
 /**
- * Persist draft keys that are XR controls. Locale also updates the live i18n
- * table so the XR panel repaints without a page reload. rebuild-scene / reload
- * desktop apply modes are not executed here.
+ * Commit only changed XR control keys through commitSetting.
+ * Does not write storage or invoke apply for unchanged draft values.
+ * Cancel is a re-read, never a write-back of old values.
  */
 export function applyXrDraft(
-  store: SettingsStore,
   draft: XrSettingsDraft,
+  scene: SettingsApplyTarget | null = null,
   keys: readonly string[] = xrControlKeys(),
 ): XrSettingsDraft {
+  registerLiveChromeSettings();
   for (const key of keys) {
     if (xrSettingExposure(key) !== 'control') continue;
     const value = draft.values[key];
-    store.set(key, value);
-    if (key === 'bb_locale' && (value === 'en' || value === 'ja')) {
-      setLocale(value as Locale);
-    }
+    if (settingValuesEqual(key, getSetting(key), value)) continue;
+    commitSetting(key, value, {
+      scene,
+      allowReload: false,
+      allowRebuild: false,
+    });
   }
   return { values: { ...draft.values }, dirty: false };
 }
 
-export function cancelXrDraft(
-  store: SettingsStore,
-  keys: readonly string[] = xrControlKeys(),
-): XrSettingsDraft {
-  return readXrDraft(store, keys);
-}
-
-export function memorySettingsStore(initial: Record<string, unknown> = {}): SettingsStore {
-  const data = { ...initial };
-  return {
-    get(key) { return data[key]; },
-    set(key, value) { data[key] = value; },
-  };
+export function cancelXrDraft(keys: readonly string[] = xrControlKeys()): XrSettingsDraft {
+  return readXrDraft(keys);
 }

@@ -547,6 +547,7 @@ async function main() {
           const d = window.__xrDiagnostics?.();
           const firstFrame = d?.startup?.firstWorldRenderCompletedAt != null;
           const ray = !!(window.storeScene?.scene?.getObjectByName?.('xr-target-ray'));
+          const contentBefore = xr?.content?.() ?? window.__xrContent?.() ?? null;
           xr?.openMenu?.();
           await new Promise((r) => setTimeout(r, 250));
           const menuMode = xr?.uiMode?.();
@@ -560,19 +561,30 @@ async function main() {
           xr?.openSettings?.();
           await new Promise((r) => setTimeout(r, 250));
           const settingsMode = xr?.uiMode?.();
-          xr?.trigger?.('right', true);
-          await new Promise((r) => setTimeout(r, 150));
-          xr?.trigger?.('right', false);
-          for (let i = 0; i < 5; i++) {
-            xr?.setStick?.('left', 0, -1);
-            await new Promise((r) => setTimeout(r, 150));
-            xr?.setStick?.('left', 0, 0);
-            await new Promise((r) => setTimeout(r, 150));
+          const localeBefore = localStorage.getItem('bb_locale');
+          const outsideBefore = window.storeScene?.getOutsideMode?.();
+          const draftLocale = xr?.settingsDraft?.()?.bb_locale;
+          if (draftLocale !== 'en') {
+            xr?.cycleSetting?.('bb_locale');
+            xr?.applySettings?.();
+            await new Promise((r) => setTimeout(r, 100));
           }
-          xr?.trigger?.('right', true);
-          await new Promise((r) => setTimeout(r, 150));
-          xr?.trigger?.('right', false);
-          await new Promise((r) => setTimeout(r, 250));
+          xr?.cycleSetting?.('bb_locale');
+          xr?.applySettings?.();
+          await new Promise((r) => setTimeout(r, 200));
+          const localeAfterApply = localStorage.getItem('bb_locale');
+          const paintJa = xr?.uiPaint?.();
+          xr?.cycleSetting?.('bb_outside');
+          xr?.applySettings?.();
+          await new Promise((r) => setTimeout(r, 200));
+          const outsideAfterApply = window.storeScene?.getOutsideMode?.();
+          const fpsBefore = localStorage.getItem('bb_fps_meter');
+          xr?.cycleSetting?.('bb_fps_meter');
+          xr?.applySettings?.();
+          await new Promise((r) => setTimeout(r, 200));
+          const fpsAfterApply = localStorage.getItem('bb_fps_meter');
+          const fpsRuntime = window.__fpsMeter?.isOn?.() === true;
+          const outsidePersisted = localStorage.getItem('bb_outside');
           return {
             entered,
             firstFrame,
@@ -580,12 +592,27 @@ async function main() {
             menuMode,
             settingsMode,
             locomotionSuppressed,
-            localeAfterApply: localStorage.getItem('bb_locale'),
+            localeBefore,
+            localeAfterApply,
+            paintTitle: paintJa?.title ?? null,
+            outsideBefore,
+            outsideAfterApply,
+            outsidePersisted,
+            fpsBefore,
+            fpsAfterApply,
+            fpsRuntime,
+            contentBefore,
           };
         });
         await shotJp4a('iwer-jp4a-settings.png');
         const closed = await page.evaluate(async () => {
           const xr = window.__xrTest;
+          const localeBeforeCancel = localStorage.getItem('bb_locale');
+          xr?.cycleSetting?.('bb_locale');
+          xr?.cancelSettings?.();
+          await new Promise((r) => setTimeout(r, 150));
+          const localeAfterCancel = localStorage.getItem('bb_locale');
+          const cancelDidNotPersist = localeAfterCancel === localeBeforeCancel;
           xr?.openMenu?.();
           await new Promise((r) => setTimeout(r, 150));
           xr?.squeeze?.('right', true);
@@ -603,24 +630,45 @@ async function main() {
           xr?.openSettings?.();
           await new Promise((r) => setTimeout(r, 250));
           const localeReopen = localStorage.getItem('bb_locale');
+          const outsideReopen = localStorage.getItem('bb_outside');
+          const fpsReopen = localStorage.getItem('bb_fps_meter');
+          const wrapsBeforeSelect = xr?.content?.()?.wraps ?? null;
+          const selected = xr?.selectFirstTitle?.() ?? { ok: false };
+          const untilWrap = Date.now() + 8000;
+          let wrapsAfterSelect = xr?.content?.()?.wraps ?? null;
+          while (Date.now() < untilWrap) {
+            wrapsAfterSelect = xr?.content?.()?.wraps ?? null;
+            if (wrapsAfterSelect?.activation === 'requested' && wrapsAfterSelect?.state === 'ready') break;
+            await new Promise((r) => setTimeout(r, 150));
+          }
           const content = xr?.content?.() ?? window.__xrContent?.() ?? null;
           const gpu = window.__gpuDiagnostics?.() ?? null;
-          const parity = !!(content
-            && content.poster?.visible > 0
-            && content.decorativeFx?.state === 'disabled'
-            && (content.canvasTextures?.visible > 0 || content.floorWallMaterials?.visible > 0)
-            && (content.signage?.visible > 0 || content.aisleFascia?.visible > 0 || content.storeLogos?.visible > 0));
+          const worldReady = content?.worldReady === true;
+          const decorativeDisabled = content?.decorativeFx?.state === 'disabled';
+          const parity = worldReady && decorativeDisabled;
           await xr?.exit?.();
           return {
             worldMode,
             locomotionResumed,
             localeReopen,
+            outsideReopen,
+            fpsReopen,
+            cancelDidNotPersist,
+            wrapsBeforeSelect,
+            selected,
+            wrapsAfterSelect,
             content,
+            worldReady,
+            decorativeDisabled,
             parity,
             contextLost: gpu?.contextLost === true,
             posterPhysicalSlots: gpu?.posterPhysicalSlots ?? null,
             posterResidentTitles: gpu?.posterResidentTitles ?? null,
+            posterHighWater: gpu?.posterResidentHighWaterMark ?? null,
             residencyOk: gpu?.posterResidencyInvariantOk ?? null,
+            duplicateOwners: gpu?.posterDuplicatePhysicalOwners ?? null,
+            freeOwnedCollisions: gpu?.posterFreeOwnedCollisions ?? null,
+            framebufferScale: gpu?.xrFramebufferScaleRequested ?? null,
           };
         });
         await shotJp4a('iwer-jp4a-japanese.png');
@@ -632,12 +680,25 @@ async function main() {
           && opened.locomotionSuppressed === true
           && closed.locomotionResumed === true
           && opened.localeAfterApply === 'ja'
+          && (opened.paintTitle === 'ストア設定' || /設定/.test(String(opened.paintTitle || '')))
           && closed.localeReopen === 'ja'
+          && opened.outsideAfterApply != null
+          && opened.outsideAfterApply !== opened.outsideBefore
+          && opened.fpsRuntime === true
+          && closed.cancelDidNotPersist === true
+          && closed.worldReady === true
+          && closed.decorativeDisabled === true
           && closed.parity === true
           && closed.contextLost !== true
-          && closed.residencyOk !== false;
+          && closed.residencyOk !== false
+          && (closed.posterPhysicalSlots == null || closed.posterPhysicalSlots === 128)
+          && (closed.framebufferScale == null || closed.framebufferScale === 0.5)
+          && closed.wrapsBeforeSelect?.activation === 'idle'
+          && closed.wrapsAfterSelect?.activation === 'requested'
+          && closed.wrapsAfterSelect?.state === 'ready';
         fs.writeFileSync(path.join(jp4aDir, 'iwer-jp4a-ui.json'), JSON.stringify(scrub({
           classification: 'IWER_EMULATED',
+          notQuestHardware: true,
           pass,
           opened,
           closed,
@@ -652,6 +713,11 @@ async function main() {
           locomotionSuppressed: opened.locomotionSuppressed,
           locomotionResumed: closed.locomotionResumed,
           localeAfterApply: opened.localeAfterApply,
+          outsideAfterApply: opened.outsideAfterApply,
+          fpsRuntime: opened.fpsRuntime,
+          cancelDidNotPersist: closed.cancelDidNotPersist,
+          worldReady: closed.worldReady,
+          wrapsAfterSelect: closed.wrapsAfterSelect,
           parity: closed.parity,
           content: closed.content,
         };

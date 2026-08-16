@@ -1,5 +1,6 @@
 {
   "classification": "IWER_EMULATED",
+  "notQuestHardware": true,
   "pass": true,
   "opened": {
     "entered": {
@@ -10,29 +11,39 @@
     "menuMode": "MENU",
     "settingsMode": "SETTINGS",
     "locomotionSuppressed": true,
-    "localeAfterApply": "ja"
-  },
-  "closed": {
-    "worldMode": "WORLD",
-    "locomotionResumed": true,
-    "localeReopen": "ja",
-    "content": {
+    "localeBefore": "ja",
+    "localeAfterApply": "ja",
+    "paintTitle": "ストア設定",
+    "outsideBefore": "day",
+    "outsideAfterApply": "night",
+    "outsidePersisted": "night",
+    "fpsBefore": null,
+    "fpsAfterApply": "1",
+    "fpsRuntime": true,
+    "contentBefore": {
       "resourceProfile": "XR_SAFE",
+      "worldReady": true,
       "requiredReady": true,
+      "onDemandWrapsReady": false,
+      "decorativeDisabled": true,
       "poster": {
         "allocated": 128,
         "decoded": 128,
         "uploaded": 128,
         "visible": 128,
         "state": "ready",
+        "requirement": "WORLD_REQUIRED",
+        "activation": "idle",
         "role": "required"
       },
       "wraps": {
-        "allocated": 1,
-        "decoded": 1,
-        "uploaded": 1,
+        "allocated": 2,
+        "decoded": 5,
+        "uploaded": 5,
         "visible": 0,
         "state": "pending",
+        "requirement": "ON_DEMAND_REQUIRED",
+        "activation": "idle",
         "role": "required"
       },
       "signage": {
@@ -41,14 +52,19 @@
         "uploaded": 97,
         "visible": 97,
         "state": "ready",
+        "requirement": "WORLD_REQUIRED",
+        "activation": "idle",
         "role": "required"
       },
       "aisleFascia": {
-        "allocated": 0,
-        "decoded": 0,
-        "uploaded": 0,
-        "visible": 0,
-        "state": "pending",
+        "allocated": 97,
+        "decoded": 97,
+        "uploaded": 97,
+        "visible": 97,
+        "state": "ready",
+        "requirement": "WORLD_REQUIRED",
+        "activation": "idle",
+        "representedBy": "signage",
         "role": "required"
       },
       "brandPack": {
@@ -57,22 +73,28 @@
         "uploaded": 1,
         "visible": 1,
         "state": "ready",
+        "requirement": "WORLD_REQUIRED",
+        "activation": "idle",
         "role": "required"
       },
       "canvasTextures": {
-        "allocated": 472,
-        "decoded": 472,
-        "uploaded": 472,
-        "visible": 472,
+        "allocated": 471,
+        "decoded": 471,
+        "uploaded": 471,
+        "visible": 471,
         "state": "ready",
+        "requirement": "WORLD_REQUIRED",
+        "activation": "idle",
         "role": "required"
       },
       "fixtureTextures": {
-        "allocated": 7,
-        "decoded": 7,
-        "uploaded": 7,
-        "visible": 7,
+        "allocated": 8,
+        "decoded": 8,
+        "uploaded": 8,
+        "visible": 8,
         "state": "ready",
+        "requirement": "WORLD_REQUIRED",
+        "activation": "idle",
         "role": "required"
       },
       "storeLogos": {
@@ -81,6 +103,8 @@
         "uploaded": 2,
         "visible": 2,
         "state": "ready",
+        "requirement": "WORLD_REQUIRED",
+        "activation": "idle",
         "role": "required"
       },
       "crt": {
@@ -89,6 +113,8 @@
         "uploaded": 0,
         "visible": 0,
         "state": "pending",
+        "requirement": "ON_DEMAND_REQUIRED",
+        "activation": "idle",
         "role": "required"
       },
       "floorWallMaterials": {
@@ -97,14 +123,18 @@
         "uploaded": 1,
         "visible": 1,
         "state": "ready",
+        "requirement": "WORLD_REQUIRED",
+        "activation": "idle",
         "role": "required"
       },
       "mediaSurfaces": {
-        "allocated": 2,
-        "decoded": 2,
-        "uploaded": 2,
-        "visible": 2,
-        "state": "ready",
+        "allocated": 0,
+        "decoded": 0,
+        "uploaded": 0,
+        "visible": 0,
+        "state": "pending",
+        "requirement": "ON_DEMAND_REQUIRED",
+        "activation": "idle",
         "role": "required"
       },
       "decorativeFx": {
@@ -113,14 +143,182 @@
         "uploaded": 0,
         "visible": 0,
         "state": "disabled",
+        "requirement": "DECORATIVE",
+        "activation": "idle",
+        "role": "decorative"
+      }
+    }
+  },
+  "closed": {
+    "worldMode": "WORLD",
+    "locomotionResumed": true,
+    "localeReopen": "ja",
+    "outsideReopen": "night",
+    "fpsReopen": "1",
+    "cancelDidNotPersist": true,
+    "wrapsBeforeSelect": {
+      "allocated": 2,
+      "decoded": 5,
+      "uploaded": 5,
+      "visible": 0,
+      "state": "pending",
+      "requirement": "ON_DEMAND_REQUIRED",
+      "activation": "idle",
+      "role": "required"
+    },
+    "selected": {
+      "ok": true,
+      "titleId": "Movies-729"
+    },
+    "wrapsAfterSelect": {
+      "allocated": 2,
+      "decoded": 5,
+      "uploaded": 5,
+      "visible": 0,
+      "state": "ready",
+      "requirement": "ON_DEMAND_REQUIRED",
+      "activation": "requested",
+      "role": "required"
+    },
+    "content": {
+      "resourceProfile": "XR_SAFE",
+      "worldReady": true,
+      "requiredReady": true,
+      "onDemandWrapsReady": true,
+      "decorativeDisabled": true,
+      "poster": {
+        "allocated": 128,
+        "decoded": 128,
+        "uploaded": 128,
+        "visible": 128,
+        "state": "ready",
+        "requirement": "WORLD_REQUIRED",
+        "activation": "idle",
+        "role": "required"
+      },
+      "wraps": {
+        "allocated": 2,
+        "decoded": 5,
+        "uploaded": 5,
+        "visible": 0,
+        "state": "ready",
+        "requirement": "ON_DEMAND_REQUIRED",
+        "activation": "requested",
+        "role": "required"
+      },
+      "signage": {
+        "allocated": 97,
+        "decoded": 97,
+        "uploaded": 97,
+        "visible": 97,
+        "state": "ready",
+        "requirement": "WORLD_REQUIRED",
+        "activation": "idle",
+        "role": "required"
+      },
+      "aisleFascia": {
+        "allocated": 97,
+        "decoded": 97,
+        "uploaded": 97,
+        "visible": 97,
+        "state": "ready",
+        "requirement": "WORLD_REQUIRED",
+        "activation": "idle",
+        "representedBy": "signage",
+        "role": "required"
+      },
+      "brandPack": {
+        "allocated": 1,
+        "decoded": 1,
+        "uploaded": 1,
+        "visible": 1,
+        "state": "ready",
+        "requirement": "WORLD_REQUIRED",
+        "activation": "idle",
+        "role": "required"
+      },
+      "canvasTextures": {
+        "allocated": 472,
+        "decoded": 472,
+        "uploaded": 472,
+        "visible": 472,
+        "state": "ready",
+        "requirement": "WORLD_REQUIRED",
+        "activation": "idle",
+        "role": "required"
+      },
+      "fixtureTextures": {
+        "allocated": 8,
+        "decoded": 8,
+        "uploaded": 8,
+        "visible": 8,
+        "state": "ready",
+        "requirement": "WORLD_REQUIRED",
+        "activation": "idle",
+        "role": "required"
+      },
+      "storeLogos": {
+        "allocated": 2,
+        "decoded": 2,
+        "uploaded": 2,
+        "visible": 2,
+        "state": "ready",
+        "requirement": "WORLD_REQUIRED",
+        "activation": "idle",
+        "role": "required"
+      },
+      "crt": {
+        "allocated": 0,
+        "decoded": 0,
+        "uploaded": 0,
+        "visible": 0,
+        "state": "pending",
+        "requirement": "ON_DEMAND_REQUIRED",
+        "activation": "idle",
+        "role": "required"
+      },
+      "floorWallMaterials": {
+        "allocated": 1,
+        "decoded": 1,
+        "uploaded": 1,
+        "visible": 1,
+        "state": "ready",
+        "requirement": "WORLD_REQUIRED",
+        "activation": "idle",
+        "role": "required"
+      },
+      "mediaSurfaces": {
+        "allocated": 0,
+        "decoded": 0,
+        "uploaded": 0,
+        "visible": 0,
+        "state": "pending",
+        "requirement": "ON_DEMAND_REQUIRED",
+        "activation": "idle",
+        "role": "required"
+      },
+      "decorativeFx": {
+        "allocated": 0,
+        "decoded": 0,
+        "uploaded": 0,
+        "visible": 0,
+        "state": "disabled",
+        "requirement": "DECORATIVE",
+        "activation": "idle",
         "role": "decorative"
       }
     },
+    "worldReady": true,
+    "decorativeDisabled": true,
     "parity": true,
     "contextLost": false,
     "posterPhysicalSlots": 128,
     "posterResidentTitles": 128,
-    "residencyOk": true
+    "posterHighWater": 128,
+    "residencyOk": true,
+    "duplicateOwners": 0,
+    "freeOwnedCollisions": 0,
+    "framebufferScale": 0.5
   },
   "shots": [
     "iwer-jp4a-settings.png",

@@ -1,17 +1,24 @@
 // Secret-free XR content-class counts. Never log tokens, API keys, or URLs.
+//
+// Ready means ready. `pending` is never success for an active WORLD_REQUIRED
+// class. On-demand classes may stay pending until their activation trigger.
 
 import {
   activeResourceProfile,
   type ResourceProfileName,
 } from '../perf/resource-profile.ts';
 import {
+  contentClassPolicy,
   decorativeXrSafeContentClasses,
-  requiredXrSafeContentClasses,
+  onDemandRequiredContentClasses,
+  worldRequiredContentClasses,
   xrSafeClassEnabled,
   type XrContentClass,
+  type XrContentRequirement,
 } from './content-classes.ts';
 
 export type XrContentState = 'ready' | 'pending' | 'disabled' | 'missing';
+export type XrContentActivation = 'idle' | 'requested';
 
 export interface XrContentClassSnapshot {
   allocated: number;
@@ -19,12 +26,21 @@ export interface XrContentClassSnapshot {
   uploaded: number;
   visible: number;
   state: XrContentState;
+  requirement: XrContentRequirement;
+  activation: XrContentActivation;
+  /** Non-empty when this row is an alias of another class's representation. */
+  representedBy?: XrContentClass;
   role: 'required' | 'decorative';
 }
 
 export interface XrContentSnapshot {
   resourceProfile: ResourceProfileName;
+  /** True only when every WORLD_REQUIRED class is actually `ready`. */
+  worldReady: boolean;
+  /** Alias of worldReady. Does not treat pending as success. */
   requiredReady: boolean;
+  onDemandWrapsReady: boolean;
+  decorativeDisabled: boolean;
   poster: XrContentClassSnapshot;
   wraps: XrContentClassSnapshot;
   signage: XrContentClassSnapshot;
@@ -48,6 +64,8 @@ export interface XrContentLiveCounts {
   wrapsDecoded?: number;
   wrapsUploaded?: number;
   wrapsVisible?: number;
+  wrapsRequested?: boolean;
+  wrapsTitleId?: string | null;
   signageVisible?: number;
   aisleFasciaVisible?: number;
   brandPackReady?: boolean;
@@ -55,8 +73,10 @@ export interface XrContentLiveCounts {
   fixtureTexturesVisible?: number;
   storeLogosVisible?: number;
   crtReady?: boolean;
+  crtActivated?: boolean;
   floorWallReady?: boolean;
   mediaSurfacesReady?: number;
+  mediaActivated?: boolean;
   environmentReady?: boolean;
 }
 
@@ -74,88 +94,193 @@ export function resetXrContentLiveStateForTests(): void {
   live = {};
 }
 
-function snap(
+/** Selected-title wrap prefetch started. Does not mark the wrap ready. */
+export function noteOnDemandWrapRequest(titleId: string): void {
+  live = {
+    ...live,
+    wrapsRequested: true,
+    wrapsTitleId: titleId,
+    wrapsUploaded: 0,
+    wrapsDecoded: 0,
+  };
+}
+
+function requirementOf(cls: XrContentClass): XrContentRequirement {
+  return contentClassPolicy(cls)?.requirement ?? 'DECORATIVE';
+}
+
+function roleOf(requirement: XrContentRequirement): 'required' | 'decorative' {
+  return requirement === 'DECORATIVE' ? 'decorative' : 'required';
+}
+
+function worldClassState(
+  enabled: boolean,
+  counts: { allocated: number; decoded: number; uploaded: number; visible: number },
+  opts: { readyIfPresent?: boolean; usesVisible?: boolean } = {},
+): XrContentState {
+  if (!enabled) return 'disabled';
+  const present = opts.readyIfPresent
+    ? counts.allocated > 0 || counts.visible > 0 || counts.uploaded > 0
+    : opts.usesVisible === false
+      ? counts.uploaded > 0 || counts.decoded > 0 || counts.allocated > 0
+      : counts.visible > 0 && (counts.uploaded > 0 || counts.allocated > 0);
+  if (present) return 'ready';
+  if (counts.allocated > 0 || counts.decoded > 0) return 'pending';
+  return 'missing';
+}
+
+function onDemandState(
+  enabled: boolean,
+  activated: boolean,
+  counts: { allocated: number; decoded: number; uploaded: number; visible: number },
+): XrContentState {
+  if (!enabled) return 'disabled';
+  if (!activated) return 'pending';
+  if (counts.uploaded > 0 || counts.decoded > 0 || counts.allocated > 0) return 'ready';
+  return 'pending';
+}
+
+function snapWorld(
   cls: XrContentClass,
   counts: { allocated: number; decoded: number; uploaded: number; visible: number },
   profile: ResourceProfileName,
+  opts?: { readyIfPresent?: boolean; usesVisible?: boolean },
 ): XrContentClassSnapshot {
   const enabled = profile === 'XR_SAFE' ? xrSafeClassEnabled(cls) : true;
-  const role = decorativeXrSafeContentClasses().includes(cls) ? 'decorative' : 'required';
-  let state: XrContentState = 'ready';
-  if (!enabled) state = 'disabled';
-  else if (counts.allocated <= 0 && counts.visible <= 0) state = role === 'required' ? 'pending' : 'disabled';
-  else if (counts.visible <= 0 || counts.uploaded < counts.decoded) state = 'pending';
-  return { ...counts, state, role };
+  const requirement = requirementOf(cls);
+  const representedBy = contentClassPolicy(cls)?.representedBy;
+  return {
+    ...counts,
+    state: worldClassState(enabled, counts, opts),
+    requirement,
+    activation: 'idle',
+    representedBy,
+    role: roleOf(requirement),
+  };
+}
+
+function snapOnDemand(
+  cls: XrContentClass,
+  counts: { allocated: number; decoded: number; uploaded: number; visible: number },
+  profile: ResourceProfileName,
+  activated: boolean,
+): XrContentClassSnapshot {
+  const enabled = profile === 'XR_SAFE' ? xrSafeClassEnabled(cls) : true;
+  const requirement = requirementOf(cls);
+  return {
+    ...counts,
+    state: onDemandState(enabled, activated, counts),
+    requirement,
+    activation: activated ? 'requested' : 'idle',
+    role: roleOf(requirement),
+  };
+}
+
+function snapDecorative(
+  cls: XrContentClass,
+  profile: ResourceProfileName,
+): XrContentClassSnapshot {
+  const enabled = profile === 'XR_SAFE' ? xrSafeClassEnabled(cls) : true;
+  const requirement = requirementOf(cls);
+  return {
+    allocated: 0,
+    decoded: 0,
+    uploaded: 0,
+    visible: 0,
+    state: enabled ? 'ready' : 'disabled',
+    requirement,
+    activation: 'idle',
+    role: roleOf(requirement),
+  };
+}
+
+function rowByClass(
+  cls: Exclude<XrContentClass, 'decorativeFx'>,
+  rows: Omit<XrContentSnapshot, 'resourceProfile' | 'worldReady' | 'requiredReady' | 'onDemandWrapsReady' | 'decorativeDisabled' | 'decorativeFx'>,
+): XrContentClassSnapshot {
+  return rows[cls];
 }
 
 export function xrContentSnapshot(
   profileName: ResourceProfileName = activeResourceProfile().name,
   counts: XrContentLiveCounts = live,
 ): XrContentSnapshot {
-  const poster = snap('poster', {
+  const poster = snapWorld('poster', {
     allocated: counts.posterAllocated ?? 0,
     decoded: counts.posterDecoded ?? 0,
     uploaded: counts.posterUploaded ?? 0,
     visible: counts.posterVisible ?? 0,
   }, profileName);
-  const wraps = snap('wraps', {
+  const wrapsActivated = !!counts.wrapsRequested;
+  const wraps = snapOnDemand('wraps', {
     allocated: counts.wrapsAllocated ?? 0,
     decoded: counts.wrapsDecoded ?? 0,
     uploaded: counts.wrapsUploaded ?? 0,
     visible: counts.wrapsVisible ?? 0,
-  }, profileName);
+  }, profileName, wrapsActivated);
   const signageN = counts.signageVisible ?? 0;
-  const signage = snap('signage', {
+  const signage = snapWorld('signage', {
     allocated: signageN, decoded: signageN, uploaded: signageN, visible: signageN,
   }, profileName);
-  const fasciaN = counts.aisleFasciaVisible ?? 0;
-  const aisleFascia = snap('aisleFascia', {
-    allocated: fasciaN, decoded: fasciaN, uploaded: fasciaN, visible: fasciaN,
-  }, profileName);
+  // Fascia is the same isSign population. Copy signage; never invent ready
+  // from a fascia name-prefix of 0 while signs exist.
+  const aisleFascia: XrContentClassSnapshot = {
+    ...signage,
+    requirement: 'WORLD_REQUIRED',
+    representedBy: 'signage',
+    role: 'required',
+  };
   const brandN = counts.brandPackReady ? 1 : 0;
-  const brandPack = snap('brandPack', {
+  const brandPack = snapWorld('brandPack', {
     allocated: brandN, decoded: brandN, uploaded: brandN, visible: brandN,
-  }, profileName);
+  }, profileName, { readyIfPresent: true, usesVisible: false });
   const canvasN = counts.canvasTexturesAllocated ?? 0;
-  const canvasTextures = snap('canvasTextures', {
+  const canvasTextures = snapWorld('canvasTextures', {
     allocated: canvasN, decoded: canvasN, uploaded: canvasN, visible: canvasN,
-  }, profileName);
+  }, profileName, { usesVisible: false });
   const fixN = counts.fixtureTexturesVisible ?? 0;
-  const fixtureTextures = snap('fixtureTextures', {
+  const fixtureTextures = snapWorld('fixtureTextures', {
     allocated: fixN, decoded: fixN, uploaded: fixN, visible: fixN,
   }, profileName);
   const logoN = counts.storeLogosVisible ?? 0;
-  const storeLogos = snap('storeLogos', {
+  const storeLogos = snapWorld('storeLogos', {
     allocated: logoN, decoded: logoN, uploaded: logoN, visible: logoN,
   }, profileName);
+  const crtActivated = !!counts.crtActivated;
   const crtN = counts.crtReady ? 1 : 0;
-  const crt = snap('crt', {
+  const crt = snapOnDemand('crt', {
     allocated: crtN, decoded: crtN, uploaded: crtN, visible: crtN,
-  }, profileName);
+  }, profileName, crtActivated);
   const floorN = counts.floorWallReady ? 1 : 0;
-  const floorWallMaterials = snap('floorWallMaterials', {
+  const floorWallMaterials = snapWorld('floorWallMaterials', {
     allocated: floorN, decoded: floorN, uploaded: floorN, visible: floorN,
-  }, profileName);
+  }, profileName, { readyIfPresent: true });
+  const mediaActivated = !!counts.mediaActivated || (counts.mediaSurfacesReady ?? 0) > 0;
   const mediaN = counts.mediaSurfacesReady ?? 0;
-  const mediaSurfaces = snap('mediaSurfaces', {
+  const mediaSurfaces = snapOnDemand('mediaSurfaces', {
     allocated: mediaN, decoded: mediaN, uploaded: mediaN, visible: mediaN,
-  }, profileName);
-  const decorativeFx = snap('decorativeFx', {
-    allocated: 0, decoded: 0, uploaded: 0, visible: 0,
-  }, profileName);
+  }, profileName, mediaActivated);
+  const decorativeFx = snapDecorative('decorativeFx', profileName);
 
-  const requiredReady = requiredXrSafeContentClasses().every((cls) => {
-    if (cls === 'decorativeFx') return true;
-    const row = {
-      poster, wraps, signage, aisleFascia, brandPack, canvasTextures,
-      fixtureTextures, storeLogos, crt, floorWallMaterials, mediaSurfaces,
-    }[cls as Exclude<XrContentClass, 'decorativeFx'>];
-    return row.state === 'ready' || row.state === 'pending';
+  const rows = {
+    poster, wraps, signage, aisleFascia, brandPack, canvasTextures,
+    fixtureTextures, storeLogos, crt, floorWallMaterials, mediaSurfaces,
+  };
+
+  const worldReady = worldRequiredContentClasses().every((cls) => {
+    const row = cls === 'aisleFascia' ? aisleFascia : rowByClass(cls as Exclude<XrContentClass, 'decorativeFx'>, rows);
+    return row.state === 'ready';
   });
 
   return {
     resourceProfile: profileName,
-    requiredReady,
+    worldReady,
+    requiredReady: worldReady,
+    onDemandWrapsReady: wraps.activation === 'requested' && wraps.state === 'ready',
+    decorativeDisabled: decorativeXrSafeContentClasses().every((cls) => {
+      if (cls === 'decorativeFx') return decorativeFx.state === 'disabled' || profileName !== 'XR_SAFE';
+      return true;
+    }) && (profileName !== 'XR_SAFE' || decorativeFx.state === 'disabled'),
     poster,
     wraps,
     signage,
@@ -171,24 +296,34 @@ export function xrContentSnapshot(
   };
 }
 
-export function requiredContentVisible(snapshot: XrContentSnapshot): boolean {
-  const mustSee: Array<keyof XrContentSnapshot> = [
-    'poster', 'signage', 'canvasTextures', 'floorWallMaterials',
-  ];
-  return mustSee.every((cls) => {
-    const row = snapshot[cls];
-    return typeof row === 'object' && 'visible' in row && row.visible > 0 && row.state !== 'disabled';
-  });
+export function worldRequiredReady(snapshot: XrContentSnapshot): boolean {
+  return snapshot.worldReady;
 }
 
-/** World-usable XR_SAFE store. Wraps may stay pending until select (not JP-4B inspect). */
+export function onDemandReady(
+  snapshot: XrContentSnapshot,
+  cls: XrContentClass,
+): boolean {
+  if (!onDemandRequiredContentClasses().includes(cls)) return false;
+  const row = snapshot[cls as keyof XrContentSnapshot];
+  if (!row || typeof row !== 'object' || !('state' in row)) return false;
+  return row.activation === 'requested' && row.state === 'ready';
+}
+
+export function decorativeExpectedDisabled(snapshot: XrContentSnapshot): boolean {
+  return snapshot.resourceProfile !== 'XR_SAFE' || snapshot.decorativeFx.state === 'disabled';
+}
+
+/** Visible world chrome used for navigation. Pending is not success. */
+export function requiredContentVisible(snapshot: XrContentSnapshot): boolean {
+  return snapshot.poster.state === 'ready' && snapshot.poster.visible > 0
+    && snapshot.signage.state === 'ready' && snapshot.signage.visible > 0
+    && snapshot.canvasTextures.state === 'ready'
+    && snapshot.floorWallMaterials.state === 'ready';
+}
+
+/** World-usable XR_SAFE store: every WORLD_REQUIRED class is ready. */
 export function requiredWorldContentParity(snapshot: XrContentSnapshot): boolean {
-  if (snapshot.resourceProfile === 'XR_SAFE' && snapshot.decorativeFx.state !== 'disabled') {
-    return false;
-  }
-  if (snapshot.poster.state === 'disabled' || snapshot.poster.visible <= 0) return false;
-  if (snapshot.canvasTextures.state === 'disabled') return false;
-  if (snapshot.canvasTextures.visible <= 0 && snapshot.floorWallMaterials.visible <= 0) return false;
-  if (snapshot.signage.state === 'disabled') return false;
-  return snapshot.signage.visible > 0 || snapshot.aisleFascia.visible > 0 || snapshot.storeLogos.visible > 0;
+  if (!decorativeExpectedDisabled(snapshot)) return false;
+  return snapshot.worldReady;
 }

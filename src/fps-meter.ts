@@ -33,7 +33,7 @@
 // allocation (percentile sort scratch views, strings) happens on the ≤2Hz
 // update path, never in the frame hook.
 
-import { perfTrace, perfSlot } from './perf-trace';
+import { perfTrace, perfSlot } from './perf-trace.ts';
 
 /** localStorage / settings-registry key for the overlay. */
 export const FPS_METER_KEY = 'bb_fps_meter';
@@ -66,6 +66,7 @@ let lineTop: HTMLDivElement | null = null;
 let lineBot: HTMLDivElement | null = null;
 let timer: ReturnType<typeof setInterval> | null = null;
 let enabled = false;
+let desired = false;
 let renderSlot = -1;
 let originalEnd: ((idx: number) => void) | null = null;
 let lastTop = '';
@@ -233,6 +234,7 @@ export function destroyFpsMeter(): void {
 
 /** Show or hide the meter. Idempotent, safe to call before the scene exists. */
 export function enableFpsMeter(on: boolean): void {
+  desired = !!on;
   if (!on) {
     if (enabled) destroyFpsMeter();
     return;
@@ -245,7 +247,7 @@ export function enableFpsMeter(on: boolean): void {
 }
 
 export function isFpsMeterEnabled(): boolean {
-  return enabled;
+  return typeof document === 'undefined' ? desired : enabled;
 }
 
 /** '1' (how the settings registry stores toggles) plus the friendly spellings. */

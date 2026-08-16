@@ -27,18 +27,14 @@ export function attachXrRuntime(
     getBackWallZ: () => scene.backWallZ,
     pickSlot: (origin, direction, maxDist) =>
       walk.pickWalkSlotFromRay(scene, origin, direction, maxDist),
-    onSelectSlot: (slot) => walk.xrSelectSlot(scene, slot),
+    onSelectSlot: (slot) => {
+      walk.xrSelectSlot(scene, slot);
+      publishXrContent(scene);
+    },
     onConsole: (msg, type) => scene.onConsoleLog(msg, type),
     getVideoElement: () => scene.xrVideoGetter?.() ?? null,
     requestRender: () => scene.requestRender(),
-    applyXrSetting: (key, value) => {
-      if (key === 'bb_fps_meter') {
-        void import('./fps-meter').then((m) => m.enableFpsMeter(!!value));
-      }
-      if (key === 'bb_outside' && (value === 'day' || value === 'night' || value === 'sunset')) {
-        scene.setOutsideMode(value);
-      }
-    },
+    getSettingsScene: () => scene,
     setXrAnimationLoop: (enabled) => {
       if (enabled) scene.claimXrRenderLoop();
       scene.renderer.setAnimationLoop(enabled
@@ -71,10 +67,35 @@ export function attachXrRuntime(
   return xr;
 }
 
+function wrapMapReady(map: { image?: { width?: number; complete?: boolean } } | undefined): boolean {
+  const img = map?.image;
+  if (!img) return false;
+  if (typeof img.complete === 'boolean' && img.complete === false) return false;
+  return (img.width ?? 1) > 0;
+}
+
+function heroWrapCounts(scene: StoreScene): {
+  allocated: number; decoded: number; uploaded: number; visible: number;
+} {
+  const meshes = [scene.heroFrontMesh, scene.heroBackMesh];
+  let allocated = 0;
+  let uploaded = 0;
+  let visible = 0;
+  for (const mesh of meshes) {
+    if (!mesh) continue;
+    allocated += 1;
+    if (mesh.visible) visible += 1;
+    const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+    for (const mat of mats as Array<{ map?: { image?: { width?: number; complete?: boolean } } }>) {
+      if (wrapMapReady(mat?.map)) uploaded += 1;
+    }
+  }
+  return { allocated, decoded: uploaded, uploaded, visible };
+}
+
 function publishXrContent(scene: StoreScene): void {
   const poster = textureArrayManager.memorySnapshot();
   let signage = 0;
-  let fascia = 0;
   let logos = 0;
   let fixtures = 0;
   let canvas = 0;
@@ -99,35 +120,37 @@ function publishXrContent(scene: StoreScene): void {
       if (map.isCanvasTexture) canvas++;
       if (map.isVideoTexture) media++;
     }
+    // Fascia lettering is isSign meshes. Do not invent a separate fascia class
+    // from a name-prefix count of 0.
     if (data?.isSign || cls === 'signage') signage++;
-    if (cls === 'aisleFascia') fascia++;
     if (cls === 'storeLogos') logos++;
     if (cls === 'fixtureTextures') fixtures++;
     if (data?.propScreen || cls === 'crt') crt++;
     if (cls === 'floorWallMaterials') floorWall++;
-    if (cls === 'mediaSurfaces') media++;
   });
-  const hero = scene.heroFrontMesh;
-  const wrapsAllocated = hero ? 1 : 0;
-  const wrapsVisible = hero?.visible ? 1 : 0;
+  if (scene.storefrontLogo3D) logos = Math.max(logos, 1);
+  fixtures = Math.max(fixtures, scene.slottedFixtures.length);
+  const wraps = heroWrapCounts(scene);
   setXrContentLiveState({
     posterAllocated: poster.physicalSlots || poster.catalogTitleCount,
     posterDecoded: poster.residentCount,
     posterUploaded: poster.residentCount,
     posterVisible: poster.residentCount,
-    wrapsAllocated,
-    wrapsDecoded: wrapsAllocated,
-    wrapsUploaded: wrapsAllocated,
-    wrapsVisible,
+    wrapsAllocated: wraps.allocated,
+    wrapsDecoded: wraps.decoded,
+    wrapsUploaded: wraps.uploaded,
+    wrapsVisible: wraps.visible,
     signageVisible: signage,
-    aisleFasciaVisible: fascia,
+    aisleFasciaVisible: signage,
     brandPackReady: brandPackStatus() !== 'failed',
     canvasTexturesAllocated: canvas,
     fixtureTexturesVisible: fixtures,
     storeLogosVisible: logos,
     crtReady: crt > 0,
+    crtActivated: false,
     floorWallReady: floorWall > 0 || canvas > 0,
     mediaSurfacesReady: media,
+    mediaActivated: media > 0,
     environmentReady: !!scene.scene.environment,
   });
 }

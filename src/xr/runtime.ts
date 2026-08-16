@@ -64,7 +64,6 @@ import {
 import { locomotionAllowed, uiOwnsInput, type XrUiMode } from './ui-mode';
 import { XrUiSession } from './ui-session';
 import { XrUiShell } from './ui-shell';
-import { localStorageSettingsStore } from './local-settings-store';
 import { rayHitsPanelUv } from './ui/hit';
 import {
   blankStartupTrace,
@@ -112,7 +111,7 @@ export interface XrRuntimeHost {
   onLocomotionTick?: () => void;
   setXrAnimationLoop: (enabled: boolean) => void;
   claimRenderLoop: () => void;
-  applyXrSetting?: (key: string, value: unknown) => void;
+  getSettingsScene?: () => import('../settings-registry').SettingsApplyTarget | null;
 }
 
 type XrManager = THREE.WebGLRenderer['xr'];
@@ -213,6 +212,36 @@ export class XrRuntime {
       suppressWorldSelect: true,
     });
     this.syncUiShell();
+  }
+
+  cycleXrControl(key: string, dir: -1 | 1 = 1): void {
+    this.ensureUi();
+    this.uiSession?.cycleControl(key, dir);
+    this.syncUiShell();
+  }
+
+  applyXrSettings(): void {
+    this.ensureUi();
+    this.uiSession?.apply();
+    this.syncUiShell();
+  }
+
+  cancelXrSettings(): void {
+    this.ensureUi();
+    this.uiSession?.cancel();
+    this.syncUiShell();
+  }
+
+  xrUiPaint(): ReturnType<XrUiSession['paint']> | null {
+    return this.uiSession?.paint() ?? null;
+  }
+
+  xrSettingsDraft(): Record<string, unknown> | null {
+    return this.uiSession ? { ...this.uiSession.draft.values } : null;
+  }
+
+  selectWorldSlot(slot: Parameters<XrRuntimeHost['onSelectSlot']>[0]): void {
+    this.host.onSelectSlot(slot);
   }
 
   get frameScheduler(): FrameSchedulerState {
@@ -1047,10 +1076,9 @@ export class XrRuntime {
   private ensureUi(): void {
     if (!this.uiSession) {
       this.uiSession = new XrUiSession(
-        localStorageSettingsStore(),
         {
           exitVr: () => { void this.exit(); },
-          applyLiveSetting: (key, value) => this.host.applyXrSetting?.(key, value),
+          getSettingsScene: () => this.host.getSettingsScene?.() ?? null,
         },
         () => activeResourceProfile().name,
       );
