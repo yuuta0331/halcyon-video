@@ -82,7 +82,6 @@ function sampleProductionSlot(
     stencilBuffer: false,
     type: THREE.UnsignedByteType,
     format: THREE.RGBAFormat,
-    colorSpace: renderer.outputColorSpace,
   });
   const dummy = new THREE.Object3D();
   slot.frontMesh.getMatrixAt(slot.instanceIdx, dummy.matrix);
