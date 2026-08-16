@@ -3,17 +3,25 @@ export {
 } from '../platform';
 export {
   immersiveVrRequestOptions,
+  diagnosticXrRequestOptions,
+  bareXrRequestOptions,
+  halcyonInitialXrRequestOptions,
   layersIsOptionalFeature,
+  requestsSessionFeature,
+  requestsLayersFeature,
+  requestsFixedFoveationFeature,
   pickReferenceSpaceType,
   selectReferenceSpaceTypeFromFeatures,
   pickXrTargetHz,
   probeImmersiveVrSupported,
   sessionCanStartWithoutLayers,
   tauriAllowsWebXr,
+  XR_FIXED_FOVEATION_FEATURE,
   XR_OPTIONAL_FEATURES,
   XR_REQUIRED_FEATURES,
   XR_TARGET_HZ,
 } from './session-policy';
+export { trySetRuntimeFoveation } from './runtime-foveation';
 export {
   competingLoops,
   initialFrameScheduler,

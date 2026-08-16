@@ -85,6 +85,35 @@ function unexpectedSeriousErrors() {
   return seriousErrors().filter((e) => !isAllowlisted(e, consoleLog));
 }
 
+function requestedOptionalFeatures(payload) {
+  const last = payload?.last;
+  if (Array.isArray(last?.requestedOptionalFeatures) && last.requestedOptionalFeatures.length) {
+    return last.requestedOptionalFeatures;
+  }
+  const d = payload?.d;
+  if (Array.isArray(d?.requestedOptionalFeatures) && d.requestedOptionalFeatures.length) {
+    return d.requestedOptionalFeatures;
+  }
+  for (const key of ['raw', 'threeBaseline', 'bare']) {
+    const nested = d?.[key]?.requestedOptionalFeatures;
+    if (Array.isArray(nested) && nested.length) return nested;
+  }
+  const journal = payload?.journal;
+  if (Array.isArray(journal)) {
+    const ev = [...journal].reverse().find((e) => e?.type === 'requestSession-start');
+    const csv = ev?.detail?.requestedOptionalFeatures;
+    if (typeof csv === 'string' && csv.length) return csv.split(',');
+  }
+  return Array.isArray(last?.requestedOptionalFeatures) ? last.requestedOptionalFeatures : [];
+}
+
+function diagnosticRequestClean(feats) {
+  return Array.isArray(feats)
+    && feats.includes('local-floor')
+    && !feats.includes('layers')
+    && !feats.includes('high-fixed-foveation-level');
+}
+
 async function waitForPort(ms = 60_000) {
   const t0 = Date.now();
   while (Date.now() - t0 < ms) {
@@ -184,19 +213,24 @@ async function runControlPage(browser, name, search, readyKey) {
       await new Promise((r) => setTimeout(r, 100));
     }
     const last = window.__lastXrStartup?.() ?? null;
+    const journal = window.__xrStartupJournal?.() ?? [];
     await api?.exit?.();
-    return { entered, d, last };
+    return { entered, d, last, journal };
   });
   const world = xr.d?.startup?.firstWorldRenderCompletedAt != null
     || xr.d?.raw?.firstWorldRenderCompletedAt != null
     || xr.d?.threeBaseline?.firstWorldRenderCompletedAt != null;
+  const feats = requestedOptionalFeatures(xr);
+  const requestClean = diagnosticRequestClean(feats);
   await page.close();
   return {
     name,
     url,
     boot,
     pre: xr,
-    pass: !!boot?.ready && !!xr.entered?.ok && world,
+    requestedOptionalFeatures: feats,
+    requestClean,
+    pass: !!boot?.ready && !!xr.entered?.ok && world && requestClean,
   };
 }
 
@@ -246,17 +280,24 @@ async function main() {
         await new Promise((r) => setTimeout(r, 100));
       }
       const gpu = window.__gpuDiagnostics?.() ?? null;
+      const last = window.__lastXrStartup?.() ?? null;
+      const journal = window.__xrStartupJournal?.() ?? [];
       await xr?.exit?.();
-      return { entered, d, gpu };
+      return { entered, d, gpu, last, journal };
     });
+    const feats = requestedOptionalFeatures(bareXr);
+    const requestClean = diagnosticRequestClean(feats);
     const barePass = !!bareReady?.bare && !!bareXr.entered?.ok
-      && (bareXr.d?.startup?.firstWorldRenderCompletedAt != null || bareXr.d?.bare?.firstWorldRenderCompletedAt != null);
+      && (bareXr.d?.startup?.firstWorldRenderCompletedAt != null || bareXr.d?.bare?.firstWorldRenderCompletedAt != null)
+      && requestClean;
     evidence.scenarios.push({
       name: 'BARE',
       url: `${BASE}/?xrBare=1&xrEmu=1&nogate=1`,
       pass: barePass,
       boot: bareReady,
       pre: bareXr,
+      requestedOptionalFeatures: feats,
+      requestClean,
     });
     await barePage.close();
 
@@ -510,6 +551,8 @@ async function main() {
         compositor: s.compositor, layersFeature: s.layersFeature,
         iwerLayersBoundary: s.iwerLayersBoundary,
         waitedForFullTextures: s.waitedForFullTextures,
+        requestedOptionalFeatures: s.requestedOptionalFeatures ?? s.pre?.last?.requestedOptionalFeatures,
+        requestClean: s.requestClean,
         diag: s.pre?.d1 ?? s.pre?.d ?? s.diag,
       })),
       unexpectedSerious: unexpectedSeriousErrors().map((e) => ({ ...e, text: redact(e.text) })),
@@ -541,7 +584,12 @@ async function main() {
     scenarioFailures: scenarioFailures.length,
     unexpectedSeriousErrors: unexpected.length,
     samplerWarnings: sampler.length,
-    scenarios: evidence.scenarios.map((s) => ({ name: s.name, pass: s.pass })),
+    scenarios: evidence.scenarios.map((s) => ({
+      name: s.name,
+      pass: s.pass,
+      requestedOptionalFeatures: s.requestedOptionalFeatures,
+      requestClean: s.requestClean,
+    })),
     unexpectedSerious: unexpected.slice(0, 20).map((e) => ({ ...e, text: redact(e.text) })),
     sampler: sampler.slice(0, 20).map((e) => ({ ...e, text: redact(e.text) })),
   }, null, 2));

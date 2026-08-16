@@ -3,7 +3,8 @@
 
 import * as THREE from 'three';
 import { readXrFlags } from './flags';
-import { immersiveVrRequestOptions, probeImmersiveVrSupported, selectReferenceSpaceTypeFromFeatures } from './session-policy';
+import { bareXrRequestOptions, probeImmersiveVrSupported, selectReferenceSpaceTypeFromFeatures } from './session-policy';
+import { trySetRuntimeFoveation } from './runtime-foveation';
 import {
   attachContextLossDiagnostics,
   gpuDiagnosticsSnapshot,
@@ -21,9 +22,9 @@ import {
   setActiveResourceProfile,
   xrSafeProfile,
 } from '../perf/resource-profile';
-import { installXrStartupJournal } from './startup-journal';
 import { classifyXrEnvironment } from './classification';
 import { isIwerActive } from './emu-state';
+import { appendXrJournal, installXrStartupJournal } from './startup-journal';
 
 export interface BareXrDiagnostics {
   bareSessionRequested: boolean;
@@ -37,6 +38,7 @@ export interface BareXrDiagnostics {
   contextLost: boolean;
   lastError: string | null;
   presenting: boolean;
+  requestedOptionalFeatures: string[];
 }
 
 const blankBare = (): BareXrDiagnostics => ({
@@ -51,6 +53,7 @@ const blankBare = (): BareXrDiagnostics => ({
   contextLost: false,
   lastError: null,
   presenting: false,
+  requestedOptionalFeatures: [],
 });
 
 let renderer: THREE.WebGLRenderer | null = null;
@@ -246,10 +249,15 @@ export async function enterBareXr(): Promise<void> {
   diag.bareSessionRequested = true;
   recordResourceSnapshot('pre-requestSession');
   publish();
-  const flags = readXrFlags();
+  const options = bareXrRequestOptions();
+  diag.requestedOptionalFeatures = [...options.optionalFeatures];
+  appendXrJournal('requestSession-start', {
+    phase: 'requesting',
+    requestedOptionalFeatures: options.optionalFeatures,
+  }, { requestedOptionalFeatures: options.optionalFeatures.join(',') });
   let next: XRSession;
   try {
-    next = await xr.requestSession('immersive-vr', immersiveVrRequestOptions({ layers: flags.layers }));
+    next = await xr.requestSession('immersive-vr', options);
   } catch (err) {
     diag.lastError = err instanceof Error ? err.message : String(err);
     publish();
@@ -274,9 +282,7 @@ export async function enterBareXr(): Promise<void> {
     throw err;
   }
   diag.bareSetSessionEnd = nowMs();
-  try {
-    xrMgr.setFoveation(1);
-  } catch { /* optional */ }
+  trySetRuntimeFoveation(xrMgr, 1);
   renderer.setAnimationLoop(onXrFrame);
   diag.presenting = true;
   recordResourceSnapshot('setSession-resolved');

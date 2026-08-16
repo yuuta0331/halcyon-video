@@ -28,6 +28,7 @@ export interface XrLastStartup {
   documentVisibility: string | null;
   sessionVisibility: string | null;
   enabledFeatures: string[];
+  requestedOptionalFeatures: string[];
   context: GlXrAttributes | null;
   hasXRWebGLBinding: boolean | null;
   hasCreateProjectionLayer: boolean | null;
@@ -107,6 +108,7 @@ export function blankLast(m: XrJournalMode): XrLastStartup {
     documentVisibility: visibility(),
     sessionVisibility: null,
     enabledFeatures: [],
+    requestedOptionalFeatures: [],
     context: null,
     hasXRWebGLBinding: null,
     hasCreateProjectionLayer: null,

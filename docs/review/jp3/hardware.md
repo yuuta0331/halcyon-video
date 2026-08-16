@@ -5,10 +5,9 @@
 Do not treat emulator evidence as QUEST_HARDWARE. Do not overwrite either
 historical failure as NOT_EXECUTED.
 
-Round 6 software/emulator XR-entry gates must pass, then exact-head CI.
-Do not request Quest testing during Round 6 implementation.
-
-## Historical hardware failure — HEAD 73abd4c
+Round 6 software/emulator XR-entry gates plus the pre-hardware Medium
+cleanup must pass, then exact-head CI. Do not request Quest testing during
+that software work.
 
 ## Historical hardware failure — HEAD 73abd4c
 
@@ -112,6 +111,17 @@ correction.
 IWER now includes `RAW_WEBXR`, `THREE_BASELINE`, and `BLUR_DURING_ENTRY`.
 Those are emulator evidence, not QUEST_HARDWARE.
 
+`BLUR_DURING_ENTRY` evidence provenance:
+
+- Unit tests reproduce the old presenting-only pause decision
+  (`legacyPresentingOnlyPauseWouldFire`) against that historical stall
+  condition. That is not a claim that the current E2E harness was executed
+  against SHA `73abd4c`.
+- Current-head IWER `BLUR_DURING_ENTRY` verifies the corrected occlusion
+  policy: blur during `requestSession` still yields a first world frame,
+  `isRendering === true`, and advancing frames. It fail-closes if that
+  regression returns.
+
 When those gates are green **and independent review asks for hardware**, one
 later session should use this order:
 
@@ -122,9 +132,40 @@ later session should use this order:
 5. If that succeeds: `?demo=1&nogate=1&xrSafe=1`
 6. Only then: real Jellyfin with XR_SAFE
 
-If RAW fails, stop (browser/raw-WebXR). If RAW passes and Three baseline
-fails, investigate Three WebXRManager / context compatibility. If BARE fails,
-stop. Do not test the full store.
+Stop on first failure:
+
+1. RAW (`?xrRaw=1`) — if fail, stop: browser / raw WebXR / XRWebGLLayer /
+   context/session path. Do not test Three or Halcyon.
+2. THREE_BASELINE (`?xrThreeBaseline=1`) — only if RAW passes. If fail, stop:
+   Three WebXRManager / session binding / compositor integration.
+3. BARE (`?xrBare=1`) — only if THREE passes. If fail, stop: Halcyon bare
+   wrapper/resource-policy/integration. Do not test full StoreScene.
+4. XR_SAFE minimal (`?demo=1&nogate=1&xrSafe=1&xrMinimal=1`) — only if BARE
+   passes.
+5. XR_SAFE full demo (`?demo=1&nogate=1&xrSafe=1`) — only if minimal passes.
+6. Real Jellyfin XR_SAFE — only after all synthetic/demo layers pass.
+
+At every failure collect `window.__lastXrStartup()`,
+`window.__xrStartupJournal()`, `window.__xrDiagnostics?.()`, and
+`window.__gpuDiagnostics?.()` where available. Never include credentials
+or tokens in committed evidence.
+
+## Pre-hardware Medium — diagnostic foveation request contamination
+
+**Status: PENDING hardware on the new HEAD** — independent review of Round 6
+was `APPROVE_WITH_ONE_PRE_HARDWARE_MEDIUM`. BARE (and Halcyon initial
+`requestSession`) could still request `high-fixed-foveation-level`, so a
+future RAW PASS / THREE PASS / BARE FAIL sequence would not be a clean
+comparison.
+
+This cleanup makes RAW, THREE_BASELINE, BARE, and Halcyon `xrMinimal`
+initial session requests omit layers and fixed-foveation as entry
+dependencies. Runtime `setFoveation` remains post-session and best-effort.
+This does **not** claim the Quest hang is fixed and is not QUEST_HARDWARE
+evidence.
+
+- HEAD `12b3ad7`: hardware **NOT_EXECUTED / PENDING**
+- Historical FAIL results above are unchanged.
 
 Emulator evidence lives in this folder separately (`iwer-*.png`,
 `xr-diagnostics.json`, `xr-resource.json`) and must not be treated as

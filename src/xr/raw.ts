@@ -3,7 +3,7 @@
 
 import { applyXrEntryVisibility, xrEntryShouldShow } from './entry';
 import { syncXrEntryLabels } from './boot';
-import { immersiveVrRequestOptions, selectReferenceSpaceTypeFromFeatures } from './session-policy';
+import { diagnosticXrRequestOptions, selectReferenceSpaceTypeFromFeatures } from './session-policy';
 import { probeImmersiveVrSupported } from './session-policy';
 import {
   attachContextJournal,
@@ -44,6 +44,7 @@ export interface RawXrDiagnostics {
   hasXRWebGLBinding: boolean;
   hasCreateProjectionLayer: boolean;
   compositorBackend: 'projection-layer' | 'xr-webgl-layer' | 'unknown';
+  requestedOptionalFeatures: string[];
 }
 
 const MAGENTA = [0.86, 0.08, 0.42, 1] as const;
@@ -72,6 +73,7 @@ const blank = (): RawXrDiagnostics => ({
   hasXRWebGLBinding: false,
   hasCreateProjectionLayer: false,
   compositorBackend: 'unknown',
+  requestedOptionalFeatures: [],
 });
 
 let canvas: HTMLCanvasElement | null = null;
@@ -122,14 +124,16 @@ export async function enterRawXr(): Promise<void> {
   if (!xr) throw new Error('navigator.xr missing');
   diag.sessionRequested = true;
   diag.requestSessionStart = nowMs();
-  appendXrJournal('requestSession-start', { phase: 'requesting' });
+  const options = diagnosticXrRequestOptions();
+  diag.requestedOptionalFeatures = [...options.optionalFeatures];
+  appendXrJournal('requestSession-start', {
+    phase: 'requesting',
+    requestedOptionalFeatures: options.optionalFeatures,
+  }, { requestedOptionalFeatures: options.optionalFeatures.join(',') });
   publish();
   let next: XRSession;
   try {
-    next = await xr.requestSession('immersive-vr', immersiveVrRequestOptions({
-      layers: false,
-      foveation: false,
-    }));
+    next = await xr.requestSession('immersive-vr', options);
   } catch (err) {
     diag.requestSessionError = err instanceof Error ? err.message : String(err);
     diag.lastError = diag.requestSessionError;

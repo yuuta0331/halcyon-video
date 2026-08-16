@@ -11,12 +11,13 @@ import { WALK_INTERACT_RANGE } from '../store-walk';
 import type { MovieSlot } from '../store-layout';
 import type { XrDiagnostics, XrSessionPhase, WalkCollisionFn } from './types';
 import {
-  immersiveVrRequestOptions,
+  halcyonInitialXrRequestOptions,
   pickXrTargetHz,
   probeImmersiveVrSupported,
   selectReferenceSpaceTypeFromFeatures,
   XR_TARGET_HZ,
 } from './session-policy';
+import { trySetRuntimeFoveation } from './runtime-foveation';
 import {
   competingLoops,
   initialFrameScheduler,
@@ -221,13 +222,15 @@ export class XrRuntime {
     this.phase = 'requesting';
     this.host.claimRenderLoop();
     this.startup = markStartupStage(this.startup, 'requestSessionStart', nowMs());
-    appendXrJournal('requestSession-start', { phase: 'requesting' });
+    const options = halcyonInitialXrRequestOptions({
+      layers: this.flags.layers && activeResourceProfile().xrCompositionLayers,
+    });
+    appendXrJournal('requestSession-start', {
+      phase: 'requesting',
+      requestedOptionalFeatures: options.optionalFeatures,
+    }, { requestedOptionalFeatures: options.optionalFeatures.join(',') });
     recordResourceSnapshot('pre-requestSession');
     this.publishDiagnostics();
-    const options = immersiveVrRequestOptions({
-      layers: this.flags.layers && activeResourceProfile().xrCompositionLayers,
-      foveation: true,
-    });
     let session: XRSession;
     try {
       session = await xr.requestSession('immersive-vr', options);
@@ -327,10 +330,7 @@ export class XrRuntime {
     this.startup.compositorBackend = detectSessionCompositorBackend(session);
     appendXrJournal('setSession-end', { compositorBackend: this.startup.compositorBackend });
     try {
-      const setFoveation = (xrMgr as XrManager & { setFoveation?: (n: number) => void }).setFoveation;
-      if (typeof setFoveation === 'function' && this.foveationRequested > 0) {
-        setFoveation.call(xrMgr, this.foveationRequested);
-      }
+      trySetRuntimeFoveation(xrMgr, this.foveationRequested);
       const getFoveation = (xrMgr as XrManager & { getFoveation?: () => number }).getFoveation;
       if (typeof getFoveation === 'function') this.foveationEffective = getFoveation.call(xrMgr);
     } catch {

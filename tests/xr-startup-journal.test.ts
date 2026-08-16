@@ -11,7 +11,10 @@ import {
 test('startup journal records secret-free transitions', () => {
   resetXrStartupJournalForTests();
   installXrStartupJournal('HALCYON');
-  appendXrJournal('requestSession-start', { phase: 'requesting' });
+  appendXrJournal('requestSession-start', {
+    phase: 'requesting',
+    requestedOptionalFeatures: ['local-floor'],
+  }, { requestedOptionalFeatures: 'local-floor' });
   appendXrJournal('window-blur', {}, { blurCount: 1 });
   appendXrJournal('setSession-end', { phase: 'projecting', compositorBackend: 'xr-webgl-layer' });
   appendXrJournal('first-world-frame', { firstWorldFrameAt: 42 });
@@ -20,6 +23,7 @@ test('startup journal records secret-free transitions', () => {
   assert.equal(last.phase, 'projecting');
   assert.equal(last.firstWorldFrameAt, 42);
   assert.equal(last.compositorBackend, 'xr-webgl-layer');
+  assert.deepEqual(last.requestedOptionalFeatures, ['local-floor']);
   const types = xrStartupJournal().map((e) => e.type);
   assert.ok(types.includes('journal-start'));
   assert.ok(types.includes('requestSession-start'));

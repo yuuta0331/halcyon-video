@@ -5,7 +5,7 @@
 import * as THREE from 'three';
 import { applyXrEntryVisibility, xrEntryShouldShow } from './entry';
 import { syncXrEntryLabels } from './boot';
-import { immersiveVrRequestOptions, probeImmersiveVrSupported, selectReferenceSpaceTypeFromFeatures } from './session-policy';
+import { diagnosticXrRequestOptions, probeImmersiveVrSupported, selectReferenceSpaceTypeFromFeatures } from './session-policy';
 import {
   appendXrJournal,
   attachContextJournal,
@@ -48,6 +48,7 @@ export interface ThreeBaselineDiagnostics {
   hasCreateProjectionLayer: boolean;
   compositorBackend: 'projection-layer' | 'xr-webgl-layer' | 'unknown';
   usedExplicitXrCompatibleContext: boolean;
+  requestedOptionalFeatures: string[];
 }
 
 const blank = (): ThreeBaselineDiagnostics => ({
@@ -77,6 +78,7 @@ const blank = (): ThreeBaselineDiagnostics => ({
   hasCreateProjectionLayer: false,
   compositorBackend: 'unknown',
   usedExplicitXrCompatibleContext: true,
+  requestedOptionalFeatures: [],
 });
 
 let renderer: THREE.WebGLRenderer | null = null;
@@ -145,14 +147,16 @@ export async function enterThreeBaseline(): Promise<void> {
   if (!xr) throw new Error('navigator.xr missing');
   diag.sessionRequested = true;
   diag.requestSessionStart = nowMs();
-  appendXrJournal('requestSession-start', { phase: 'requesting' });
+  const options = diagnosticXrRequestOptions();
+  diag.requestedOptionalFeatures = [...options.optionalFeatures];
+  appendXrJournal('requestSession-start', {
+    phase: 'requesting',
+    requestedOptionalFeatures: options.optionalFeatures,
+  }, { requestedOptionalFeatures: options.optionalFeatures.join(',') });
   publish();
   let next: XRSession;
   try {
-    next = await xr.requestSession('immersive-vr', immersiveVrRequestOptions({
-      layers: false,
-      foveation: false,
-    }));
+    next = await xr.requestSession('immersive-vr', options);
   } catch (err) {
     diag.requestSessionError = err instanceof Error ? err.message : String(err);
     diag.lastError = diag.requestSessionError;

@@ -31,16 +31,52 @@ export function selectReferenceSpaceTypeFromFeatures(
 /** JP-3 baseline. Do not require 90/120. */
 export const XR_TARGET_HZ = 72;
 
+export const XR_FIXED_FOVEATION_FEATURE = 'high-fixed-foveation-level';
+
 export function immersiveVrRequestOptions(opts?: {
   layers?: boolean;
   foveation?: boolean;
 }): XrSessionRequestOptions {
   const optional: string[] = ['local-floor'];
   if (opts?.layers !== false) optional.push('layers');
-  if (opts?.foveation !== false) optional.push('high-fixed-foveation-level');
+  // Fixed-foveation is opt-in. Initial projection must not depend on it.
+  if (opts?.foveation === true) optional.push(XR_FIXED_FOVEATION_FEATURE);
   return {
     optionalFeatures: optional,
   };
+}
+
+/** RAW / THREE_BASELINE / BARE: no layers, no fixed-foveation. */
+export function diagnosticXrRequestOptions(): XrSessionRequestOptions {
+  return immersiveVrRequestOptions({ layers: false, foveation: false });
+}
+
+/** BARE ignores URL flags, XR_SAFE, and other runtime switches. */
+export function bareXrRequestOptions(_ignored?: unknown): XrSessionRequestOptions {
+  return diagnosticXrRequestOptions();
+}
+
+/** Halcyon initial request: layers follow xrMinimal policy; never foveation. */
+export function halcyonInitialXrRequestOptions(input: {
+  layers: boolean;
+}): XrSessionRequestOptions {
+  return immersiveVrRequestOptions({ layers: input.layers, foveation: false });
+}
+
+export function requestsSessionFeature(
+  options: XrSessionRequestOptions,
+  feature: string,
+): boolean {
+  return options.optionalFeatures.includes(feature)
+    || (options.requiredFeatures ?? []).includes(feature);
+}
+
+export function requestsLayersFeature(options: XrSessionRequestOptions): boolean {
+  return requestsSessionFeature(options, 'layers');
+}
+
+export function requestsFixedFoveationFeature(options: XrSessionRequestOptions): boolean {
+  return requestsSessionFeature(options, XR_FIXED_FOVEATION_FEATURE);
 }
 
 export function layersIsOptionalFeature(options: XrSessionRequestOptions): boolean {

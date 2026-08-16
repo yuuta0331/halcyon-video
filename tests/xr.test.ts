@@ -110,13 +110,15 @@ test('immersive-vr support probe: unsupported / supported / Tauri', async () => 
 
 test('session request options include layers as optional, never required', () => {
   const opts = immersiveVrRequestOptions();
-  assert.deepEqual(opts.optionalFeatures, [...XR_OPTIONAL_FEATURES]);
+  assert.deepEqual(opts.optionalFeatures, ['local-floor', 'layers']);
   assert.ok(opts.optionalFeatures.includes('layers'));
   assert.ok(opts.optionalFeatures.includes('local-floor'));
+  assert.equal(opts.optionalFeatures.includes('high-fixed-foveation-level'), false);
   assert.equal((opts.requiredFeatures ?? []).includes('layers'), false);
   assert.equal(XR_REQUIRED_FEATURES.length, 0);
   assert.equal(layersIsOptionalFeature(opts), true);
   assert.equal(sessionCanStartWithoutLayers(opts), true);
+  assert.ok(XR_OPTIONAL_FEATURES.includes('high-fixed-foveation-level'));
 });
 
 test('session can start without Layers support', () => {

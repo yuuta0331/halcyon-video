@@ -2,10 +2,6 @@
   "console": [
     {
       "type": "log",
-      "text": "[Signage Debug] Processing slot: register-right category: register"
-    },
-    {
-      "type": "log",
       "text": "[Signage Debug] Processing slot: wall-newrelease-back-left category: wall-newrelease"
     },
     {
@@ -34,59 +30,59 @@
     },
     {
       "type": "log",
-      "text": "[UI Log] [10:43:08] [System] Jump index — 5 counter/libraries/genres, 8 displays."
+      "text": "[UI Log] [11:28:11] [System] Jump index — 5 counter/libraries/genres, 8 displays."
     },
     {
       "type": "log",
-      "text": "[UI Log] [10:43:08] [System] Inside the store — ◄ ► pick a section, ▼ the displays, ▲ the TVs, OK to go."
+      "text": "[UI Log] [11:28:11] [System] Inside the store — ◄ ► pick a section, ▼ the displays, ▲ the TVs, OK to go."
     },
     {
       "type": "log",
-      "text": "[resScale] 0.7fps < 50 — down to 0.95"
+      "text": "[resScale] 0.5fps < 50 — down to 0.95"
     },
     {
       "type": "log",
-      "text": "[UI Log] [10:43:10] [System] 3D Store rendering active in Library Select mode."
+      "text": "[UI Log] [11:28:13] [System] 3D Store rendering active in Library Select mode."
     },
     {
       "type": "log",
-      "text": "[UI Log] [10:43:10] [System] Loading critical store textures..."
+      "text": "[UI Log] [11:28:13] [System] Loading critical store textures..."
     },
     {
       "type": "log",
-      "text": "[UI Log] [10:43:10] [XR] immersive-vr is supported. Enter VR is available."
+      "text": "[UI Log] [11:28:13] [XR] immersive-vr is supported. Enter VR is available."
     },
     {
       "type": "log",
-      "text": "[resScale] 0.8fps < 50 — down to 0.9"
+      "text": "[resScale] 0.7fps < 50 — down to 0.9"
     },
     {
       "type": "log",
-      "text": "[UI Log] [10:43:11] [System] Loading store textures... 0% (1/128)"
+      "text": "[UI Log] [11:28:15] [System] Loading store textures... 0% (1/128)"
     },
     {
       "type": "log",
-      "text": "[UI Log] [10:43:12] [System] Loading store textures... 10% (13/128)"
+      "text": "[UI Log] [11:28:15] [System] Loading store textures... 10% (13/128)"
     },
     {
       "type": "log",
-      "text": "[UI Log] [10:43:13] [System] Loading store textures... 20% (26/128)"
+      "text": "[UI Log] [11:28:16] [System] Loading store textures... 20% (26/128)"
     },
     {
       "type": "log",
-      "text": "[UI Log] [10:43:13] [System] Loading store textures... 30% (39/128)"
+      "text": "[UI Log] [11:28:16] [System] Loading store textures... 30% (39/128)"
     },
     {
       "type": "log",
-      "text": "[warmup] hero material programs drawn+compiled in 697ms"
+      "text": "[warmup] hero material programs drawn+compiled in 1210ms"
     },
     {
       "type": "log",
-      "text": "[UI Log] [10:43:14] [System] Store ready. Remaining covers stream in the background."
+      "text": "[UI Log] [11:28:17] [System] Store ready. Remaining covers stream in the background."
     },
     {
       "type": "log",
-      "text": "[UI Log] [10:43:14] [XR] Immersive VR session started."
+      "text": "[UI Log] [11:28:18] [XR] Immersive VR session started."
     },
     {
       "type": "log",
@@ -94,19 +90,23 @@
     },
     {
       "type": "log",
-      "text": "[UI Log] [10:43:16] [System] Loading store textures... 40% (52/128)"
+      "text": "[UI Log] [11:28:19] [XR] Immersive VR session ended."
     },
     {
       "type": "log",
-      "text": "[UI Log] [10:43:16] [XR] Immersive VR session ended."
+      "text": "[UI Log] [11:28:19] [System] Loading store textures... 40% (52/128)"
     },
     {
       "type": "log",
-      "text": "[UI Log] [10:43:16] [System] Loading store textures... 50% (64/128)"
+      "text": "[UI Log] [11:28:19] [System] Loading store textures... 50% (64/128)"
     },
     {
       "type": "log",
-      "text": "[UI Log] [10:43:16] [System] Rendering paused. Resources yielded."
+      "text": "[UI Log] [11:28:19] [System] Loading store textures... 60% (77/128)"
+    },
+    {
+      "type": "log",
+      "text": "[UI Log] [11:28:19] [System] Rendering paused. Resources yielded."
     },
     {
       "type": "debug",
@@ -126,11 +126,11 @@
     },
     {
       "type": "log",
-      "text": "[UI Log] [10:43:17] [System] Initializing HTPC interface..."
+      "text": "[UI Log] [11:28:20] [System] Initializing HTPC interface..."
     },
     {
       "type": "log",
-      "text": "[UI Log] [10:43:17] [System] Demo mode: stocking the store with a placeholder library (no media server)."
+      "text": "[UI Log] [11:28:20] [System] Demo mode: stocking the store with a placeholder library (no media server)."
     },
     {
       "type": "log",
@@ -146,7 +146,7 @@
     },
     {
       "type": "log",
-      "text": "[calibrate] ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002488) Direct3D11 vs_5_0 ps_5_0, D3D11) → high +supersample (cached)"
+      "text": "[calibrate] ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002488) Direct3D11 vs_5_0 ps_5_0, D3D11) → medium +supersample (cached)"
     },
     {
       "type": "log",
@@ -234,11 +234,11 @@
     },
     {
       "type": "log",
-      "text": "[UI Log] [10:43:20] [System] Jump index — 5 counter/libraries/genres, 8 displays."
+      "text": "[UI Log] [11:28:23] [System] Jump index — 5 counter/libraries/genres, 8 displays."
     },
     {
       "type": "log",
-      "text": "[UI Log] [10:43:20] [System] Inside the store — ◄ ► pick a section, ▼ the displays, ▲ the TVs, OK to go."
+      "text": "[UI Log] [11:28:23] [System] Inside the store — ◄ ► pick a section, ▼ the displays, ▲ the TVs, OK to go."
     },
     {
       "type": "log",
@@ -246,79 +246,79 @@
     },
     {
       "type": "log",
-      "text": "[UI Log] [10:43:22] [System] 3D Store rendering active in Library Select mode."
+      "text": "[UI Log] [11:28:25] [System] 3D Store rendering active in Library Select mode."
     },
     {
       "type": "log",
-      "text": "[UI Log] [10:43:22] [System] Loading critical store textures..."
+      "text": "[UI Log] [11:28:25] [System] Loading critical store textures..."
     },
     {
       "type": "log",
-      "text": "[UI Log] [10:43:22] [XR] immersive-vr is supported. Enter VR is available."
+      "text": "[UI Log] [11:28:25] [XR] immersive-vr is supported. Enter VR is available."
     },
     {
       "type": "log",
-      "text": "[resScale] 0.7fps < 50 — down to 0.9"
+      "text": "[resScale] 0.8fps < 50 — down to 0.9"
     },
     {
       "type": "log",
-      "text": "[UI Log] [10:43:25] [System] Loading store textures... 0% (1/128)"
+      "text": "[UI Log] [11:28:27] [System] Loading store textures... 0% (1/128)"
     },
     {
       "type": "log",
-      "text": "[UI Log] [10:43:25] [System] Loading store textures... 10% (13/128)"
+      "text": "[UI Log] [11:28:28] [System] Loading store textures... 10% (13/128)"
     },
     {
       "type": "log",
-      "text": "[UI Log] [10:43:26] [System] Loading store textures... 20% (26/128)"
+      "text": "[UI Log] [11:28:28] [System] Loading store textures... 20% (26/128)"
     },
     {
       "type": "log",
-      "text": "[UI Log] [10:43:26] [System] Loading store textures... 30% (39/128)"
+      "text": "[UI Log] [11:28:29] [System] Loading store textures... 30% (39/128)"
     },
     {
       "type": "log",
-      "text": "[warmup] hero material programs drawn+compiled in 3234ms"
+      "text": "[warmup] hero material programs drawn+compiled in 951ms"
     },
     {
       "type": "log",
-      "text": "[UI Log] [10:43:29] [System] Store ready. Remaining covers stream in the background."
+      "text": "[UI Log] [11:28:30] [System] Store ready. Remaining covers stream in the background."
     },
     {
       "type": "log",
-      "text": "[UI Log] [10:43:30] [System] Loading store textures... 40% (52/128)"
+      "text": "[UI Log] [11:28:30] [System] Loading store textures... 40% (52/128)"
     },
     {
       "type": "log",
-      "text": "[UI Log] [10:43:30] [System] Loading store textures... 50% (64/128)"
+      "text": "[UI Log] [11:28:31] [System] Loading store textures... 50% (64/128)"
     },
     {
       "type": "log",
-      "text": "[UI Log] [10:43:30] [System] Loading store textures... 60% (77/128)"
+      "text": "[UI Log] [11:28:31] [System] Loading store textures... 60% (77/128)"
     },
     {
       "type": "log",
-      "text": "[UI Log] [10:43:30] [System] Loading store textures... 70% (90/128)"
+      "text": "[UI Log] [11:28:31] [System] Loading store textures... 70% (90/128)"
     },
     {
       "type": "log",
-      "text": "[UI Log] [10:43:30] [System] Loading store textures... 80% (103/128)"
+      "text": "[UI Log] [11:28:31] [System] Loading store textures... 80% (103/128)"
     },
     {
       "type": "log",
-      "text": "[UI Log] [10:43:30] [System] Loading store textures... 90% (116/128)"
+      "text": "[UI Log] [11:28:31] [System] Loading store textures... 90% (116/128)"
     },
     {
       "type": "log",
-      "text": "[UI Log] [10:43:30] [System] Loading store textures... 100% (128/128)"
+      "text": "[UI Log] [11:28:31] [System] Loading store textures... 100% (128/128)"
     },
     {
       "type": "log",
-      "text": "[UI Log] [10:43:30] [System] Initial poster working set settled."
+      "text": "[UI Log] [11:28:31] [System] Initial poster working set settled."
     },
     {
       "type": "log",
-      "text": "[UI Log] [10:43:31] [System] Rendering paused. Resources yielded."
+      "text": "[UI Log] [11:28:31] [System] Rendering paused. Resources yielded."
     }
   ],
   "serious": [
@@ -400,22 +400,26 @@
       "name": "BARE",
       "pass": true,
       "url": "http://127.0.0.1:17425/?xrBare=1&xrEmu=1&nogate=1",
+      "requestedOptionalFeatures": [
+        "local-floor"
+      ],
+      "requestClean": true,
       "diag": {
         "classification": "IWER_EMULATED",
         "iwerEmulated": true,
         "session": {
           "phase": "active",
           "rendererPresenting": true,
-          "sessionStartAt": 1231.300000000745
+          "sessionStartAt": 1351.699999999255
         },
         "startup": {
-          "requestSessionStart": 1231.300000000745,
-          "rendererSetSessionStart": 1231.300000000745,
-          "rendererSetSessionEnd": 1232.5,
-          "firstAnimationCallbackAt": 1489.800000000745,
-          "firstDirectRenderStart": 1489.800000000745,
-          "firstDirectRenderEnd": 1614.800000000745,
-          "firstWorldRenderCompletedAt": 1614.800000000745,
+          "requestSessionStart": 1351.699999999255,
+          "rendererSetSessionStart": 1351.699999999255,
+          "rendererSetSessionEnd": 1352.6000000014901,
+          "firstAnimationCallbackAt": 1610.5,
+          "firstDirectRenderStart": 1610.699999999255,
+          "firstDirectRenderEnd": 1660,
+          "firstWorldRenderCompletedAt": 1660,
           "lastError": null
         },
         "flags": {
@@ -430,16 +434,19 @@
         },
         "bare": {
           "bareSessionRequested": true,
-          "bareSetSessionStart": 1231.300000000745,
-          "bareSetSessionEnd": 1232.5,
-          "firstXrCallbackAt": 1489.800000000745,
-          "firstRendererRenderStart": 1489.800000000745,
-          "firstRendererRenderEnd": 1614.800000000745,
-          "firstWorldRenderCompletedAt": 1614.800000000745,
+          "bareSetSessionStart": 1351.699999999255,
+          "bareSetSessionEnd": 1352.6000000014901,
+          "firstXrCallbackAt": 1610.5,
+          "firstRendererRenderStart": 1610.699999999255,
+          "firstRendererRenderEnd": 1660,
+          "firstWorldRenderCompletedAt": 1660,
           "frameCount": 2,
           "contextLost": false,
           "lastError": null,
-          "presenting": true
+          "presenting": true,
+          "requestedOptionalFeatures": [
+            "local-floor"
+          ]
         },
         "gpu": {
           "classification": "IWER_EMULATED",
@@ -503,14 +510,14 @@
           "xrFoveationEffective": null,
           "xrPhase": "active",
           "xrFrameCount": 2,
-          "firstWorldRenderCompletedAt": 1614.800000000745,
+          "firstWorldRenderCompletedAt": 1660,
           "firstStoreXrRenderAt": null,
           "contextLost": false,
           "lastContextLossAt": null,
           "lastError": null,
           "snapshots": {
             "renderer-created": {
-              "at": 1188.7000000029802,
+              "at": 1305.1000000014901,
               "classification": "DESKTOP_BROWSER",
               "resourceProfile": "XR_SAFE",
               "rendererName": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002488) Direct3D11 vs_5_0 ps_5_0, D3D11)",
@@ -579,7 +586,7 @@
               "lastError": null
             },
             "pre-requestSession": {
-              "at": 1230.300000000745,
+              "at": 1350.699999999255,
               "classification": "IWER_EMULATED",
               "resourceProfile": "XR_SAFE",
               "rendererName": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002488) Direct3D11 vs_5_0 ps_5_0, D3D11)",
@@ -648,7 +655,7 @@
               "lastError": null
             },
             "requestSession-resolved": {
-              "at": 1231.2000000029802,
+              "at": 1351.699999999255,
               "classification": "IWER_EMULATED",
               "resourceProfile": "XR_SAFE",
               "rendererName": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002488) Direct3D11 vs_5_0 ps_5_0, D3D11)",
@@ -717,7 +724,7 @@
               "lastError": null
             },
             "pre-setSession": {
-              "at": 1231.300000000745,
+              "at": 1351.699999999255,
               "classification": "IWER_EMULATED",
               "resourceProfile": "XR_SAFE",
               "rendererName": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002488) Direct3D11 vs_5_0 ps_5_0, D3D11)",
@@ -786,7 +793,7 @@
               "lastError": null
             },
             "setSession-resolved": {
-              "at": 1232.5,
+              "at": 1352.6000000014901,
               "classification": "IWER_EMULATED",
               "resourceProfile": "XR_SAFE",
               "rendererName": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002488) Direct3D11 vs_5_0 ps_5_0, D3D11)",
@@ -855,7 +862,7 @@
               "lastError": null
             },
             "first-XR-callback": {
-              "at": 1489.800000000745,
+              "at": 1610.699999999255,
               "classification": "IWER_EMULATED",
               "resourceProfile": "XR_SAFE",
               "rendererName": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002488) Direct3D11 vs_5_0 ps_5_0, D3D11)",
@@ -924,7 +931,7 @@
               "lastError": null
             },
             "first-bare-render": {
-              "at": 1614.800000000745,
+              "at": 1660,
               "classification": "IWER_EMULATED",
               "resourceProfile": "XR_SAFE",
               "rendererName": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002488) Direct3D11 vs_5_0 ps_5_0, D3D11)",
@@ -1000,23 +1007,27 @@
       "name": "RAW_WEBXR",
       "pass": true,
       "url": "http://127.0.0.1:17425/?xrRaw=1&xrEmu=1&nogate=1",
+      "requestedOptionalFeatures": [
+        "local-floor"
+      ],
+      "requestClean": true,
       "diag": {
         "mode": "RAW",
         "raw": {
           "mode": "RAW",
           "sessionRequested": true,
-          "requestSessionStart": 612.9000000022352,
-          "requestSessionEnd": 613.7000000029802,
+          "requestSessionStart": 686.6999999992549,
+          "requestSessionEnd": 687.6999999992549,
           "requestSessionError": null,
-          "makeXRCompatibleStart": 613.9000000022352,
-          "makeXRCompatibleEnd": 614.1000000014901,
+          "makeXRCompatibleStart": 687.8000000007451,
+          "makeXRCompatibleEnd": 688,
           "makeXRCompatibleError": null,
-          "baseLayerSetAt": 614.4000000022352,
-          "firstXrCallbackAt": 631.2000000029802,
-          "firstRenderStart": 631.8000000007451,
-          "firstRenderEnd": 631.9000000022352,
-          "firstWorldRenderCompletedAt": 631.9000000022352,
-          "frameCount": 6,
+          "baseLayerSetAt": 688.3999999985099,
+          "firstXrCallbackAt": 693.6999999992549,
+          "firstRenderStart": 694.3999999985099,
+          "firstRenderEnd": 694.3999999985099,
+          "firstWorldRenderCompletedAt": 694.3999999985099,
+          "frameCount": 7,
           "contextLost": false,
           "lastError": null,
           "presenting": true,
@@ -1029,15 +1040,18 @@
           "xrCompatible": false,
           "hasXRWebGLBinding": true,
           "hasCreateProjectionLayer": false,
-          "compositorBackend": "unknown"
+          "compositorBackend": "unknown",
+          "requestedOptionalFeatures": [
+            "local-floor"
+          ]
         },
         "startup": {
-          "requestSessionStart": 612.9000000022352,
-          "requestSessionEnd": 613.7000000029802,
-          "firstAnimationCallbackAt": 631.2000000029802,
-          "firstDirectRenderStart": 631.8000000007451,
-          "firstDirectRenderEnd": 631.9000000022352,
-          "firstWorldRenderCompletedAt": 631.9000000022352,
+          "requestSessionStart": 686.6999999992549,
+          "requestSessionEnd": 687.6999999992549,
+          "firstAnimationCallbackAt": 693.6999999992549,
+          "firstDirectRenderStart": 694.3999999985099,
+          "firstDirectRenderEnd": 694.3999999985099,
+          "firstWorldRenderCompletedAt": 694.3999999985099,
           "lastError": null
         },
         "session": {
@@ -1060,25 +1074,29 @@
       "name": "THREE_BASELINE",
       "pass": true,
       "url": "http://127.0.0.1:17425/?xrThreeBaseline=1&xrEmu=1&nogate=1",
+      "requestedOptionalFeatures": [
+        "local-floor"
+      ],
+      "requestClean": true,
       "diag": {
         "mode": "THREE_BASELINE",
         "threeBaseline": {
           "mode": "THREE_BASELINE",
           "sessionRequested": true,
-          "requestSessionStart": 602.5999999977648,
-          "requestSessionEnd": 603.3999999985099,
+          "requestSessionStart": 643.3999999985099,
+          "requestSessionEnd": 644.2999999970198,
           "requestSessionError": null,
-          "makeXRCompatibleStart": 603.5999999977648,
-          "makeXRCompatibleEnd": 603.5999999977648,
+          "makeXRCompatibleStart": 644.5999999977648,
+          "makeXRCompatibleEnd": 644.6999999992549,
           "makeXRCompatibleError": null,
-          "setSessionStart": 603.8000000007451,
-          "setSessionEnd": 604.5,
+          "setSessionStart": 644.8999999985099,
+          "setSessionEnd": 645.6999999992549,
           "setSessionError": null,
-          "firstXrCallbackAt": 611.3999999985099,
-          "firstRenderStart": 611.3999999985099,
-          "firstRenderEnd": 612.0999999977648,
-          "firstWorldRenderCompletedAt": 612.0999999977648,
-          "frameCount": 7,
+          "firstXrCallbackAt": 662.0999999977648,
+          "firstRenderStart": 662.1999999992549,
+          "firstRenderEnd": 662.8999999985099,
+          "firstWorldRenderCompletedAt": 662.8999999985099,
+          "frameCount": 6,
           "contextLost": false,
           "lastError": null,
           "presenting": true,
@@ -1092,17 +1110,20 @@
           "hasXRWebGLBinding": true,
           "hasCreateProjectionLayer": false,
           "compositorBackend": "xr-webgl-layer",
-          "usedExplicitXrCompatibleContext": true
+          "usedExplicitXrCompatibleContext": true,
+          "requestedOptionalFeatures": [
+            "local-floor"
+          ]
         },
         "startup": {
-          "requestSessionStart": 602.5999999977648,
-          "requestSessionEnd": 603.3999999985099,
-          "rendererSetSessionStart": 603.8000000007451,
-          "rendererSetSessionEnd": 604.5,
-          "firstAnimationCallbackAt": 611.3999999985099,
-          "firstDirectRenderStart": 611.3999999985099,
-          "firstDirectRenderEnd": 612.0999999977648,
-          "firstWorldRenderCompletedAt": 612.0999999977648,
+          "requestSessionStart": 643.3999999985099,
+          "requestSessionEnd": 644.2999999970198,
+          "rendererSetSessionStart": 644.8999999985099,
+          "rendererSetSessionEnd": 645.6999999992549,
+          "firstAnimationCallbackAt": 662.0999999977648,
+          "firstDirectRenderStart": 662.1999999992549,
+          "firstDirectRenderEnd": 662.8999999985099,
+          "firstWorldRenderCompletedAt": 662.8999999985099,
           "lastError": null
         },
         "session": {
@@ -1137,29 +1158,29 @@
           "immersiveVrSupported": true,
           "rendererPresenting": true,
           "referenceSpace": "local-floor",
-          "sessionStartAt": 35327.699999999255
+          "sessionStartAt": 34155.20000000298
         },
         "startup": {
-          "requestSessionStart": 35325.900000002235,
-          "requestSessionEnd": 35327.699999999255,
-          "referenceSpaceStart": 35327.900000002235,
-          "referenceSpaceEnd": 35328,
-          "makeXRCompatibleStart": 35330.800000000745,
-          "makeXRCompatibleEnd": 35330.900000002235,
+          "requestSessionStart": 34153.5,
+          "requestSessionEnd": 34155.20000000298,
+          "referenceSpaceStart": 34155.5,
+          "referenceSpaceEnd": 34155.5,
+          "makeXRCompatibleStart": 34158.900000002235,
+          "makeXRCompatibleEnd": 34159.10000000149,
           "makeXRCompatibleError": null,
-          "targetFrameRateStart": 35423.199999999255,
-          "targetFrameRateEnd": 35424.400000002235,
-          "targetFrameRateRequestedAt": 35423.199999999255,
-          "targetFrameRateResolvedAt": 35424.400000002235,
+          "targetFrameRateStart": 34225.70000000298,
+          "targetFrameRateEnd": 34226.60000000149,
+          "targetFrameRateRequestedAt": 34225.70000000298,
+          "targetFrameRateResolvedAt": 34226.60000000149,
           "targetFrameRateError": null,
           "frameratechangeCount": 1,
-          "rendererSetSessionStart": 35331.10000000149,
-          "rendererSetSessionEnd": 35416.400000002235,
-          "firstAnimationCallbackAt": 35421.60000000149,
-          "firstDirectRenderStart": 35422.10000000149,
-          "firstDirectRenderEnd": 35423,
-          "firstWorldRenderCompletedAt": 35423,
-          "firstVisibleFrameAt": 35423,
+          "rendererSetSessionStart": 34159.400000002235,
+          "rendererSetSessionEnd": 34219.20000000298,
+          "firstAnimationCallbackAt": 34224.5,
+          "firstDirectRenderStart": 34224.800000000745,
+          "firstDirectRenderEnd": 34225.60000000149,
+          "firstWorldRenderCompletedAt": 34225.60000000149,
+          "firstVisibleFrameAt": 34225.60000000149,
           "lastCompletedStage": "targetFrameRateEnd",
           "lastError": null,
           "contextXrCompatibleBefore": false,
@@ -1219,7 +1240,7 @@
           ],
           "framebufferScale": 0.5,
           "frameCount": 5,
-          "lastFrameDtMs": 1.199999999254942
+          "lastFrameDtMs": 1.1000000014901161
         },
         "flags": {
           "minimal": true,
@@ -1252,29 +1273,29 @@
           "immersiveVrSupported": true,
           "rendererPresenting": true,
           "referenceSpace": "local-floor",
-          "sessionStartAt": 13706.79999999702
+          "sessionStartAt": 12850.300000000745
         },
         "startup": {
-          "requestSessionStart": 13705,
-          "requestSessionEnd": 13706.79999999702,
-          "referenceSpaceStart": 13707,
-          "referenceSpaceEnd": 13707.099999997765,
-          "makeXRCompatibleStart": 13712,
-          "makeXRCompatibleEnd": 13712.199999999255,
+          "requestSessionStart": 12848.400000002235,
+          "requestSessionEnd": 12850.300000000745,
+          "referenceSpaceStart": 12850.5,
+          "referenceSpaceEnd": 12850.5,
+          "makeXRCompatibleStart": 12854.699999999255,
+          "makeXRCompatibleEnd": 12854.900000002235,
           "makeXRCompatibleError": null,
-          "targetFrameRateStart": 13742.699999999255,
-          "targetFrameRateEnd": 13743.5,
-          "targetFrameRateRequestedAt": 13742.699999999255,
-          "targetFrameRateResolvedAt": 13743.5,
+          "targetFrameRateStart": 12936.300000000745,
+          "targetFrameRateEnd": 12937,
+          "targetFrameRateRequestedAt": 12936.300000000745,
+          "targetFrameRateResolvedAt": 12937,
           "targetFrameRateError": null,
           "frameratechangeCount": 1,
-          "rendererSetSessionStart": 13712.5,
-          "rendererSetSessionEnd": 13724.89999999851,
-          "firstAnimationCallbackAt": 13741.599999997765,
-          "firstDirectRenderStart": 13742,
-          "firstDirectRenderEnd": 13742.599999997765,
-          "firstWorldRenderCompletedAt": 13742.599999997765,
-          "firstVisibleFrameAt": 13742.599999997765,
+          "rendererSetSessionStart": 12855.199999999255,
+          "rendererSetSessionEnd": 12917.699999999255,
+          "firstAnimationCallbackAt": 12935,
+          "firstDirectRenderStart": 12935.300000000745,
+          "firstDirectRenderEnd": 12936.10000000149,
+          "firstWorldRenderCompletedAt": 12936.10000000149,
+          "firstVisibleFrameAt": 12936.10000000149,
           "lastCompletedStage": "targetFrameRateEnd",
           "lastError": null,
           "contextXrCompatibleBefore": false,
@@ -1333,8 +1354,8 @@
             120
           ],
           "framebufferScale": 0.5,
-          "frameCount": 75,
-          "lastFrameDtMs": 0.3999999985098839
+          "frameCount": 73,
+          "lastFrameDtMs": 0.7999999970197678
         },
         "flags": {
           "minimal": false,
@@ -1363,29 +1384,29 @@
           "immersiveVrSupported": true,
           "rendererPresenting": true,
           "referenceSpace": "local-floor",
-          "sessionStartAt": 9356.800000000745
+          "sessionStartAt": 10027.199999999255
         },
         "startup": {
-          "requestSessionStart": 9355.39999999851,
-          "requestSessionEnd": 9356.800000000745,
-          "referenceSpaceStart": 9357.099999997765,
-          "referenceSpaceEnd": 9357.099999997765,
-          "makeXRCompatibleStart": 9362.099999997765,
-          "makeXRCompatibleEnd": 9362.300000000745,
+          "requestSessionStart": 10025.699999999255,
+          "requestSessionEnd": 10027.199999999255,
+          "referenceSpaceStart": 10027.599999997765,
+          "referenceSpaceEnd": 10027.599999997765,
+          "makeXRCompatibleStart": 10031,
+          "makeXRCompatibleEnd": 10031.199999999255,
           "makeXRCompatibleError": null,
-          "targetFrameRateStart": 9387.300000000745,
-          "targetFrameRateEnd": 9388.099999997765,
-          "targetFrameRateRequestedAt": 9387.300000000745,
-          "targetFrameRateResolvedAt": 9388.099999997765,
+          "targetFrameRateStart": 10050,
+          "targetFrameRateEnd": 10050.800000000745,
+          "targetFrameRateRequestedAt": 10050,
+          "targetFrameRateResolvedAt": 10050.800000000745,
           "targetFrameRateError": null,
           "frameratechangeCount": 1,
-          "rendererSetSessionStart": 9362.599999997765,
-          "rendererSetSessionEnd": 9366.099999997765,
-          "firstAnimationCallbackAt": 9385.599999997765,
-          "firstDirectRenderStart": 9386,
-          "firstDirectRenderEnd": 9386.89999999851,
-          "firstWorldRenderCompletedAt": 9386.89999999851,
-          "firstVisibleFrameAt": 9386.89999999851,
+          "rendererSetSessionStart": 10031.39999999851,
+          "rendererSetSessionEnd": 10034.599999997765,
+          "firstAnimationCallbackAt": 10048.89999999851,
+          "firstDirectRenderStart": 10049.199999999255,
+          "firstDirectRenderEnd": 10049.800000000745,
+          "firstWorldRenderCompletedAt": 10049.800000000745,
+          "firstVisibleFrameAt": 10049.800000000745,
           "lastCompletedStage": "targetFrameRateEnd",
           "lastError": null,
           "contextXrCompatibleBefore": false,
@@ -1444,8 +1465,8 @@
             120
           ],
           "framebufferScale": 0.5,
-          "frameCount": 5,
-          "lastFrameDtMs": 1.199999999254942
+          "frameCount": 3,
+          "lastFrameDtMs": 3.399999998509884
         },
         "flags": {
           "minimal": false,
@@ -1465,55 +1486,55 @@
       "waitedForFullTextures": true,
       "diag": {
         "marks": {
-          "appStart": 302.5999999977648,
-          "credentialStart": 482,
-          "credentialEnd": 482,
-          "catalogStart": 482,
-          "catalogEnd": 511.69999999925494,
-          "sidecarsStart": 511.69999999925494,
-          "sidecarsEnd": 511.69999999925494,
-          "baseFontsStart": 511.8999999985099,
-          "brandPackStart": 512,
-          "brandPackEnd": 549.1999999992549,
-          "baseFontsEnd": 549.1999999992549,
-          "cjkFontsStart": 549.1999999992549,
-          "cjkFontsEnd": 600.3999999985099,
-          "qualityCalibrationStart": 1545.800000000745,
-          "qualityCalibrationEnd": 1560,
-          "threeSceneImportStart": 1560,
-          "threeSceneImportEnd": 1711.199999999255,
-          "storeSceneConstructStart": 1711.199999999255,
-          "storeSceneConstructEnd": 6234.89999999851,
-          "criticalTextureReady": 13237.199999999255,
-          "storeInteractive": 13237.199999999255,
-          "allTexturesSettled": 14332.39999999851
+          "appStart": 367.9000000022352,
+          "credentialStart": 518.4000000022352,
+          "credentialEnd": 518.4000000022352,
+          "catalogStart": 518.4000000022352,
+          "catalogEnd": 544.7000000029802,
+          "sidecarsStart": 544.7000000029802,
+          "sidecarsEnd": 544.7000000029802,
+          "baseFontsStart": 544.7000000029802,
+          "brandPackStart": 544.9000000022352,
+          "brandPackEnd": 585.1000000014901,
+          "baseFontsEnd": 585.1000000014901,
+          "cjkFontsStart": 585.1000000014901,
+          "cjkFontsEnd": 628,
+          "qualityCalibrationStart": 1171.7000000029802,
+          "qualityCalibrationEnd": 1183.9000000022352,
+          "threeSceneImportStart": 1183.9000000022352,
+          "threeSceneImportEnd": 1324.9000000022352,
+          "storeSceneConstructStart": 1324.9000000022352,
+          "storeSceneConstructEnd": 5760.70000000298,
+          "criticalTextureReady": 10351.10000000149,
+          "storeInteractive": 10351.10000000149,
+          "allTexturesSettled": 11417.900000002235
         },
-        "qualityCalibrationMs": 14.199999999254942,
-        "storeSceneConstructMs": 4523.699999999255,
-        "timeToInteractive": 12934.60000000149,
-        "timeToFullTextures": 14029.800000000745,
+        "qualityCalibrationMs": 12.199999999254942,
+        "storeSceneConstructMs": 4435.800000000745,
+        "timeToInteractive": 9983.199999999255,
+        "timeToFullTextures": 11050,
         "criticalReadyBeforeAllTextures": true,
         "construct": {
           "stages": [
             {
               "name": "initThree",
-              "ms": 102.5
+              "ms": 111.30000000074506
             },
             {
               "name": "setupLighting",
-              "ms": 0.6000000014901161
+              "ms": 0.6999999992549419
             },
             {
               "name": "exterior",
-              "ms": 41.600000001490116
+              "ms": 36.20000000298023
             },
             {
               "name": "carpetTextures",
-              "ms": 145.5
+              "ms": 157.5
             },
             {
               "name": "wallTextures",
-              "ms": 77.09999999776483
+              "ms": 80.70000000298023
             },
             {
               "name": "aisleShelving",
@@ -1525,11 +1546,11 @@
             },
             {
               "name": "signage",
-              "ms": 224
+              "ms": 220.10000000149012
             },
             {
               "name": "buildStore",
-              "ms": 1506.1000000014901
+              "ms": 1515.5
             },
             {
               "name": "bakeEnvironment",
@@ -1537,32 +1558,32 @@
             },
             {
               "name": "textureArrayInit",
-              "ms": 0.9000000022351742
+              "ms": 0.3999999985098839
             },
             {
               "name": "buildAllMovieBoxes",
-              "ms": 123.69999999925494
+              "ms": 149.69999999925494
             },
             {
               "name": "rebuildMovieBoxes",
-              "ms": 19.300000000745058
+              "ms": 20.5
             }
           ],
           "top3": [
             {
               "name": "buildStore",
-              "ms": 1506.1000000014901
+              "ms": 1515.5
             },
             {
               "name": "signage",
-              "ms": 224
+              "ms": 220.10000000149012
             },
             {
               "name": "carpetTextures",
-              "ms": 145.5
+              "ms": 157.5
             }
           ],
-          "totalMs": 2266.4000000059605
+          "totalMs": 2317.7000000067055
         }
       }
     }
