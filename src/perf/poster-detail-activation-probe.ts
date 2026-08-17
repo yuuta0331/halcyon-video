@@ -283,7 +283,7 @@ export async function runPosterDetailActivationProbe(
     isSelected: (id) => id === liveMovie.id,
     sceneGeneration: () => liveGen.n,
     getPixels: (id) => posterPixelCache.get(id) ?? null,
-    loadPoster: (movie, priority, onPixels) => posterQueue.load(movie as never, priority, onPixels),
+    loadPoster: (movie, priority, onPixels, onSettled) => posterQueue.load(movie as never, priority, onPixels, onSettled),
     queueUpload: (run) => { run(); },
     uploadLayer: (slot, data) => uploadPosterDetailLayer(renderer, slot, data),
     setLut: (i, v) => setPosterDetailLut(i, v),

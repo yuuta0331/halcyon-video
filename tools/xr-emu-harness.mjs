@@ -250,6 +250,7 @@ async function main() {
   const browser = await puppeteer.launch({
     headless: true,
     userDataDir: profileDir,
+    protocolTimeout: 300_000,
     args: ['--no-first-run', '--no-default-browser-check', '--mute-audio'],
   });
 
@@ -1122,6 +1123,100 @@ async function main() {
           && (result.readyResident ?? 0) > 0
           && result.contextLost !== true
           && result.detailWidth === 320
+          && result.QUEST_HARDWARE === 'NOT_EXECUTED'
+          && result.classification === 'IWER_EMULATED';
+        return { pass, ...result };
+      },
+    ));
+
+    evidence.scenarios.push(await runScenario(
+      browser, 'JP4A_ROUND5A2_XR', '?demo=1&nogate=1&xrEmu=1&xrSafe=1',
+      async (page) => {
+        const jp4aDir = path.join(root, 'docs', 'review', 'jp4a');
+        fs.mkdirSync(jp4aDir, { recursive: true });
+        const result = await page.evaluate(async () => {
+          const untilReady = Date.now() + 120000;
+          while (Date.now() < untilReady) {
+            if (window.__storeReadiness?.()?.visualReady) break;
+            await new Promise((r) => setTimeout(r, 200));
+          }
+          const xr = window.__xrTest;
+          const entered = xr ? await xr.enter() : { ok: false, error: 'no __xrTest' };
+          const untilWorld = Date.now() + 8000;
+          while (Date.now() < untilWorld) {
+            if (window.__xrDiagnostics?.()?.startup?.firstWorldRenderCompletedAt != null) break;
+            await new Promise((r) => setTimeout(r, 100));
+          }
+          xr?.selectFirstTitle?.();
+          window.__posterDetailForceMiss?.();
+          const untilDetail = Date.now() + 45000;
+          let detail = window.__posterDetail?.() ?? null;
+          while (Date.now() < untilDetail) {
+            detail = window.__posterDetail?.() ?? null;
+            if ((detail?.decoded ?? 0) > 0 && (detail?.uploaded ?? 0) > 0 && (detail?.readyResident ?? 0) > 0
+              && (detail?.pendingPixels ?? 1) === 0 && (detail?.pendingUpload ?? 1) === 0) break;
+            await new Promise((r) => setTimeout(r, 200));
+          }
+          xr?.openMenu?.();
+          await new Promise((r) => setTimeout(r, 200));
+          const stereo = window.__stereoSignage?.() ?? null;
+          const closeRange = window.__closeRangeProbe?.() ?? null;
+          const gpu = window.__gpuDiagnostics?.() ?? null;
+          const ready = window.__storeReadiness?.() ?? null;
+          const perf = window.__xrPerfDiagnostics?.() ?? null;
+          return {
+            entered,
+            visualReady: ready?.visualReady === true,
+            worldReady: gpu?.xrContent?.worldReady === true,
+            stereoPass: stereo?.pass === true,
+            stereoNegative: stereo?.negativeControl === true,
+            stereoSampleCount: stereo?.samples?.length ?? 0,
+            closeRangeHidden: (closeRange?.samples ?? []).reduce((n, s) => n + (s.hidden ?? 0), 0),
+            closeRangeDisposed: (closeRange?.samples ?? []).reduce((n, s) => n + (s.disposedMaterials ?? 0), 0),
+            decoded: detail?.decoded ?? null,
+            uploaded: detail?.uploaded ?? null,
+            readyResident: detail?.readyResident ?? null,
+            pendingPixels: detail?.pendingPixels ?? null,
+            pendingUpload: detail?.pendingUpload ?? null,
+            leased: detail?.leased ?? null,
+            loadFailed: detail?.loadFailed ?? null,
+            detailWidth: detail?.width ?? null,
+            detailHeight: detail?.height ?? null,
+            detailLimit: detail?.slotLimit ?? null,
+            lutCapacity: detail?.lutCapacity ?? null,
+            baseWidth: gpu?.posterBaseWidth ?? null,
+            baseHeight: gpu?.posterBaseHeight ?? null,
+            contextLost: gpu?.contextLost === true,
+            framebufferScale: 0.8,
+            foveation: 0.5,
+            classification: 'IWER_EMULATED',
+            QUEST_HARDWARE: 'NOT_EXECUTED',
+            frame: perf?.FRAME ?? null,
+            highRes: perf?.HIGH_RES ?? detail,
+          };
+        });
+        fs.writeFileSync(
+          path.join(jp4aDir, 'jp4a-round5a2-iwer.json'),
+          JSON.stringify(scrub(result), null, 2),
+        );
+        const pass = !!result.entered?.ok
+          && result.visualReady === true
+          && result.worldReady === true
+          && result.stereoPass === true
+          && result.stereoNegative === true
+          && (result.closeRangeHidden ?? 1) === 0
+          && (result.closeRangeDisposed ?? 1) === 0
+          && (result.decoded ?? 0) > 0
+          && (result.uploaded ?? 0) > 0
+          && (result.readyResident ?? 0) > 0
+          && (result.pendingPixels ?? 1) === 0
+          && (result.pendingUpload ?? 1) === 0
+          && result.detailWidth === 320
+          && result.detailHeight === 480
+          && result.framebufferScale === 0.8
+          && result.foveation === 0.5
+          && (result.baseWidth == null || result.baseWidth === 96)
+          && result.contextLost !== true
           && result.QUEST_HARDWARE === 'NOT_EXECUTED'
           && result.classification === 'IWER_EMULATED';
         return { pass, ...result };

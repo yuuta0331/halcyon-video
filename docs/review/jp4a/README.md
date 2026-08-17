@@ -22,6 +22,9 @@ merge `351947a`. This slice does not reopen that verdict.
 | `jp4a-round5a1-review.md` | Round 5A.1 DETAIL activation correction (not Quest-ready) |
 | `jp4a-round5a1-iwer.json` | IWER_EMULATED Round 5A.1 DETAIL ready proof (not Quest) |
 | `jp4a-round5a1-detail-activation.json` | DESKTOP_BROWSER production shader/readback DETAIL proof |
+| `jp4a-round5a2-review.md` | Round 5A.2 DETAIL load-failure settlement (not Quest-ready) |
+| `jp4a-round5a2-iwer.json` | IWER_EMULATED Round 5A.2 stereo/detail regression (not Quest) |
+| `jp4a-round5a2-detail-failure.json` | DESKTOP_BROWSER DETAIL failure/retry/pool/stale proof |
 | `jp4a.5-catalog-delta-sync.md` | Deferred persistent catalog / delta sync (not in this PR) |
 | `jp4a-round4-preload-stability.json` | DESKTOP_BROWSER STORE_VISIBLE_BASE drain |
 | `jp4a-round4-production-multibank.json` | DESKTOP_BROWSER production shelf 3+ bank render |

@@ -24,7 +24,9 @@ import {
   uploadPosterDetailLayer,
 } from './poster-detail-gpu';
 import { activateDetailTitle, demoteDetailTitle, type DetailActivateDeps } from './poster-detail-activate';
+import { posterDetailRetry } from './poster-detail-retry';
 import { runPosterDetailActivationProbe } from './perf/poster-detail-activation-probe';
+import { runPosterDetailFailureProbe } from './perf/poster-detail-failure-probe';
 import type { StoreScene } from './three-scene';
 import type { MovieSlot } from './store-layout';
 
@@ -48,6 +50,7 @@ export function resetPosterDetailReconcileForTests(): void {
   lastDesired.clear();
   spatial.length = 0;
   movies.clear();
+  posterDetailRetry.reset();
 }
 
 export function cachePosterDetailSpatial(slots: MovieSlot[]): void {
@@ -116,8 +119,8 @@ function makeDeps(scene: StoreScene): DetailActivateDeps {
     isSelected: (id) => lastSelected === id,
     sceneGeneration: () => storeVisibleWork.currentGeneration(),
     getPixels: (id) => posterPixelCache.get(id) ?? null,
-    loadPoster: (movie, priority, onPixels) => {
-      posterQueue.load(movie as never, priority, onPixels);
+    loadPoster: (movie, priority, onPixels, onSettled) => {
+      posterQueue.load(movie as never, priority, onPixels, onSettled);
     },
     queueUpload: (run, movieId, generation) => {
       queueTextureUpload(run, 'priority', { scope: 'ON_DEMAND', generation, movieId });
@@ -133,6 +136,7 @@ export function bindPosterDetailTier(scene: StoreScene, slots: MovieSlot[]): voi
   if (!textureArrayManager.residencyBound) return;
   resetPosterDetailReconcileForTests();
   cachePosterDetailSpatial(slots);
+  posterDetailRetry.reset();
   initPosterDetailGpu({
     slotLimit: POSTER_DETAIL_SLOT_LIMIT,
     catalogCount: catalogCountFromSpatial(),
@@ -189,6 +193,7 @@ export function installPosterDetailTestHooks(scene: StoreScene): void {
     __posterDetail?: () => unknown;
     __posterDetailForceMiss?: (movieId?: string) => { ok: boolean };
     __posterDetailActivationProbe?: () => Promise<unknown>;
+    __posterDetailFailureProbe?: () => Promise<unknown>;
   };
   w.__posterDetail = () => posterDetailResourceSnapshot();
   w.__posterDetailForceMiss = (movieId?: string) => {
@@ -199,17 +204,28 @@ export function installPosterDetailTestHooks(scene: StoreScene): void {
     reconcilePosterDetail(scene, { force: true });
     return { ok: true };
   };
-  w.__posterDetailActivationProbe = async () => {
+  const restoreDetailGpu = () => {
     const prev = getPosterDetailLutLayout();
+    initPosterDetailGpu({
+      slotLimit: POSTER_DETAIL_SLOT_LIMIT,
+      catalogCount: Math.max(prev.needed, catalogCountFromSpatial()),
+      renderer: scene.renderer,
+    });
+    posterDetailRetry.reset();
+    reconcilePosterDetail(scene, { force: true });
+  };
+  w.__posterDetailActivationProbe = async () => {
     try {
       return await runPosterDetailActivationProbe(scene.renderer);
     } finally {
-      initPosterDetailGpu({
-        slotLimit: POSTER_DETAIL_SLOT_LIMIT,
-        catalogCount: Math.max(prev.needed, catalogCountFromSpatial()),
-        renderer: scene.renderer,
-      });
-      reconcilePosterDetail(scene, { force: true });
+      restoreDetailGpu();
+    }
+  };
+  w.__posterDetailFailureProbe = async () => {
+    try {
+      return await runPosterDetailFailureProbe(scene.renderer);
+    } finally {
+      restoreDetailGpu();
     }
   };
 }

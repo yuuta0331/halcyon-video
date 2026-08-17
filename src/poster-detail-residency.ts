@@ -49,6 +49,10 @@ export interface PosterDetailStats {
   evicted: number;
   reacquired: number;
   staleDropped: number;
+  loadFailed: number;
+  uploadFailed: number;
+  lutFailed: number;
+  malformedDropped: number;
   cpuBytesEstimated: number;
   gpuBytesEstimated: number;
   width: number;
@@ -146,6 +150,10 @@ export class PosterDetailResidency {
   private evicted = 0;
   private reacquired = 0;
   private staleDropped = 0;
+  private loadFailed = 0;
+  private uploadFailed = 0;
+  private lutFailed = 0;
+  private malformedDropped = 0;
 
   constructor(
     slotLimit = POSTER_DETAIL_SLOT_LIMIT,
@@ -197,6 +205,22 @@ export class PosterDetailResidency {
 
   noteStaleDrop(): void {
     this.staleDropped++;
+  }
+
+  noteLoadFailed(): void {
+    this.loadFailed++;
+  }
+
+  noteUploadFailed(): void {
+    this.uploadFailed++;
+  }
+
+  noteLutFailed(): void {
+    this.lutFailed++;
+  }
+
+  noteMalformed(): void {
+    this.malformedDropped++;
   }
 
   markPendingPixels(movieId: string): void {
@@ -278,6 +302,10 @@ export class PosterDetailResidency {
     this.evicted = 0;
     this.reacquired = 0;
     this.staleDropped = 0;
+    this.loadFailed = 0;
+    this.uploadFailed = 0;
+    this.lutFailed = 0;
+    this.malformedDropped = 0;
   }
 
   residentIds(): string[] {
@@ -320,6 +348,10 @@ export class PosterDetailResidency {
       evicted: this.evicted,
       reacquired: this.reacquired,
       staleDropped: this.staleDropped,
+      loadFailed: this.loadFailed,
+      uploadFailed: this.uploadFailed,
+      lutFailed: this.lutFailed,
+      malformedDropped: this.malformedDropped,
       cpuBytesEstimated: bytes.cpu,
       gpuBytesEstimated: bytes.gpu,
       width: this.width,

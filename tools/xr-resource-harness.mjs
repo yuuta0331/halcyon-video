@@ -480,6 +480,34 @@ async function main() {
         && detailAct?.contextLost !== true,
       probe: detailAct,
     });
+    const detailFail = await storePage.evaluate(async () => {
+      const fn = window.__posterDetailFailureProbe;
+      if (typeof fn !== 'function') return { pass: false, note: 'no failure probe hook' };
+      return await fn();
+    });
+    fs.writeFileSync(
+      path.join(root, 'docs', 'review', 'jp4a', 'jp4a-round5a2-detail-failure.json'),
+      JSON.stringify({
+        classification: 'DESKTOP_BROWSER',
+        QUEST_HARDWARE: 'NOT_EXECUTED',
+        pass: detailFail?.pass === true
+          && detailFail?.failure?.leasedAfter === 0
+          && detailFail?.failure?.readyResidentAfter === 0
+          && detailFail?.pool?.leakedLeases === 0
+          && detailFail?.contextLost !== true,
+        probe: detailFail,
+      }, null, 2),
+    );
+    evidence.scenarios.push({
+      name: 'JP4A_DETAIL_FAILURE',
+      classification: 'DESKTOP_BROWSER',
+      pass: detailFail?.pass === true
+        && detailFail?.failure?.leasedAfter === 0
+        && detailFail?.failure?.readyResidentAfter === 0
+        && detailFail?.pool?.leakedLeases === 0
+        && detailFail?.contextLost !== true,
+      probe: detailFail,
+    });
     await storePage.close();
 
     const multiPage = await browser.newPage();
@@ -572,6 +600,7 @@ async function main() {
       'JP4A_PRODUCTION_MULTIBANK',
       'JP4A_PRELOAD_STABILITY',
       'JP4A_DETAIL_ACTIVATION',
+      'JP4A_DETAIL_FAILURE',
     ]) {
       const s = evidence.scenarios.find((x) => x.name === name);
       if (!s) continue;
