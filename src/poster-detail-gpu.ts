@@ -82,9 +82,9 @@ export function initPosterDetailGpu(opts: {
   detailArray.format = THREE.RGBAFormat;
   detailArray.type = THREE.UnsignedByteType;
   detailArray.colorSpace = THREE.SRGBColorSpace;
-  detailArray.minFilter = THREE.LinearMipmapLinearFilter;
+  detailArray.minFilter = THREE.LinearFilter;
   detailArray.magFilter = THREE.LinearFilter;
-  detailArray.generateMipmaps = true;
+  detailArray.generateMipmaps = false;
   detailArray.needsUpdate = true;
   creates++;
   posterDetailResidency.reset();

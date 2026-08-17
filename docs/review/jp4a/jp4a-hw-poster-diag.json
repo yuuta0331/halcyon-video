@@ -1,0 +1,96 @@
+{
+  "name": "JP4A_HW_POSTER_DIAG",
+  "classification": "DESKTOP_BROWSER",
+  "pass": true,
+  "probe": {
+    "classification": "DESKTOP_BROWSER",
+    "QUEST_HARDWARE": "NOT_EXECUTED",
+    "pass": true,
+    "contextLost": false,
+    "stereoBothEyesEligible": true,
+    "normalLaunchUnaffected": true,
+    "modes": {
+      "A": {
+        "visible": true,
+        "meta": {
+          "mode": "A",
+          "label": "MODE A — FLAT_DIRECT_BASIC",
+          "materialType": "MeshBasicMaterial",
+          "textureType": "DataTexture",
+          "array": false,
+          "mipPolicy": "none",
+          "depthTest": false,
+          "depthWrite": false,
+          "stereoBothEyes": true,
+          "cycleHint": "thumbstick click: cycle A→B→C→D→E"
+        },
+        "glError": 0
+      },
+      "B": {
+        "visible": true,
+        "meta": {
+          "mode": "B",
+          "label": "MODE B — CASE_GEOMETRY_DIRECT_BASIC",
+          "materialType": "MeshBasicMaterial",
+          "textureType": "DataTexture",
+          "array": false,
+          "mipPolicy": "none",
+          "depthTest": true,
+          "depthWrite": false,
+          "stereoBothEyes": true,
+          "cycleHint": "thumbstick click: cycle A→B→C→D→E"
+        },
+        "glError": 0
+      },
+      "C": {
+        "visible": true,
+        "meta": {
+          "mode": "C",
+          "label": "MODE C — CASE_BASE_ARRAY",
+          "materialType": "ShaderMaterial-array",
+          "textureType": "DataArrayTexture",
+          "array": true,
+          "mipPolicy": "mips",
+          "depthTest": true,
+          "depthWrite": false,
+          "stereoBothEyes": true,
+          "cycleHint": "thumbstick click: cycle A→B→C→D→E"
+        },
+        "glError": 0
+      },
+      "D": {
+        "visible": true,
+        "meta": {
+          "mode": "D",
+          "label": "MODE D — CASE_DETAIL_SIMPLIFIED",
+          "materialType": "ShaderMaterial-array",
+          "textureType": "DataArrayTexture",
+          "array": true,
+          "mipPolicy": "none",
+          "depthTest": true,
+          "depthWrite": false,
+          "stereoBothEyes": true,
+          "cycleHint": "thumbstick click: cycle A→B→C→D→E"
+        },
+        "glError": 0
+      },
+      "E": {
+        "visible": true,
+        "meta": {
+          "mode": "E",
+          "label": "MODE E — FULL_PRODUCTION",
+          "materialType": "MeshStandardMaterial",
+          "textureType": "DataTexture",
+          "array": false,
+          "mipPolicy": "mips",
+          "depthTest": true,
+          "depthWrite": true,
+          "stereoBothEyes": true,
+          "cycleHint": "thumbstick click: cycle A→B→C→D→E"
+        },
+        "glError": 0
+      }
+    },
+    "note": "Fixture render only. Does not diagnose Quest black artifact."
+  }
+}

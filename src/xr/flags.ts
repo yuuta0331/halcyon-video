@@ -14,6 +14,8 @@ export interface XrRuntimeFlags {
   bare: boolean;
   /** Force the XR_SAFE resource graph (`?xrSafe=1`). */
   safe: boolean;
+  /** Test-only close-range poster A/B diagnostic (`?xrPosterHwDiag=1`). */
+  posterHwDiag: boolean;
   /** Diagnostic raw WebXR (`?xrRaw=1`). No StoreScene / Three XR manager. */
   raw: boolean;
   /** Diagnostic Three-native baseline (`?xrThreeBaseline=1`). */
@@ -33,6 +35,7 @@ export function readXrFlags(
     layers: !layersOff,
     bare: q.get('xrBare') === '1',
     safe: q.get('xrSafe') === '1',
+    posterHwDiag: q.get('xrPosterHwDiag') === '1',
     raw: q.get('xrRaw') === '1',
     threeBaseline: q.get('xrThreeBaseline') === '1',
   };

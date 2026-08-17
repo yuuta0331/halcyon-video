@@ -15,11 +15,22 @@ import {
   type UploadScope,
 } from './store-visible-work.ts';
 import { refreshStoreVisualReady } from '../store-visual-ready.ts';
+import {
+  canEnqueueExpensive,
+  decideExpensiveUpload,
+  isExpensiveUpload,
+  noteExpensiveDeferred,
+  noteExpensivePromotion,
+  noteExpensiveQueued,
+  type UploadCostClass,
+} from './xr-detail-upload-policy.ts';
+import { noteUploadQueue } from './xr-upload-metrics.ts';
 
 export type TextureUploadMeta = {
   scope?: UploadScope;
   generation?: number;
   movieId?: string;
+  cost?: UploadCostClass;
 };
 
 type QueuedUpload = {
@@ -27,6 +38,7 @@ type QueuedUpload = {
   scope: UploadScope;
   generation: number;
   movieId: string | null;
+  cost: UploadCostClass;
 };
 
 const priorityUploadQueue: QueuedUpload[] = [];
@@ -76,11 +88,14 @@ function wrapTask(task: () => void, meta?: TextureUploadMeta): QueuedUpload {
   const scope: UploadScope = meta?.scope ?? 'OTHER';
   const generation = meta?.generation ?? storeVisibleWork.currentGeneration();
   const movieId = meta?.movieId ?? null;
+  const cost: UploadCostClass = meta?.cost ?? 'base';
   storeVisibleWork.noteUploadQueued(scope);
+  if (isExpensiveUpload(cost)) noteExpensiveQueued(1);
   return {
     scope,
     generation,
     movieId,
+    cost,
     run: () => {
       try {
         if (movieId && !storeVisibleWork.allowsGpuMutation(movieId, generation)) {
@@ -107,6 +122,7 @@ function dropFrom(queue: QueuedUpload[], pred: (item: QueuedUpload) => boolean):
     const item = queue[i]!;
     if (!pred(item)) continue;
     queue.splice(i, 1);
+    if (isExpensiveUpload(item.cost)) noteExpensiveQueued(-1);
     storeVisibleWork.noteUploadFinished(item.scope);
     if (item.movieId && storeVisibleWork.isStableFallback(item.movieId)) {
       storeVisibleWork.noteLateRealRejected();
@@ -157,9 +173,13 @@ function processUploads(source: UploadPumpOwner = 'page') {
 
   const start = performance.now();
   let count = 0;
+  const skipped: QueuedUpload[] = [];
+  const maxInspect = pendingUploads();
+  let inspected = 0;
   while (
     pendingUploads() > 0 &&
     count < maxPerFrame &&
+    inspected < maxInspect &&
     (count === 0 || performance.now() - start < budget)
   ) {
     const preferPriority = xr.presenting && (xr.moving || priorityUploadQueue.length > 0);
@@ -167,6 +187,16 @@ function processUploads(source: UploadPumpOwner = 'page') {
       ? (priorityUploadQueue.shift() ?? (xrBudget.bulkMaxPerFrame > 0 ? textureUploadQueue.shift() : undefined))
       : (priorityUploadQueue.length > 0 ? priorityUploadQueue.shift() : textureUploadQueue.shift());
     if (!item) break;
+    inspected++;
+    if (xr.presenting && isExpensiveUpload(item.cost)) {
+      const decision = decideExpensiveUpload();
+      if (!decision.allowExpensive) {
+        noteExpensiveDeferred();
+        skipped.push(item);
+        continue;
+      }
+      noteExpensivePromotion(decision);
+    }
     try {
       item.run();
     } catch (err) {
@@ -174,6 +204,10 @@ function processUploads(source: UploadPumpOwner = 'page') {
     }
     count++;
   }
+  for (let i = skipped.length - 1; i >= 0; i--) {
+    priorityUploadQueue.unshift(skipped[i]!);
+  }
+  publishUploadQueueMetrics();
 
   if (pendingUploads() > 0) {
     if (uploadPumpOwner() === 'page' && textureUploadUsesWindowRaf()) {
@@ -202,6 +236,17 @@ export function resetTextureUploadQueueForTests(): void {
   storeVisibleWork.resetUploadPendingForTests();
 }
 
+export function pendingUploadsByCost(): { base: number; near: number; focus: number } {
+  const out = { base: 0, near: 0, focus: 0 };
+  for (const q of priorityUploadQueue) out[q.cost]++;
+  for (const q of textureUploadQueue) out[q.cost]++;
+  return out;
+}
+
+function publishUploadQueueMetrics(): void {
+  noteUploadQueue(pendingUploadsByCost());
+}
+
 export function posterUploadJobsStarted(): number {
   return posterUploadJobsQueued;
 }
@@ -211,9 +256,12 @@ export function queueTextureUpload(
   lane: 'bulk' | 'priority' = 'bulk',
   meta?: TextureUploadMeta,
 ) {
+  const cost = meta?.cost ?? 'base';
+  if (isExpensiveUpload(cost) && !canEnqueueExpensive()) return;
   posterUploadJobsQueued++;
   const item = wrapTask(task, meta);
   (lane === 'priority' ? priorityUploadQueue : textureUploadQueue).push(item);
+  publishUploadQueueMetrics();
   if (!isUploading) {
     isUploading = true;
     if (uploadPumpOwner() === 'page' && textureUploadUsesWindowRaf()) {

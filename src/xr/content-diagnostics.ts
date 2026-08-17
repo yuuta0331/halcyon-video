@@ -5,6 +5,7 @@
 
 import {
   activeResourceProfile,
+  usesCheapResourceProfileName,
   type ResourceProfileName,
 } from '../perf/resource-profile.ts';
 import {
@@ -185,7 +186,7 @@ function snapWorld(
   profile: ResourceProfileName,
   opts?: { readyIfPresent?: boolean; usesVisible?: boolean },
 ): XrContentClassSnapshot {
-  const enabled = profile === 'XR_SAFE' ? xrSafeClassEnabled(cls) : true;
+  const enabled = usesCheapResourceProfileName(profile) ? xrSafeClassEnabled(cls) : true;
   const requirement = requirementOf(cls);
   const representedBy = contentClassPolicy(cls)?.representedBy;
   return {
@@ -205,7 +206,7 @@ function snapOnDemand(
   activated: boolean,
   generation?: { request: number; ready: number },
 ): XrContentClassSnapshot {
-  const enabled = profile === 'XR_SAFE' ? xrSafeClassEnabled(cls) : true;
+  const enabled = usesCheapResourceProfileName(profile) ? xrSafeClassEnabled(cls) : true;
   const requirement = requirementOf(cls);
   return {
     ...counts,
@@ -220,7 +221,7 @@ function snapDecorative(
   cls: XrContentClass,
   profile: ResourceProfileName,
 ): XrContentClassSnapshot {
-  const enabled = profile === 'XR_SAFE' ? xrSafeClassEnabled(cls) : true;
+  const enabled = usesCheapResourceProfileName(profile) ? xrSafeClassEnabled(cls) : true;
   const requirement = requirementOf(cls);
   return {
     allocated: 0,
@@ -321,9 +322,9 @@ export function xrContentSnapshot(
     requiredReady: worldReady,
     onDemandWrapsReady: wraps.activation === 'requested' && wraps.state === 'ready',
     decorativeDisabled: decorativeXrSafeContentClasses().every((cls) => {
-      if (cls === 'decorativeFx') return decorativeFx.state === 'disabled' || profileName !== 'XR_SAFE';
+      if (cls === 'decorativeFx') return decorativeFx.state === 'disabled' || !usesCheapResourceProfileName(profileName);
       return true;
-    }) && (profileName !== 'XR_SAFE' || decorativeFx.state === 'disabled'),
+    }) && (!usesCheapResourceProfileName(profileName) || decorativeFx.state === 'disabled'),
     poster,
     wraps,
     signage,

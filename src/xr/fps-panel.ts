@@ -35,7 +35,10 @@ export class XrFpsHud {
     this.mesh.position.set(-0.22, 0.18, -0.55);
   }
 
-  sync(parent: THREE.Object3D | null): void {
+  sync(parent: THREE.Object3D | null, pose?: {
+    x: number; y: number; z: number;
+    qx: number; qy: number; qz: number; qw: number;
+  } | null): void {
     const on = isFpsMeterEnabled();
     if (!on || !parent) {
       this.mesh.visible = false;
@@ -44,6 +47,10 @@ export class XrFpsHud {
     }
     if (this.mesh.parent !== parent) parent.add(this.mesh);
     this.mesh.visible = true;
+    if (pose) {
+      this.mesh.position.set(pose.x, pose.y, pose.z);
+      this.mesh.quaternion.set(pose.qx, pose.qy, pose.qz, pose.qw);
+    }
     const readout = fpsMeterReadout();
     if (readout.top === this.lastTop && readout.bot === this.lastBot) return;
     this.lastTop = readout.top;

@@ -7,6 +7,7 @@ import { posterPixelCache, posterQueue } from './video-case';
 import { storeVisibleResidency } from './store-visible-residency';
 import { dropQueuedUploadsForMovie, queueTextureUpload, textureArrayManager } from './poster-textures';
 import { storeVisibleWork } from './perf/store-visible-work';
+import { latestViewerWorldPose } from './xr/viewer-pose';
 import {
   chooseDetailSet,
   POSTER_DETAIL_MOVE_FEET,
@@ -27,6 +28,21 @@ import { activateDetailTitle, demoteDetailTitle, type DetailActivateDeps } from 
 import { posterDetailRetry } from './poster-detail-retry';
 import { runPosterDetailActivationProbe } from './perf/poster-detail-activation-probe';
 import { runPosterDetailFailureProbe } from './perf/poster-detail-failure-probe';
+import { runInlineProfileProbe } from './perf/inline-profile-probe';
+import { runFocusQualityProbe } from './perf/focus-quality-probe';
+import { runUploadPolicyProbe } from './perf/upload-policy-probe';
+import { runHardwarePosterDiagProbe } from './perf/hardware-diag-probe';
+import { activateFocusTitle, demoteFocusTitle, type FocusActivateDeps } from './poster-focus-activate';
+import { posterFocusResidency } from './poster-focus-residency';
+import {
+  clearPosterFocusActive,
+  initPosterFocusGpu,
+  posterFocusResourceSnapshot,
+  setPosterFocusActive,
+  uploadPosterFocusTexture,
+} from './poster-focus-texture';
+import { decodeFocusFromUrl } from './poster-focus-decode';
+import { POSTER_FOCUS_SLOT_LIMIT } from './poster-quality';
 import type { StoreScene } from './three-scene';
 import type { MovieSlot } from './store-layout';
 
@@ -86,6 +102,8 @@ function selectedMovieId(scene: StoreScene): string | null {
 }
 
 function playerPose(scene: StoreScene): { x: number; z: number; yaw: number } {
+  const world = latestViewerWorldPose();
+  if (world && scene.xr?.presenting) return { x: world.x, z: world.z, yaw: world.yaw };
   scene.camera.getWorldPosition(_pos);
   scene.camera.getWorldQuaternion(_quat);
   _euler.setFromQuaternion(_quat, 'YXZ');
@@ -123,11 +141,37 @@ function makeDeps(scene: StoreScene): DetailActivateDeps {
       posterQueue.load(movie as never, priority, onPixels, onSettled);
     },
     queueUpload: (run, movieId, generation) => {
-      queueTextureUpload(run, 'priority', { scope: 'ON_DEMAND', generation, movieId });
+      queueTextureUpload(run, 'priority', { scope: 'ON_DEMAND', generation, movieId, cost: 'near' });
     },
     uploadLayer: (slot, pixels) => uploadPosterDetailLayer(scene.renderer, slot, pixels),
     setLut: (globalIndex, slotPlusOne) => setPosterDetailLut(globalIndex, slotPlusOne),
     clearLut: (globalIndex) => { clearPosterDetailLut(globalIndex); },
+    requestRender: () => scene.requestRender(),
+  };
+}
+
+function makeFocusDeps(scene: StoreScene): FocusActivateDeps {
+  return {
+    getGlobalIndex: (id) => storeVisibleResidency.peek(id)?.globalIndex
+      ?? spatial.find((c) => c.movieId === id)?.globalIndex
+      ?? 0,
+    isSelected: (id) => lastSelected === id,
+    sceneGeneration: () => storeVisibleWork.currentGeneration(),
+    getSourcePixels: () => null,
+    loadSource: (id, onDecoded, onSettled) => {
+      const movie = movies.get(id);
+      if (!movie?.posterUrl) {
+        onSettled?.();
+        return;
+      }
+      void decodeFocusFromUrl(movie.posterUrl).then(onDecoded).catch(() => onSettled?.());
+    },
+    queueUpload: (run, movieId, generation) => {
+      queueTextureUpload(run, 'priority', { scope: 'ON_DEMAND', generation, movieId, cost: 'focus' });
+    },
+    uploadFocus: (slot, pixels, width, height) => uploadPosterFocusTexture(slot, pixels, width, height),
+    setActive: (slot, globalIndex) => setPosterFocusActive(slot, globalIndex),
+    clearActive: () => clearPosterFocusActive(),
     requestRender: () => scene.requestRender(),
   };
 }
@@ -142,6 +186,7 @@ export function bindPosterDetailTier(scene: StoreScene, slots: MovieSlot[]): voi
     catalogCount: catalogCountFromSpatial(),
     renderer: scene.renderer,
   });
+  initPosterFocusGpu({ slotLimit: POSTER_FOCUS_SLOT_LIMIT });
 }
 
 export function reconcilePosterDetail(scene: StoreScene, opts: { force?: boolean } = {}): void {
@@ -165,6 +210,7 @@ export function reconcilePosterDetail(scene: StoreScene, opts: { force?: boolean
   });
   lastDesired = new Set(desired);
   const deps = makeDeps(scene);
+  const focusDeps = makeFocusDeps(scene);
   for (const id of leased) {
     if (lastDesired.has(id) || id === selected) continue;
     dropQueuedUploadsForMovie(id);
@@ -172,6 +218,10 @@ export function reconcilePosterDetail(scene: StoreScene, opts: { force?: boolean
   }
   for (const id of lastDesired) {
     activateDetailTitle(id, deps);
+  }
+  if (selected) activateFocusTitle(selected, focusDeps);
+  for (const id of posterFocusResidency.residentIds()) {
+    if (id !== selected) demoteFocusTitle(id, focusDeps);
   }
 }
 
@@ -181,6 +231,7 @@ export function promoteSelectedPosterDetail(scene: StoreScene, movieId: string):
   lastDesired.add(movieId);
   if (spatial.length === 0) cachePosterDetailSpatial([...scene.slotsByPosition.values()]);
   activateDetailTitle(movieId, makeDeps(scene));
+  activateFocusTitle(movieId, makeFocusDeps(scene));
 }
 
 export function forcePosterDetailCacheMiss(movieId: string): boolean {
@@ -191,11 +242,17 @@ export function installPosterDetailTestHooks(scene: StoreScene): void {
   if (typeof window === 'undefined') return;
   const w = window as unknown as {
     __posterDetail?: () => unknown;
+    __posterFocus?: () => unknown;
     __posterDetailForceMiss?: (movieId?: string) => { ok: boolean };
     __posterDetailActivationProbe?: () => Promise<unknown>;
     __posterDetailFailureProbe?: () => Promise<unknown>;
+    __inlineProfileProbe?: () => unknown;
+    __focusQualityProbe?: () => Promise<unknown>;
+    __uploadPolicyProbe?: () => unknown;
+    __hardwarePosterDiagProbe?: () => unknown;
   };
   w.__posterDetail = () => posterDetailResourceSnapshot();
+  w.__posterFocus = () => posterFocusResourceSnapshot();
   w.__posterDetailForceMiss = (movieId?: string) => {
     const id = movieId ?? selectedMovieId(scene) ?? spatial[0]?.movieId;
     if (!id) return { ok: false };
@@ -211,6 +268,7 @@ export function installPosterDetailTestHooks(scene: StoreScene): void {
       catalogCount: Math.max(prev.needed, catalogCountFromSpatial()),
       renderer: scene.renderer,
     });
+    initPosterFocusGpu({ slotLimit: POSTER_FOCUS_SLOT_LIMIT });
     posterDetailRetry.reset();
     reconcilePosterDetail(scene, { force: true });
   };
@@ -228,4 +286,14 @@ export function installPosterDetailTestHooks(scene: StoreScene): void {
       restoreDetailGpu();
     }
   };
+  w.__inlineProfileProbe = () => runInlineProfileProbe();
+  w.__focusQualityProbe = async () => {
+    try {
+      return await runFocusQualityProbe(scene.renderer);
+    } finally {
+      restoreDetailGpu();
+    }
+  };
+  w.__uploadPolicyProbe = () => runUploadPolicyProbe();
+  w.__hardwarePosterDiagProbe = () => runHardwarePosterDiagProbe(scene.renderer);
 }

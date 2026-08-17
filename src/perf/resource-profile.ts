@@ -2,7 +2,7 @@
 // BEFORE poster arrays, composer targets, AO, probes, mirrors, or environment
 // bakes are allocated. XR_SAFE is a resource graph, not a late XR boolean.
 
-export type ResourceProfileName = 'DESKTOP_FULL' | 'XR_SAFE';
+export type ResourceProfileName = 'DESKTOP_FULL' | 'QUEST_INLINE' | 'XR_SAFE';
 
 export interface GpuCapabilities {
   maxTextures: number;
@@ -23,6 +23,7 @@ export interface ResourceFlags {
   posterProbe: boolean;
   multibank: boolean;
   posterLayers: number | null;
+  posterHwDiag: boolean;
 }
 
 export interface PosterPolicy {
@@ -87,6 +88,7 @@ export function readResourceFlags(
     posterProbe: q.get('xrPosterProbe') === '1',
     multibank: q.get('xrMultibank') === '1',
     posterLayers: Number.isFinite(posterLayers) && posterLayers > 0 ? Math.floor(posterLayers) : null,
+    posterHwDiag: q.get('xrPosterHwDiag') === '1',
   };
 }
 
@@ -155,10 +157,9 @@ export function choosePhysicalPosterSlots(caps: GpuCapabilities): number {
 }
 
 export function estimateXrSafeFragmentSamplers(): number {
-  // MeshStandardMaterial: map + envMap + loaded-flag LUT + one shelf bank.
-  // Catalog banks are swapped per draw; they do not consume extra samplers.
-  // Shadows off. No clearcoat / transmission / AO / dual-resolution preview.
-  return 4;
+  // MeshStandardMaterial: map + envMap + loaded-flag LUT + one shelf bank
+  // + DETAIL array + DETAIL LUT + FOCUS 2D. Catalog banks swap per draw.
+  return 7;
 }
 
 export function desktopFullProfile(): ResourceProfile {
@@ -228,20 +229,43 @@ export function xrSafeProfile(caps: GpuCapabilities): ResourceProfile {
   };
 }
 
+/**
+ * Quest Browser + INLINE. Cheap resource graph (no AO/bloom/mirrors/probes)
+ * with readable 160×240 shelf posters. Not XR_SAFE 96×144.
+ * Entering immersive VR must not rebuild this graph.
+ */
+export function questInlineProfile(caps: GpuCapabilities): ResourceProfile {
+  const xr = xrSafeProfile(caps);
+  return {
+    ...xr,
+    name: 'QUEST_INLINE',
+    poster: {
+      ...xr.poster,
+      shelfWidth: 160,
+      shelfHeight: 240,
+    },
+  };
+}
+
 export function selectResourceProfile(input: {
   caps: GpuCapabilities;
   flags?: ResourceFlags;
   userAgent?: string;
   isTauri?: boolean;
+  presentation?: 'INLINE' | 'IMMERSIVE_XR';
 }): ResourceProfile {
   const flags = input.flags ?? readResourceFlags('');
   if (input.isTauri || flags.desktopQuality) return desktopFullProfile();
   const ua = input.userAgent ?? '';
   const questLike = isQuestBrowserUa(ua);
   const questEmu = flags.emu;
-  if (flags.safe || flags.bare || flags.posterProbe || questLike || questEmu) {
+  const immersive = input.presentation === 'IMMERSIVE_XR';
+  // Explicit emulation / diagnostic flags stay XR_SAFE so IWER is deterministic.
+  if (flags.safe || flags.bare || flags.posterProbe || questEmu) {
     return xrSafeProfile(input.caps);
   }
+  if (questLike && immersive) return xrSafeProfile(input.caps);
+  if (questLike) return questInlineProfile(input.caps);
   return desktopFullProfile();
 }
 
@@ -264,6 +288,20 @@ export function activeGpuCapabilities(): GpuCapabilities | null {
 
 export function isXrSafeProfile(profile: ResourceProfile = activeResourceProfile()): boolean {
   return profile.name === 'XR_SAFE';
+}
+
+/** Cheap GPU graph: no AO/bloom/mirrors/probes. Quest inline and immersive. */
+export function usesCheapResourceGraph(profile: ResourceProfile = activeResourceProfile()): boolean {
+  return profile.name === 'XR_SAFE' || profile.name === 'QUEST_INLINE';
+}
+
+export function usesCheapResourceProfileName(name: ResourceProfileName): boolean {
+  return name === 'XR_SAFE' || name === 'QUEST_INLINE';
+}
+
+/** Stable catalog banks + single shelf sampler. */
+export function usesStablePosterBanks(profile: ResourceProfile = activeResourceProfile()): boolean {
+  return usesCheapResourceGraph(profile) && profile.poster.mode === 'stable-store-visible';
 }
 
 export function resetResourceProfileForTests(): void {

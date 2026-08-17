@@ -16,7 +16,7 @@ import { getRommConfig, authHeader } from './romm';
 import { drawTechSpecsTable, TECH_SPECS_TABLE_H } from './tech-specs';
 import { perfTrace, perfSlot } from './perf-trace';
 import { LruByteCache } from './lru-byte-cache';
-import { isXrSafeProfile } from './perf/resource-profile';
+import { usesCheapResourceGraph } from './perf/resource-profile';
 import { getLowResFrontMaterial, disposeLowResFrontMaterials } from './hero-lowres-front';
 // The two DVD typed-metadata passes live in their own module (this file is at
 // its line budget — see dvd-overlays.ts's header). They import this file's
@@ -1129,7 +1129,7 @@ function caseBodyFinish(): CaseFinish {
 function applyCaseFinish(mat: THREE.MeshPhysicalMaterial, finish: CaseFinish) {
   mat.userData.caseFinish = finish;
   mat.metalness = 0.0;
-  if (isXrSafeProfile()) {
+  if (usesCheapResourceGraph()) {
     mat.roughness = 0.62;
     mat.envMapIntensity = 0.85;
     mat.clearcoat = 0;

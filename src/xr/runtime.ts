@@ -6,6 +6,7 @@ import * as THREE from 'three';
 import {
   getPlatform,
   setXrSessionActive,
+  STORE_UNITS_PER_METER,
 } from '../platform';
 import { WALK_INTERACT_RANGE } from '../store-walk';
 import type { MovieSlot } from '../store-layout';
@@ -66,10 +67,25 @@ import {
 import { locomotionAllowed, uiOwnsInput, type XrUiMode } from './ui-mode';
 import { XrUiSession } from './ui-session';
 import { XrUiShell } from './ui-shell';
-import { placeUiInFrontOfHmd } from './ui-placement';
 import { applyXrDepthNear, restoreCameraNear, DESKTOP_CAMERA_NEAR } from './near-plane';
 import { ensureXrEyesSeeWorld } from './stereo-view';
 import { XrFpsHud } from './fps-panel.ts';
+import { placeHudFromViewerPose } from './hud-placement.ts';
+import {
+  latestViewerPose,
+  setViewerWorldPose,
+  updateViewerPoseFromXrFrame,
+  viewerPoseToWorldXZ,
+} from './viewer-pose.ts';
+import {
+  clearUiPlacement,
+  requestUiPlacement,
+  takeUiPlacementFromViewerPose,
+} from './ui-place-pending.ts';
+import { HardwarePosterDiagnostic } from './hardware-poster-diagnostic.ts';
+import { beginXrUploadFrame, detailUploadPolicySnapshot, sampleXrMotion } from '../perf/xr-detail-upload-policy.ts';
+import { noteMotionPolicy, noteXrFrameDelta } from '../perf/xr-upload-metrics.ts';
+import { setPresentationMode } from '../perf/presentation-mode.ts';
 import { rayHitsPanelUv } from './ui/hit';
 import {
   blankStartupTrace,
@@ -174,6 +190,7 @@ export class XrRuntime {
   private uiShell: XrUiShell | null = null;
   private uiPlacedFromWorld = false;
   private fpsHud: XrFpsHud | null = null;
+  private hwDiag: HardwarePosterDiagnostic | null = null;
   private uiButtons = emptyXrButtonSnapshot();
   private prevUiButtons = emptyXrButtonSnapshot();
   private prevUiStick = { x: 0, y: 0 };
@@ -208,6 +225,7 @@ export class XrRuntime {
     this.ensureUi();
     this.uiSession?.openMenu();
     this.uiPlacedFromWorld = false;
+    requestUiPlacement();
     this.syncUiShell();
   }
 
@@ -249,6 +267,22 @@ export class XrRuntime {
 
   xrSettingsDraft(): Record<string, unknown> | null {
     return this.uiSession ? { ...this.uiSession.draft.values } : null;
+  }
+
+  hwPosterDiagSnapshot(): unknown {
+    if (!this.hwDiag) return { enabled: false, QUEST_HARDWARE: 'NOT_EXECUTED' };
+    let glError: number | null = null;
+    try {
+      const gl = this.host.renderer.getContext() as WebGL2RenderingContext;
+      glError = gl.getError();
+    } catch {
+      glError = null;
+    }
+    return this.hwDiag.snapshot(glError, false);
+  }
+
+  cycleHwPosterDiag(): string | null {
+    return this.hwDiag?.cycle() ?? null;
   }
 
   selectWorldSlot(slot: Parameters<XrRuntimeHost['onSelectSlot']>[0]): void {
@@ -366,6 +400,10 @@ export class XrRuntime {
     this.snapshotDesktop();
     this.rig = new XrPlayerRig(this.host.camera);
     this.rig.attach(this.host.scene);
+    if (this.flags.posterHwDiag) {
+      this.hwDiag = new HardwarePosterDiagnostic();
+      this.hwDiag.attach(this.rig.xrOrigin);
+    }
     this.ensureUi();
     if (!this.flags.minimal) this.installControllers(xrMgr);
 
@@ -427,6 +465,7 @@ export class XrRuntime {
 
     this.host.onSessionChange?.(true);
     setXrUploadPresenting(true);
+    setPresentationMode('IMMERSIVE_XR');
     this.host.onConsole('[XR] Immersive VR session started.', 'system');
     this.host.requestRender();
     this.maybeInitOptionalLayers();
@@ -495,11 +534,54 @@ export class XrRuntime {
       appendXrJournal('first-xr-callback', { firstXrCallbackAt: at });
     }
     if (this.host.renderer.xr.isPresenting) {
+      if (this.lastFrameAt === at) {
+        this.publishDiagnostics();
+        return;
+      }
       this.xrFrameCount++;
       if (this.lastFrameAt != null) this.lastFrameDtMs = at - this.lastFrameAt;
       this.lastFrameAt = at;
+      if (this.lastFrameDtMs != null) noteXrFrameDelta(this.lastFrameDtMs);
     }
     this.publishDiagnostics();
+  }
+
+  /** Pose + motion + upload frame gate. Call before pumping GPU uploads. */
+  prepareXrFrame(at: number = nowMs()): void {
+    this.noteXrFrame(at);
+    if (!this.presenting) return;
+    const xrMgr = this.host.renderer.xr as XrManager;
+    const pose = updateViewerPoseFromXrFrame({
+      frame: (xrMgr.getFrame?.() ?? null) as Parameters<typeof updateViewerPoseFromXrFrame>[0]['frame'],
+      referenceSpace: xrMgr.getReferenceSpace?.() ?? null,
+      nowMs: at,
+      frameId: this.xrFrameCount,
+    });
+    beginXrUploadFrame(this.xrFrameCount);
+    if (pose.valid && this.rig) {
+      setViewerWorldPose(viewerPoseToWorldXZ({
+        originX: this.rig.x,
+        originZ: this.rig.z,
+        originYaw: this.rig.yaw,
+        originScale: STORE_UNITS_PER_METER,
+        viewerX: pose.x,
+        viewerZ: pose.z,
+        viewerYaw: pose.yaw,
+      }));
+      const sticks = this.locomotionSticks();
+      sampleXrMotion({
+        x: pose.x, y: pose.y, z: pose.z, yaw: pose.yaw,
+        locomotionStickActive: Math.hypot(sticks.moveX, sticks.moveY) > 0.25,
+        snapTurnActive: this.snap.cooldown > 0,
+        nowMs: at,
+      });
+      const pol = detailUploadPolicySnapshot();
+      noteMotionPolicy({
+        deferredForMotion: pol.deferredForMotion,
+        promotedWhileStable: pol.promotedWhileStable,
+        fairnessForced: pol.fairnessForced,
+      });
+    }
   }
 
   beforeDirectRender(at: number = nowMs()): void {
@@ -1145,32 +1227,32 @@ export class XrRuntime {
     const shell = this.uiShell;
     if (!ui || !shell || !this.rig) return;
     if (uiOwnsInput(ui.mode)) {
-      if (!this.uiPlacedFromWorld && this.rig) {
-        const cam = this.host.camera;
-        cam.updateMatrixWorld(true);
-        const pos = new THREE.Vector3();
-        const quat = new THREE.Quaternion();
-        cam.getWorldPosition(pos);
-        cam.getWorldQuaternion(quat);
-        this.rig.xrOrigin.worldToLocal(pos);
-        const localQuat = this.rig.xrOrigin.getWorldQuaternion(new THREE.Quaternion()).invert().multiply(quat);
-        const placed = placeUiInFrontOfHmd({
-          hmdX: pos.x, hmdY: pos.y, hmdZ: pos.z,
-          qx: localQuat.x, qy: localQuat.y, qz: localQuat.z, qw: localQuat.w,
-        });
-        shell.applyPlacement(placed);
-        this.uiPlacedFromWorld = true;
+      if (!this.uiPlacedFromWorld) {
+        requestUiPlacement();
+        const pose = latestViewerPose();
+        const placed = takeUiPlacementFromViewerPose(pose, this.xrFrameCount);
+        if (placed) {
+          shell.applyPlacement(placed);
+          this.uiPlacedFromWorld = true;
+        }
       }
       shell.setPaint(ui.paint());
       shell.show(this.rig.xrOrigin);
       this.panel?.hideMesh();
     } else {
       this.uiPlacedFromWorld = false;
+      clearUiPlacement();
       shell.hide();
       if (this.rig) this.panel?.showMesh(this.rig.xrOrigin);
     }
     shell.flush();
-    this.fpsHud?.sync(this.rig.xrOrigin);
+    const hudPose = placeHudFromViewerPose(latestViewerPose());
+    this.fpsHud?.sync(this.rig.xrOrigin, hudPose);
+    if (this.hwDiag) {
+      this.hwDiag.noteButtons(this.uiButtons.thumbstick);
+      const cam = this.host.camera;
+      this.hwDiag.tick(latestViewerPose(), cam.near, cam.far);
+    }
     this.applyUiFoveation();
   }
 
@@ -1215,6 +1297,9 @@ export class XrRuntime {
     this.uiShell?.hide();
     this.fpsHud?.dispose();
     this.fpsHud = null;
+    this.hwDiag?.dispose();
+    this.hwDiag = null;
+    clearUiPlacement();
     this.uiSession?.closeToWorld();
     if (this.desktopPose) {
       const cam = this.host.camera;
@@ -1250,6 +1335,7 @@ export class XrRuntime {
     this.host.renderer.xr.enabled = this.immersiveVrSupported && !getPlatform().isTauri;
     this.host.onSessionChange?.(false);
     setXrUploadPresenting(false);
+    setPresentationMode('INLINE');
     this.host.onConsole('[XR] Immersive VR session ended.', 'system');
     this.host.requestRender();
     this.ending = false;

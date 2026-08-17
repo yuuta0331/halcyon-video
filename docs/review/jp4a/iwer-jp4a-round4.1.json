@@ -213,15 +213,18 @@
   },
   "perf": {
     "FRAME": {
-      "rollingFps": 34.65937527447701,
-      "meanFrameTime": 28.852222294277617,
-      "p95": 42.20000076293945,
-      "p99": 50.29999923706055,
-      "worst": 52.29999923706055,
+      "rollingFps": 40.2585494155333,
+      "meanFrameTime": 24.839444404178195,
+      "p95": 36.099998474121094,
+      "p99": 43.20000076293945,
+      "worst": 47.099998474121094,
       "over1389ms": 180,
+      "over20ms": 149,
+      "over333ms": 14,
       "longFrames": 180,
       "uiMode": null,
-      "samples": 180
+      "samples": 180,
+      "note": "JavaScript inter-composite gap; not GPU time"
     },
     "STORE_READINESS": {
       "state": "STORE_INTERACTIVE",
@@ -232,7 +235,7 @@
       "visualReady": true,
       "worldReady": true,
       "requiredReady": true,
-      "timeToVisualReady": 34943.90000000596
+      "timeToVisualReady": 36472.70000001788
     },
     "STORE_VISIBLE_BASE": {
       "expected": 2001,
@@ -252,7 +255,7 @@
       "pendingUploads": 0,
       "pendingBaseUploads": 0,
       "pendingOnDemandUploads": 0,
-      "totalUploads": 4020,
+      "totalUploads": 4023,
       "staleDrops": 0,
       "work": {
         "generation": 2,
@@ -270,8 +273,8 @@
       }
     },
     "GPU": {
-      "textures": 149,
-      "geometries": 587,
+      "textures": 154,
+      "geometries": 597,
       "programs": 55,
       "textureHighWater": 2001,
       "creates": 2001,
@@ -293,6 +296,45 @@
       "duplicateMappingCount": 0,
       "invalidFreeOwnedCollisionCount": 0,
       "mappingOk": true
+    },
+    "HIGH_RES": {
+      "requested": 1,
+      "decoded": 1,
+      "uploaded": 1,
+      "resident": 1,
+      "leased": 1,
+      "pendingPixels": 0,
+      "pendingUpload": 0,
+      "readyResident": 1,
+      "slotLimit": 64,
+      "highWater": 1,
+      "readyHighWater": 1,
+      "promoted": 1,
+      "demoted": 0,
+      "evicted": 0,
+      "reacquired": 0,
+      "staleDropped": 0,
+      "loadFailed": 0,
+      "uploadFailed": 0,
+      "lutFailed": 0,
+      "malformedDropped": 0,
+      "cpuBytesEstimated": 39321600,
+      "gpuBytesEstimated": 52428800,
+      "width": 320,
+      "height": 480,
+      "textureCreates": 1,
+      "textureDisposals": 0,
+      "arrayAllocated": true,
+      "lutOk": true,
+      "lutWidth": 2001,
+      "lutHeight": 1,
+      "lutCapacity": 2001,
+      "lutRejected": 0,
+      "lutReason": null
+    },
+    "DETAIL_GPU": {
+      "creates": 1,
+      "disposals": 0
     }
   },
   "classification": "IWER_EMULATED",

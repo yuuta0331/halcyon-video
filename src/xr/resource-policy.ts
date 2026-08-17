@@ -3,6 +3,7 @@
 
 import {
   activeResourceProfile,
+  usesCheapResourceGraph,
   type ResourceProfile,
 } from '../perf/resource-profile.ts';
 import { XR_TARGET_HZ } from './session-policy.ts';
@@ -31,7 +32,7 @@ export function xrQualityPolicy(
   return {
     n8ao: profile.n8ao,
     postprocessing: profile.composer ? 'desktop' : 'none',
-    framebufferScale: profile.name === 'XR_SAFE'
+    framebufferScale: usesCheapResourceGraph(profile)
       ? clampXrSafeFramebufferScale(profile.framebufferScale)
       : profile.framebufferScale,
     foveation: profile.foveation,

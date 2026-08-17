@@ -25,6 +25,13 @@ merge `351947a`. This slice does not reopen that verdict.
 | `jp4a-round5a2-review.md` | Round 5A.2 DETAIL load-failure settlement (not Quest-ready) |
 | `jp4a-round5a2-iwer.json` | IWER_EMULATED Round 5A.2 stereo/detail regression (not Quest) |
 | `jp4a-round5a2-detail-failure.json` | DESKTOP_BROWSER DETAIL failure/retry/pool/stale proof |
+| `jp4a-round5b-hardware-fail-history.md` | Real Quest 3 FAILED on `216483fac` (canonical; not rewritten) |
+| `jp4a-round5b-review.md` | Round 5B implementation package (not Quest-ready; not hardware proof) |
+| `jp4a-round5b-inline-profile.json` | DESKTOP_BROWSER Quest-UA inline vs immersive vs desktop policy |
+| `jp4a-round5b-focus-quality.json` | DESKTOP_BROWSER BASE/NEAR/FOCUS ladder (not human readability) |
+| `jp4a-round5b-upload-policy.json` | DESKTOP_BROWSER motion-gated upload policy (not Quest GPU time) |
+| `jp4a-round5b-hardware-diagnostic.json` | DESKTOP_BROWSER A/B/C/D/E fixture render (does not diagnose Quest black) |
+| `jp4a-round5b-iwer.json` | IWER_EMULATED Round 5B pose/menu/diag/stereo logic (not hardware visual proof) |
 | `jp4a.5-catalog-delta-sync.md` | Deferred persistent catalog / delta sync (not in this PR) |
 | `jp4a-round4-preload-stability.json` | DESKTOP_BROWSER STORE_VISIBLE_BASE drain |
 | `jp4a-round4-production-multibank.json` | DESKTOP_BROWSER production shelf 3+ bank render |

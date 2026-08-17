@@ -1223,6 +1223,88 @@ async function main() {
       },
     ));
 
+    evidence.scenarios.push(await runScenario(
+      browser, 'JP4A_ROUND5B_XR', '?demo=1&nogate=1&xrEmu=1&xrSafe=1&xrPosterHwDiag=1',
+      async (page) => {
+        const jp4aDir = path.join(root, 'docs', 'review', 'jp4a');
+        fs.mkdirSync(jp4aDir, { recursive: true });
+        const result = await page.evaluate(async () => {
+          const untilReady = Date.now() + 120000;
+          while (Date.now() < untilReady) {
+            if (window.__storeReadiness?.()?.visualReady) break;
+            await new Promise((r) => setTimeout(r, 200));
+          }
+          const xr = window.__xrTest;
+          const entered = xr ? await xr.enter() : { ok: false, error: 'no __xrTest' };
+          const untilWorld = Date.now() + 8000;
+          while (Date.now() < untilWorld) {
+            if (window.__xrDiagnostics?.()?.startup?.firstWorldRenderCompletedAt != null) break;
+            await new Promise((r) => setTimeout(r, 100));
+          }
+          xr?.setHeadsetPose?.({ x: 0, y: 1.6, z: 0, qx: 0, qy: 0, qz: 0, qw: 1 });
+          await new Promise((r) => setTimeout(r, 200));
+          xr?.openMenu();
+          const untilMenu = Date.now() + 2000;
+          let pose = window.__xrViewerPose?.() ?? null;
+          let placed = window.__xrUiPlacement?.() ?? null;
+          while (Date.now() < untilMenu) {
+            pose = window.__xrViewerPose?.() ?? null;
+            placed = window.__xrUiPlacement?.() ?? null;
+            if (pose?.source === 'XR_VIEWER_POSE' && placed?.source === 'XR_VIEWER_POSE') break;
+            await new Promise((r) => setTimeout(r, 50));
+          }
+          const stereo = window.__stereoSignage?.() ?? null;
+          const modes = [];
+          let mode = window.__hwPosterDiag?.()?.mode ?? null;
+          modes.push(mode);
+          for (let i = 0; i < 4; i++) {
+            window.__cycleHwPosterDiag?.();
+            await new Promise((r) => setTimeout(r, 50));
+            modes.push(window.__hwPosterDiag?.()?.mode ?? null);
+          }
+          const gpu = window.__gpuDiagnostics?.() ?? null;
+          const detail = window.__posterDetail?.() ?? null;
+          const focus = window.__posterFocus?.() ?? null;
+          const normalLaunch = window.__hardwarePosterDiagProbe
+            ? null
+            : null;
+          return {
+            entered,
+            stereoPass: stereo?.pass === true,
+            stereoNegative: stereo?.negativeControl === true,
+            poseSource: pose?.source ?? null,
+            poseValid: pose?.valid === true,
+            menuSource: placed?.source ?? null,
+            menuDistance: placed?.distanceFromViewer ?? null,
+            diagModes: modes,
+            diagEnabled: window.__hwPosterDiag?.()?.enabled === true,
+            contextLost: gpu?.contextLost === true,
+            detailWidth: detail?.width ?? null,
+            focusSlots: focus?.slotLimit ?? null,
+            classification: 'IWER_EMULATED',
+            QUEST_HARDWARE: 'NOT_EXECUTED',
+            note: 'IWER_EMULATED logic only. Not hardware visual proof.',
+          };
+        });
+        fs.writeFileSync(
+          path.join(jp4aDir, 'jp4a-round5b-iwer.json'),
+          JSON.stringify(scrub(result), null, 2),
+        );
+        const pass = !!result.entered?.ok
+          && result.stereoPass === true
+          && result.stereoNegative === true
+          && result.poseSource === 'XR_VIEWER_POSE'
+          && result.menuSource === 'XR_VIEWER_POSE'
+          && result.diagEnabled === true
+          && (result.diagModes ?? []).includes('A')
+          && (result.diagModes ?? []).includes('E')
+          && result.contextLost !== true
+          && result.QUEST_HARDWARE === 'NOT_EXECUTED'
+          && result.classification === 'IWER_EMULATED';
+        return { pass, ...result };
+      },
+    ));
+
     // XR_SAFE TTI on the IWER GPU. `?demo=1&nogate=1` without xrEmu selects
     // DESKTOP_FULL, which overflows this Chromium's 16 texture units (26+
     // samplers) and is not the JP-3 measurement.

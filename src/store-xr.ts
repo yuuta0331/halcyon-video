@@ -14,6 +14,9 @@ import { publishXrPerfDiagnostics } from './xr/perf-diagnostics.ts';
 import { installPosterDetailTestHooks } from './store-poster-detail';
 import { inspectCloseRangePosters, closeRangeSweepPlan } from './xr/close-range-probe';
 import { sampleSignageStereo, stereoSignagePass, negativeControlLeftEyeOnly, userCameraMask } from './xr/stereo-signage-probe';
+import { lastUiPlacementEvidence } from './xr/ui-place-pending';
+import { latestViewerPose } from './xr/viewer-pose';
+import { xrUploadMetricsSnapshot } from './perf/xr-upload-metrics.ts';
 import { noteStoreWorldClassProgress, refreshStoreVisualReady } from './store-visual-ready';
 
 export function attachXrRuntime(
@@ -44,8 +47,8 @@ export function attachXrRuntime(
       if (enabled) scene.claimXrRenderLoop();
       scene.renderer.setAnimationLoop(enabled
         ? (time?: number) => {
+          scene.xr?.prepareXrFrame(typeof time === 'number' ? time : performance.now());
           pumpTextureUploads();
-          scene.xr?.noteXrFrame(typeof time === 'number' ? time : performance.now());
           animate(time);
         }
         : null);
@@ -89,6 +92,11 @@ export function attachXrRuntime(
       QUEST_HARDWARE: 'NOT_EXECUTED',
     };
   };
+  (window as unknown as { __hwPosterDiag?: unknown }).__hwPosterDiag = () => scene.xr?.hwPosterDiagSnapshot?.() ?? { enabled: false };
+  (window as unknown as { __cycleHwPosterDiag?: unknown }).__cycleHwPosterDiag = () => scene.xr?.cycleHwPosterDiag?.() ?? null;
+  (window as unknown as { __xrUiPlacement?: unknown }).__xrUiPlacement = () => lastUiPlacementEvidence();
+  (window as unknown as { __xrViewerPose?: unknown }).__xrViewerPose = () => latestViewerPose();
+  (window as unknown as { __xrUploadMetrics?: unknown }).__xrUploadMetrics = () => xrUploadMetricsSnapshot();
   publishXrPerfDiagnostics();
   publishXrContent(scene);
   return xr;

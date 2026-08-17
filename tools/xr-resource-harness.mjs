@@ -508,6 +508,54 @@ async function main() {
         && detailFail?.contextLost !== true,
       probe: detailFail,
     });
+    const inlineProf = await storePage.evaluate(() => window.__inlineProfileProbe?.() ?? { pass: false });
+    fs.writeFileSync(
+      path.join(root, 'docs', 'review', 'jp4a', 'jp4a-round5b-inline-profile.json'),
+      JSON.stringify({ classification: 'DESKTOP_BROWSER', QUEST_HARDWARE: 'NOT_EXECUTED', ...inlineProf }, null, 2),
+    );
+    evidence.scenarios.push({
+      name: 'JP4A_INLINE_PROFILE',
+      classification: 'DESKTOP_BROWSER',
+      pass: inlineProf?.pass === true,
+      probe: inlineProf,
+    });
+    const focusQ = await storePage.evaluate(async () => {
+      const fn = window.__focusQualityProbe;
+      if (typeof fn !== 'function') return { pass: false, note: 'no focus probe' };
+      return await fn();
+    });
+    fs.writeFileSync(
+      path.join(root, 'docs', 'review', 'jp4a', 'jp4a-round5b-focus-quality.json'),
+      JSON.stringify(focusQ, null, 2),
+    );
+    evidence.scenarios.push({
+      name: 'JP4A_FOCUS_QUALITY',
+      classification: 'DESKTOP_BROWSER',
+      pass: focusQ?.pass === true && focusQ?.upscaledFromNear === false && focusQ?.contextLost !== true,
+      probe: focusQ,
+    });
+    const uploadP = await storePage.evaluate(() => window.__uploadPolicyProbe?.() ?? { pass: false });
+    fs.writeFileSync(
+      path.join(root, 'docs', 'review', 'jp4a', 'jp4a-round5b-upload-policy.json'),
+      JSON.stringify(uploadP, null, 2),
+    );
+    evidence.scenarios.push({
+      name: 'JP4A_UPLOAD_POLICY',
+      classification: 'DESKTOP_BROWSER',
+      pass: uploadP?.pass === true,
+      probe: uploadP,
+    });
+    const hwDiag = await storePage.evaluate(() => window.__hardwarePosterDiagProbe?.() ?? { pass: false });
+    fs.writeFileSync(
+      path.join(root, 'docs', 'review', 'jp4a', 'jp4a-round5b-hardware-diagnostic.json'),
+      JSON.stringify(hwDiag, null, 2),
+    );
+    evidence.scenarios.push({
+      name: 'JP4A_HW_POSTER_DIAG',
+      classification: 'DESKTOP_BROWSER',
+      pass: hwDiag?.pass === true && hwDiag?.contextLost !== true,
+      probe: hwDiag,
+    });
     await storePage.close();
 
     const multiPage = await browser.newPage();
@@ -601,6 +649,10 @@ async function main() {
       'JP4A_PRELOAD_STABILITY',
       'JP4A_DETAIL_ACTIVATION',
       'JP4A_DETAIL_FAILURE',
+      'JP4A_INLINE_PROFILE',
+      'JP4A_FOCUS_QUALITY',
+      'JP4A_UPLOAD_POLICY',
+      'JP4A_HW_POSTER_DIAG',
     ]) {
       const s = evidence.scenarios.find((x) => x.name === name);
       if (!s) continue;

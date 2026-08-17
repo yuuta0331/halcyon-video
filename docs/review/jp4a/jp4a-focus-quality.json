@@ -1,0 +1,59 @@
+{
+  "name": "JP4A_FOCUS_QUALITY",
+  "classification": "DESKTOP_BROWSER",
+  "pass": true,
+  "probe": {
+    "classification": "DESKTOP_BROWSER",
+    "QUEST_HARDWARE": "NOT_EXECUTED",
+    "pass": true,
+    "contextLost": false,
+    "source": {
+      "width": 800,
+      "height": 1200
+    },
+    "decoded": {
+      "width": 640,
+      "height": 960
+    },
+    "baseGpu": {
+      "width": 96,
+      "height": 144,
+      "texelsPerFace": 13824
+    },
+    "nearGpu": {
+      "width": 320,
+      "height": 480,
+      "texelsPerFace": 153600
+    },
+    "focusGpu": {
+      "width": 640,
+      "height": 960,
+      "texelsPerFace": 614400
+    },
+    "upscaledFromNear": false,
+    "edgeEnergy": {
+      "base": 40.996817129629626,
+      "near": 61.426171875,
+      "focus": 61.42897135416667
+    },
+    "shaderBase": [
+      40,
+      30,
+      200,
+      255
+    ],
+    "shaderNear": [
+      40,
+      30,
+      126,
+      255
+    ],
+    "shaderFocus": [
+      255,
+      30,
+      132,
+      255
+    ],
+    "note": "Synthetic pattern; not human readability. Not Quest GPU."
+  }
+}

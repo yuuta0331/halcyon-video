@@ -1,13 +1,33 @@
 # JP-4A Quest 3 smoke — PREPARED, NOT EXECUTED
 
 Do not ask the owner to run this until independent review declares
-`READY_FOR_SINGLE_QUEST_JP4A_SMOKE`.
+`READY_FOR_SINGLE_QUEST_JP4A_SMOKE` or
+`READY_FOR_SINGLE_QUEST_JP4A_ROUND5B_DIAGNOSTIC`.
 
-QUEST_HARDWARE for JP-4A is **NOT_EXECUTED / PENDING**.
+Historical hardware:
 
-Anti-aliasing / resolution is **not** an acceptance item. That is JP-5.
+- `a20389e` — QUEST_HARDWARE FAILED (`jp4a-round5-quest-fail.md`)
+- `216483fac` — QUEST_HARDWARE FAILED (`jp4a-round5b-hardware-fail-history.md`)
 
-## Checklist
+Current implementation HEAD: **QUEST_HARDWARE = NOT_EXECUTED / PENDING**.
+
+Anti-aliasing / framebuffer scale bump is **not** an acceptance item. That is JP-5.
+Do not treat IWER as hardware rendering evidence.
+
+## Round 5B diagnostic session (one enter-VR)
+
+Only after independent review. Use `?xrPosterHwDiag=1`.
+
+1. Enter XR once. Do not reload five URLs.
+2. Confirm stereo signage still visible in both eyes.
+3. Open menu at several head orientations — should appear ~0.9 m ahead, facing viewer, then stay world-stable.
+4. Confirm FPS HUD stays upper-left / readable and follows head orientation.
+5. Approach a shelf. BASE should remain visible. Detail should not freeze the headset while walking; waiting still should promote.
+6. Inspect a selected title — is FOCUS 640×960 materially clearer than 320×480 NEAR? Can title/logo be recognized?
+7. Thumbstick **click** cycles MODE A → B → C → D → E. Record the first mode where the close-range black artifact appears.
+8. Exit XR. No context loss.
+
+## Historical smoke checklist (still valid later)
 
 1. Enter XR
 2. Store world appears

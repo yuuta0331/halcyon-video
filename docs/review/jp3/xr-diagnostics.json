@@ -2,87 +2,95 @@
   "console": [
     {
       "type": "log",
-      "text": "[Signage Debug] Processing slot: wall-newrelease-back-left category: wall-newrelease"
+      "text": "[posters] STORE_VISIBLE_BASE unique=2001 layers=2001 banks=1 shelf=96x144"
     },
     {
       "type": "log",
-      "text": "[Signage Debug] Processing slot: wall-newrelease-back-right category: wall-newrelease"
+      "text": "[UI Log] [23:13:25] [System] Jump index — 5 counter/libraries/genres, 8 displays."
     },
     {
       "type": "log",
-      "text": "[Signage Debug] Processing slot: wall-newrelease-back-step category: wall-newrelease"
+      "text": "[UI Log] [23:13:25] [System] Inside the store — ◄ ► pick a section, ▼ the displays, ▲ the TVs, OK to go."
     },
     {
       "type": "log",
-      "text": "[Signage Debug] Processing slot: wall-newrelease-left-wall category: wall-newrelease"
+      "text": "[resScale] 0.4fps < 50 — down to 0.95"
     },
     {
       "type": "log",
-      "text": "[Signage Debug] Processing slot: promo-previously-viewed category: ceiling-promo"
+      "text": "[UI Log] [23:13:29] [System] 3D Store rendering active in Library Select mode."
     },
     {
       "type": "log",
-      "text": "[System debug] Unique movies count: 2001 libraries count: 3"
+      "text": "[UI Log] [23:13:29] [System] Loading critical store textures..."
     },
     {
       "type": "log",
-      "text": "[posters] XR_SAFE P0 unique=49 P1 unique=722 slots=128 p0SettleJobs=49 p1ScheduledAtBoot=79 (bounded working set, not full catalog)"
+      "text": "[UI Log] [23:13:29] [XR] immersive-vr is supported. Enter VR is available."
     },
     {
       "type": "log",
-      "text": "[UI Log] [11:28:11] [System] Jump index — 5 counter/libraries/genres, 8 displays."
+      "text": "[resScale] 0.5fps < 50 — down to 0.9"
     },
     {
       "type": "log",
-      "text": "[UI Log] [11:28:11] [System] Inside the store — ◄ ► pick a section, ▼ the displays, ▲ the TVs, OK to go."
+      "text": "[UI Log] [23:13:30] [System] Loading store textures... 0% (1/2001)"
     },
     {
       "type": "log",
-      "text": "[resScale] 0.5fps < 50 — down to 0.95"
+      "text": "[UI Log] [23:13:39] [System] Loading store textures... 10% (201/2001)"
     },
     {
       "type": "log",
-      "text": "[UI Log] [11:28:13] [System] 3D Store rendering active in Library Select mode."
+      "text": "[UI Log] [23:13:42] [System] Loading store textures... 20% (401/2001)"
     },
     {
       "type": "log",
-      "text": "[UI Log] [11:28:13] [System] Loading critical store textures..."
+      "text": "[UI Log] [23:13:45] [System] Loading store textures... 30% (601/2001)"
     },
     {
       "type": "log",
-      "text": "[UI Log] [11:28:13] [XR] immersive-vr is supported. Enter VR is available."
+      "text": "[UI Log] [23:13:48] [System] Loading store textures... 40% (801/2001)"
     },
     {
       "type": "log",
-      "text": "[resScale] 0.7fps < 50 — down to 0.9"
+      "text": "[UI Log] [23:13:50] [System] Loading store textures... 50% (1001/2001)"
     },
     {
       "type": "log",
-      "text": "[UI Log] [11:28:15] [System] Loading store textures... 0% (1/128)"
+      "text": "[UI Log] [23:13:53] [System] Loading store textures... 60% (1201/2001)"
     },
     {
       "type": "log",
-      "text": "[UI Log] [11:28:15] [System] Loading store textures... 10% (13/128)"
+      "text": "[UI Log] [23:13:55] [System] Loading store textures... 70% (1401/2001)"
     },
     {
       "type": "log",
-      "text": "[UI Log] [11:28:16] [System] Loading store textures... 20% (26/128)"
+      "text": "[UI Log] [23:13:58] [System] Loading store textures... 80% (1601/2001)"
     },
     {
       "type": "log",
-      "text": "[UI Log] [11:28:16] [System] Loading store textures... 30% (39/128)"
+      "text": "[UI Log] [23:14:00] [System] Loading store textures... 90% (1801/2001)"
     },
     {
       "type": "log",
-      "text": "[warmup] hero material programs drawn+compiled in 1210ms"
+      "text": "[UI Log] [23:14:04] [System] Loading store textures... 100% (2001/2001)"
     },
     {
       "type": "log",
-      "text": "[UI Log] [11:28:17] [System] Store ready. Remaining covers stream in the background."
+      "text": "[warmup] hero material programs drawn+compiled in 164ms"
     },
     {
       "type": "log",
-      "text": "[UI Log] [11:28:18] [XR] Immersive VR session started."
+      "text": "[UI Log] [23:14:04] [System] Store ready. Remaining covers stream in the background."
+    },
+    {
+      "type": "log",
+      "text": "[UI Log] [23:14:04] [System] Initial poster working set settled."
+    },
+    {
+      "type": "log",
+      "text": "[UI Log] [23:14:04] [XR] Immersive VR session started."
     },
     {
       "type": "log",
@@ -90,23 +98,15 @@
     },
     {
       "type": "log",
-      "text": "[UI Log] [11:28:19] [XR] Immersive VR session ended."
+      "text": "[resScale] 3.3fps < 50 — down to 0.95"
     },
     {
       "type": "log",
-      "text": "[UI Log] [11:28:19] [System] Loading store textures... 40% (52/128)"
+      "text": "[resScale] 0.6fps < 50 — down to 0.9"
     },
     {
       "type": "log",
-      "text": "[UI Log] [11:28:19] [System] Loading store textures... 50% (64/128)"
-    },
-    {
-      "type": "log",
-      "text": "[UI Log] [11:28:19] [System] Loading store textures... 60% (77/128)"
-    },
-    {
-      "type": "log",
-      "text": "[UI Log] [11:28:19] [System] Rendering paused. Resources yielded."
+      "text": "[UI Log] [23:14:10] [System] XR session keeps the animation loop live."
     },
     {
       "type": "debug",
@@ -126,11 +126,11 @@
     },
     {
       "type": "log",
-      "text": "[UI Log] [11:28:20] [System] Initializing HTPC interface..."
+      "text": "[UI Log] [23:14:11] [System] Initializing HTPC interface..."
     },
     {
       "type": "log",
-      "text": "[UI Log] [11:28:20] [System] Demo mode: stocking the store with a placeholder library (no media server)."
+      "text": "[UI Log] [23:14:11] [System] Demo mode: stocking the store with a placeholder library (no media server)."
     },
     {
       "type": "log",
@@ -146,7 +146,7 @@
     },
     {
       "type": "log",
-      "text": "[calibrate] ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002488) Direct3D11 vs_5_0 ps_5_0, D3D11) → medium +supersample (cached)"
+      "text": "[calibrate] ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002488) Direct3D11 vs_5_0 ps_5_0, D3D11) → high +supersample (cached)"
     },
     {
       "type": "log",
@@ -230,15 +230,15 @@
     },
     {
       "type": "log",
-      "text": "[posters] XR_SAFE P0 unique=49 P1 unique=722 slots=128 p0SettleJobs=49 p1ScheduledAtBoot=79 (bounded working set, not full catalog)"
+      "text": "[posters] STORE_VISIBLE_BASE unique=2001 layers=2001 banks=1 shelf=96x144"
     },
     {
       "type": "log",
-      "text": "[UI Log] [11:28:23] [System] Jump index — 5 counter/libraries/genres, 8 displays."
+      "text": "[UI Log] [23:14:14] [System] Jump index — 5 counter/libraries/genres, 8 displays."
     },
     {
       "type": "log",
-      "text": "[UI Log] [11:28:23] [System] Inside the store — ◄ ► pick a section, ▼ the displays, ▲ the TVs, OK to go."
+      "text": "[UI Log] [23:14:14] [System] Inside the store — ◄ ► pick a section, ▼ the displays, ▲ the TVs, OK to go."
     },
     {
       "type": "log",
@@ -246,79 +246,79 @@
     },
     {
       "type": "log",
-      "text": "[UI Log] [11:28:25] [System] 3D Store rendering active in Library Select mode."
+      "text": "[UI Log] [23:14:18] [System] 3D Store rendering active in Library Select mode."
     },
     {
       "type": "log",
-      "text": "[UI Log] [11:28:25] [System] Loading critical store textures..."
+      "text": "[UI Log] [23:14:18] [System] Loading critical store textures..."
     },
     {
       "type": "log",
-      "text": "[UI Log] [11:28:25] [XR] immersive-vr is supported. Enter VR is available."
+      "text": "[UI Log] [23:14:18] [XR] immersive-vr is supported. Enter VR is available."
     },
     {
       "type": "log",
-      "text": "[resScale] 0.8fps < 50 — down to 0.9"
+      "text": "[resScale] 0.5fps < 50 — down to 0.9"
     },
     {
       "type": "log",
-      "text": "[UI Log] [11:28:27] [System] Loading store textures... 0% (1/128)"
+      "text": "[UI Log] [23:14:21] [System] Loading store textures... 0% (1/2001)"
     },
     {
       "type": "log",
-      "text": "[UI Log] [11:28:28] [System] Loading store textures... 10% (13/128)"
+      "text": "[UI Log] [23:14:28] [System] Loading store textures... 10% (201/2001)"
     },
     {
       "type": "log",
-      "text": "[UI Log] [11:28:28] [System] Loading store textures... 20% (26/128)"
+      "text": "[UI Log] [23:14:32] [System] Loading store textures... 20% (401/2001)"
     },
     {
       "type": "log",
-      "text": "[UI Log] [11:28:29] [System] Loading store textures... 30% (39/128)"
+      "text": "[UI Log] [23:14:35] [System] Loading store textures... 30% (601/2001)"
     },
     {
       "type": "log",
-      "text": "[warmup] hero material programs drawn+compiled in 951ms"
+      "text": "[UI Log] [23:14:38] [System] Loading store textures... 40% (801/2001)"
     },
     {
       "type": "log",
-      "text": "[UI Log] [11:28:30] [System] Store ready. Remaining covers stream in the background."
+      "text": "[UI Log] [23:14:40] [System] Loading store textures... 50% (1001/2001)"
     },
     {
       "type": "log",
-      "text": "[UI Log] [11:28:30] [System] Loading store textures... 40% (52/128)"
+      "text": "[UI Log] [23:14:42] [System] Loading store textures... 60% (1201/2001)"
     },
     {
       "type": "log",
-      "text": "[UI Log] [11:28:31] [System] Loading store textures... 50% (64/128)"
+      "text": "[UI Log] [23:14:45] [System] Loading store textures... 70% (1401/2001)"
     },
     {
       "type": "log",
-      "text": "[UI Log] [11:28:31] [System] Loading store textures... 60% (77/128)"
+      "text": "[UI Log] [23:14:48] [System] Loading store textures... 80% (1601/2001)"
     },
     {
       "type": "log",
-      "text": "[UI Log] [11:28:31] [System] Loading store textures... 70% (90/128)"
+      "text": "[UI Log] [23:14:50] [System] Loading store textures... 90% (1801/2001)"
     },
     {
       "type": "log",
-      "text": "[UI Log] [11:28:31] [System] Loading store textures... 80% (103/128)"
+      "text": "[UI Log] [23:14:53] [System] Loading store textures... 100% (2001/2001)"
     },
     {
       "type": "log",
-      "text": "[UI Log] [11:28:31] [System] Loading store textures... 90% (116/128)"
+      "text": "[warmup] hero material programs drawn+compiled in 136ms"
     },
     {
       "type": "log",
-      "text": "[UI Log] [11:28:31] [System] Loading store textures... 100% (128/128)"
+      "text": "[UI Log] [23:14:54] [System] Store ready. Remaining covers stream in the background."
     },
     {
       "type": "log",
-      "text": "[UI Log] [11:28:31] [System] Initial poster working set settled."
+      "text": "[UI Log] [23:14:54] [System] Initial poster working set settled."
     },
     {
       "type": "log",
-      "text": "[UI Log] [11:28:31] [System] Rendering paused. Resources yielded."
+      "text": "[UI Log] [23:14:54] [System] Rendering paused. Resources yielded."
     }
   ],
   "serious": [
@@ -410,16 +410,16 @@
         "session": {
           "phase": "active",
           "rendererPresenting": true,
-          "sessionStartAt": 1351.699999999255
+          "sessionStartAt": 1288.5
         },
         "startup": {
-          "requestSessionStart": 1351.699999999255,
-          "rendererSetSessionStart": 1351.699999999255,
-          "rendererSetSessionEnd": 1352.6000000014901,
-          "firstAnimationCallbackAt": 1610.5,
-          "firstDirectRenderStart": 1610.699999999255,
-          "firstDirectRenderEnd": 1660,
-          "firstWorldRenderCompletedAt": 1660,
+          "requestSessionStart": 1288.5,
+          "rendererSetSessionStart": 1288.5,
+          "rendererSetSessionEnd": 1289.2999999821186,
+          "firstAnimationCallbackAt": 1549.7999999821186,
+          "firstDirectRenderStart": 1549.8999999761581,
+          "firstDirectRenderEnd": 1576.5999999940395,
+          "firstWorldRenderCompletedAt": 1576.5999999940395,
           "lastError": null
         },
         "flags": {
@@ -429,18 +429,19 @@
           "layers": false,
           "bare": true,
           "safe": false,
+          "posterHwDiag": false,
           "raw": false,
           "threeBaseline": false
         },
         "bare": {
           "bareSessionRequested": true,
-          "bareSetSessionStart": 1351.699999999255,
-          "bareSetSessionEnd": 1352.6000000014901,
-          "firstXrCallbackAt": 1610.5,
-          "firstRendererRenderStart": 1610.699999999255,
-          "firstRendererRenderEnd": 1660,
-          "firstWorldRenderCompletedAt": 1660,
-          "frameCount": 2,
+          "bareSetSessionStart": 1288.5,
+          "bareSetSessionEnd": 1289.2999999821186,
+          "firstXrCallbackAt": 1549.7999999821186,
+          "firstRendererRenderStart": 1549.8999999761581,
+          "firstRendererRenderEnd": 1576.5999999940395,
+          "firstWorldRenderCompletedAt": 1576.5999999940395,
+          "frameCount": 4,
           "contextLost": false,
           "lastError": null,
           "presenting": true,
@@ -456,14 +457,31 @@
           "maxTextureSize": 16384,
           "maxCubemapSize": 16384,
           "maxArrayTextureLayers": 2048,
+          "hardwareMaxArrayTextureLayers": 2048,
+          "effectiveTestMaxArrayTextureLayers": null,
           "maxRenderbufferSize": 16384,
           "maxSamples": 8,
           "rendererTextures": 1,
           "rendererGeometries": 3,
           "rendererPrograms": 2,
           "posterCatalogTitles": null,
-          "posterPhysicalSlots": 128,
+          "posterExpectedTitles": null,
+          "posterLogicalMappedTitles": null,
+          "posterActuallyRenderableTitles": null,
           "posterResidentTitles": null,
+          "posterBankCount": null,
+          "posterLayersPerBank": null,
+          "posterRenderBatchCount": null,
+          "posterSourceMeshCount": null,
+          "posterSamplersPerDraw": 1,
+          "posterBaseWidth": null,
+          "posterBaseHeight": null,
+          "posterCpuBytesEstimated": 113246208,
+          "posterCpuBytesActive": null,
+          "posterCpuBytesAllocated": null,
+          "posterGpuBytesEstimated": 150994944,
+          "posterCapacityInvariantOk": null,
+          "posterPhysicalSlots": 2048,
           "posterFreeSlots": null,
           "posterResidencyInvariantOk": null,
           "posterDuplicatePhysicalOwners": null,
@@ -491,8 +509,8 @@
           "p2UniqueTitles": null,
           "p3UniqueTitles": null,
           "p0PlusP1UniqueTitles": null,
-          "posterArrayCpuBytesEstimated": 7077888,
-          "posterArrayGpuBytesEstimated": 9437184,
+          "posterArrayCpuBytesEstimated": 113246208,
+          "posterArrayGpuBytesEstimated": 150994944,
           "posterCpuCacheBytes": null,
           "posterCpuCacheBudget": null,
           "posterCpuCacheHits": null,
@@ -505,19 +523,147 @@
           "reflectionProbeCount": 0,
           "environmentBakeResolution": 0,
           "environmentBounceCount": 0,
-          "xrFramebufferScaleRequested": 0.5,
-          "xrFoveationRequested": 1,
+          "xrFramebufferScaleRequested": 0.8,
+          "xrFoveationRequested": 0.5,
           "xrFoveationEffective": null,
           "xrPhase": "active",
-          "xrFrameCount": 2,
-          "firstWorldRenderCompletedAt": 1660,
+          "xrFrameCount": 4,
+          "firstWorldRenderCompletedAt": 1576.5999999940395,
           "firstStoreXrRenderAt": null,
           "contextLost": false,
           "lastContextLossAt": null,
           "lastError": null,
+          "xrContent": {
+            "resourceProfile": "XR_SAFE",
+            "worldReady": false,
+            "requiredReady": false,
+            "onDemandWrapsReady": false,
+            "decorativeDisabled": true,
+            "poster": {
+              "allocated": 0,
+              "decoded": 0,
+              "uploaded": 0,
+              "visible": 0,
+              "state": "missing",
+              "requirement": "WORLD_REQUIRED",
+              "activation": "idle",
+              "role": "required"
+            },
+            "wraps": {
+              "allocated": 0,
+              "decoded": 0,
+              "uploaded": 0,
+              "visible": 0,
+              "state": "pending",
+              "requirement": "ON_DEMAND_REQUIRED",
+              "activation": "idle",
+              "role": "required"
+            },
+            "signage": {
+              "allocated": 0,
+              "decoded": 0,
+              "uploaded": 0,
+              "visible": 0,
+              "state": "missing",
+              "requirement": "WORLD_REQUIRED",
+              "activation": "idle",
+              "role": "required"
+            },
+            "aisleFascia": {
+              "allocated": 0,
+              "decoded": 0,
+              "uploaded": 0,
+              "visible": 0,
+              "state": "missing",
+              "requirement": "WORLD_REQUIRED",
+              "activation": "idle",
+              "representedBy": "signage",
+              "role": "required"
+            },
+            "brandPack": {
+              "allocated": 0,
+              "decoded": 0,
+              "uploaded": 0,
+              "visible": 0,
+              "state": "missing",
+              "requirement": "WORLD_REQUIRED",
+              "activation": "idle",
+              "role": "required"
+            },
+            "canvasTextures": {
+              "allocated": 0,
+              "decoded": 0,
+              "uploaded": 0,
+              "visible": 0,
+              "state": "missing",
+              "requirement": "WORLD_REQUIRED",
+              "activation": "idle",
+              "role": "required"
+            },
+            "fixtureTextures": {
+              "allocated": 0,
+              "decoded": 0,
+              "uploaded": 0,
+              "visible": 0,
+              "state": "missing",
+              "requirement": "WORLD_REQUIRED",
+              "activation": "idle",
+              "role": "required"
+            },
+            "storeLogos": {
+              "allocated": 0,
+              "decoded": 0,
+              "uploaded": 0,
+              "visible": 0,
+              "state": "missing",
+              "requirement": "WORLD_REQUIRED",
+              "activation": "idle",
+              "role": "required"
+            },
+            "crt": {
+              "allocated": 0,
+              "decoded": 0,
+              "uploaded": 0,
+              "visible": 0,
+              "state": "pending",
+              "requirement": "ON_DEMAND_REQUIRED",
+              "activation": "idle",
+              "role": "required"
+            },
+            "floorWallMaterials": {
+              "allocated": 0,
+              "decoded": 0,
+              "uploaded": 0,
+              "visible": 0,
+              "state": "missing",
+              "requirement": "WORLD_REQUIRED",
+              "activation": "idle",
+              "role": "required"
+            },
+            "mediaSurfaces": {
+              "allocated": 0,
+              "decoded": 0,
+              "uploaded": 0,
+              "visible": 0,
+              "state": "pending",
+              "requirement": "ON_DEMAND_REQUIRED",
+              "activation": "idle",
+              "role": "required"
+            },
+            "decorativeFx": {
+              "allocated": 0,
+              "decoded": 0,
+              "uploaded": 0,
+              "visible": 0,
+              "state": "disabled",
+              "requirement": "DECORATIVE",
+              "activation": "idle",
+              "role": "decorative"
+            }
+          },
           "snapshots": {
             "renderer-created": {
-              "at": 1305.1000000014901,
+              "at": 1239,
               "classification": "DESKTOP_BROWSER",
               "resourceProfile": "XR_SAFE",
               "rendererName": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002488) Direct3D11 vs_5_0 ps_5_0, D3D11)",
@@ -525,14 +671,31 @@
               "maxTextureSize": 16384,
               "maxCubemapSize": 16384,
               "maxArrayTextureLayers": 2048,
+              "hardwareMaxArrayTextureLayers": 2048,
+              "effectiveTestMaxArrayTextureLayers": null,
               "maxRenderbufferSize": 16384,
               "maxSamples": 8,
               "rendererTextures": 0,
               "rendererGeometries": 0,
               "rendererPrograms": 0,
               "posterCatalogTitles": null,
-              "posterPhysicalSlots": 128,
+              "posterExpectedTitles": null,
+              "posterLogicalMappedTitles": null,
+              "posterActuallyRenderableTitles": null,
               "posterResidentTitles": null,
+              "posterBankCount": null,
+              "posterLayersPerBank": null,
+              "posterRenderBatchCount": null,
+              "posterSourceMeshCount": null,
+              "posterSamplersPerDraw": 1,
+              "posterBaseWidth": null,
+              "posterBaseHeight": null,
+              "posterCpuBytesEstimated": 113246208,
+              "posterCpuBytesActive": null,
+              "posterCpuBytesAllocated": null,
+              "posterGpuBytesEstimated": 150994944,
+              "posterCapacityInvariantOk": null,
+              "posterPhysicalSlots": 2048,
               "posterFreeSlots": null,
               "posterResidencyInvariantOk": null,
               "posterDuplicatePhysicalOwners": null,
@@ -560,8 +723,8 @@
               "p2UniqueTitles": null,
               "p3UniqueTitles": null,
               "p0PlusP1UniqueTitles": null,
-              "posterArrayCpuBytesEstimated": 7077888,
-              "posterArrayGpuBytesEstimated": 9437184,
+              "posterArrayCpuBytesEstimated": 113246208,
+              "posterArrayGpuBytesEstimated": 150994944,
               "posterCpuCacheBytes": null,
               "posterCpuCacheBudget": null,
               "posterCpuCacheHits": null,
@@ -574,8 +737,8 @@
               "reflectionProbeCount": 0,
               "environmentBakeResolution": 0,
               "environmentBounceCount": 0,
-              "xrFramebufferScaleRequested": 0.5,
-              "xrFoveationRequested": 1,
+              "xrFramebufferScaleRequested": 0.8,
+              "xrFoveationRequested": 0.5,
               "xrFoveationEffective": null,
               "xrPhase": null,
               "xrFrameCount": 0,
@@ -583,10 +746,138 @@
               "firstStoreXrRenderAt": null,
               "contextLost": false,
               "lastContextLossAt": null,
-              "lastError": null
+              "lastError": null,
+              "xrContent": {
+                "resourceProfile": "XR_SAFE",
+                "worldReady": false,
+                "requiredReady": false,
+                "onDemandWrapsReady": false,
+                "decorativeDisabled": true,
+                "poster": {
+                  "allocated": 0,
+                  "decoded": 0,
+                  "uploaded": 0,
+                  "visible": 0,
+                  "state": "missing",
+                  "requirement": "WORLD_REQUIRED",
+                  "activation": "idle",
+                  "role": "required"
+                },
+                "wraps": {
+                  "allocated": 0,
+                  "decoded": 0,
+                  "uploaded": 0,
+                  "visible": 0,
+                  "state": "pending",
+                  "requirement": "ON_DEMAND_REQUIRED",
+                  "activation": "idle",
+                  "role": "required"
+                },
+                "signage": {
+                  "allocated": 0,
+                  "decoded": 0,
+                  "uploaded": 0,
+                  "visible": 0,
+                  "state": "missing",
+                  "requirement": "WORLD_REQUIRED",
+                  "activation": "idle",
+                  "role": "required"
+                },
+                "aisleFascia": {
+                  "allocated": 0,
+                  "decoded": 0,
+                  "uploaded": 0,
+                  "visible": 0,
+                  "state": "missing",
+                  "requirement": "WORLD_REQUIRED",
+                  "activation": "idle",
+                  "representedBy": "signage",
+                  "role": "required"
+                },
+                "brandPack": {
+                  "allocated": 0,
+                  "decoded": 0,
+                  "uploaded": 0,
+                  "visible": 0,
+                  "state": "missing",
+                  "requirement": "WORLD_REQUIRED",
+                  "activation": "idle",
+                  "role": "required"
+                },
+                "canvasTextures": {
+                  "allocated": 0,
+                  "decoded": 0,
+                  "uploaded": 0,
+                  "visible": 0,
+                  "state": "missing",
+                  "requirement": "WORLD_REQUIRED",
+                  "activation": "idle",
+                  "role": "required"
+                },
+                "fixtureTextures": {
+                  "allocated": 0,
+                  "decoded": 0,
+                  "uploaded": 0,
+                  "visible": 0,
+                  "state": "missing",
+                  "requirement": "WORLD_REQUIRED",
+                  "activation": "idle",
+                  "role": "required"
+                },
+                "storeLogos": {
+                  "allocated": 0,
+                  "decoded": 0,
+                  "uploaded": 0,
+                  "visible": 0,
+                  "state": "missing",
+                  "requirement": "WORLD_REQUIRED",
+                  "activation": "idle",
+                  "role": "required"
+                },
+                "crt": {
+                  "allocated": 0,
+                  "decoded": 0,
+                  "uploaded": 0,
+                  "visible": 0,
+                  "state": "pending",
+                  "requirement": "ON_DEMAND_REQUIRED",
+                  "activation": "idle",
+                  "role": "required"
+                },
+                "floorWallMaterials": {
+                  "allocated": 0,
+                  "decoded": 0,
+                  "uploaded": 0,
+                  "visible": 0,
+                  "state": "missing",
+                  "requirement": "WORLD_REQUIRED",
+                  "activation": "idle",
+                  "role": "required"
+                },
+                "mediaSurfaces": {
+                  "allocated": 0,
+                  "decoded": 0,
+                  "uploaded": 0,
+                  "visible": 0,
+                  "state": "pending",
+                  "requirement": "ON_DEMAND_REQUIRED",
+                  "activation": "idle",
+                  "role": "required"
+                },
+                "decorativeFx": {
+                  "allocated": 0,
+                  "decoded": 0,
+                  "uploaded": 0,
+                  "visible": 0,
+                  "state": "disabled",
+                  "requirement": "DECORATIVE",
+                  "activation": "idle",
+                  "role": "decorative"
+                }
+              }
             },
             "pre-requestSession": {
-              "at": 1350.699999999255,
+              "at": 1287.3999999761581,
               "classification": "IWER_EMULATED",
               "resourceProfile": "XR_SAFE",
               "rendererName": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002488) Direct3D11 vs_5_0 ps_5_0, D3D11)",
@@ -594,14 +885,31 @@
               "maxTextureSize": 16384,
               "maxCubemapSize": 16384,
               "maxArrayTextureLayers": 2048,
+              "hardwareMaxArrayTextureLayers": 2048,
+              "effectiveTestMaxArrayTextureLayers": null,
               "maxRenderbufferSize": 16384,
               "maxSamples": 8,
               "rendererTextures": 0,
               "rendererGeometries": 0,
               "rendererPrograms": 0,
               "posterCatalogTitles": null,
-              "posterPhysicalSlots": 128,
+              "posterExpectedTitles": null,
+              "posterLogicalMappedTitles": null,
+              "posterActuallyRenderableTitles": null,
               "posterResidentTitles": null,
+              "posterBankCount": null,
+              "posterLayersPerBank": null,
+              "posterRenderBatchCount": null,
+              "posterSourceMeshCount": null,
+              "posterSamplersPerDraw": 1,
+              "posterBaseWidth": null,
+              "posterBaseHeight": null,
+              "posterCpuBytesEstimated": 113246208,
+              "posterCpuBytesActive": null,
+              "posterCpuBytesAllocated": null,
+              "posterGpuBytesEstimated": 150994944,
+              "posterCapacityInvariantOk": null,
+              "posterPhysicalSlots": 2048,
               "posterFreeSlots": null,
               "posterResidencyInvariantOk": null,
               "posterDuplicatePhysicalOwners": null,
@@ -629,8 +937,8 @@
               "p2UniqueTitles": null,
               "p3UniqueTitles": null,
               "p0PlusP1UniqueTitles": null,
-              "posterArrayCpuBytesEstimated": 7077888,
-              "posterArrayGpuBytesEstimated": 9437184,
+              "posterArrayCpuBytesEstimated": 113246208,
+              "posterArrayGpuBytesEstimated": 150994944,
               "posterCpuCacheBytes": null,
               "posterCpuCacheBudget": null,
               "posterCpuCacheHits": null,
@@ -643,8 +951,8 @@
               "reflectionProbeCount": 0,
               "environmentBakeResolution": 0,
               "environmentBounceCount": 0,
-              "xrFramebufferScaleRequested": 0.5,
-              "xrFoveationRequested": 1,
+              "xrFramebufferScaleRequested": 0.8,
+              "xrFoveationRequested": 0.5,
               "xrFoveationEffective": null,
               "xrPhase": "idle",
               "xrFrameCount": 0,
@@ -652,10 +960,138 @@
               "firstStoreXrRenderAt": null,
               "contextLost": false,
               "lastContextLossAt": null,
-              "lastError": null
+              "lastError": null,
+              "xrContent": {
+                "resourceProfile": "XR_SAFE",
+                "worldReady": false,
+                "requiredReady": false,
+                "onDemandWrapsReady": false,
+                "decorativeDisabled": true,
+                "poster": {
+                  "allocated": 0,
+                  "decoded": 0,
+                  "uploaded": 0,
+                  "visible": 0,
+                  "state": "missing",
+                  "requirement": "WORLD_REQUIRED",
+                  "activation": "idle",
+                  "role": "required"
+                },
+                "wraps": {
+                  "allocated": 0,
+                  "decoded": 0,
+                  "uploaded": 0,
+                  "visible": 0,
+                  "state": "pending",
+                  "requirement": "ON_DEMAND_REQUIRED",
+                  "activation": "idle",
+                  "role": "required"
+                },
+                "signage": {
+                  "allocated": 0,
+                  "decoded": 0,
+                  "uploaded": 0,
+                  "visible": 0,
+                  "state": "missing",
+                  "requirement": "WORLD_REQUIRED",
+                  "activation": "idle",
+                  "role": "required"
+                },
+                "aisleFascia": {
+                  "allocated": 0,
+                  "decoded": 0,
+                  "uploaded": 0,
+                  "visible": 0,
+                  "state": "missing",
+                  "requirement": "WORLD_REQUIRED",
+                  "activation": "idle",
+                  "representedBy": "signage",
+                  "role": "required"
+                },
+                "brandPack": {
+                  "allocated": 0,
+                  "decoded": 0,
+                  "uploaded": 0,
+                  "visible": 0,
+                  "state": "missing",
+                  "requirement": "WORLD_REQUIRED",
+                  "activation": "idle",
+                  "role": "required"
+                },
+                "canvasTextures": {
+                  "allocated": 0,
+                  "decoded": 0,
+                  "uploaded": 0,
+                  "visible": 0,
+                  "state": "missing",
+                  "requirement": "WORLD_REQUIRED",
+                  "activation": "idle",
+                  "role": "required"
+                },
+                "fixtureTextures": {
+                  "allocated": 0,
+                  "decoded": 0,
+                  "uploaded": 0,
+                  "visible": 0,
+                  "state": "missing",
+                  "requirement": "WORLD_REQUIRED",
+                  "activation": "idle",
+                  "role": "required"
+                },
+                "storeLogos": {
+                  "allocated": 0,
+                  "decoded": 0,
+                  "uploaded": 0,
+                  "visible": 0,
+                  "state": "missing",
+                  "requirement": "WORLD_REQUIRED",
+                  "activation": "idle",
+                  "role": "required"
+                },
+                "crt": {
+                  "allocated": 0,
+                  "decoded": 0,
+                  "uploaded": 0,
+                  "visible": 0,
+                  "state": "pending",
+                  "requirement": "ON_DEMAND_REQUIRED",
+                  "activation": "idle",
+                  "role": "required"
+                },
+                "floorWallMaterials": {
+                  "allocated": 0,
+                  "decoded": 0,
+                  "uploaded": 0,
+                  "visible": 0,
+                  "state": "missing",
+                  "requirement": "WORLD_REQUIRED",
+                  "activation": "idle",
+                  "role": "required"
+                },
+                "mediaSurfaces": {
+                  "allocated": 0,
+                  "decoded": 0,
+                  "uploaded": 0,
+                  "visible": 0,
+                  "state": "pending",
+                  "requirement": "ON_DEMAND_REQUIRED",
+                  "activation": "idle",
+                  "role": "required"
+                },
+                "decorativeFx": {
+                  "allocated": 0,
+                  "decoded": 0,
+                  "uploaded": 0,
+                  "visible": 0,
+                  "state": "disabled",
+                  "requirement": "DECORATIVE",
+                  "activation": "idle",
+                  "role": "decorative"
+                }
+              }
             },
             "requestSession-resolved": {
-              "at": 1351.699999999255,
+              "at": 1288.3999999761581,
               "classification": "IWER_EMULATED",
               "resourceProfile": "XR_SAFE",
               "rendererName": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002488) Direct3D11 vs_5_0 ps_5_0, D3D11)",
@@ -663,14 +1099,31 @@
               "maxTextureSize": 16384,
               "maxCubemapSize": 16384,
               "maxArrayTextureLayers": 2048,
+              "hardwareMaxArrayTextureLayers": 2048,
+              "effectiveTestMaxArrayTextureLayers": null,
               "maxRenderbufferSize": 16384,
               "maxSamples": 8,
               "rendererTextures": 0,
               "rendererGeometries": 0,
               "rendererPrograms": 0,
               "posterCatalogTitles": null,
-              "posterPhysicalSlots": 128,
+              "posterExpectedTitles": null,
+              "posterLogicalMappedTitles": null,
+              "posterActuallyRenderableTitles": null,
               "posterResidentTitles": null,
+              "posterBankCount": null,
+              "posterLayersPerBank": null,
+              "posterRenderBatchCount": null,
+              "posterSourceMeshCount": null,
+              "posterSamplersPerDraw": 1,
+              "posterBaseWidth": null,
+              "posterBaseHeight": null,
+              "posterCpuBytesEstimated": 113246208,
+              "posterCpuBytesActive": null,
+              "posterCpuBytesAllocated": null,
+              "posterGpuBytesEstimated": 150994944,
+              "posterCapacityInvariantOk": null,
+              "posterPhysicalSlots": 2048,
               "posterFreeSlots": null,
               "posterResidencyInvariantOk": null,
               "posterDuplicatePhysicalOwners": null,
@@ -698,8 +1151,8 @@
               "p2UniqueTitles": null,
               "p3UniqueTitles": null,
               "p0PlusP1UniqueTitles": null,
-              "posterArrayCpuBytesEstimated": 7077888,
-              "posterArrayGpuBytesEstimated": 9437184,
+              "posterArrayCpuBytesEstimated": 113246208,
+              "posterArrayGpuBytesEstimated": 150994944,
               "posterCpuCacheBytes": null,
               "posterCpuCacheBudget": null,
               "posterCpuCacheHits": null,
@@ -712,8 +1165,8 @@
               "reflectionProbeCount": 0,
               "environmentBakeResolution": 0,
               "environmentBounceCount": 0,
-              "xrFramebufferScaleRequested": 0.5,
-              "xrFoveationRequested": 1,
+              "xrFramebufferScaleRequested": 0.8,
+              "xrFoveationRequested": 0.5,
               "xrFoveationEffective": null,
               "xrPhase": "idle",
               "xrFrameCount": 0,
@@ -721,10 +1174,138 @@
               "firstStoreXrRenderAt": null,
               "contextLost": false,
               "lastContextLossAt": null,
-              "lastError": null
+              "lastError": null,
+              "xrContent": {
+                "resourceProfile": "XR_SAFE",
+                "worldReady": false,
+                "requiredReady": false,
+                "onDemandWrapsReady": false,
+                "decorativeDisabled": true,
+                "poster": {
+                  "allocated": 0,
+                  "decoded": 0,
+                  "uploaded": 0,
+                  "visible": 0,
+                  "state": "missing",
+                  "requirement": "WORLD_REQUIRED",
+                  "activation": "idle",
+                  "role": "required"
+                },
+                "wraps": {
+                  "allocated": 0,
+                  "decoded": 0,
+                  "uploaded": 0,
+                  "visible": 0,
+                  "state": "pending",
+                  "requirement": "ON_DEMAND_REQUIRED",
+                  "activation": "idle",
+                  "role": "required"
+                },
+                "signage": {
+                  "allocated": 0,
+                  "decoded": 0,
+                  "uploaded": 0,
+                  "visible": 0,
+                  "state": "missing",
+                  "requirement": "WORLD_REQUIRED",
+                  "activation": "idle",
+                  "role": "required"
+                },
+                "aisleFascia": {
+                  "allocated": 0,
+                  "decoded": 0,
+                  "uploaded": 0,
+                  "visible": 0,
+                  "state": "missing",
+                  "requirement": "WORLD_REQUIRED",
+                  "activation": "idle",
+                  "representedBy": "signage",
+                  "role": "required"
+                },
+                "brandPack": {
+                  "allocated": 0,
+                  "decoded": 0,
+                  "uploaded": 0,
+                  "visible": 0,
+                  "state": "missing",
+                  "requirement": "WORLD_REQUIRED",
+                  "activation": "idle",
+                  "role": "required"
+                },
+                "canvasTextures": {
+                  "allocated": 0,
+                  "decoded": 0,
+                  "uploaded": 0,
+                  "visible": 0,
+                  "state": "missing",
+                  "requirement": "WORLD_REQUIRED",
+                  "activation": "idle",
+                  "role": "required"
+                },
+                "fixtureTextures": {
+                  "allocated": 0,
+                  "decoded": 0,
+                  "uploaded": 0,
+                  "visible": 0,
+                  "state": "missing",
+                  "requirement": "WORLD_REQUIRED",
+                  "activation": "idle",
+                  "role": "required"
+                },
+                "storeLogos": {
+                  "allocated": 0,
+                  "decoded": 0,
+                  "uploaded": 0,
+                  "visible": 0,
+                  "state": "missing",
+                  "requirement": "WORLD_REQUIRED",
+                  "activation": "idle",
+                  "role": "required"
+                },
+                "crt": {
+                  "allocated": 0,
+                  "decoded": 0,
+                  "uploaded": 0,
+                  "visible": 0,
+                  "state": "pending",
+                  "requirement": "ON_DEMAND_REQUIRED",
+                  "activation": "idle",
+                  "role": "required"
+                },
+                "floorWallMaterials": {
+                  "allocated": 0,
+                  "decoded": 0,
+                  "uploaded": 0,
+                  "visible": 0,
+                  "state": "missing",
+                  "requirement": "WORLD_REQUIRED",
+                  "activation": "idle",
+                  "role": "required"
+                },
+                "mediaSurfaces": {
+                  "allocated": 0,
+                  "decoded": 0,
+                  "uploaded": 0,
+                  "visible": 0,
+                  "state": "pending",
+                  "requirement": "ON_DEMAND_REQUIRED",
+                  "activation": "idle",
+                  "role": "required"
+                },
+                "decorativeFx": {
+                  "allocated": 0,
+                  "decoded": 0,
+                  "uploaded": 0,
+                  "visible": 0,
+                  "state": "disabled",
+                  "requirement": "DECORATIVE",
+                  "activation": "idle",
+                  "role": "decorative"
+                }
+              }
             },
             "pre-setSession": {
-              "at": 1351.699999999255,
+              "at": 1288.5,
               "classification": "IWER_EMULATED",
               "resourceProfile": "XR_SAFE",
               "rendererName": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002488) Direct3D11 vs_5_0 ps_5_0, D3D11)",
@@ -732,14 +1313,31 @@
               "maxTextureSize": 16384,
               "maxCubemapSize": 16384,
               "maxArrayTextureLayers": 2048,
+              "hardwareMaxArrayTextureLayers": 2048,
+              "effectiveTestMaxArrayTextureLayers": null,
               "maxRenderbufferSize": 16384,
               "maxSamples": 8,
               "rendererTextures": 0,
               "rendererGeometries": 0,
               "rendererPrograms": 0,
               "posterCatalogTitles": null,
-              "posterPhysicalSlots": 128,
+              "posterExpectedTitles": null,
+              "posterLogicalMappedTitles": null,
+              "posterActuallyRenderableTitles": null,
               "posterResidentTitles": null,
+              "posterBankCount": null,
+              "posterLayersPerBank": null,
+              "posterRenderBatchCount": null,
+              "posterSourceMeshCount": null,
+              "posterSamplersPerDraw": 1,
+              "posterBaseWidth": null,
+              "posterBaseHeight": null,
+              "posterCpuBytesEstimated": 113246208,
+              "posterCpuBytesActive": null,
+              "posterCpuBytesAllocated": null,
+              "posterGpuBytesEstimated": 150994944,
+              "posterCapacityInvariantOk": null,
+              "posterPhysicalSlots": 2048,
               "posterFreeSlots": null,
               "posterResidencyInvariantOk": null,
               "posterDuplicatePhysicalOwners": null,
@@ -767,8 +1365,8 @@
               "p2UniqueTitles": null,
               "p3UniqueTitles": null,
               "p0PlusP1UniqueTitles": null,
-              "posterArrayCpuBytesEstimated": 7077888,
-              "posterArrayGpuBytesEstimated": 9437184,
+              "posterArrayCpuBytesEstimated": 113246208,
+              "posterArrayGpuBytesEstimated": 150994944,
               "posterCpuCacheBytes": null,
               "posterCpuCacheBudget": null,
               "posterCpuCacheHits": null,
@@ -781,8 +1379,8 @@
               "reflectionProbeCount": 0,
               "environmentBakeResolution": 0,
               "environmentBounceCount": 0,
-              "xrFramebufferScaleRequested": 0.5,
-              "xrFoveationRequested": 1,
+              "xrFramebufferScaleRequested": 0.8,
+              "xrFoveationRequested": 0.5,
               "xrFoveationEffective": null,
               "xrPhase": "idle",
               "xrFrameCount": 0,
@@ -790,10 +1388,138 @@
               "firstStoreXrRenderAt": null,
               "contextLost": false,
               "lastContextLossAt": null,
-              "lastError": null
+              "lastError": null,
+              "xrContent": {
+                "resourceProfile": "XR_SAFE",
+                "worldReady": false,
+                "requiredReady": false,
+                "onDemandWrapsReady": false,
+                "decorativeDisabled": true,
+                "poster": {
+                  "allocated": 0,
+                  "decoded": 0,
+                  "uploaded": 0,
+                  "visible": 0,
+                  "state": "missing",
+                  "requirement": "WORLD_REQUIRED",
+                  "activation": "idle",
+                  "role": "required"
+                },
+                "wraps": {
+                  "allocated": 0,
+                  "decoded": 0,
+                  "uploaded": 0,
+                  "visible": 0,
+                  "state": "pending",
+                  "requirement": "ON_DEMAND_REQUIRED",
+                  "activation": "idle",
+                  "role": "required"
+                },
+                "signage": {
+                  "allocated": 0,
+                  "decoded": 0,
+                  "uploaded": 0,
+                  "visible": 0,
+                  "state": "missing",
+                  "requirement": "WORLD_REQUIRED",
+                  "activation": "idle",
+                  "role": "required"
+                },
+                "aisleFascia": {
+                  "allocated": 0,
+                  "decoded": 0,
+                  "uploaded": 0,
+                  "visible": 0,
+                  "state": "missing",
+                  "requirement": "WORLD_REQUIRED",
+                  "activation": "idle",
+                  "representedBy": "signage",
+                  "role": "required"
+                },
+                "brandPack": {
+                  "allocated": 0,
+                  "decoded": 0,
+                  "uploaded": 0,
+                  "visible": 0,
+                  "state": "missing",
+                  "requirement": "WORLD_REQUIRED",
+                  "activation": "idle",
+                  "role": "required"
+                },
+                "canvasTextures": {
+                  "allocated": 0,
+                  "decoded": 0,
+                  "uploaded": 0,
+                  "visible": 0,
+                  "state": "missing",
+                  "requirement": "WORLD_REQUIRED",
+                  "activation": "idle",
+                  "role": "required"
+                },
+                "fixtureTextures": {
+                  "allocated": 0,
+                  "decoded": 0,
+                  "uploaded": 0,
+                  "visible": 0,
+                  "state": "missing",
+                  "requirement": "WORLD_REQUIRED",
+                  "activation": "idle",
+                  "role": "required"
+                },
+                "storeLogos": {
+                  "allocated": 0,
+                  "decoded": 0,
+                  "uploaded": 0,
+                  "visible": 0,
+                  "state": "missing",
+                  "requirement": "WORLD_REQUIRED",
+                  "activation": "idle",
+                  "role": "required"
+                },
+                "crt": {
+                  "allocated": 0,
+                  "decoded": 0,
+                  "uploaded": 0,
+                  "visible": 0,
+                  "state": "pending",
+                  "requirement": "ON_DEMAND_REQUIRED",
+                  "activation": "idle",
+                  "role": "required"
+                },
+                "floorWallMaterials": {
+                  "allocated": 0,
+                  "decoded": 0,
+                  "uploaded": 0,
+                  "visible": 0,
+                  "state": "missing",
+                  "requirement": "WORLD_REQUIRED",
+                  "activation": "idle",
+                  "role": "required"
+                },
+                "mediaSurfaces": {
+                  "allocated": 0,
+                  "decoded": 0,
+                  "uploaded": 0,
+                  "visible": 0,
+                  "state": "pending",
+                  "requirement": "ON_DEMAND_REQUIRED",
+                  "activation": "idle",
+                  "role": "required"
+                },
+                "decorativeFx": {
+                  "allocated": 0,
+                  "decoded": 0,
+                  "uploaded": 0,
+                  "visible": 0,
+                  "state": "disabled",
+                  "requirement": "DECORATIVE",
+                  "activation": "idle",
+                  "role": "decorative"
+                }
+              }
             },
             "setSession-resolved": {
-              "at": 1352.6000000014901,
+              "at": 1289.3999999761581,
               "classification": "IWER_EMULATED",
               "resourceProfile": "XR_SAFE",
               "rendererName": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002488) Direct3D11 vs_5_0 ps_5_0, D3D11)",
@@ -801,14 +1527,31 @@
               "maxTextureSize": 16384,
               "maxCubemapSize": 16384,
               "maxArrayTextureLayers": 2048,
+              "hardwareMaxArrayTextureLayers": 2048,
+              "effectiveTestMaxArrayTextureLayers": null,
               "maxRenderbufferSize": 16384,
               "maxSamples": 8,
               "rendererTextures": 0,
               "rendererGeometries": 0,
               "rendererPrograms": 0,
               "posterCatalogTitles": null,
-              "posterPhysicalSlots": 128,
+              "posterExpectedTitles": null,
+              "posterLogicalMappedTitles": null,
+              "posterActuallyRenderableTitles": null,
               "posterResidentTitles": null,
+              "posterBankCount": null,
+              "posterLayersPerBank": null,
+              "posterRenderBatchCount": null,
+              "posterSourceMeshCount": null,
+              "posterSamplersPerDraw": 1,
+              "posterBaseWidth": null,
+              "posterBaseHeight": null,
+              "posterCpuBytesEstimated": 113246208,
+              "posterCpuBytesActive": null,
+              "posterCpuBytesAllocated": null,
+              "posterGpuBytesEstimated": 150994944,
+              "posterCapacityInvariantOk": null,
+              "posterPhysicalSlots": 2048,
               "posterFreeSlots": null,
               "posterResidencyInvariantOk": null,
               "posterDuplicatePhysicalOwners": null,
@@ -836,8 +1579,8 @@
               "p2UniqueTitles": null,
               "p3UniqueTitles": null,
               "p0PlusP1UniqueTitles": null,
-              "posterArrayCpuBytesEstimated": 7077888,
-              "posterArrayGpuBytesEstimated": 9437184,
+              "posterArrayCpuBytesEstimated": 113246208,
+              "posterArrayGpuBytesEstimated": 150994944,
               "posterCpuCacheBytes": null,
               "posterCpuCacheBudget": null,
               "posterCpuCacheHits": null,
@@ -850,8 +1593,8 @@
               "reflectionProbeCount": 0,
               "environmentBakeResolution": 0,
               "environmentBounceCount": 0,
-              "xrFramebufferScaleRequested": 0.5,
-              "xrFoveationRequested": 1,
+              "xrFramebufferScaleRequested": 0.8,
+              "xrFoveationRequested": 0.5,
               "xrFoveationEffective": null,
               "xrPhase": "idle",
               "xrFrameCount": 0,
@@ -859,10 +1602,138 @@
               "firstStoreXrRenderAt": null,
               "contextLost": false,
               "lastContextLossAt": null,
-              "lastError": null
+              "lastError": null,
+              "xrContent": {
+                "resourceProfile": "XR_SAFE",
+                "worldReady": false,
+                "requiredReady": false,
+                "onDemandWrapsReady": false,
+                "decorativeDisabled": true,
+                "poster": {
+                  "allocated": 0,
+                  "decoded": 0,
+                  "uploaded": 0,
+                  "visible": 0,
+                  "state": "missing",
+                  "requirement": "WORLD_REQUIRED",
+                  "activation": "idle",
+                  "role": "required"
+                },
+                "wraps": {
+                  "allocated": 0,
+                  "decoded": 0,
+                  "uploaded": 0,
+                  "visible": 0,
+                  "state": "pending",
+                  "requirement": "ON_DEMAND_REQUIRED",
+                  "activation": "idle",
+                  "role": "required"
+                },
+                "signage": {
+                  "allocated": 0,
+                  "decoded": 0,
+                  "uploaded": 0,
+                  "visible": 0,
+                  "state": "missing",
+                  "requirement": "WORLD_REQUIRED",
+                  "activation": "idle",
+                  "role": "required"
+                },
+                "aisleFascia": {
+                  "allocated": 0,
+                  "decoded": 0,
+                  "uploaded": 0,
+                  "visible": 0,
+                  "state": "missing",
+                  "requirement": "WORLD_REQUIRED",
+                  "activation": "idle",
+                  "representedBy": "signage",
+                  "role": "required"
+                },
+                "brandPack": {
+                  "allocated": 0,
+                  "decoded": 0,
+                  "uploaded": 0,
+                  "visible": 0,
+                  "state": "missing",
+                  "requirement": "WORLD_REQUIRED",
+                  "activation": "idle",
+                  "role": "required"
+                },
+                "canvasTextures": {
+                  "allocated": 0,
+                  "decoded": 0,
+                  "uploaded": 0,
+                  "visible": 0,
+                  "state": "missing",
+                  "requirement": "WORLD_REQUIRED",
+                  "activation": "idle",
+                  "role": "required"
+                },
+                "fixtureTextures": {
+                  "allocated": 0,
+                  "decoded": 0,
+                  "uploaded": 0,
+                  "visible": 0,
+                  "state": "missing",
+                  "requirement": "WORLD_REQUIRED",
+                  "activation": "idle",
+                  "role": "required"
+                },
+                "storeLogos": {
+                  "allocated": 0,
+                  "decoded": 0,
+                  "uploaded": 0,
+                  "visible": 0,
+                  "state": "missing",
+                  "requirement": "WORLD_REQUIRED",
+                  "activation": "idle",
+                  "role": "required"
+                },
+                "crt": {
+                  "allocated": 0,
+                  "decoded": 0,
+                  "uploaded": 0,
+                  "visible": 0,
+                  "state": "pending",
+                  "requirement": "ON_DEMAND_REQUIRED",
+                  "activation": "idle",
+                  "role": "required"
+                },
+                "floorWallMaterials": {
+                  "allocated": 0,
+                  "decoded": 0,
+                  "uploaded": 0,
+                  "visible": 0,
+                  "state": "missing",
+                  "requirement": "WORLD_REQUIRED",
+                  "activation": "idle",
+                  "role": "required"
+                },
+                "mediaSurfaces": {
+                  "allocated": 0,
+                  "decoded": 0,
+                  "uploaded": 0,
+                  "visible": 0,
+                  "state": "pending",
+                  "requirement": "ON_DEMAND_REQUIRED",
+                  "activation": "idle",
+                  "role": "required"
+                },
+                "decorativeFx": {
+                  "allocated": 0,
+                  "decoded": 0,
+                  "uploaded": 0,
+                  "visible": 0,
+                  "state": "disabled",
+                  "requirement": "DECORATIVE",
+                  "activation": "idle",
+                  "role": "decorative"
+                }
+              }
             },
             "first-XR-callback": {
-              "at": 1610.699999999255,
+              "at": 1549.7999999821186,
               "classification": "IWER_EMULATED",
               "resourceProfile": "XR_SAFE",
               "rendererName": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002488) Direct3D11 vs_5_0 ps_5_0, D3D11)",
@@ -870,14 +1741,31 @@
               "maxTextureSize": 16384,
               "maxCubemapSize": 16384,
               "maxArrayTextureLayers": 2048,
+              "hardwareMaxArrayTextureLayers": 2048,
+              "effectiveTestMaxArrayTextureLayers": null,
               "maxRenderbufferSize": 16384,
               "maxSamples": 8,
               "rendererTextures": 0,
               "rendererGeometries": 0,
               "rendererPrograms": 0,
               "posterCatalogTitles": null,
-              "posterPhysicalSlots": 128,
+              "posterExpectedTitles": null,
+              "posterLogicalMappedTitles": null,
+              "posterActuallyRenderableTitles": null,
               "posterResidentTitles": null,
+              "posterBankCount": null,
+              "posterLayersPerBank": null,
+              "posterRenderBatchCount": null,
+              "posterSourceMeshCount": null,
+              "posterSamplersPerDraw": 1,
+              "posterBaseWidth": null,
+              "posterBaseHeight": null,
+              "posterCpuBytesEstimated": 113246208,
+              "posterCpuBytesActive": null,
+              "posterCpuBytesAllocated": null,
+              "posterGpuBytesEstimated": 150994944,
+              "posterCapacityInvariantOk": null,
+              "posterPhysicalSlots": 2048,
               "posterFreeSlots": null,
               "posterResidencyInvariantOk": null,
               "posterDuplicatePhysicalOwners": null,
@@ -905,8 +1793,8 @@
               "p2UniqueTitles": null,
               "p3UniqueTitles": null,
               "p0PlusP1UniqueTitles": null,
-              "posterArrayCpuBytesEstimated": 7077888,
-              "posterArrayGpuBytesEstimated": 9437184,
+              "posterArrayCpuBytesEstimated": 113246208,
+              "posterArrayGpuBytesEstimated": 150994944,
               "posterCpuCacheBytes": null,
               "posterCpuCacheBudget": null,
               "posterCpuCacheHits": null,
@@ -919,8 +1807,8 @@
               "reflectionProbeCount": 0,
               "environmentBakeResolution": 0,
               "environmentBounceCount": 0,
-              "xrFramebufferScaleRequested": 0.5,
-              "xrFoveationRequested": 1,
+              "xrFramebufferScaleRequested": 0.8,
+              "xrFoveationRequested": 0.5,
               "xrFoveationEffective": null,
               "xrPhase": "active",
               "xrFrameCount": 0,
@@ -928,10 +1816,138 @@
               "firstStoreXrRenderAt": null,
               "contextLost": false,
               "lastContextLossAt": null,
-              "lastError": null
+              "lastError": null,
+              "xrContent": {
+                "resourceProfile": "XR_SAFE",
+                "worldReady": false,
+                "requiredReady": false,
+                "onDemandWrapsReady": false,
+                "decorativeDisabled": true,
+                "poster": {
+                  "allocated": 0,
+                  "decoded": 0,
+                  "uploaded": 0,
+                  "visible": 0,
+                  "state": "missing",
+                  "requirement": "WORLD_REQUIRED",
+                  "activation": "idle",
+                  "role": "required"
+                },
+                "wraps": {
+                  "allocated": 0,
+                  "decoded": 0,
+                  "uploaded": 0,
+                  "visible": 0,
+                  "state": "pending",
+                  "requirement": "ON_DEMAND_REQUIRED",
+                  "activation": "idle",
+                  "role": "required"
+                },
+                "signage": {
+                  "allocated": 0,
+                  "decoded": 0,
+                  "uploaded": 0,
+                  "visible": 0,
+                  "state": "missing",
+                  "requirement": "WORLD_REQUIRED",
+                  "activation": "idle",
+                  "role": "required"
+                },
+                "aisleFascia": {
+                  "allocated": 0,
+                  "decoded": 0,
+                  "uploaded": 0,
+                  "visible": 0,
+                  "state": "missing",
+                  "requirement": "WORLD_REQUIRED",
+                  "activation": "idle",
+                  "representedBy": "signage",
+                  "role": "required"
+                },
+                "brandPack": {
+                  "allocated": 0,
+                  "decoded": 0,
+                  "uploaded": 0,
+                  "visible": 0,
+                  "state": "missing",
+                  "requirement": "WORLD_REQUIRED",
+                  "activation": "idle",
+                  "role": "required"
+                },
+                "canvasTextures": {
+                  "allocated": 0,
+                  "decoded": 0,
+                  "uploaded": 0,
+                  "visible": 0,
+                  "state": "missing",
+                  "requirement": "WORLD_REQUIRED",
+                  "activation": "idle",
+                  "role": "required"
+                },
+                "fixtureTextures": {
+                  "allocated": 0,
+                  "decoded": 0,
+                  "uploaded": 0,
+                  "visible": 0,
+                  "state": "missing",
+                  "requirement": "WORLD_REQUIRED",
+                  "activation": "idle",
+                  "role": "required"
+                },
+                "storeLogos": {
+                  "allocated": 0,
+                  "decoded": 0,
+                  "uploaded": 0,
+                  "visible": 0,
+                  "state": "missing",
+                  "requirement": "WORLD_REQUIRED",
+                  "activation": "idle",
+                  "role": "required"
+                },
+                "crt": {
+                  "allocated": 0,
+                  "decoded": 0,
+                  "uploaded": 0,
+                  "visible": 0,
+                  "state": "pending",
+                  "requirement": "ON_DEMAND_REQUIRED",
+                  "activation": "idle",
+                  "role": "required"
+                },
+                "floorWallMaterials": {
+                  "allocated": 0,
+                  "decoded": 0,
+                  "uploaded": 0,
+                  "visible": 0,
+                  "state": "missing",
+                  "requirement": "WORLD_REQUIRED",
+                  "activation": "idle",
+                  "role": "required"
+                },
+                "mediaSurfaces": {
+                  "allocated": 0,
+                  "decoded": 0,
+                  "uploaded": 0,
+                  "visible": 0,
+                  "state": "pending",
+                  "requirement": "ON_DEMAND_REQUIRED",
+                  "activation": "idle",
+                  "role": "required"
+                },
+                "decorativeFx": {
+                  "allocated": 0,
+                  "decoded": 0,
+                  "uploaded": 0,
+                  "visible": 0,
+                  "state": "disabled",
+                  "requirement": "DECORATIVE",
+                  "activation": "idle",
+                  "role": "decorative"
+                }
+              }
             },
             "first-bare-render": {
-              "at": 1660,
+              "at": 1576.699999988079,
               "classification": "IWER_EMULATED",
               "resourceProfile": "XR_SAFE",
               "rendererName": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002488) Direct3D11 vs_5_0 ps_5_0, D3D11)",
@@ -939,14 +1955,31 @@
               "maxTextureSize": 16384,
               "maxCubemapSize": 16384,
               "maxArrayTextureLayers": 2048,
+              "hardwareMaxArrayTextureLayers": 2048,
+              "effectiveTestMaxArrayTextureLayers": null,
               "maxRenderbufferSize": 16384,
               "maxSamples": 8,
               "rendererTextures": 1,
               "rendererGeometries": 3,
               "rendererPrograms": 2,
               "posterCatalogTitles": null,
-              "posterPhysicalSlots": 128,
+              "posterExpectedTitles": null,
+              "posterLogicalMappedTitles": null,
+              "posterActuallyRenderableTitles": null,
               "posterResidentTitles": null,
+              "posterBankCount": null,
+              "posterLayersPerBank": null,
+              "posterRenderBatchCount": null,
+              "posterSourceMeshCount": null,
+              "posterSamplersPerDraw": 1,
+              "posterBaseWidth": null,
+              "posterBaseHeight": null,
+              "posterCpuBytesEstimated": 113246208,
+              "posterCpuBytesActive": null,
+              "posterCpuBytesAllocated": null,
+              "posterGpuBytesEstimated": 150994944,
+              "posterCapacityInvariantOk": null,
+              "posterPhysicalSlots": 2048,
               "posterFreeSlots": null,
               "posterResidencyInvariantOk": null,
               "posterDuplicatePhysicalOwners": null,
@@ -974,8 +2007,8 @@
               "p2UniqueTitles": null,
               "p3UniqueTitles": null,
               "p0PlusP1UniqueTitles": null,
-              "posterArrayCpuBytesEstimated": 7077888,
-              "posterArrayGpuBytesEstimated": 9437184,
+              "posterArrayCpuBytesEstimated": 113246208,
+              "posterArrayGpuBytesEstimated": 150994944,
               "posterCpuCacheBytes": null,
               "posterCpuCacheBudget": null,
               "posterCpuCacheHits": null,
@@ -988,8 +2021,8 @@
               "reflectionProbeCount": 0,
               "environmentBakeResolution": 0,
               "environmentBounceCount": 0,
-              "xrFramebufferScaleRequested": 0.5,
-              "xrFoveationRequested": 1,
+              "xrFramebufferScaleRequested": 0.8,
+              "xrFoveationRequested": 0.5,
               "xrFoveationEffective": null,
               "xrPhase": "active",
               "xrFrameCount": 0,
@@ -997,7 +2030,135 @@
               "firstStoreXrRenderAt": null,
               "contextLost": false,
               "lastContextLossAt": null,
-              "lastError": null
+              "lastError": null,
+              "xrContent": {
+                "resourceProfile": "XR_SAFE",
+                "worldReady": false,
+                "requiredReady": false,
+                "onDemandWrapsReady": false,
+                "decorativeDisabled": true,
+                "poster": {
+                  "allocated": 0,
+                  "decoded": 0,
+                  "uploaded": 0,
+                  "visible": 0,
+                  "state": "missing",
+                  "requirement": "WORLD_REQUIRED",
+                  "activation": "idle",
+                  "role": "required"
+                },
+                "wraps": {
+                  "allocated": 0,
+                  "decoded": 0,
+                  "uploaded": 0,
+                  "visible": 0,
+                  "state": "pending",
+                  "requirement": "ON_DEMAND_REQUIRED",
+                  "activation": "idle",
+                  "role": "required"
+                },
+                "signage": {
+                  "allocated": 0,
+                  "decoded": 0,
+                  "uploaded": 0,
+                  "visible": 0,
+                  "state": "missing",
+                  "requirement": "WORLD_REQUIRED",
+                  "activation": "idle",
+                  "role": "required"
+                },
+                "aisleFascia": {
+                  "allocated": 0,
+                  "decoded": 0,
+                  "uploaded": 0,
+                  "visible": 0,
+                  "state": "missing",
+                  "requirement": "WORLD_REQUIRED",
+                  "activation": "idle",
+                  "representedBy": "signage",
+                  "role": "required"
+                },
+                "brandPack": {
+                  "allocated": 0,
+                  "decoded": 0,
+                  "uploaded": 0,
+                  "visible": 0,
+                  "state": "missing",
+                  "requirement": "WORLD_REQUIRED",
+                  "activation": "idle",
+                  "role": "required"
+                },
+                "canvasTextures": {
+                  "allocated": 0,
+                  "decoded": 0,
+                  "uploaded": 0,
+                  "visible": 0,
+                  "state": "missing",
+                  "requirement": "WORLD_REQUIRED",
+                  "activation": "idle",
+                  "role": "required"
+                },
+                "fixtureTextures": {
+                  "allocated": 0,
+                  "decoded": 0,
+                  "uploaded": 0,
+                  "visible": 0,
+                  "state": "missing",
+                  "requirement": "WORLD_REQUIRED",
+                  "activation": "idle",
+                  "role": "required"
+                },
+                "storeLogos": {
+                  "allocated": 0,
+                  "decoded": 0,
+                  "uploaded": 0,
+                  "visible": 0,
+                  "state": "missing",
+                  "requirement": "WORLD_REQUIRED",
+                  "activation": "idle",
+                  "role": "required"
+                },
+                "crt": {
+                  "allocated": 0,
+                  "decoded": 0,
+                  "uploaded": 0,
+                  "visible": 0,
+                  "state": "pending",
+                  "requirement": "ON_DEMAND_REQUIRED",
+                  "activation": "idle",
+                  "role": "required"
+                },
+                "floorWallMaterials": {
+                  "allocated": 0,
+                  "decoded": 0,
+                  "uploaded": 0,
+                  "visible": 0,
+                  "state": "missing",
+                  "requirement": "WORLD_REQUIRED",
+                  "activation": "idle",
+                  "role": "required"
+                },
+                "mediaSurfaces": {
+                  "allocated": 0,
+                  "decoded": 0,
+                  "uploaded": 0,
+                  "visible": 0,
+                  "state": "pending",
+                  "requirement": "ON_DEMAND_REQUIRED",
+                  "activation": "idle",
+                  "role": "required"
+                },
+                "decorativeFx": {
+                  "allocated": 0,
+                  "decoded": 0,
+                  "uploaded": 0,
+                  "visible": 0,
+                  "state": "disabled",
+                  "requirement": "DECORATIVE",
+                  "activation": "idle",
+                  "role": "decorative"
+                }
+              }
             }
           }
         }
@@ -1016,18 +2177,18 @@
         "raw": {
           "mode": "RAW",
           "sessionRequested": true,
-          "requestSessionStart": 686.6999999992549,
-          "requestSessionEnd": 687.6999999992549,
+          "requestSessionStart": 695.6999999880791,
+          "requestSessionEnd": 696.6999999880791,
           "requestSessionError": null,
-          "makeXRCompatibleStart": 687.8000000007451,
-          "makeXRCompatibleEnd": 688,
+          "makeXRCompatibleStart": 696.9000000059605,
+          "makeXRCompatibleEnd": 697.0999999940395,
           "makeXRCompatibleError": null,
-          "baseLayerSetAt": 688.3999999985099,
-          "firstXrCallbackAt": 693.6999999992549,
-          "firstRenderStart": 694.3999999985099,
-          "firstRenderEnd": 694.3999999985099,
-          "firstWorldRenderCompletedAt": 694.3999999985099,
-          "frameCount": 7,
+          "baseLayerSetAt": 697.6999999880791,
+          "firstXrCallbackAt": 710.0999999940395,
+          "firstRenderStart": 710.9000000059605,
+          "firstRenderEnd": 710.9000000059605,
+          "firstWorldRenderCompletedAt": 710.9000000059605,
+          "frameCount": 6,
           "contextLost": false,
           "lastError": null,
           "presenting": true,
@@ -1046,12 +2207,12 @@
           ]
         },
         "startup": {
-          "requestSessionStart": 686.6999999992549,
-          "requestSessionEnd": 687.6999999992549,
-          "firstAnimationCallbackAt": 693.6999999992549,
-          "firstDirectRenderStart": 694.3999999985099,
-          "firstDirectRenderEnd": 694.3999999985099,
-          "firstWorldRenderCompletedAt": 694.3999999985099,
+          "requestSessionStart": 695.6999999880791,
+          "requestSessionEnd": 696.6999999880791,
+          "firstAnimationCallbackAt": 710.0999999940395,
+          "firstDirectRenderStart": 710.9000000059605,
+          "firstDirectRenderEnd": 710.9000000059605,
+          "firstWorldRenderCompletedAt": 710.9000000059605,
           "lastError": null
         },
         "session": {
@@ -1065,6 +2226,7 @@
           "layers": true,
           "bare": false,
           "safe": false,
+          "posterHwDiag": false,
           "raw": true,
           "threeBaseline": false
         }
@@ -1083,19 +2245,19 @@
         "threeBaseline": {
           "mode": "THREE_BASELINE",
           "sessionRequested": true,
-          "requestSessionStart": 643.3999999985099,
-          "requestSessionEnd": 644.2999999970198,
+          "requestSessionStart": 724.1999999880791,
+          "requestSessionEnd": 725.1999999880791,
           "requestSessionError": null,
-          "makeXRCompatibleStart": 644.5999999977648,
-          "makeXRCompatibleEnd": 644.6999999992549,
+          "makeXRCompatibleStart": 725.5,
+          "makeXRCompatibleEnd": 725.6999999880791,
           "makeXRCompatibleError": null,
-          "setSessionStart": 644.8999999985099,
-          "setSessionEnd": 645.6999999992549,
+          "setSessionStart": 725.9000000059605,
+          "setSessionEnd": 727.1999999880791,
           "setSessionError": null,
-          "firstXrCallbackAt": 662.0999999977648,
-          "firstRenderStart": 662.1999999992549,
-          "firstRenderEnd": 662.8999999985099,
-          "firstWorldRenderCompletedAt": 662.8999999985099,
+          "firstXrCallbackAt": 741.7999999821186,
+          "firstRenderStart": 741.9000000059605,
+          "firstRenderEnd": 742.5999999940395,
+          "firstWorldRenderCompletedAt": 742.5999999940395,
           "frameCount": 6,
           "contextLost": false,
           "lastError": null,
@@ -1116,14 +2278,14 @@
           ]
         },
         "startup": {
-          "requestSessionStart": 643.3999999985099,
-          "requestSessionEnd": 644.2999999970198,
-          "rendererSetSessionStart": 644.8999999985099,
-          "rendererSetSessionEnd": 645.6999999992549,
-          "firstAnimationCallbackAt": 662.0999999977648,
-          "firstDirectRenderStart": 662.1999999992549,
-          "firstDirectRenderEnd": 662.8999999985099,
-          "firstWorldRenderCompletedAt": 662.8999999985099,
+          "requestSessionStart": 724.1999999880791,
+          "requestSessionEnd": 725.1999999880791,
+          "rendererSetSessionStart": 725.9000000059605,
+          "rendererSetSessionEnd": 727.1999999880791,
+          "firstAnimationCallbackAt": 741.7999999821186,
+          "firstDirectRenderStart": 741.9000000059605,
+          "firstDirectRenderEnd": 742.5999999940395,
+          "firstWorldRenderCompletedAt": 742.5999999940395,
           "lastError": null
         },
         "session": {
@@ -1137,6 +2299,7 @@
           "layers": true,
           "bare": false,
           "safe": false,
+          "posterHwDiag": false,
           "raw": false,
           "threeBaseline": true
         }
@@ -1158,29 +2321,29 @@
           "immersiveVrSupported": true,
           "rendererPresenting": true,
           "referenceSpace": "local-floor",
-          "sessionStartAt": 34155.20000000298
+          "sessionStartAt": 75589.29999998212
         },
         "startup": {
-          "requestSessionStart": 34153.5,
-          "requestSessionEnd": 34155.20000000298,
-          "referenceSpaceStart": 34155.5,
-          "referenceSpaceEnd": 34155.5,
-          "makeXRCompatibleStart": 34158.900000002235,
-          "makeXRCompatibleEnd": 34159.10000000149,
+          "requestSessionStart": 75587.59999999404,
+          "requestSessionEnd": 75589.29999998212,
+          "referenceSpaceStart": 75589.69999998808,
+          "referenceSpaceEnd": 75589.69999998808,
+          "makeXRCompatibleStart": 75593.09999999404,
+          "makeXRCompatibleEnd": 75593.19999998808,
           "makeXRCompatibleError": null,
-          "targetFrameRateStart": 34225.70000000298,
-          "targetFrameRateEnd": 34226.60000000149,
-          "targetFrameRateRequestedAt": 34225.70000000298,
-          "targetFrameRateResolvedAt": 34226.60000000149,
+          "targetFrameRateStart": 75606.79999998212,
+          "targetFrameRateEnd": 75607.59999999404,
+          "targetFrameRateRequestedAt": 75606.79999998212,
+          "targetFrameRateResolvedAt": 75607.59999999404,
           "targetFrameRateError": null,
           "frameratechangeCount": 1,
-          "rendererSetSessionStart": 34159.400000002235,
-          "rendererSetSessionEnd": 34219.20000000298,
-          "firstAnimationCallbackAt": 34224.5,
-          "firstDirectRenderStart": 34224.800000000745,
-          "firstDirectRenderEnd": 34225.60000000149,
-          "firstWorldRenderCompletedAt": 34225.60000000149,
-          "firstVisibleFrameAt": 34225.60000000149,
+          "rendererSetSessionStart": 75593.5,
+          "rendererSetSessionEnd": 75596.69999998808,
+          "firstAnimationCallbackAt": 75605.5,
+          "firstDirectRenderStart": 75605.79999998212,
+          "firstDirectRenderEnd": 75606.69999998808,
+          "firstWorldRenderCompletedAt": 75606.69999998808,
+          "firstVisibleFrameAt": 75606.69999998808,
           "lastCompletedStage": "targetFrameRateEnd",
           "lastError": null,
           "contextXrCompatibleBefore": false,
@@ -1228,7 +2391,7 @@
         "quality": {
           "n8ao": false,
           "postprocessing": "none",
-          "framebufferScale": 0.5
+          "framebufferScale": 0.8
         },
         "performance": {
           "targetHz": 72,
@@ -1238,9 +2401,9 @@
             90,
             120
           ],
-          "framebufferScale": 0.5,
+          "framebufferScale": 0.8,
           "frameCount": 5,
-          "lastFrameDtMs": 1.1000000014901161
+          "lastFrameDtMs": 4.299999982118607
         },
         "flags": {
           "minimal": true,
@@ -1273,29 +2436,29 @@
           "immersiveVrSupported": true,
           "rendererPresenting": true,
           "referenceSpace": "local-floor",
-          "sessionStartAt": 12850.300000000745
+          "sessionStartAt": 45343.80000001192
         },
         "startup": {
-          "requestSessionStart": 12848.400000002235,
-          "requestSessionEnd": 12850.300000000745,
-          "referenceSpaceStart": 12850.5,
-          "referenceSpaceEnd": 12850.5,
-          "makeXRCompatibleStart": 12854.699999999255,
-          "makeXRCompatibleEnd": 12854.900000002235,
+          "requestSessionStart": 45341.90000000596,
+          "requestSessionEnd": 45343.70000001788,
+          "referenceSpaceStart": 45344.10000002384,
+          "referenceSpaceEnd": 45344.10000002384,
+          "makeXRCompatibleStart": 45351.60000002384,
+          "makeXRCompatibleEnd": 45351.70000001788,
           "makeXRCompatibleError": null,
-          "targetFrameRateStart": 12936.300000000745,
-          "targetFrameRateEnd": 12937,
-          "targetFrameRateRequestedAt": 12936.300000000745,
-          "targetFrameRateResolvedAt": 12937,
+          "targetFrameRateStart": 45381.5,
+          "targetFrameRateEnd": 45382.20000001788,
+          "targetFrameRateRequestedAt": 45381.5,
+          "targetFrameRateResolvedAt": 45382.20000001788,
           "targetFrameRateError": null,
           "frameratechangeCount": 1,
-          "rendererSetSessionStart": 12855.199999999255,
-          "rendererSetSessionEnd": 12917.699999999255,
-          "firstAnimationCallbackAt": 12935,
-          "firstDirectRenderStart": 12935.300000000745,
-          "firstDirectRenderEnd": 12936.10000000149,
-          "firstWorldRenderCompletedAt": 12936.10000000149,
-          "firstVisibleFrameAt": 12936.10000000149,
+          "rendererSetSessionStart": 45352,
+          "rendererSetSessionEnd": 45369.30000001192,
+          "firstAnimationCallbackAt": 45380.5,
+          "firstDirectRenderStart": 45380.80000001192,
+          "firstDirectRenderEnd": 45381.40000000596,
+          "firstWorldRenderCompletedAt": 45381.40000000596,
+          "firstVisibleFrameAt": 45381.40000000596,
           "lastCompletedStage": "targetFrameRateEnd",
           "lastError": null,
           "contextXrCompatibleBefore": false,
@@ -1343,7 +2506,7 @@
         "quality": {
           "n8ao": false,
           "postprocessing": "none",
-          "framebufferScale": 0.5
+          "framebufferScale": 0.8
         },
         "performance": {
           "targetHz": 72,
@@ -1353,9 +2516,9 @@
             90,
             120
           ],
-          "framebufferScale": 0.5,
-          "frameCount": 73,
-          "lastFrameDtMs": 0.7999999970197678
+          "framebufferScale": 0.8,
+          "frameCount": 89,
+          "lastFrameDtMs": 2.2000000178813934
         },
         "flags": {
           "minimal": false,
@@ -1384,29 +2547,29 @@
           "immersiveVrSupported": true,
           "rendererPresenting": true,
           "referenceSpace": "local-floor",
-          "sessionStartAt": 10027.199999999255
+          "sessionStartAt": 44559.19999998808
         },
         "startup": {
-          "requestSessionStart": 10025.699999999255,
-          "requestSessionEnd": 10027.199999999255,
-          "referenceSpaceStart": 10027.599999997765,
-          "referenceSpaceEnd": 10027.599999997765,
-          "makeXRCompatibleStart": 10031,
-          "makeXRCompatibleEnd": 10031.199999999255,
+          "requestSessionStart": 44557.40000000596,
+          "requestSessionEnd": 44559.19999998808,
+          "referenceSpaceStart": 44559.59999999404,
+          "referenceSpaceEnd": 44559.59999999404,
+          "makeXRCompatibleStart": 44594.90000000596,
+          "makeXRCompatibleEnd": 44595.09999999404,
           "makeXRCompatibleError": null,
-          "targetFrameRateStart": 10050,
-          "targetFrameRateEnd": 10050.800000000745,
-          "targetFrameRateRequestedAt": 10050,
-          "targetFrameRateResolvedAt": 10050.800000000745,
+          "targetFrameRateStart": 44623.5,
+          "targetFrameRateEnd": 44624.09999999404,
+          "targetFrameRateRequestedAt": 44623.5,
+          "targetFrameRateResolvedAt": 44624.09999999404,
           "targetFrameRateError": null,
           "frameratechangeCount": 1,
-          "rendererSetSessionStart": 10031.39999999851,
-          "rendererSetSessionEnd": 10034.599999997765,
-          "firstAnimationCallbackAt": 10048.89999999851,
-          "firstDirectRenderStart": 10049.199999999255,
-          "firstDirectRenderEnd": 10049.800000000745,
-          "firstWorldRenderCompletedAt": 10049.800000000745,
-          "firstVisibleFrameAt": 10049.800000000745,
+          "rendererSetSessionStart": 44595.29999998212,
+          "rendererSetSessionEnd": 44597.5,
+          "firstAnimationCallbackAt": 44622.69999998808,
+          "firstDirectRenderStart": 44622.90000000596,
+          "firstDirectRenderEnd": 44623.40000000596,
+          "firstWorldRenderCompletedAt": 44623.40000000596,
+          "firstVisibleFrameAt": 44623.40000000596,
           "lastCompletedStage": "targetFrameRateEnd",
           "lastError": null,
           "contextXrCompatibleBefore": false,
@@ -1454,7 +2617,7 @@
         "quality": {
           "n8ao": false,
           "postprocessing": "none",
-          "framebufferScale": 0.5
+          "framebufferScale": 0.8
         },
         "performance": {
           "targetHz": 72,
@@ -1464,9 +2627,9 @@
             90,
             120
           ],
-          "framebufferScale": 0.5,
-          "frameCount": 3,
-          "lastFrameDtMs": 3.399999998509884
+          "framebufferScale": 0.8,
+          "frameCount": 5,
+          "lastFrameDtMs": 3.5
         },
         "flags": {
           "minimal": false,
@@ -1480,77 +2643,113 @@
       }
     },
     {
+      "name": "JP4A_UI",
+      "pass": true,
+      "url": "http://127.0.0.1:17425/?demo=1&nogate=1&xrEmu=1&xrSafe=1",
+      "firstFrame": true
+    },
+    {
+      "name": "JP4A_NORMAL_STABLE_STORE",
+      "pass": true,
+      "url": "http://127.0.0.1:17425/?demo=1&nogate=1&xrEmu=1&xrSafe=1"
+    },
+    {
+      "name": "JP4A_ROUND4_XR",
+      "pass": true,
+      "url": "http://127.0.0.1:17425/?demo=1&nogate=1&xrEmu=1&xrSafe=1"
+    },
+    {
+      "name": "JP4A_ROUND5A_XR",
+      "pass": true,
+      "url": "http://127.0.0.1:17425/?demo=1&nogate=1&xrEmu=1&xrSafe=1"
+    },
+    {
+      "name": "JP4A_ROUND5A1_XR",
+      "pass": true,
+      "url": "http://127.0.0.1:17425/?demo=1&nogate=1&xrEmu=1&xrSafe=1"
+    },
+    {
+      "name": "JP4A_ROUND5A2_XR",
+      "pass": true,
+      "url": "http://127.0.0.1:17425/?demo=1&nogate=1&xrEmu=1&xrSafe=1"
+    },
+    {
+      "name": "JP4A_ROUND5B_XR",
+      "pass": true,
+      "url": "http://127.0.0.1:17425/?demo=1&nogate=1&xrEmu=1&xrSafe=1&xrPosterHwDiag=1"
+    },
+    {
       "name": "BOOT_PERF",
       "pass": true,
       "url": "http://127.0.0.1:17425/?demo=1&nogate=1&xrEmu=1",
       "waitedForFullTextures": true,
       "diag": {
         "marks": {
-          "appStart": 367.9000000022352,
-          "credentialStart": 518.4000000022352,
-          "credentialEnd": 518.4000000022352,
-          "catalogStart": 518.4000000022352,
-          "catalogEnd": 544.7000000029802,
-          "sidecarsStart": 544.7000000029802,
-          "sidecarsEnd": 544.7000000029802,
-          "baseFontsStart": 544.7000000029802,
-          "brandPackStart": 544.9000000022352,
-          "brandPackEnd": 585.1000000014901,
-          "baseFontsEnd": 585.1000000014901,
-          "cjkFontsStart": 585.1000000014901,
-          "cjkFontsEnd": 628,
-          "qualityCalibrationStart": 1171.7000000029802,
-          "qualityCalibrationEnd": 1183.9000000022352,
-          "threeSceneImportStart": 1183.9000000022352,
-          "threeSceneImportEnd": 1324.9000000022352,
-          "storeSceneConstructStart": 1324.9000000022352,
-          "storeSceneConstructEnd": 5760.70000000298,
-          "criticalTextureReady": 10351.10000000149,
-          "storeInteractive": 10351.10000000149,
-          "allTexturesSettled": 11417.900000002235
+          "appStart": 409.5,
+          "credentialStart": 665.9000000059605,
+          "credentialEnd": 665.9000000059605,
+          "catalogStart": 665.9000000059605,
+          "catalogEnd": 693.0999999940395,
+          "sidecarsStart": 693.0999999940395,
+          "sidecarsEnd": 693.0999999940395,
+          "baseFontsStart": 693.1999999880791,
+          "brandPackStart": 693.2999999821186,
+          "brandPackEnd": 740.0999999940395,
+          "baseFontsEnd": 740.0999999940395,
+          "cjkFontsStart": 740.4000000059605,
+          "cjkFontsEnd": 788.2999999821186,
+          "qualityCalibrationStart": 1233,
+          "qualityCalibrationEnd": 1248.2999999821186,
+          "threeSceneImportStart": 1248.2999999821186,
+          "threeSceneImportEnd": 1421.7999999821186,
+          "storeSceneConstructStart": 1421.7999999821186,
+          "storeSceneConstructEnd": 7303.0999999940395,
+          "criticalTextureReady": 43101.40000000596,
+          "storeInteractive": 43101.5,
+          "allTexturesSettled": 43233.40000000596
         },
-        "qualityCalibrationMs": 12.199999999254942,
-        "storeSceneConstructMs": 4435.800000000745,
-        "timeToInteractive": 9983.199999999255,
-        "timeToFullTextures": 11050,
+        "qualityCalibrationMs": 15.299999982118607,
+        "storeSceneConstructMs": 5881.300000011921,
+        "timeToInteractive": 42692,
+        "timeToFullTextures": 42823.90000000596,
         "criticalReadyBeforeAllTextures": true,
         "construct": {
           "stages": [
             {
               "name": "initThree",
-              "ms": 111.30000000074506
+              "ms": 85.40000000596046
             },
             {
               "name": "setupLighting",
-              "ms": 0.6999999992549419
+              "ms": 0.7999999821186066
             },
             {
               "name": "exterior",
-              "ms": 36.20000000298023
+              "ms": 32.099999994039536
             },
             {
               "name": "carpetTextures",
-              "ms": 157.5
+              "ms": 141.2000000178814
             },
             {
               "name": "wallTextures",
-              "ms": 80.70000000298023
+              "ms": 101.30000001192093
             },
             {
               "name": "aisleShelving",
-              "ms": 24.100000001490116
+              "ms": 21.19999998807907
             },
             {
               "name": "floorAO",
-              "ms": 1
+              "ms": 1.199999988079071
             },
             {
               "name": "signage",
-              "ms": 220.10000000149012
+              "ms": 203.5
             },
             {
               "name": "buildStore",
-              "ms": 1515.5
+              "ms": 1452.199999988079
             },
             {
               "name": "bakeEnvironment",
@@ -1558,32 +2757,32 @@
             },
             {
               "name": "textureArrayInit",
-              "ms": 0.3999999985098839
+              "ms": 2.5999999940395355
             },
             {
               "name": "buildAllMovieBoxes",
-              "ms": 149.69999999925494
+              "ms": 189.7999999821186
             },
             {
               "name": "rebuildMovieBoxes",
-              "ms": 20.5
+              "ms": 13
             }
           ],
           "top3": [
             {
               "name": "buildStore",
-              "ms": 1515.5
+              "ms": 1452.199999988079
             },
             {
               "name": "signage",
-              "ms": 220.10000000149012
+              "ms": 203.5
             },
             {
-              "name": "carpetTextures",
-              "ms": 157.5
+              "name": "buildAllMovieBoxes",
+              "ms": 189.7999999821186
             }
           ],
-          "totalMs": 2317.7000000067055
+          "totalMs": 2244.2999999523163
         }
       }
     }

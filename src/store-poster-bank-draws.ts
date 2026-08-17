@@ -5,6 +5,7 @@
 import * as THREE from 'three';
 import type { MovieSlot } from './store-layout';
 import { textureArrayManager } from './poster-textures';
+import { bindPosterBankUniforms } from './poster-shader';
 import {
   groupSlotsByPosterBank,
 } from './perf/poster-bank-batches';
@@ -24,7 +25,7 @@ const scratchMatrix = new THREE.Matrix4();
 function bindBank(mesh: THREE.InstancedMesh, bank: number): void {
   mesh.userData.posterBank = bank;
   mesh.onBeforeRender = () => {
-    textureArrayManager.bindDrawBank(bank);
+    bindPosterBankUniforms(bank);
   };
 }
 

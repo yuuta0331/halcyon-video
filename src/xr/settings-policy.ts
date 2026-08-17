@@ -38,6 +38,6 @@ export function xrQualityStatusLabel(resourceProfile: string): string {
 }
 
 export function xrDesktopQualityAffectsXr(key: string, resourceProfile: string): boolean {
-  if (resourceProfile !== 'XR_SAFE') return true;
-  return xrSettingExposure(key) === 'control';
+  if (resourceProfile === 'XR_SAFE' || resourceProfile === 'QUEST_INLINE') return xrSettingExposure(key) === 'control';
+  return true;
 }

@@ -116,6 +116,9 @@ function sampleProduction(
       posterDetailCount: { value: layout.capacity },
       posterDetailLutWidth: { value: layout.width },
       posterDetailLutHeight: { value: layout.height },
+      posterFocusMap: { value: new THREE.DataTexture(new Uint8Array([0, 0, 0, 0]), 1, 1) },
+      posterFocusIndex: { value: -1 },
+      posterFocusActive: { value: 0 },
       uIndex: { value: index },
     },
     vertexShader: `

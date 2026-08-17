@@ -25,32 +25,52 @@ test('URL flags distinguish bare, safe, and desktop quality', () => {
   assert.equal(readResourceFlags('?xrEmu=1').emu, true);
   assert.equal(readResourceFlags('?xrCatalog=4000').catalog, 4000);
   assert.equal(readResourceFlags('?xrMinimal=1').bare, false);
+  assert.equal(readResourceFlags('?xrPosterHwDiag=1').posterHwDiag, true);
 });
 
-test('Quest UA and IWER select XR_SAFE; desktop Chrome stays DESKTOP_FULL even at 16 texture units', () => {
+test('Quest UA inline is not XR_SAFE 96x144; immersive and IWER stay XR_SAFE; desktop Chrome unchanged', () => {
   const low = blankGpuCapabilities({ maxTextures: 16, maxArrayTextureLayers: 256 });
-  const quest = selectResourceProfile({
+  const questUa = 'Mozilla/5.0 (Linux; Android 12; Quest 3) OculusBrowser/35.0';
+  const questInline = selectResourceProfile({
     caps: blankGpuCapabilities({ maxTextures: 32, maxArrayTextureLayers: 2048 }),
     flags: readResourceFlags(''),
-    userAgent: 'Mozilla/5.0 (Linux; Android 12; Quest 3) OculusBrowser/35.0',
+    userAgent: questUa,
+    presentation: 'INLINE',
+  });
+  const questImmersive = selectResourceProfile({
+    caps: blankGpuCapabilities({ maxTextures: 32, maxArrayTextureLayers: 2048 }),
+    flags: readResourceFlags(''),
+    userAgent: questUa,
+    presentation: 'IMMERSIVE_XR',
   });
   const desktopChrome = selectResourceProfile({
     caps: low,
     flags: readResourceFlags(''),
     userAgent: 'Mozilla/5.0 Chrome/120',
+    presentation: 'INLINE',
   });
   const desktopOverride = selectResourceProfile({
     caps: blankGpuCapabilities({ maxTextures: 32, maxArrayTextureLayers: 2048 }),
     flags: readResourceFlags('?xrDesktopQuality=1'),
-    userAgent: 'Mozilla/5.0 (Linux; Android 12; Quest 3) OculusBrowser/35.0',
+    userAgent: questUa,
   });
   const emu = selectResourceProfile({
     caps: low,
     flags: readResourceFlags('?xrEmu=1'),
     userAgent: 'Mozilla/5.0 Chrome/120',
   });
-  assert.equal(quest.name, 'XR_SAFE');
+  assert.equal(questInline.name, 'QUEST_INLINE');
+  assert.equal(questInline.poster.shelfWidth, 160);
+  assert.equal(questInline.poster.shelfHeight, 240);
+  assert.equal(questInline.n8ao, false);
+  assert.equal(questInline.bloom, false);
+  assert.equal(questInline.liveMirrors, false);
+  assert.equal(questInline.reflectionProbes, false);
+  assert.equal(questImmersive.name, 'XR_SAFE');
+  assert.equal(questImmersive.poster.shelfWidth, 96);
+  assert.equal(questImmersive.poster.shelfHeight, 144);
   assert.equal(desktopChrome.name, 'DESKTOP_FULL');
+  assert.equal(desktopChrome.poster.shelfWidth, 160);
   assert.equal(desktopOverride.name, 'DESKTOP_FULL');
   assert.equal(emu.name, 'XR_SAFE');
 });
@@ -150,7 +170,7 @@ test('XR_SAFE estimated sampler use fits a 16-unit GPU', () => {
   const profile = xrSafeProfile(blankGpuCapabilities({ maxTextures: 16 }));
   assert.ok(profile.estimatedFragmentSamplers <= 16);
   assert.equal(profile.singleShelfPosterSampler, true);
-  assert.equal(estimateXrSafeFragmentSamplers(), 4);
+  assert.equal(estimateXrSafeFragmentSamplers(), 7);
 });
 
 test('XR_SAFE poster policy is stable-store-visible; quality drops before eviction', () => {

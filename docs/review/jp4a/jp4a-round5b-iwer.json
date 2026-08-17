@@ -1,0 +1,25 @@
+{
+  "entered": {
+    "ok": true
+  },
+  "stereoPass": true,
+  "stereoNegative": true,
+  "poseSource": "XR_VIEWER_POSE",
+  "poseValid": true,
+  "menuSource": "XR_VIEWER_POSE",
+  "menuDistance": 0.9,
+  "diagModes": [
+    "A",
+    "B",
+    "C",
+    "D",
+    "E"
+  ],
+  "diagEnabled": true,
+  "contextLost": false,
+  "detailWidth": 320,
+  "focusSlots": 2,
+  "classification": "IWER_EMULATED",
+  "QUEST_HARDWARE": "NOT_EXECUTED",
+  "note": "IWER_EMULATED logic only. Not hardware visual proof."
+}

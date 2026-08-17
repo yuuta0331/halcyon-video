@@ -117,7 +117,7 @@ test('catalog bank count does not imply equal simultaneous sampler count', () =>
   });
   assert.ok(layout.bankCount > 4);
   assert.equal(layout.samplersPerDraw, 1);
-  assert.equal(estimateXrSafeFragmentSamplers(), 4);
+  assert.equal(estimateXrSafeFragmentSamplers(), 7);
 });
 
 test('movement and selection do not change STORE_VISIBLE_BASE mappings', () => {

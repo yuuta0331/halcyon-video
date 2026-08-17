@@ -34,6 +34,7 @@ export function bindStoreResourceProfile(
     flags,
     userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : '',
     isTauri: !!(window as unknown as { __TAURI_INTERNALS__?: unknown }).__TAURI_INTERNALS__,
+    presentation: 'INLINE',
   }), caps);
   applyPosterCacheBudgets(profile.poster.heroCacheBytes, profile.poster.shelfCacheBytes);
   installGpuDiagnostics();

@@ -1,0 +1,60 @@
+{
+  "name": "JP4A_DETAIL_FAILURE",
+  "classification": "DESKTOP_BROWSER",
+  "pass": true,
+  "probe": {
+    "classification": "DESKTOP_BROWSER",
+    "QUEST_HARDWARE": "NOT_EXECUTED",
+    "pass": true,
+    "success": {
+      "decoded": 1,
+      "uploaded": 1,
+      "readyResident": 1,
+      "shaderDetail": [
+        255,
+        2,
+        2,
+        255
+      ]
+    },
+    "failure": {
+      "requested": 2,
+      "loadFailed": 1,
+      "pendingPixelsAfter": 0,
+      "pendingUploadAfter": 0,
+      "readyResidentAfter": 0,
+      "leasedAfter": 0,
+      "baseStayedVisible": true
+    },
+    "retry": {
+      "attempts": 1,
+      "retrySuppressedDuringBackoff": true,
+      "eventualSuccess": true,
+      "decoded": 2,
+      "uploaded": 2,
+      "readyResident": 1
+    },
+    "pool": {
+      "slotLimit": 64,
+      "failedTitles": 64,
+      "leakedLeases": 0,
+      "healthyTitleAcquiredAfterFailures": true
+    },
+    "stale": {
+      "oldLeaseRejected": true,
+      "newOwnerPreserved": true,
+      "oldGenerationRejected": true
+    },
+    "gpu": {
+      "uploadFailureSettled": true,
+      "lutFailureSettled": true
+    },
+    "canonicalQueue": {
+      "decoded": true,
+      "loadFailed": true,
+      "leasedAfterFail": 0
+    },
+    "contextLost": false,
+    "note": "DETAIL failure settles; pool reusable; BASE preserved"
+  }
+}

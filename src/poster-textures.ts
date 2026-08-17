@@ -18,7 +18,7 @@
 import * as THREE from 'three';
 import { perfTrace, perfSlot } from './perf-trace';
 import { type PosterPriorityClass } from './perf/store-readiness';
-import { activeGpuCapabilities, activeResourceProfile, isXrSafeProfile } from './perf/resource-profile';
+import { activeGpuCapabilities, activeResourceProfile, usesStablePosterBanks } from './perf/resource-profile';
 import { choosePosterBankLayout, layersPerBankFromCaps, QUEST_SAFE_POSTER_GPU_BUDGET, type PosterBankLayout } from './perf/poster-bank-layout';
 import { effectivePosterArrayLayerCeiling } from './perf/test-array-layer-ceiling';
 import { storeVisibleWork } from './perf/store-visible-work';
@@ -26,6 +26,7 @@ import { noteBindDrawBank } from './perf/poster-bank-bind-observer';
 import { storeVisibleResidency } from './store-visible-residency';
 import { PosterResidencyWindow, estimatePosterArrayBytes, type PosterLease } from './poster-residency';
 import { pixelStorei } from './xr/gl-state';
+import { noteCpuWork, noteGpuSubmit } from './perf/xr-upload-metrics.ts';
 
 const SP_UPLOAD = perfSlot('texUploadMs');  // uploadTextureNow (initTexture + mipmaps)
 const CT_UPLOAD = perfSlot('texUploadN');
@@ -279,6 +280,7 @@ function updateTextureArrayLayerImpl(
   // afterwards because we are making raw WebGL calls that Three.js doesn't track.
   gl.bindTexture(gl.TEXTURE_2D_ARRAY, webglTexture);
 
+  const submitT0 = typeof performance !== 'undefined' ? performance.now() : 0;
   try {
     gl.texSubImage3D(
       gl.TEXTURE_2D_ARRAY,
@@ -293,6 +295,8 @@ function updateTextureArrayLayerImpl(
       gl.UNSIGNED_BYTE,
       pixelData
     );
+    let texCalls = 1;
+    let cpuMipMs = 0;
     // This raw texSubImage3D bypasses three's normal upload path entirely, so
     // three never sees a version bump and never calls gl.generateMipmap() for
     // us — and calling it ourselves would regenerate EVERY layer's mip chain
@@ -300,6 +304,7 @@ function updateTextureArrayLayerImpl(
     // chain on the CPU and upload each level explicitly instead; the layer is
     // then renderable at every distance the moment this call returns.
     if (arrayTexture.generateMipmaps) {
+      const mipT0 = typeof performance !== 'undefined' ? performance.now() : 0;
       const chain = getMipChainScratch(arrayTexture.image.width, arrayTexture.image.height);
       let src = pixelData;
       let sw = arrayTexture.image.width;
@@ -316,11 +321,19 @@ function updateTextureArrayLayerImpl(
           gl.UNSIGNED_BYTE,
           mip.data
         );
+        texCalls++;
         src = mip.data;
         sw = mip.w;
         sh = mip.h;
       }
+      cpuMipMs = (typeof performance !== 'undefined' ? performance.now() : 0) - mipT0;
+      noteCpuWork('mip', cpuMipMs);
     }
+    noteGpuSubmit({
+      durationMs: (typeof performance !== 'undefined' ? performance.now() : 0) - submitT0,
+      texSubImageCalls: texCalls,
+      bytes: pixelData.byteLength,
+    });
   } catch (err) {
     console.warn("WebGL upload deferred until Three.js allocation.", err);
   }
@@ -559,7 +572,7 @@ class TextureArrayManager {
     // A medium/box-art change genuinely invalidates the pixels; that path calls
     // invalidatePosterLayers() and falls through to the full reallocation.
     const profile = activeResourceProfile();
-    const bounded = isXrSafeProfile(profile) && (
+    const bounded = usesStablePosterBanks(profile) && (
       profile.poster.mode === 'bounded-residency' || profile.poster.mode === 'stable-store-visible'
     );
     this.catalogTitleCount = totalMovies;
@@ -1406,7 +1419,7 @@ export function posterArrayMemorySnapshot() {
 
 export function estimatedPosterBytesForCatalog(catalogTitles: number) {
   const profile = activeResourceProfile();
-  if (isXrSafeProfile(profile)) {
+  if (usesStablePosterBanks(profile)) {
     return { ...estimatePosterArrayBytes(profile.poster), catalogTitleCount: catalogTitles };
   }
   return {

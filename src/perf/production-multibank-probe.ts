@@ -18,6 +18,7 @@ import {
 } from './poster-bank-bind-observer';
 import { activeGpuCapabilities } from './resource-profile';
 import { testPosterArrayLayerCeiling } from './test-array-layer-ceiling';
+import { suppressPosterFocusSamplingForProbe } from '../poster-shader.ts';
 import { colorDistance, uniqueCoverRgb } from './synthetic-cover';
 import type { MovieSlot } from '../store-layout';
 
@@ -285,6 +286,7 @@ function runNegativeControl(
 }
 
 export function runProductionMultibankProbe(scene: ProductionMultibankScene): ProductionMultibankResult {
+  suppressPosterFocusSamplingForProbe();
   const mem = textureArrayManager.memorySnapshot();
   const caps = activeGpuCapabilities();
   const hardware = caps?.maxArrayTextureLayers ?? mem.hardwareMaxArrayTextureLayers ?? null;
