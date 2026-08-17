@@ -1,6 +1,9 @@
 // Bounded ON_DEMAND high-resolution poster detail. Does not own BASE
 // STORE_VISIBLE_BASE slots. Eviction here never blanks a poster: the shader
 // falls back to the stable base layer when the LUT is 0.
+//
+// A physical lease is NOT DETAIL_READY. readyResident counts GPU-ready titles
+// only. `resident` remains the leased/reserved slot count for compatibility.
 
 export const POSTER_DETAIL_WIDTH = 320;
 export const POSTER_DETAIL_HEIGHT = 480;
@@ -9,9 +12,9 @@ export const POSTER_DETAIL_ENTER_FEET = 5.5;
 export const POSTER_DETAIL_KEEP_FEET = 8.5;
 export const POSTER_DETAIL_MOVE_FEET = 0.55;
 export const POSTER_DETAIL_YAW_RAD = 0.18;
-export const POSTER_DETAIL_LUT_WIDTH = 2048;
 
 export type PosterDetailPriority = 'selected' | 'near' | 'visible';
+export type PosterDetailPhase = 'pendingPixels' | 'pendingUpload' | 'ready';
 
 export interface PosterDetailLease {
   movieId: string;
@@ -19,13 +22,28 @@ export interface PosterDetailLease {
   generation: number;
 }
 
+export interface PosterDetailRecord {
+  lease: PosterDetailLease;
+  phase: PosterDetailPhase;
+  loadInFlight: boolean;
+  uploadInFlight: boolean;
+  sceneGeneration: number;
+  globalIndex: number;
+}
+
 export interface PosterDetailStats {
   requested: number;
   decoded: number;
   uploaded: number;
+  /** Physical DETAIL slot leases. Not GPU-ready. */
   resident: number;
+  leased: number;
+  pendingPixels: number;
+  pendingUpload: number;
+  readyResident: number;
   slotLimit: number;
   highWater: number;
+  readyHighWater: number;
   promoted: number;
   demoted: number;
   evicted: number;
@@ -44,7 +62,7 @@ export function estimatePosterDetailBytes(
   w = POSTER_DETAIL_WIDTH,
   h = POSTER_DETAIL_HEIGHT,
 ): { cpu: number; gpu: number } {
-  const cpu = Math.max(0, slots) * w * h * 4;
+  const cpu = Math.max(0, Math.floor(slots)) * w * h * 4;
   return { cpu, gpu: Math.round(cpu * MIP) };
 }
 
@@ -116,12 +134,13 @@ export class PosterDetailResidency {
   readonly height: number;
   private readonly owners: Array<string | null>;
   private readonly gens: number[];
-  private readonly byMovie = new Map<string, PosterDetailLease>();
+  private readonly records = new Map<string, PosterDetailRecord>();
   private generation = 1;
   private requested = 0;
   private decoded = 0;
   private uploaded = 0;
   private highWater = 0;
+  private readyHighWater = 0;
   private promoted = 0;
   private demoted = 0;
   private evicted = 0;
@@ -141,12 +160,26 @@ export class PosterDetailResidency {
   }
 
   peek(movieId: string): PosterDetailLease | null {
-    return this.byMovie.get(movieId) ?? null;
+    return this.records.get(movieId)?.lease ?? null;
+  }
+
+  peekRecord(movieId: string): PosterDetailRecord | null {
+    return this.records.get(movieId) ?? null;
+  }
+
+  phase(movieId: string): PosterDetailPhase | null {
+    return this.records.get(movieId)?.phase ?? null;
+  }
+
+  isReady(movieId: string): boolean {
+    return this.records.get(movieId)?.phase === 'ready';
   }
 
   isLeaseCurrent(lease: PosterDetailLease): boolean {
-    const live = this.byMovie.get(lease.movieId);
-    return !!live && live.slot === lease.slot && live.generation === lease.generation;
+    const live = this.records.get(lease.movieId);
+    return !!live
+      && live.lease.slot === lease.slot
+      && live.lease.generation === lease.generation;
   }
 
   request(_movieId: string): void {
@@ -159,18 +192,43 @@ export class PosterDetailResidency {
 
   noteUploaded(): void {
     this.uploaded++;
-    if (this.residentCount() > this.highWater) this.highWater = this.residentCount();
+    this.bumpReadyHighWater();
   }
 
   noteStaleDrop(): void {
     this.staleDropped++;
   }
 
-  acquire(movieId: string): { lease: PosterDetailLease; evicted: string | null } | null {
-    const existing = this.byMovie.get(movieId);
+  markPendingPixels(movieId: string): void {
+    const rec = this.records.get(movieId);
+    if (rec && rec.phase !== 'ready') rec.phase = 'pendingPixels';
+  }
+
+  markPendingUpload(movieId: string): void {
+    const rec = this.records.get(movieId);
+    if (rec && rec.phase !== 'ready') rec.phase = 'pendingUpload';
+  }
+
+  markReady(movieId: string): boolean {
+    const rec = this.records.get(movieId);
+    if (!rec) return false;
+    rec.phase = 'ready';
+    rec.loadInFlight = false;
+    rec.uploadInFlight = false;
+    this.bumpReadyHighWater();
+    return true;
+  }
+
+  acquire(
+    movieId: string,
+    opts: { sceneGeneration?: number; globalIndex?: number } = {},
+  ): { lease: PosterDetailLease; evicted: string | null; record: PosterDetailRecord } | null {
+    const existing = this.records.get(movieId);
     if (existing) {
       this.reacquired++;
-      return { lease: existing, evicted: null };
+      if (opts.globalIndex != null) existing.globalIndex = opts.globalIndex;
+      if (opts.sceneGeneration != null) existing.sceneGeneration = opts.sceneGeneration;
+      return { lease: existing.lease, evicted: null, record: existing };
     }
     let slot = this.owners.indexOf(null);
     let evicted: string | null = null;
@@ -184,21 +242,29 @@ export class PosterDetailResidency {
     const lease: PosterDetailLease = { movieId, slot, generation: this.generation };
     this.owners[slot] = movieId;
     this.gens[slot] = this.generation;
-    this.byMovie.set(movieId, lease);
+    const record: PosterDetailRecord = {
+      lease,
+      phase: 'pendingPixels',
+      loadInFlight: false,
+      uploadInFlight: false,
+      sceneGeneration: opts.sceneGeneration ?? 0,
+      globalIndex: opts.globalIndex ?? 0,
+    };
+    this.records.set(movieId, record);
     this.promoted++;
     if (this.residentCount() > this.highWater) this.highWater = this.residentCount();
-    return { lease, evicted };
+    return { lease, evicted, record };
   }
 
   release(movieId: string): boolean {
-    const live = this.byMovie.get(movieId);
+    const live = this.records.get(movieId);
     if (!live) return false;
-    this.releaseSlot(live.slot, 'demote');
+    this.releaseSlot(live.lease.slot, 'demote');
     return true;
   }
 
   reset(): void {
-    this.byMovie.clear();
+    this.records.clear();
     this.owners.fill(null);
     this.gens.fill(0);
     this.generation = 1;
@@ -206,6 +272,7 @@ export class PosterDetailResidency {
     this.decoded = 0;
     this.uploaded = 0;
     this.highWater = 0;
+    this.readyHighWater = 0;
     this.promoted = 0;
     this.demoted = 0;
     this.evicted = 0;
@@ -214,22 +281,40 @@ export class PosterDetailResidency {
   }
 
   residentIds(): string[] {
-    return [...this.byMovie.keys()];
+    return [...this.records.keys()];
+  }
+
+  readyIds(): string[] {
+    return [...this.records.entries()].filter(([, r]) => r.phase === 'ready').map(([id]) => id);
   }
 
   residentCount(): number {
-    return this.byMovie.size;
+    return this.records.size;
   }
 
   snapshot(): PosterDetailStats {
     const bytes = estimatePosterDetailBytes(this.slotLimit, this.width, this.height);
+    let pendingPixels = 0;
+    let pendingUpload = 0;
+    let readyResident = 0;
+    for (const rec of this.records.values()) {
+      if (rec.phase === 'pendingPixels') pendingPixels++;
+      else if (rec.phase === 'pendingUpload') pendingUpload++;
+      else if (rec.phase === 'ready') readyResident++;
+    }
+    const leased = this.residentCount();
     return {
       requested: this.requested,
       decoded: this.decoded,
       uploaded: this.uploaded,
-      resident: this.residentCount(),
+      resident: leased,
+      leased,
+      pendingPixels,
+      pendingUpload,
+      readyResident,
       slotLimit: this.slotLimit,
       highWater: this.highWater,
+      readyHighWater: this.readyHighWater,
       promoted: this.promoted,
       demoted: this.demoted,
       evicted: this.evicted,
@@ -242,6 +327,12 @@ export class PosterDetailResidency {
     };
   }
 
+  private bumpReadyHighWater(): void {
+    let ready = 0;
+    for (const rec of this.records.values()) if (rec.phase === 'ready') ready++;
+    if (ready > this.readyHighWater) this.readyHighWater = ready;
+  }
+
   private pickVictim(keepId: string): number {
     for (let i = 0; i < this.owners.length; i++) {
       if (this.owners[i] && this.owners[i] !== keepId) return i;
@@ -252,7 +343,7 @@ export class PosterDetailResidency {
   private releaseSlot(slot: number, why: 'evict' | 'demote'): void {
     const id = this.owners[slot];
     if (!id) return;
-    this.byMovie.delete(id);
+    this.records.delete(id);
     this.owners[slot] = null;
     this.gens[slot]++;
     if (why === 'evict') this.evicted++;

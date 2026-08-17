@@ -11,7 +11,7 @@ import { setXrContentLiveState, xrContentLiveState, xrContentSnapshot } from './
 import { classifyObjectName } from './xr/content-classes';
 import { brandPackStatus } from './brand-pack';
 import { publishXrPerfDiagnostics } from './xr/perf-diagnostics.ts';
-import { posterDetailResidency } from './poster-detail-residency';
+import { installPosterDetailTestHooks } from './store-poster-detail';
 import { inspectCloseRangePosters, closeRangeSweepPlan } from './xr/close-range-probe';
 import { sampleSignageStereo, stereoSignagePass, negativeControlLeftEyeOnly, userCameraMask } from './xr/stereo-signage-probe';
 import { noteStoreWorldClassProgress, refreshStoreVisualReady } from './store-visual-ready';
@@ -68,7 +68,7 @@ export function attachXrRuntime(
   });
   (window as unknown as { __xrDiagnostics?: unknown }).__xrDiagnostics = () => scene.xr?.diagnostics ?? null;
   (window as unknown as { __xrContent?: unknown }).__xrContent = () => xrContentSnapshot();
-  (window as unknown as { __posterDetail?: unknown }).__posterDetail = () => posterDetailResidency.snapshot();
+  installPosterDetailTestHooks(scene);
   (window as unknown as { __closeRangeProbe?: unknown }).__closeRangeProbe = () => {
     const samples = closeRangeSweepPlan().map((step) => inspectCloseRangePosters(scene.scene, step, 'mono'));
     return {

@@ -1025,6 +1025,109 @@ async function main() {
       },
     ));
 
+    evidence.scenarios.push(await runScenario(
+      browser, 'JP4A_ROUND5A1_XR', '?demo=1&nogate=1&xrEmu=1&xrSafe=1',
+      async (page) => {
+        const jp4aDir = path.join(root, 'docs', 'review', 'jp4a');
+        fs.mkdirSync(jp4aDir, { recursive: true });
+        const result = await page.evaluate(async () => {
+          const untilReady = Date.now() + 120000;
+          while (Date.now() < untilReady) {
+            if (window.__storeReadiness?.()?.visualReady) break;
+            await new Promise((r) => setTimeout(r, 200));
+          }
+          const xr = window.__xrTest;
+          const entered = xr ? await xr.enter() : { ok: false, error: 'no __xrTest' };
+          const untilWorld = Date.now() + 8000;
+          while (Date.now() < untilWorld) {
+            if (window.__xrDiagnostics?.()?.startup?.firstWorldRenderCompletedAt != null) break;
+            await new Promise((r) => setTimeout(r, 100));
+          }
+          xr?.selectFirstTitle?.();
+          window.__posterDetailForceMiss?.();
+          const untilDetail = Date.now() + 45000;
+          let detail = window.__posterDetail?.() ?? null;
+          while (Date.now() < untilDetail) {
+            detail = window.__posterDetail?.() ?? null;
+            if ((detail?.decoded ?? 0) > 0 && (detail?.uploaded ?? 0) > 0 && (detail?.readyResident ?? 0) > 0) break;
+            await new Promise((r) => setTimeout(r, 200));
+          }
+          xr?.openMenu?.();
+          await new Promise((r) => setTimeout(r, 200));
+          const paint1 = xr?.uiPaint?.();
+          const pose1 = xr?.getHeadsetPose?.();
+          xr?.setHeadsetPose?.({ y: (pose1?.y ?? 1.6), qy: 0.707, qw: 0.707 });
+          xr?.openMenu?.();
+          await new Promise((r) => setTimeout(r, 200));
+          const paint2 = xr?.uiPaint?.();
+          const stereo = window.__stereoSignage?.() ?? null;
+          const closeRange = window.__closeRangeProbe?.() ?? null;
+          const perf = window.__xrPerfDiagnostics?.() ?? null;
+          const gpu = window.__gpuDiagnostics?.() ?? null;
+          const ready = window.__storeReadiness?.() ?? null;
+          return {
+            entered,
+            visualReady: ready?.visualReady === true,
+            worldReady: gpu?.xrContent?.worldReady === true,
+            uiOpen: paint1?.title != null && paint2?.title != null,
+            stereoPass: stereo?.pass === true,
+            stereoNegative: stereo?.negativeControl === true,
+            stereoSampleCount: stereo?.samples?.length ?? 0,
+            closeRangeHidden: (closeRange?.samples ?? []).reduce((n, s) => n + (s.hidden ?? 0), 0),
+            closeRangeDisposed: (closeRange?.samples ?? []).reduce((n, s) => n + (s.disposedMaterials ?? 0), 0),
+            detailLimit: detail?.slotLimit ?? null,
+            leased: detail?.leased ?? detail?.resident ?? null,
+            pendingPixels: detail?.pendingPixels ?? null,
+            pendingUpload: detail?.pendingUpload ?? null,
+            decoded: detail?.decoded ?? null,
+            uploaded: detail?.uploaded ?? null,
+            readyResident: detail?.readyResident ?? null,
+            promoted: detail?.promoted ?? null,
+            demoted: detail?.demoted ?? null,
+            evicted: detail?.evicted ?? null,
+            reacquired: detail?.reacquired ?? null,
+            staleDropped: detail?.staleDropped ?? null,
+            requested: detail?.requested ?? null,
+            detailWidth: detail?.width ?? null,
+            detailHeight: detail?.height ?? null,
+            lutCapacity: detail?.lutCapacity ?? null,
+            lutOk: detail?.lutOk ?? null,
+            textureCreates: detail?.textureCreates ?? null,
+            textureDisposals: detail?.textureDisposals ?? null,
+            baseWidth: gpu?.posterBaseWidth ?? null,
+            baseHeight: gpu?.posterBaseHeight ?? null,
+            contextLost: gpu?.contextLost === true,
+            framebufferScale: 0.8,
+            foveation: 0.5,
+            classification: 'IWER_EMULATED',
+            QUEST_HARDWARE: 'NOT_EXECUTED',
+            frame: perf?.FRAME ?? null,
+            highRes: perf?.HIGH_RES ?? detail,
+          };
+        });
+        fs.writeFileSync(
+          path.join(jp4aDir, 'jp4a-round5a1-iwer.json'),
+          JSON.stringify(scrub(result), null, 2),
+        );
+        const pass = !!result.entered?.ok
+          && result.visualReady === true
+          && result.worldReady === true
+          && result.stereoPass === true
+          && result.stereoNegative === true
+          && (result.closeRangeHidden ?? 1) === 0
+          && (result.closeRangeDisposed ?? 1) === 0
+          && (result.detailLimit ?? 0) === 64
+          && (result.decoded ?? 0) > 0
+          && (result.uploaded ?? 0) > 0
+          && (result.readyResident ?? 0) > 0
+          && result.contextLost !== true
+          && result.detailWidth === 320
+          && result.QUEST_HARDWARE === 'NOT_EXECUTED'
+          && result.classification === 'IWER_EMULATED';
+        return { pass, ...result };
+      },
+    ));
+
     // XR_SAFE TTI on the IWER GPU. `?demo=1&nogate=1` without xrEmu selects
     // DESKTOP_FULL, which overflows this Chromium's 16 texture units (26+
     // samplers) and is not the JP-3 measurement.

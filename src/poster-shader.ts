@@ -4,19 +4,25 @@ import { textureArrayManager } from './poster-textures';
 import {
   getPosterDetailArray,
   getPosterDetailLut,
+  getPosterDetailLutLayout,
 } from './poster-detail-gpu';
-import { POSTER_DETAIL_LUT_WIDTH } from './poster-detail-residency';
 
 /** XR_SAFE: catalog banks swap on the mesh. Detail LUT 0 = BASE, else detail layer. */
-const POSTER_SHELF_UNIFORMS = `
+export const XR_SAFE_POSTER_SAMPLE_GLSL = `
       precision highp sampler2DArray;
       uniform sampler2DArray shelfMapArray;
       uniform sampler2DArray detailMapArray;
       uniform sampler2D detailLayerTex;
       uniform float posterBankOffset;
       uniform float posterDetailCount;
+      uniform float posterDetailLutWidth;
+      uniform float posterDetailLutHeight;
       vec4 samplePosterBank(bool hi, vec2 uv, float idx, vec2 ddx, vec2 ddy) {
-        float detail = texture(detailLayerTex, vec2((idx + 0.5) / max(posterDetailCount, 1.0), 0.5)).r;
+        float w = max(posterDetailLutWidth, 1.0);
+        float h = max(posterDetailLutHeight, 1.0);
+        float lx = mod(idx, w);
+        float ly = floor(idx / w);
+        float detail = texture(detailLayerTex, vec2((lx + 0.5) / w, (ly + 0.5) / h)).r;
         if (detail > 0.001) {
           return textureGrad(detailMapArray, vec3(uv, detail * 255.0 - 1.0), ddx, ddy);
         }
@@ -37,7 +43,7 @@ const POSTER_ARRAY_UNIFORMS = `
 `;
 
 export function posterShaderChunk(): string {
-  return isXrSafeProfile() ? POSTER_SHELF_UNIFORMS : POSTER_ARRAY_UNIFORMS;
+  return isXrSafeProfile() ? XR_SAFE_POSTER_SAMPLE_GLSL : POSTER_ARRAY_UNIFORMS;
 }
 
 export function posterArrayUniforms(shader: THREE.WebGLProgramParametersWithUniforms) {
@@ -55,11 +61,14 @@ export function posterArrayUniforms(shader: THREE.WebGLProgramParametersWithUnif
     { value: textureArrayManager.loadedFlagsTexture ? textureArrayManager.loadedFlagsTexture.image.width : 2048 };
   const detailMapArray = shader.uniforms.detailMapArray = { value: getPosterDetailArray() };
   const detailLayerTex = shader.uniforms.detailLayerTex = { value: getPosterDetailLut() };
-  const posterDetailCount = shader.uniforms.posterDetailCount = { value: POSTER_DETAIL_LUT_WIDTH };
+  const lutLayout = getPosterDetailLutLayout();
+  const posterDetailCount = shader.uniforms.posterDetailCount = { value: Math.max(1, lutLayout.capacity) };
+  const posterDetailLutWidth = shader.uniforms.posterDetailLutWidth = { value: Math.max(1, lutLayout.width) };
+  const posterDetailLutHeight = shader.uniforms.posterDetailLutHeight = { value: Math.max(1, lutLayout.height) };
   return {
     lowResMapArray, highResMapArray, shelfMapArray, posterBankOffset,
     posterBankSize, posterBankCount, posterLowResBase, highResLoadedTex, maxMoviesCount,
-    detailMapArray, detailLayerTex, posterDetailCount,
+    detailMapArray, detailLayerTex, posterDetailCount, posterDetailLutWidth, posterDetailLutHeight,
   };
 }
 

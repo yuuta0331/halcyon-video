@@ -1,0 +1,52 @@
+{
+  "name": "JP4A_DETAIL_ACTIVATION",
+  "classification": "DESKTOP_BROWSER",
+  "pass": true,
+  "probe": {
+    "classification": "DESKTOP_BROWSER",
+    "QUEST_HARDWARE": "NOT_EXECUTED",
+    "pass": true,
+    "decoded": 1,
+    "uploaded": 1,
+    "readyResident": 1,
+    "leased": 1,
+    "pendingPixels": 0,
+    "requested": 1,
+    "staleDropped": 1,
+    "detailWidth": 320,
+    "detailHeight": 480,
+    "lutCapacity": 4000,
+    "lutOk": true,
+    "index2049Ready": true,
+    "missReachedReady": true,
+    "hitReachedReady": true,
+    "shaderBase": [
+      0,
+      220,
+      255,
+      255
+    ],
+    "shaderDetail": [
+      255,
+      2,
+      2,
+      255
+    ],
+    "shaderRestored": [
+      0,
+      220,
+      255,
+      255
+    ],
+    "shader2049": [
+      255,
+      2,
+      2,
+      255
+    ],
+    "staleRejected": true,
+    "blankBetween": false,
+    "contextLost": false,
+    "note": "production DETAIL sampled; BASE fallback restored"
+  }
+}

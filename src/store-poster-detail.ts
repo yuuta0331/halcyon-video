@@ -1,10 +1,11 @@
 // Reconcile the ON_DEMAND poster detail cache from pose / selection.
 // Never evicts STORE_VISIBLE_BASE. Tiny HMD motion is gated by hysteresis.
+// CPU posterPixelCache MISS schedules the canonical posterQueue load.
 
 import * as THREE from 'three';
-import { posterPixelCache } from './video-case';
+import { posterPixelCache, posterQueue } from './video-case';
 import { storeVisibleResidency } from './store-visible-residency';
-import { queueTextureUpload, textureArrayManager } from './poster-textures';
+import { dropQueuedUploadsForMovie, queueTextureUpload, textureArrayManager } from './poster-textures';
 import { storeVisibleWork } from './perf/store-visible-work';
 import {
   chooseDetailSet,
@@ -16,10 +17,14 @@ import {
 } from './poster-detail-residency';
 import {
   clearPosterDetailLut,
+  getPosterDetailLutLayout,
   initPosterDetailGpu,
+  posterDetailResourceSnapshot,
   setPosterDetailLut,
   uploadPosterDetailLayer,
 } from './poster-detail-gpu';
+import { activateDetailTitle, demoteDetailTitle, type DetailActivateDeps } from './poster-detail-activate';
+import { runPosterDetailActivationProbe } from './perf/poster-detail-activation-probe';
 import type { StoreScene } from './three-scene';
 import type { MovieSlot } from './store-layout';
 
@@ -31,18 +36,23 @@ let lastX = NaN;
 let lastZ = NaN;
 let lastYaw = NaN;
 let lastSelected: string | null = null;
+let lastDesired = new Set<string>();
 const spatial: DetailCandidate[] = [];
+const movies = new Map<string, { id: string; posterUrl?: string }>();
 
 export function resetPosterDetailReconcileForTests(): void {
   lastX = NaN;
   lastZ = NaN;
   lastYaw = NaN;
   lastSelected = null;
+  lastDesired.clear();
   spatial.length = 0;
+  movies.clear();
 }
 
 export function cachePosterDetailSpatial(slots: MovieSlot[]): void {
   spatial.length = 0;
+  movies.clear();
   const seen = new Set<string>();
   for (const slot of slots) {
     const id = slot.movie.id;
@@ -55,6 +65,7 @@ export function cachePosterDetailSpatial(slots: MovieSlot[]): void {
       z: slot.restingZ,
       globalIndex: rec?.globalIndex ?? 0,
     });
+    movies.set(id, { id, posterUrl: slot.movie.posterUrl });
   }
 }
 
@@ -89,35 +100,44 @@ function shouldReconcile(x: number, z: number, yaw: number, selected: string | n
   return d >= POSTER_DETAIL_MOVE_FEET || Math.abs(dy) >= POSTER_DETAIL_YAW_RAD;
 }
 
-function promote(scene: StoreScene, movieId: string, globalIndex: number): void {
-  posterDetailResidency.request(movieId);
-  const got = posterDetailResidency.acquire(movieId);
-  if (!got) return;
-  if (got.evicted) {
-    const prev = storeVisibleResidency.peek(got.evicted);
-    if (prev) clearPosterDetailLut(prev.globalIndex);
-  }
-  const pixels = posterPixelCache.get(movieId);
-  if (!pixels) return;
-  posterDetailResidency.noteDecoded();
-  const lease = got.lease;
-  const generation = storeVisibleWork.currentGeneration();
-  queueTextureUpload(() => {
-    if (!posterDetailResidency.isLeaseCurrent(lease)) {
-      posterDetailResidency.noteStaleDrop();
-      return;
-    }
-    if (!uploadPosterDetailLayer(scene.renderer, lease.slot, pixels)) return;
-    setPosterDetailLut(globalIndex, lease.slot + 1);
-    posterDetailResidency.noteUploaded();
-  }, 'priority', { scope: 'ON_DEMAND', generation, movieId });
+function catalogCountFromSpatial(): number {
+  let maxIdx = 0;
+  for (const c of spatial) if (c.globalIndex > maxIdx) maxIdx = c.globalIndex;
+  return Math.max(spatial.length, maxIdx + 1, 1);
 }
 
-export function bindPosterDetailTier(_scene: StoreScene, slots: MovieSlot[]): void {
+function makeDeps(scene: StoreScene): DetailActivateDeps {
+  return {
+    getMovie: (id) => movies.get(id) ?? null,
+    getGlobalIndex: (id) => storeVisibleResidency.peek(id)?.globalIndex
+      ?? spatial.find((c) => c.movieId === id)?.globalIndex
+      ?? 0,
+    isDesired: (id) => lastDesired.has(id),
+    isSelected: (id) => lastSelected === id,
+    sceneGeneration: () => storeVisibleWork.currentGeneration(),
+    getPixels: (id) => posterPixelCache.get(id) ?? null,
+    loadPoster: (movie, priority, onPixels) => {
+      posterQueue.load(movie as never, priority, onPixels);
+    },
+    queueUpload: (run, movieId, generation) => {
+      queueTextureUpload(run, 'priority', { scope: 'ON_DEMAND', generation, movieId });
+    },
+    uploadLayer: (slot, pixels) => uploadPosterDetailLayer(scene.renderer, slot, pixels),
+    setLut: (globalIndex, slotPlusOne) => setPosterDetailLut(globalIndex, slotPlusOne),
+    clearLut: (globalIndex) => { clearPosterDetailLut(globalIndex); },
+    requestRender: () => scene.requestRender(),
+  };
+}
+
+export function bindPosterDetailTier(scene: StoreScene, slots: MovieSlot[]): void {
   if (!textureArrayManager.residencyBound) return;
-  initPosterDetailGpu(POSTER_DETAIL_SLOT_LIMIT);
   resetPosterDetailReconcileForTests();
   cachePosterDetailSpatial(slots);
+  initPosterDetailGpu({
+    slotLimit: POSTER_DETAIL_SLOT_LIMIT,
+    catalogCount: catalogCountFromSpatial(),
+    renderer: scene.renderer,
+  });
 }
 
 export function reconcilePosterDetail(scene: StoreScene, opts: { force?: boolean } = {}): void {
@@ -130,31 +150,66 @@ export function reconcilePosterDetail(scene: StoreScene, opts: { force?: boolean
   lastYaw = pose.yaw;
   lastSelected = selected;
   if (spatial.length === 0) cachePosterDetailSpatial([...scene.slotsByPosition.values()]);
-  const resident = new Set(posterDetailResidency.residentIds());
+  const leased = new Set(posterDetailResidency.residentIds());
   const desired = chooseDetailSet(spatial, {
     playerX: pose.x,
     playerZ: pose.z,
     yaw: pose.yaw,
     selectedId: selected,
-    resident,
+    resident: leased,
     limit: POSTER_DETAIL_SLOT_LIMIT,
   });
-  const want = new Set(desired);
-  for (const id of resident) {
-    if (want.has(id)) continue;
-    const rec = storeVisibleResidency.peek(id);
-    if (rec) clearPosterDetailLut(rec.globalIndex);
-    posterDetailResidency.release(id);
+  lastDesired = new Set(desired);
+  const deps = makeDeps(scene);
+  for (const id of leased) {
+    if (lastDesired.has(id) || id === selected) continue;
+    dropQueuedUploadsForMovie(id);
+    demoteDetailTitle(id, deps);
   }
-  for (const id of desired) {
-    if (posterDetailResidency.peek(id)) continue;
-    const rec = storeVisibleResidency.peek(id);
-    promote(scene, id, rec?.globalIndex ?? 0);
+  for (const id of lastDesired) {
+    activateDetailTitle(id, deps);
   }
 }
 
 export function promoteSelectedPosterDetail(scene: StoreScene, movieId: string): void {
   if (!textureArrayManager.residencyBound) return;
-  const rec = storeVisibleResidency.peek(movieId);
-  promote(scene, movieId, rec?.globalIndex ?? 0);
+  lastSelected = movieId;
+  lastDesired.add(movieId);
+  if (spatial.length === 0) cachePosterDetailSpatial([...scene.slotsByPosition.values()]);
+  activateDetailTitle(movieId, makeDeps(scene));
+}
+
+export function forcePosterDetailCacheMiss(movieId: string): boolean {
+  return posterPixelCache.delete(movieId);
+}
+
+export function installPosterDetailTestHooks(scene: StoreScene): void {
+  if (typeof window === 'undefined') return;
+  const w = window as unknown as {
+    __posterDetail?: () => unknown;
+    __posterDetailForceMiss?: (movieId?: string) => { ok: boolean };
+    __posterDetailActivationProbe?: () => Promise<unknown>;
+  };
+  w.__posterDetail = () => posterDetailResourceSnapshot();
+  w.__posterDetailForceMiss = (movieId?: string) => {
+    const id = movieId ?? selectedMovieId(scene) ?? spatial[0]?.movieId;
+    if (!id) return { ok: false };
+    posterPixelCache.delete(id);
+    promoteSelectedPosterDetail(scene, id);
+    reconcilePosterDetail(scene, { force: true });
+    return { ok: true };
+  };
+  w.__posterDetailActivationProbe = async () => {
+    const prev = getPosterDetailLutLayout();
+    try {
+      return await runPosterDetailActivationProbe(scene.renderer);
+    } finally {
+      initPosterDetailGpu({
+        slotLimit: POSTER_DETAIL_SLOT_LIMIT,
+        catalogCount: Math.max(prev.needed, catalogCountFromSpatial()),
+        renderer: scene.renderer,
+      });
+      reconcilePosterDetail(scene, { force: true });
+    }
+  };
 }

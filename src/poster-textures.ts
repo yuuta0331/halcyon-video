@@ -42,6 +42,11 @@ export function setCaseMaterialUniformProvider(fn: () => any[]) {
   caseMaterialUniformProvider = fn;
 }
 
+let detailUniformBinder: ((u: any) => void) | null = null;
+export function setDetailUniformBinder(fn: (u: any) => void) {
+  detailUniformBinder = fn;
+}
+
 // Two lanes, drained priority-first. Bulk cache-hit re-uploads (a rebuild, or
 // walking back onto an already-decoded shelf) go in the normal lane; freshly
 // DECODED posters go in the priority lane, because their task is what fires the
@@ -745,6 +750,7 @@ class TextureArrayManager {
           u.posterLowResBase.value = this.lowResBase;
           u.highResLoadedTex.value = this.loadedFlagsTexture;
           u.maxMoviesCount.value = this.loadedFlagsTexture ? this.loadedFlagsTexture.image.width : 2048;
+          detailUniformBinder?.(u);
         });
       }
     };
@@ -766,6 +772,7 @@ class TextureArrayManager {
       for (const u of mat.userData.compiledUniformsList) {
         if (u.shelfMapArray) u.shelfMapArray.value = tex;
         if (u.posterBankOffset) u.posterBankOffset.value = offset;
+        detailUniformBinder?.(u);
       }
     };
     for (const mat of caseMaterialUniformProvider?.() ?? []) updateUniforms(mat);

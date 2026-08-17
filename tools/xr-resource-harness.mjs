@@ -451,6 +451,35 @@ async function main() {
       idleQuiet,
       bootNoCatalogSweep,
     });
+    const detailAct = await storePage.evaluate(async () => {
+      const fn = window.__posterDetailActivationProbe;
+      if (typeof fn !== 'function') return { pass: false, note: 'no probe hook' };
+      return await fn();
+    });
+    fs.mkdirSync(path.join(root, 'docs', 'review', 'jp4a'), { recursive: true });
+    fs.writeFileSync(
+      path.join(root, 'docs', 'review', 'jp4a', 'jp4a-round5a1-detail-activation.json'),
+      JSON.stringify({
+        classification: 'DESKTOP_BROWSER',
+        QUEST_HARDWARE: 'NOT_EXECUTED',
+        pass: detailAct?.pass === true
+          && (detailAct?.decoded ?? 0) > 0
+          && (detailAct?.uploaded ?? 0) > 0
+          && (detailAct?.readyResident ?? 0) > 0
+          && detailAct?.contextLost !== true,
+        probe: detailAct,
+      }, null, 2),
+    );
+    evidence.scenarios.push({
+      name: 'JP4A_DETAIL_ACTIVATION',
+      classification: 'DESKTOP_BROWSER',
+      pass: detailAct?.pass === true
+        && (detailAct?.decoded ?? 0) > 0
+        && (detailAct?.uploaded ?? 0) > 0
+        && (detailAct?.readyResident ?? 0) > 0
+        && detailAct?.contextLost !== true,
+      probe: detailAct,
+    });
     await storePage.close();
 
     const multiPage = await browser.newPage();
@@ -542,6 +571,7 @@ async function main() {
       'JP4A_REAL_GPU_MULTIBANK',
       'JP4A_PRODUCTION_MULTIBANK',
       'JP4A_PRELOAD_STABILITY',
+      'JP4A_DETAIL_ACTIVATION',
     ]) {
       const s = evidence.scenarios.find((x) => x.name === name);
       if (!s) continue;

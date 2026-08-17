@@ -111,3 +111,21 @@ test('promotion is counted once per acquire of a new title', () => {
   assert.equal(r.snapshot().promoted, 1);
   assert.equal(r.snapshot().reacquired, 1);
 });
+
+test('a physical lease is not DETAIL_READY', () => {
+  const r = new PosterDetailResidency(4);
+  r.acquire('a');
+  assert.equal(r.snapshot().leased, 1);
+  assert.equal(r.snapshot().resident, 1);
+  assert.equal(r.snapshot().readyResident, 0);
+  assert.equal(r.phase('a'), 'pendingPixels');
+  r.markReady('a');
+  assert.equal(r.snapshot().readyResident, 1);
+});
+
+test('DETAIL byte estimate is independent of catalog size', () => {
+  const a = estimatePosterDetailBytes(64, 320, 480);
+  const b = estimatePosterDetailBytes(64, 320, 480);
+  assert.equal(a.cpu, b.cpu);
+  assert.ok(a.cpu < 64 * 1024 * 1024);
+});

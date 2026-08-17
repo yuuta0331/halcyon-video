@@ -8,8 +8,7 @@ import { pendingScopedTextureUploads } from '../perf/texture-upload-queue.ts';
 import { storeVisibleResidency } from '../store-visible-residency.ts';
 import { textureArrayManager } from '../poster-textures.ts';
 import { gpuDiagnosticsSnapshot } from './gpu-diagnostics.ts';
-import { posterDetailResidency } from '../poster-detail-residency.ts';
-import { posterDetailGpuCreates, posterDetailGpuDisposals } from '../poster-detail-gpu.ts';
+import { posterDetailGpuCreates, posterDetailGpuDisposals, posterDetailResourceSnapshot } from '../poster-detail-gpu.ts';
 
 export function xrPerfDiagnostics(): Record<string, unknown> {
   const frame = fpsMeterReadout();
@@ -88,7 +87,7 @@ export function xrPerfDiagnostics(): Record<string, unknown> {
       invalidFreeOwnedCollisionCount: mem.freeOwnedCollisions,
       mappingOk: vis.ok && mem.residencyInvariantOk !== false,
     },
-    HIGH_RES: posterDetailResidency.snapshot(),
+    HIGH_RES: posterDetailResourceSnapshot(),
     DETAIL_GPU: {
       creates: posterDetailGpuCreates(),
       disposals: posterDetailGpuDisposals(),
