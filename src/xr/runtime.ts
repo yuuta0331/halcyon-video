@@ -75,7 +75,7 @@ import {
   latestViewerPose,
   setViewerWorldPose,
   updateViewerPoseFromXrFrame,
-  viewerPoseToWorldXZ,
+  viewerPoseToWorld,
 } from './viewer-pose.ts';
 import {
   clearUiPlacement,
@@ -85,7 +85,10 @@ import {
 import { createHardwarePosterDiagnostic } from './hw-diag-factory.ts';
 import type { HardwarePosterDiagnostic } from './hardware-poster-diagnostic.ts';
 import { beginXrUploadFrame, detailUploadPolicySnapshot, sampleXrMotion } from '../perf/xr-detail-upload-policy.ts';
-import { noteMotionPolicy, noteXrFrameDelta } from '../perf/xr-upload-metrics.ts';
+import { noteMotionPolicy, noteXrFrameDelta, xrUploadMetricsSnapshot } from '../perf/xr-upload-metrics.ts';
+import { pendingTextureUploads, pendingUploadsByCost } from '../perf/texture-upload-queue.ts';
+import { posterDetailWakeSnapshot } from '../perf/poster-detail-wake.ts';
+import { fpsMeterReadout } from '../fps-meter.ts';
 import { setPresentationMode } from '../perf/presentation-mode.ts';
 import { rayHitsPanelUv } from './ui/hit';
 import {
@@ -279,7 +282,50 @@ export class XrRuntime {
     } catch {
       glError = null;
     }
-    return this.hwDiag.snapshot(glError, false);
+    const frame = fpsMeterReadout();
+    const policy = xrQualityPolicy();
+    const info = this.host.renderer.info;
+    const viewerPose = latestViewerPose();
+    const runtime = {
+      viewerPose,
+      frame: {
+        currentRollingFps: frame.fps,
+        meanFrameIntervalMs: frame.meanMs,
+        onePercentLowFps: frame.p99Ms ? 1000 / frame.p99Ms : null,
+        p95FrameMs: frame.p95Ms,
+        p99FrameMs: frame.p99Ms,
+        worstFrameMs: frame.worstMs,
+        compositeSamples: frame.samples,
+        frameCount: this.xrFrameCount,
+      },
+      display: {
+        targetHz: this.targetHz,
+        supportedHz: this.supportedHz,
+        requestedFoveation: this.foveationRequested,
+        effectiveFoveation: this.foveationEffective,
+        framebufferScale: policy.framebufferScale,
+      },
+      renderer: {
+        drawCalls: info.render.calls,
+        triangles: info.render.triangles,
+        lines: info.render.lines,
+        points: info.render.points,
+        textures: info.memory.textures,
+        geometries: info.memory.geometries,
+        programs: info.programs?.length ?? 0,
+      },
+      hud: {
+        fps: this.fpsHud?.snapshot() ?? null,
+      },
+      upload: {
+        pending: pendingTextureUploads(),
+        pendingByCost: pendingUploadsByCost(),
+        policy: detailUploadPolicySnapshot(),
+        wake: posterDetailWakeSnapshot(),
+        metrics: xrUploadMetricsSnapshot(),
+      },
+    };
+    return this.hwDiag.snapshot(glError, false, runtime, this.classify());
   }
 
   cycleHwPosterDiag(): string | null {
@@ -560,14 +606,17 @@ export class XrRuntime {
     });
     beginXrUploadFrame(this.xrFrameCount);
     if (pose.valid && this.rig) {
-      setViewerWorldPose(viewerPoseToWorldXZ({
+      setViewerWorldPose(viewerPoseToWorld({
         originX: this.rig.x,
+        originY: this.rig.root.position.y,
         originZ: this.rig.z,
         originYaw: this.rig.yaw,
         originScale: STORE_UNITS_PER_METER,
         viewerX: pose.x,
+        viewerY: pose.y,
         viewerZ: pose.z,
         viewerYaw: pose.yaw,
+        frameId: pose.frameId,
       }));
       const sticks = this.locomotionSticks();
       sampleXrMotion({

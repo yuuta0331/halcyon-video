@@ -29,6 +29,7 @@ export interface XrViewerPoseState {
 
 export interface ViewerWorldPose {
   x: number;
+  y: number;
   z: number;
   yaw: number;
   frameId: number;
@@ -161,7 +162,33 @@ export function updateViewerPoseFromXrFrame(input: XrViewerPoseInput): XrViewerP
   return latest;
 }
 
-/** Store-unit XZ from origin (store) + viewer (meters in origin space). */
+/** Store-space pose from origin (store units) + viewer (reference-space meters). */
+export function viewerPoseToWorld(input: {
+  originX: number;
+  originY: number;
+  originZ: number;
+  originYaw: number;
+  originScale: number;
+  viewerX: number;
+  viewerY: number;
+  viewerZ: number;
+  viewerYaw: number;
+  frameId?: number;
+}): ViewerWorldPose {
+  const sx = input.viewerX * input.originScale;
+  const sz = input.viewerZ * input.originScale;
+  const c = Math.cos(input.originYaw);
+  const s = Math.sin(input.originYaw);
+  return {
+    x: input.originX + sx * c + sz * s,
+    y: input.originY + input.viewerY * input.originScale,
+    z: input.originZ - sx * s + sz * c,
+    yaw: input.originYaw + input.viewerYaw,
+    frameId: input.frameId ?? latest.frameId,
+  };
+}
+
+/** Back-compatible XZ-only helper. New XR code should use viewerPoseToWorld. */
 export function viewerPoseToWorldXZ(input: {
   originX: number;
   originZ: number;
@@ -171,16 +198,11 @@ export function viewerPoseToWorldXZ(input: {
   viewerZ: number;
   viewerYaw: number;
 }): ViewerWorldPose {
-  const sx = input.viewerX * input.originScale;
-  const sz = input.viewerZ * input.originScale;
-  const c = Math.cos(input.originYaw);
-  const s = Math.sin(input.originYaw);
-  return {
-    x: input.originX + sx * c + sz * s,
-    z: input.originZ - sx * s + sz * c,
-    yaw: input.originYaw + input.viewerYaw,
-    frameId: latest.frameId,
-  };
+  return viewerPoseToWorld({
+    ...input,
+    originY: 0,
+    viewerY: 0,
+  });
 }
 
 export function resetViewerPoseForTests(): void {

@@ -26,7 +26,7 @@ import {
   type UploadCostClass,
 } from './xr-detail-upload-policy.ts';
 import { noteUploadQueue } from './xr-upload-metrics.ts';
-import { requestPosterDetailWake } from './poster-detail-wake.ts';
+import { notifyPosterDetailCapacityAvailable, requestPosterDetailWake } from './poster-detail-wake.ts';
 
 export type TextureUploadMeta = {
   scope?: UploadScope;
@@ -214,7 +214,7 @@ function processUploads(source: UploadPumpOwner = 'page') {
       console.warn('Texture upload task failed:', err);
     }
     count++;
-    if (isExpensiveUpload(item.cost)) requestPosterDetailWake();
+    if (isExpensiveUpload(item.cost)) notifyPosterDetailCapacityAvailable();
   }
   for (let i = skipped.length - 1; i >= 0; i--) {
     priorityUploadQueue.unshift(skipped[i]!);

@@ -1224,7 +1224,23 @@ async function main() {
     ));
 
     evidence.scenarios.push(await runScenario(
-      browser, 'JP4A_ROUND5B_XR', '?demo=1&nogate=1&xrEmu=1&xrSafe=1&xrPosterHwDiag=1',
+      browser, 'JP4A_ROUND5B2_NORMAL_URL', '?demo=1&nogate=1&xrEmu=1&xrSafe=1',
+      async (page) => {
+        const result = await page.evaluate(async () => {
+          const xr = window.__xrTest;
+          const entered = xr ? await xr.enter() : { ok: false, error: 'no __xrTest' };
+          await new Promise((r) => setTimeout(r, 300));
+          const snap = window.__hwPosterDiag?.() ?? null;
+          const mesh = window.storeScene?.scene?.getObjectByName?.('xr-hw-poster-diag') ?? null;
+          await xr?.exit?.();
+          return { entered, enabled: snap?.enabled === true, meshCreated: !!mesh };
+        });
+        return { pass: !!result.entered?.ok && !result.enabled && !result.meshCreated, ...result };
+      },
+    ));
+
+    evidence.scenarios.push(await runScenario(
+      browser, 'JP4A_ROUND5B2_XR', '?demo=1&nogate=1&xrEmu=1&xrSafe=1&xrPosterHwDiag=1&fps=1',
       async (page) => {
         const jp4aDir = path.join(root, 'docs', 'review', 'jp4a');
         fs.mkdirSync(jp4aDir, { recursive: true });
@@ -1235,6 +1251,7 @@ async function main() {
             await new Promise((r) => setTimeout(r, 200));
           }
           const xr = window.__xrTest;
+          xr?.setHeadsetPose?.({ x: 0, y: 1.6, z: 0, qx: 0, qy: 0, qz: 0, qw: 1 });
           const entered = xr ? await xr.enter() : { ok: false, error: 'no __xrTest' };
           const untilWorld = Date.now() + 8000;
           while (Date.now() < untilWorld) {
@@ -1243,6 +1260,10 @@ async function main() {
           }
           xr?.setHeadsetPose?.({ x: 0, y: 1.6, z: 0, qx: 0, qy: 0, qz: 0, qw: 1 });
           await new Promise((r) => setTimeout(r, 200));
+          const diagBeforeMove = window.__hwPosterDiag?.() ?? null;
+          xr?.setHeadsetPose?.({ x: 0.25, y: 1.72, z: -0.18, qx: 0, qy: Math.sin(0.35), qz: 0, qw: Math.cos(0.35) });
+          await new Promise((r) => setTimeout(r, 250));
+          const diagAfterMove = window.__hwPosterDiag?.() ?? null;
           xr?.openMenu();
           const untilMenu = Date.now() + 2000;
           let pose = window.__xrViewerPose?.() ?? null;
@@ -1257,7 +1278,7 @@ async function main() {
           const modes = [];
           let mode = window.__hwPosterDiag?.()?.mode ?? null;
           modes.push(mode);
-          for (let i = 0; i < 4; i++) {
+          for (let i = 0; i < 5; i++) {
             window.__cycleHwPosterDiag?.();
             await new Promise((r) => setTimeout(r, 50));
             modes.push(window.__hwPosterDiag?.()?.mode ?? null);
@@ -1265,10 +1286,28 @@ async function main() {
           const gpu = window.__gpuDiagnostics?.() ?? null;
           const detail = window.__posterDetail?.() ?? null;
           const focus = window.__posterFocus?.() ?? null;
-          const normalLaunch = window.__hardwarePosterDiagProbe
-            ? null
-            : null;
           const last = window.__hwPosterDiag?.() ?? null;
+          const pos0 = diagBeforeMove?.placement?.position;
+          const pos1 = diagAfterMove?.placement?.position;
+          const worldStable = !!pos0 && !!pos1
+            && Math.hypot(pos0.x - pos1.x, pos0.y - pos1.y, pos0.z - pos1.z) < 1e-5;
+          const hud0 = diagBeforeMove?.modeHud?.position;
+          const hud1 = diagAfterMove?.modeHud?.position;
+          const hudFollows = !!hud0 && !!hud1
+            && Math.hypot(hud0.x - hud1.x, hud0.y - hud1.y, hud0.z - hud1.z) > 0.05;
+          const fps = last?.runtime?.hud?.fps;
+          const modeHud = last?.modeHud;
+          const projected = (offset, size) => ({
+            left: (offset.x - size.width / 2) / -offset.z,
+            right: (offset.x + size.width / 2) / -offset.z,
+            bottom: (offset.y - size.height / 2) / -offset.z,
+            top: (offset.y + size.height / 2) / -offset.z,
+          });
+          const fpsBounds = fps ? projected({ x: -0.25, y: 0.17, z: -0.62 }, fps.sizeM) : null;
+          const modeBounds = modeHud ? projected(modeHud.viewerOffsetM, modeHud.sizeM) : null;
+          const hudOverlap = !!fpsBounds && !!modeBounds
+            && fpsBounds.left < modeBounds.right && fpsBounds.right > modeBounds.left
+            && fpsBounds.bottom < modeBounds.top && fpsBounds.top > modeBounds.bottom;
           return {
             entered,
             stereoPass: stereo?.pass === true,
@@ -1282,6 +1321,16 @@ async function main() {
             diagObserved: last?.observed ?? null,
             diagProduction: last?.production ?? null,
             diagWorldStable: last?.worldStable === true,
+            placedFromFreshPose: last?.placement?.source === 'INITIAL_FRESH_XR_VIEWER_POSE',
+            eyeHeightM: last?.placement?.viewerEyeHeightM ?? null,
+            posterHeightM: last?.placement?.posterWorldHeightM ?? null,
+            posterStableAfterViewerMove: worldStable,
+            modeHudFollowsViewer: hudFollows,
+            fpsHudVisible: fps?.visible === true,
+            fpsModeHudOverlap: hudOverlap,
+            telemetryPopulated: last?.runtime?.frame?.frameCount > 0
+              && last?.runtime?.display?.targetHz != null
+              && last?.runtime?.renderer?.drawCalls != null,
             contextLost: gpu?.contextLost === true,
             detailWidth: detail?.width ?? null,
             focusSlots: focus?.slotLimit ?? null,
@@ -1291,11 +1340,7 @@ async function main() {
           };
         });
         fs.writeFileSync(
-          path.join(jp4aDir, 'jp4a-round5b-iwer.json'),
-          JSON.stringify(scrub(result), null, 2),
-        );
-        fs.writeFileSync(
-          path.join(jp4aDir, 'jp4a-round5b1-iwer.json'),
+          path.join(jp4aDir, 'jp4a-round5b2-iwer.json'),
           JSON.stringify(scrub(result), null, 2),
         );
         const pass = !!result.entered?.ok
@@ -1304,8 +1349,14 @@ async function main() {
           && result.poseSource === 'XR_VIEWER_POSE'
           && result.menuSource === 'XR_VIEWER_POSE'
           && result.diagEnabled === true
-          && (result.diagModes ?? []).includes('A')
-          && (result.diagModes ?? []).includes('E')
+          && result.placedFromFreshPose === true
+          && Math.abs((result.eyeHeightM ?? 0) - 1.6) < 0.08
+          && result.posterStableAfterViewerMove === true
+          && result.modeHudFollowsViewer === true
+          && result.fpsHudVisible === true
+          && result.fpsModeHudOverlap === false
+          && result.telemetryPopulated === true
+          && JSON.stringify(result.diagModes) === JSON.stringify(['A', 'B', 'C', 'D', 'E', 'A'])
           && result.contextLost !== true
           && result.QUEST_HARDWARE === 'NOT_EXECUTED'
           && result.classification === 'IWER_EMULATED';

@@ -22,6 +22,7 @@ import {
   getPosterDetailLutLayout,
   initPosterDetailGpu,
   posterDetailResourceSnapshot,
+  readPosterDetailLut,
   setPosterDetailLut,
   uploadPosterDetailLayer,
 } from './poster-detail-gpu';
@@ -39,6 +40,8 @@ import { posterFocusResidency } from './poster-focus-residency';
 import {
   clearPosterFocusActive,
   initPosterFocusGpu,
+  posterFocusActive,
+  posterFocusActiveIndex,
   posterFocusResourceSnapshot,
   setPosterFocusActive,
   uploadPosterFocusTexture,
@@ -47,6 +50,7 @@ import { decodeFocusFromUrl } from './poster-focus-decode';
 import { POSTER_FOCUS_SLOT_LIMIT } from './poster-quality';
 import type { StoreScene } from './three-scene';
 import type { MovieSlot } from './store-layout';
+import { pendingUploadsByCost } from './perf/texture-upload-queue.ts';
 
 const _pos = new THREE.Vector3();
 const _quat = new THREE.Quaternion();
@@ -120,6 +124,68 @@ function selectedMovieId(scene: StoreScene): string | null {
     }
   }
   return null;
+}
+
+function opaquePosterId(id: string): string {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < id.length; i++) {
+    h ^= id.charCodeAt(i);
+    h = Math.imul(h, 0x01000193);
+  }
+  return `p-${(h >>> 0).toString(16).padStart(8, '0')}`;
+}
+
+/** Secret/title-free live shelf state for a selected real production poster. */
+export function liveShelfPosterObservation(scene: StoreScene): Record<string, unknown> {
+  const id = selectedMovieId(scene);
+  if (!id) return { selected: false, opaqueId: null };
+  const base = storeVisibleResidency.peek(id);
+  const globalIndex = base?.globalIndex ?? textureArrayManager.peekIndex(id);
+  const detail = posterDetailResidency.peekRecord(id);
+  const focus = posterFocusResidency.peekRecord(id);
+  const bankTex = base ? textureArrayManager.bankTexture(base.bank) : null;
+  const image = bankTex?.image as { width?: number; height?: number; depth?: number } | undefined;
+  const loadedFlag = globalIndex == null ? null : textureArrayManager.loadedFlags?.[globalIndex] ?? null;
+  return {
+    selected: true,
+    opaqueId: opaquePosterId(id),
+    globalIndex,
+    bankIndex: base?.bank ?? null,
+    layerIndex: base?.layer ?? null,
+    loadedFlag,
+    baseResident: base != null,
+    baseTerminalState: storeVisibleWork.terminalState(id),
+    near: detail ? {
+      slot: detail.lease.slot,
+      phase: detail.phase,
+      generation: detail.lease.generation,
+      sceneGeneration: detail.sceneGeneration,
+      uploadInFlight: detail.uploadInFlight,
+      lutEntry: readPosterDetailLut(detail.globalIndex),
+    } : null,
+    focus: focus ? {
+      slot: focus.lease.slot,
+      phase: focus.phase,
+      generation: focus.lease.generation,
+      sceneGeneration: focus.sceneGeneration,
+      uploadInFlight: focus.uploadInFlight,
+      active: posterFocusActive() && posterFocusActiveIndex() === focus.globalIndex,
+    } : null,
+    queue: pendingUploadsByCost(),
+    bankTexture: image ? {
+      width: image.width ?? null,
+      height: image.height ?? null,
+      layers: image.depth ?? null,
+      present: true,
+    } : { width: null, height: null, layers: null, present: false },
+    shaderBranches: {
+      baseLoaded: loadedFlag != null && loadedFlag > 0,
+      nearEnabled: !!detail && detail.phase === 'ready' && readPosterDetailLut(detail.globalIndex) > 0,
+      focusEnabled: !!focus && focus.phase === 'ready'
+        && posterFocusActive() && posterFocusActiveIndex() === focus.globalIndex,
+    },
+    privacy: 'OPAQUE_ID_NO_TITLE_NO_URL',
+  };
 }
 
 function playerPose(scene: StoreScene): { x: number; z: number; yaw: number } {
@@ -290,9 +356,11 @@ export function installPosterDetailTestHooks(scene: StoreScene): void {
     __uploadPolicyProbe?: () => unknown;
     __hardwarePosterDiagProbe?: () => unknown;
     __uploadAdmissionProbe?: () => unknown;
+    __livePosterDiag?: () => unknown;
   };
   w.__posterDetail = () => posterDetailResourceSnapshot();
   w.__posterFocus = () => posterFocusResourceSnapshot();
+  w.__livePosterDiag = () => liveShelfPosterObservation(scene);
   w.__posterDetailForceMiss = (movieId?: string) => {
     const id = movieId ?? selectedMovieId(scene) ?? spatial[0]?.movieId;
     if (!id) return { ok: false };

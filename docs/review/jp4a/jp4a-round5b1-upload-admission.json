@@ -47,7 +47,7 @@
   },
   "stale": {
     "deadResident": false,
-    "lutHasDead": 11
+    "lutEntryCount": 11
   },
   "metrics": {
     "texSubImageCalls": 0,

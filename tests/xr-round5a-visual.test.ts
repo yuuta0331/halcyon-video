@@ -35,6 +35,11 @@ test('XR menu placement uses current yaw, not a fixed rig forward', () => {
   assert.ok(Math.abs(turned.x) > 0.4, 'must move off the rig-forward -Z axis');
   assert.notEqual(Math.round(turned.x * 10), Math.round(identity.x * 10));
   assert.equal(uiFacesHmd(identity.yaw, 0), true);
+  assert.equal(uiFacesHmd(turned.yaw, Math.PI / 2), true);
+  const toViewer = { x: -turned.x, z: -turned.z };
+  const len = Math.hypot(toViewer.x, toViewer.z);
+  const front = { x: Math.sin(turned.yaw), z: Math.cos(turned.yaw) };
+  assert.ok(front.x * toViewer.x / len + front.z * toViewer.z / len > 0.99);
 });
 
 test('extreme pitch does not place the panel under the user', () => {

@@ -216,7 +216,7 @@ export function runUploadAdmissionProbe() {
   drainExpensive(12);
   const stale = {
     deadResident: detailRes2.peekRecord('dead') != null,
-    lutHasDead: [...lut.keys()].length,
+    lutEntryCount: [...lut.keys()].length,
   };
 
   setXrUploadPresenting(false);

@@ -6,7 +6,7 @@ import { createClonedCaseGeometry, POSTER_CROP_X } from '../video-case.ts';
 import { compileProductionPosterFront } from '../poster-front-compile.ts';
 import { bindPosterBankUniforms } from '../poster-shader.ts';
 import { textureArrayManager } from '../poster-textures.ts';
-import { makePosterQualityPattern } from '../poster-quality-pattern.ts';
+import { makeHardwarePosterDiagnosticPattern } from '../poster-quality-pattern.ts';
 import {
   POSTER_BASE_XR_HEIGHT,
   POSTER_BASE_XR_WIDTH,
@@ -17,15 +17,15 @@ import {
 } from '../poster-quality.ts';
 import {
   hwDiagProductionBindSuppressed,
-  noteHwDiagBankBind,
+  observeHwDiagBankBind,
   noteHwDiagFocusBind,
   noteHwDiagLutBind,
 } from '../perf/hw-diag-observe.ts';
 
 export type ProductionDiagTier = 'C' | 'D' | 'E';
 
-function makeArray(w: number, h: number, layers: number, seed: number, mips: boolean): THREE.DataArrayTexture {
-  const tex = new THREE.DataArrayTexture(makePosterQualityPattern(w, h, seed), w, h, layers);
+function makeArray(w: number, h: number, layers: number, mips: boolean): THREE.DataArrayTexture {
+  const tex = new THREE.DataArrayTexture(makeHardwarePosterDiagnosticPattern(w, h), w, h, layers);
   tex.format = THREE.RGBAFormat;
   tex.type = THREE.UnsignedByteType;
   tex.colorSpace = THREE.SRGBColorSpace;
@@ -60,9 +60,9 @@ function makeLut(on: boolean): THREE.DataTexture {
   return tex;
 }
 
-function makeFocus(seed: number): THREE.DataTexture {
+function makeFocus(): THREE.DataTexture {
   const tex = new THREE.DataTexture(
-    makePosterQualityPattern(POSTER_FOCUS_WIDTH, POSTER_FOCUS_HEIGHT, seed),
+    makeHardwarePosterDiagnosticPattern(POSTER_FOCUS_WIDTH, POSTER_FOCUS_HEIGHT),
     POSTER_FOCUS_WIDTH,
     POSTER_FOCUS_HEIGHT,
   );
@@ -90,13 +90,13 @@ export class HwDiagProductionPoster {
   private mode: ProductionDiagTier = 'C';
 
   constructor() {
-    this.baseArray = makeArray(POSTER_BASE_XR_WIDTH, POSTER_BASE_XR_HEIGHT, 1, 1, true);
-    this.nearArray = makeArray(POSTER_NEAR_WIDTH, POSTER_NEAR_HEIGHT, 1, 5, false);
-    this.dummyNear = makeArray(POSTER_NEAR_WIDTH, POSTER_NEAR_HEIGHT, 1, 0, false);
+    this.baseArray = makeArray(POSTER_BASE_XR_WIDTH, POSTER_BASE_XR_HEIGHT, 1, true);
+    this.nearArray = makeArray(POSTER_NEAR_WIDTH, POSTER_NEAR_HEIGHT, 1, false);
+    this.dummyNear = makeArray(POSTER_NEAR_WIDTH, POSTER_NEAR_HEIGHT, 1, false);
     this.loaded = makeLoadedFlags();
     this.lutOff = makeLut(false);
     this.lutOn = makeLut(true);
-    this.focusTex = makeFocus(9);
+    this.focusTex = makeFocus();
     this.dummyFocus = new THREE.DataTexture(new Uint8Array([0, 0, 0, 0]), 1, 1);
     this.dummyFocus.format = THREE.RGBAFormat;
     this.dummyFocus.type = THREE.UnsignedByteType;
@@ -136,9 +136,10 @@ export class HwDiagProductionPoster {
 
   onBeforeRender(): void {
     if (hwDiagProductionBindSuppressed()) return;
-    if (textureArrayManager.highResArray) bindPosterBankUniforms(0);
+    // Observer follows the actual production bind call. A missing live bank or
+    // a thrown bind can no longer increment the evidence counter.
+    observeHwDiagBankBind(!!textureArrayManager.highResArray, () => bindPosterBankUniforms(0));
     this.applyUniforms();
-    noteHwDiagBankBind();
     if (this.mode === 'D' || this.mode === 'E') noteHwDiagLutBind();
     if (this.mode === 'E') noteHwDiagFocusBind();
   }

@@ -32,6 +32,12 @@ merge `351947a`. This slice does not reopen that verdict.
 | `jp4a-round5b-upload-policy.json` | DESKTOP_BROWSER motion-gated upload policy (not Quest GPU time) |
 | `jp4a-round5b-hardware-diagnostic.json` | DESKTOP_BROWSER A/B/C/D/E fixture render (does not diagnose Quest black) |
 | `jp4a-round5b-iwer.json` | IWER_EMULATED Round 5B pose/menu/diag/stereo logic (not hardware visual proof) |
+| `jp4a-round5b2-hardware-history.md` | Quest 3 Round 5B user observation: inconclusive, fixture correction required |
+| `jp4a-round5b2-investigation.md` | Coordinate audit and ranked ~20 FPS investigation |
+| `jp4a-round5b2-quest-procedure.md` | One-entry Quest 3 procedure, interpretation ladder, and result template |
+| `jp4a-round5b2-review.md` | Round 5B.2 implementation/status package (new HEAD not run on Quest) |
+| `jp4a-round5b2-iwer.json` | IWER_EMULATED placement/world-stability/HUD/A–E logic (not hardware proof) |
+| `jp4a-round5b2-software-validation.json` | Unit/build/browser/IWER result summary; Quest not executed |
 | `jp4a.5-catalog-delta-sync.md` | Deferred persistent catalog / delta sync (not in this PR) |
 | `jp4a-round4-preload-stability.json` | DESKTOP_BROWSER STORE_VISIBLE_BASE drain |
 | `jp4a-round4-production-multibank.json` | DESKTOP_BROWSER production shelf 3+ bank render |

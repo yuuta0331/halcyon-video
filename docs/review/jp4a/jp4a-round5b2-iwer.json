@@ -1,0 +1,43 @@
+{
+  "entered": {
+    "ok": true
+  },
+  "stereoPass": true,
+  "stereoNegative": true,
+  "poseSource": "XR_VIEWER_POSE",
+  "poseValid": true,
+  "menuSource": "XR_VIEWER_POSE",
+  "menuDistance": 0.9,
+  "diagModes": [
+    "A",
+    "B",
+    "C",
+    "D",
+    "E",
+    "A"
+  ],
+  "diagEnabled": true,
+  "diagObserved": {
+    "compileCount": 3,
+    "diagBankBindCount": 16,
+    "diagLutBindCount": 12,
+    "diagFocusBindCount": 6,
+    "suppressBind": false
+  },
+  "diagProduction": null,
+  "diagWorldStable": true,
+  "placedFromFreshPose": true,
+  "eyeHeightM": 1.600000023841858,
+  "posterHeightM": 1.600000023841858,
+  "posterStableAfterViewerMove": true,
+  "modeHudFollowsViewer": true,
+  "fpsHudVisible": true,
+  "fpsModeHudOverlap": false,
+  "telemetryPopulated": true,
+  "contextLost": false,
+  "detailWidth": 320,
+  "focusSlots": 2,
+  "classification": "IWER_EMULATED",
+  "QUEST_HARDWARE": "NOT_EXECUTED",
+  "note": "IWER_EMULATED logic only. Not hardware visual proof."
+}

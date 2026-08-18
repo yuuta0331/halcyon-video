@@ -2,8 +2,12 @@
 
 import type { XrViewerPoseState } from './viewer-pose.ts';
 
-/** Upper-left peripheral, meters in viewer space. Not lower-left. */
-export const HUD_VIEW_OFFSET = { x: -0.16, y: 0.14, z: -0.52 };
+/** Upper-left peripheral, meters in viewer space. */
+export const HUD_VIEW_OFFSET = { x: -0.25, y: 0.17, z: -0.62 };
+/** Upper-right; kept disjoint from the FPS panel in projected viewer space. */
+export const MODE_HUD_VIEW_OFFSET = { x: 0.24, y: 0.16, z: -0.62 };
+export const FPS_HUD_SIZE_M = { width: 0.34, height: 0.16 };
+export const MODE_HUD_SIZE_M = { width: 0.34, height: 0.14 };
 
 export interface HudLocalTransform {
   x: number;
@@ -41,6 +45,31 @@ export function hudFollowsViewer(hudYaw: number, viewerYaw: number, eps = 0.12):
 
 export function hudOffsetIsReadableSide(offset = HUD_VIEW_OFFSET): boolean {
   return offset.x < 0 && offset.y > 0 && offset.z < -0.3;
+}
+
+export interface ProjectedHudBounds {
+  left: number;
+  right: number;
+  bottom: number;
+  top: number;
+}
+
+/** Perspective-normalized bounds (tan view angle), deterministic without a camera. */
+export function projectedHudBounds(
+  offset: { x: number; y: number; z: number },
+  size: { width: number; height: number },
+): ProjectedHudBounds {
+  const depth = Math.max(1e-6, -offset.z);
+  return {
+    left: (offset.x - size.width / 2) / depth,
+    right: (offset.x + size.width / 2) / depth,
+    bottom: (offset.y - size.height / 2) / depth,
+    top: (offset.y + size.height / 2) / depth,
+  };
+}
+
+export function projectedHudBoundsOverlap(a: ProjectedHudBounds, b: ProjectedHudBounds): boolean {
+  return a.left < b.right && a.right > b.left && a.bottom < b.top && a.top > b.bottom;
 }
 
 export function placeHudFromViewerPose(

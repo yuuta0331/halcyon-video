@@ -36,11 +36,13 @@ export function placeUiInFrontOfHmd(input: {
   const x = input.hmdX - Math.sin(yaw) * distance;
   const z = input.hmdZ - Math.cos(yaw) * distance;
   const y = Math.max(XR_UI_MIN_Y_M, input.hmdY - XR_UI_EYE_DROP_M);
-  return { x, y, z, yaw: -yaw, distance };
+  // Plane front is local +Z. At viewer yaw +90° the panel is at -X and must
+  // rotate +90° so its +Z normal points back toward the viewer.
+  return { x, y, z, yaw, distance };
 }
 
 export function uiFacesHmd(panelYaw: number, hmdYaw: number): boolean {
-  let d = panelYaw + hmdYaw;
+  let d = panelYaw - hmdYaw;
   while (d > Math.PI) d -= Math.PI * 2;
   while (d < -Math.PI) d += Math.PI * 2;
   return Math.abs(d) < 0.35;

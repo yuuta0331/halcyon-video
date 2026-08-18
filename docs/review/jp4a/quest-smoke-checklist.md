@@ -4,6 +4,9 @@ Do not ask the owner to run this until independent review declares
 `READY_FOR_SINGLE_QUEST_JP4A_SMOKE` or
 `READY_FOR_SINGLE_QUEST_JP4A_ROUND5B_DIAGNOSTIC`.
 
+For the corrected Round 5B.2 fixture use `jp4a-round5b2-quest-procedure.md` and
+require `READY_FOR_SINGLE_QUEST_JP4A_ROUND5B2_DIAGNOSTIC`.
+
 Historical hardware:
 
 - `a20389e` — QUEST_HARDWARE FAILED (`jp4a-round5-quest-fail.md`)

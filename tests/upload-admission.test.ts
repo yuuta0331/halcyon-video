@@ -25,6 +25,8 @@ import { setXrUploadPresenting } from '../src/perf/upload-policy.ts';
 import { storeVisibleWork } from '../src/perf/store-visible-work.ts';
 import {
   flushPosterDetailWake,
+  notifyPosterDetailCapacityAvailable,
+  posterDetailWakeSnapshot,
   requestPosterDetailWake,
   resetPosterDetailWakeForTests,
   setPosterDetailWakeHandler,
@@ -147,6 +149,18 @@ test('deferred NEAR retries after drain without another movement sample', () => 
   assert.equal(residency.snapshot().pendingUpload, 0);
 });
 
+test('queue capacity is the primary wake and 90ms timer remains fallback only', () => {
+  let wakes = 0;
+  setPosterDetailWakeHandler(() => { wakes++; });
+  requestPosterDetailWake();
+  assert.equal(posterDetailWakeSnapshot().pending, true);
+  notifyPosterDetailCapacityAvailable();
+  assert.equal(wakes, 1);
+  assert.equal(posterDetailWakeSnapshot().pending, false);
+  assert.equal(posterDetailWakeSnapshot().capacityWakeCount, 1);
+  assert.equal(posterDetailWakeSnapshot().fallbackTimerWakeCount, 0);
+});
+
 test('generation change while deferred does not resurrect content', () => {
   setUploadTurbo(true);
   setXrUploadPresenting(true);
@@ -216,4 +230,5 @@ test('production admission probe covers pressure + FOCUS priority', () => {
   assert.equal(result.QUEST_HARDWARE, 'NOT_EXECUTED');
   assert.equal(result.afterDrain.pendingUpload, 0);
   assert.equal(result.detailReject.uploadInFlight, false);
+  assert.equal(typeof result.stale.lutEntryCount, 'number');
 });

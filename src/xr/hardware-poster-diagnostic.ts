@@ -3,13 +3,18 @@
 
 import * as THREE from 'three';
 import { MIRROR_SKIP_LAYER } from '../scene-layers.ts';
-import { makePosterQualityPattern } from '../poster-quality-pattern.ts';
+import { makeHardwarePosterDiagnosticPattern } from '../poster-quality-pattern.ts';
 import { POSTER_FOCUS_HEIGHT, POSTER_FOCUS_WIDTH } from '../poster-quality.ts';
-import { placeHudFromViewerPose } from './hud-placement.ts';
+import {
+  MODE_HUD_SIZE_M,
+  MODE_HUD_VIEW_OFFSET,
+  placeHudFromViewerPose,
+} from './hud-placement.ts';
 import type { XrViewerPoseState } from './viewer-pose.ts';
-import { latestViewerWorldPose } from './viewer-pose.ts';
+import { latestViewerWorldPose, poseIsCurrent } from './viewer-pose.ts';
 import { STORE_UNITS_PER_METER } from '../platform/index.ts';
 import { hwDiagObserveSnapshot } from '../perf/hw-diag-observe.ts';
+import { placeHardwarePosterFromViewer } from './hardware-poster-placement.ts';
 
 export const HW_DIAG_QUERY = 'xrPosterHwDiag';
 export const HW_DIAG_MEDIA_ID = 'hwdiag-opaque-0';
@@ -64,6 +69,7 @@ export interface HwPosterDiagMeta {
   detailLutEnabled: boolean;
   focusEnabled: boolean;
   worldStable: boolean;
+  baselineSemantics: string | null;
 }
 
 const LABELS: Record<HwPosterDiagMode, string> = {
@@ -72,6 +78,14 @@ const LABELS: Record<HwPosterDiagMode, string> = {
   C: 'MODE C — PRODUCTION_CASE_BASE_ONLY',
   D: 'MODE D — PRODUCTION_CASE_BASE_PLUS_NEAR',
   E: 'MODE E — FULL_PRODUCTION',
+};
+
+const HUD_TIER: Record<HwPosterDiagMode, string> = {
+  A: 'DIRECT BASIC',
+  B: 'CASE + BASIC',
+  C: 'BASE ONLY',
+  D: 'BASE + NEAR',
+  E: 'FULL + FOCUS',
 };
 
 const SPAWN_X = 13.0;
@@ -101,8 +115,8 @@ function enableStereo(obj: THREE.Object3D): void {
   });
 }
 
-function makeDirectTex(w: number, h: number, seed: number): THREE.DataTexture {
-  const tex = new THREE.DataTexture(makePosterQualityPattern(w, h, seed), w, h);
+function makeDirectTex(w: number, h: number): THREE.DataTexture {
+  const tex = new THREE.DataTexture(makeHardwarePosterDiagnosticPattern(w, h), w, h);
   tex.format = THREE.RGBAFormat;
   tex.type = THREE.UnsignedByteType;
   tex.colorSpace = THREE.SRGBColorSpace;
@@ -131,6 +145,8 @@ export function hwPosterDiagModeMeta(mode: HwPosterDiagMode): Pick<
   | 'detailLutEnabled'
   | 'focusEnabled'
   | 'worldStable'
+  | 'baselineSemantics'
+  | 'side'
 > {
   const production = mode === 'C' || mode === 'D' || mode === 'E';
   return {
@@ -152,6 +168,10 @@ export function hwPosterDiagModeMeta(mode: HwPosterDiagMode): Pick<
     detailLutEnabled: mode === 'D' || mode === 'E',
     focusEnabled: mode === 'E',
     worldStable: true,
+    side: mode === 'A' ? 'DoubleSide' : 'FrontSide',
+    baselineSemantics: mode === 'A'
+      ? 'Basic direct texture/compositor baseline; DoubleSide intentionally excludes backface culling.'
+      : null,
   };
 }
 
@@ -168,6 +188,9 @@ export class HardwarePosterDiagnostic {
   private lastLabel = '';
   private thumbPrev = false;
   private viewerDistance = 0;
+  private viewerEyeHeightM: number | null = null;
+  private viewerEyeWorldHeightStoreUnits: number | null = null;
+  private placedFromFreshViewerPose = false;
   private readonly worldAnchor: 'spawn' | 'origin';
   private readonly _contentWorld = new THREE.Vector3();
   private readonly _labelWorld = new THREE.Vector3();
@@ -175,7 +198,7 @@ export class HardwarePosterDiagnostic {
   constructor(opts: { worldAnchor?: 'spawn' | 'origin'; deps?: HwDiagCaseDeps } = {}) {
     this.worldAnchor = opts.worldAnchor ?? 'spawn';
     this.content.name = 'xr-hw-poster-diag';
-    this.placeContent();
+    this.placeFallbackContent();
     const w = opts.deps?.caseWidth ?? FALLBACK_CASE_W;
     const h = opts.deps?.caseHeight ?? FALLBACK_CASE_H;
     this.meshA = this.makeA(w, h);
@@ -189,9 +212,9 @@ export class HardwarePosterDiagnostic {
 
     this.labelCanvas = (typeof document !== 'undefined'
       ? document.createElement('canvas')
-      : { width: 768, height: 128, getContext: () => null }) as unknown as HTMLCanvasElement;
+      : { width: 768, height: 320, getContext: () => null }) as unknown as HTMLCanvasElement;
     this.labelCanvas.width = 768;
-    this.labelCanvas.height = 128;
+    this.labelCanvas.height = 320;
     this.labelTex = new THREE.CanvasTexture(this.labelCanvas);
     this.labelTex.minFilter = THREE.LinearFilter;
     this.labelTex.magFilter = THREE.LinearFilter;
@@ -201,7 +224,7 @@ export class HardwarePosterDiagnostic {
       depthWrite: false,
       transparent: true,
     });
-    this.labelMesh = new THREE.Mesh(new THREE.PlaneGeometry(0.48, 0.08), labelMat);
+    this.labelMesh = new THREE.Mesh(new THREE.PlaneGeometry(MODE_HUD_SIZE_M.width, MODE_HUD_SIZE_M.height), labelMat);
     this.labelMesh.name = 'xr-hw-poster-diag-label';
     this.labelMesh.renderOrder = 20;
     enableStereo(this.labelMesh);
@@ -241,14 +264,33 @@ export class HardwarePosterDiagnostic {
 
   tick(pose: XrViewerPoseState | null, cameraNear: number, cameraFar: number): HwPosterDiagMeta {
     const world = latestViewerWorldPose();
+    if (!this.placedFromFreshViewerPose && pose && poseIsCurrent(pose) && world) {
+      const placed = placeHardwarePosterFromViewer({
+        viewerX: world.x,
+        viewerY: world.y,
+        viewerZ: world.z,
+        viewerYaw: world.yaw,
+        storeUnitsPerMeter: STORE_UNITS_PER_METER,
+      });
+      this.content.position.set(placed.x, placed.y, placed.z);
+      this.content.rotation.set(0, placed.yaw, 0);
+      this.content.visible = true;
+      this.placedFromFreshViewerPose = true;
+      this.viewerEyeHeightM = pose.y;
+      this.viewerEyeWorldHeightStoreUnits = world.y;
+    }
     this.content.getWorldPosition(this._contentWorld);
     if (world) {
-      this.viewerDistance = Math.hypot(world.x - this._contentWorld.x, world.z - this._contentWorld.z);
-    } else if (pose?.valid) {
-      this.viewerDistance = Math.hypot(pose.x - this.content.position.x, pose.z - this.content.position.z);
+      this.viewerDistance = Math.hypot(
+        world.x - this._contentWorld.x,
+        world.z - this._contentWorld.z,
+      ) / STORE_UNITS_PER_METER;
+    } else {
+      // Do not compare reference-space meters with scene/store coordinates.
+      this.viewerDistance = 0;
     }
     if (pose?.valid) {
-      const hud = placeHudFromViewerPose(pose, { x: 0, y: 0.18, z: -0.62 });
+      const hud = placeHudFromViewerPose(pose, MODE_HUD_VIEW_OFFSET);
       if (hud) {
         this.labelMesh.position.set(hud.x, hud.y, hud.z);
         this.labelMesh.quaternion.set(hud.qx, hud.qy, hud.qz, hud.qw);
@@ -270,7 +312,6 @@ export class HardwarePosterDiagnostic {
     return {
       ...declared,
       productionPath: productionObserved,
-      side: 'FrontSide',
       transparent: false,
       near: cameraNear,
       far: cameraFar,
@@ -286,8 +327,14 @@ export class HardwarePosterDiagnostic {
     return this.labelMesh.getWorldPosition(this._labelWorld).clone();
   }
 
-  snapshot(glError: number | null = null, contextLost = false) {
+  snapshot(
+    glError: number | null = null,
+    contextLost = false,
+    runtime: Record<string, unknown> = {},
+    classification: 'UNIT' | 'DESKTOP_BROWSER' | 'IWER_EMULATED' | 'QUEST_HARDWARE' = 'DESKTOP_BROWSER',
+  ) {
     const observed = hwDiagObserveSnapshot();
+    const runtimePose = runtime.viewerPose as XrViewerPoseState | undefined;
     const prod = this.mode === 'C' || this.mode === 'D' || this.mode === 'E'
       ? this.production?.snapshot() ?? null
       : null;
@@ -299,8 +346,34 @@ export class HardwarePosterDiagnostic {
       contextLost,
       observed,
       production: prod,
-      classification: 'IWER_EMULATED' as const,
-      QUEST_HARDWARE: 'NOT_EXECUTED',
+      placement: {
+        source: this.placedFromFreshViewerPose ? 'INITIAL_FRESH_XR_VIEWER_POSE' : 'FALLBACK_PENDING_POSE',
+        posterWorldHeightStoreUnits: this._contentWorld.y,
+        posterWorldHeightM: this._contentWorld.y / STORE_UNITS_PER_METER,
+        viewerEyeHeightM: this.viewerEyeHeightM,
+        viewerEyeWorldHeightStoreUnits: this.viewerEyeWorldHeightStoreUnits,
+        viewerDistanceM: this.viewerDistance,
+        position: { x: this._contentWorld.x, y: this._contentWorld.y, z: this._contentWorld.z },
+        horizontalYaw: this.content.rotation.y,
+        worldStableAfterPlacement: true,
+      },
+      modeHud: {
+        viewerOffsetM: MODE_HUD_VIEW_OFFSET,
+        sizeM: MODE_HUD_SIZE_M,
+        position: { x: this.labelMesh.position.x, y: this.labelMesh.position.y, z: this.labelMesh.position.z },
+        quaternion: {
+          x: this.labelMesh.quaternion.x,
+          y: this.labelMesh.quaternion.y,
+          z: this.labelMesh.quaternion.z,
+          w: this.labelMesh.quaternion.w,
+        },
+      },
+      hudPoseFresh: runtimePose ? poseIsCurrent(runtimePose) : false,
+      runtime,
+      classification,
+      QUEST_HARDWARE: classification === 'QUEST_HARDWARE'
+        ? 'EXECUTED_RESULT_PENDING'
+        : 'NOT_EXECUTED',
     };
   }
 
@@ -322,9 +395,11 @@ export class HardwarePosterDiagnostic {
     this.labelMesh.geometry.dispose();
   }
 
-  private placeContent(): void {
+  private placeFallbackContent(): void {
     if (this.worldAnchor === 'origin') {
       this.content.position.set(0, 1.15, -1.4);
+      this.content.rotation.set(0, 0, 0);
+      this.content.visible = true;
       return;
     }
     const dist = 1.15 * STORE_UNITS_PER_METER;
@@ -332,10 +407,13 @@ export class HardwarePosterDiagnostic {
     const lookZ = -Math.cos(SPAWN_YAW);
     this.content.position.set(
       SPAWN_X + lookX * dist,
-      1.15,
+      1.6 * STORE_UNITS_PER_METER,
       SPAWN_Z + lookZ * dist,
     );
-    this.content.rotation.y = SPAWN_YAW + Math.PI;
+    this.content.rotation.y = SPAWN_YAW;
+    // Avoid a foot-level/incorrect fallback flash. The real fixture becomes
+    // visible only after the first fresh XR_VIEWER_POSE has placed it.
+    this.content.visible = false;
   }
 
   private applyMode(): void {
@@ -351,11 +429,10 @@ export class HardwarePosterDiagnostic {
   }
 
   private paintLabel(): void {
-    const declared = hwPosterDiagModeMeta(this.mode);
-    const obs = hwDiagObserveSnapshot();
-    const line1 = LABELS[this.mode];
-    const line2 = `BASE ${declared.baseEnabled ? 'on' : 'off'}  NEAR ${declared.detailLutEnabled ? 'on' : 'off'}  FOCUS ${declared.focusEnabled ? 'on' : 'off'}  prodPath ${declared.shaderPath === 'posterShaderChunk' ? 'yes' : 'no'}  bind ${obs.diagBankBindCount}`;
-    const text = `${line1}\n${line2}`;
+    const line1 = `MODE ${this.mode}`;
+    const line2 = HUD_TIER[this.mode];
+    const line3 = `distance ${this.viewerDistance.toFixed(1)}m`;
+    const text = `${line1}\n${line2}\n${line3}`;
     if (text === this.lastLabel) return;
     this.lastLabel = text;
     const ctx = this.labelCanvas.getContext('2d');
@@ -363,17 +440,20 @@ export class HardwarePosterDiagnostic {
     const w = this.labelCanvas.width;
     const h = this.labelCanvas.height;
     ctx.clearRect(0, 0, w, h);
-    ctx.fillStyle = 'rgba(8,12,20,0.78)';
+    ctx.fillStyle = 'rgba(2,5,10,0.92)';
     ctx.fillRect(0, 0, w, h);
     ctx.strokeStyle = '#9fe8d8';
-    ctx.strokeRect(1, 1, w - 2, h - 2);
-    ctx.fillStyle = '#e8fff8';
-    ctx.font = '22px ui-monospace, Menlo, Consolas, monospace';
-    ctx.fillText(line1, 12, 36);
+    ctx.lineWidth = 8;
+    ctx.strokeRect(5, 5, w - 10, h - 10);
+    ctx.fillStyle = '#f4fffc';
+    ctx.font = 'bold 92px ui-monospace, Menlo, Consolas, monospace';
+    ctx.fillText(line1, 34, 112);
     ctx.fillStyle = '#9fe8d8';
-    ctx.font = '16px ui-monospace, Menlo, Consolas, monospace';
-    ctx.fillText(line2, 12, 68);
-    ctx.fillText(`id ${HW_DIAG_MEDIA_ID}  ·  thumbstick click cycles`, 12, 96);
+    ctx.font = '52px ui-monospace, Menlo, Consolas, monospace';
+    ctx.fillText(line2, 36, 202);
+    ctx.fillStyle = '#d8e5e2';
+    ctx.font = '42px ui-monospace, Menlo, Consolas, monospace';
+    ctx.fillText(line3, 36, 274);
     this.labelTex.needsUpdate = true;
   }
 
@@ -384,10 +464,13 @@ export class HardwarePosterDiagnostic {
 
   private makeA(w: number, h: number): THREE.Mesh {
     const mat = new THREE.MeshBasicMaterial({
-      map: this.track(makeDirectTex(POSTER_FOCUS_WIDTH, POSTER_FOCUS_HEIGHT, 3)),
+      map: this.track(makeDirectTex(POSTER_FOCUS_WIDTH, POSTER_FOCUS_HEIGHT)),
       depthTest: false,
       depthWrite: false,
-      side: THREE.FrontSide,
+      // Baseline tests direct texturing/compositor visibility. Backface
+      // culling is intentionally removed as a variable after the Round 5B
+      // fixture was proven to have the wrong yaw.
+      side: THREE.DoubleSide,
     });
     const mesh = new THREE.Mesh(new THREE.PlaneGeometry(w, h), mat);
     mesh.name = 'hw-diag-A';
@@ -397,7 +480,7 @@ export class HardwarePosterDiagnostic {
   private makeBProduction(deps: HwDiagCaseDeps): THREE.InstancedMesh {
     const geo = deps.createCaseGeometry(1);
     const mat = new THREE.MeshBasicMaterial({
-      map: this.track(makeDirectTex(POSTER_FOCUS_WIDTH, POSTER_FOCUS_HEIGHT, 3)),
+      map: this.track(makeDirectTex(POSTER_FOCUS_WIDTH, POSTER_FOCUS_HEIGHT)),
       depthTest: true,
       depthWrite: false,
     });
@@ -411,7 +494,7 @@ export class HardwarePosterDiagnostic {
 
   private makeBFallback(w: number, h: number): THREE.Mesh {
     const mat = new THREE.MeshBasicMaterial({
-      map: this.track(makeDirectTex(POSTER_FOCUS_WIDTH, POSTER_FOCUS_HEIGHT, 3)),
+      map: this.track(makeDirectTex(POSTER_FOCUS_WIDTH, POSTER_FOCUS_HEIGHT)),
       depthTest: true,
       depthWrite: false,
     });

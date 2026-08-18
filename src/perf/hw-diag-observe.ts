@@ -11,9 +11,12 @@ export function noteProductionPosterCompile(): void {
   compileCount++;
 }
 
-export function noteHwDiagBankBind(): void {
-  if (suppressBind) return;
+/** Actual-bind seam: count only after an available production bind returned. */
+export function observeHwDiagBankBind(available: boolean, bind: () => void): boolean {
+  if (suppressBind || !available) return false;
+  bind();
   diagBankBindCount++;
+  return true;
 }
 
 export function noteHwDiagLutBind(): void {

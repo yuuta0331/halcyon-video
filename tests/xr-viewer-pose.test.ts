@@ -8,6 +8,7 @@ import {
   resetViewerPoseForTests,
   updateViewerPoseFromXrFrame,
   viewerPoseFromTransform,
+  viewerPoseToWorld,
   viewerPoseToWorldXZ,
   VIEWER_POSE_STALE_MS,
 } from '../src/xr/viewer-pose.ts';
@@ -22,9 +23,14 @@ import {
 import { XR_UI_DISTANCE_M, uiFacesHmd } from '../src/xr/ui-placement.ts';
 import {
   HUD_VIEW_OFFSET,
+  FPS_HUD_SIZE_M,
+  MODE_HUD_SIZE_M,
+  MODE_HUD_VIEW_OFFSET,
   hudFollowsViewer,
   hudOffsetIsReadableSide,
   placeHudFromViewerPose,
+  projectedHudBounds,
+  projectedHudBoundsOverlap,
 } from '../src/xr/hud-placement.ts';
 
 test('canonical viewer pose comes from XRFrame.getViewerPose', () => {
@@ -145,6 +151,24 @@ test('viewer pose world conversion is origin + scaled local', () => {
   });
   assert.ok(Math.abs(w.x - 13) < 1e-9);
   assert.ok(Math.abs(w.z - (-1)) < 1e-9);
+});
+
+test('viewer eye height converts from reference meters to store-space once', () => {
+  const w = viewerPoseToWorld({
+    originX: 13, originY: 0, originZ: 12.5, originYaw: Math.PI / 2,
+    originScale: 3.28084,
+    viewerX: 0.2, viewerY: 1.73, viewerZ: -0.1, viewerYaw: 0.3,
+    frameId: 44,
+  });
+  assert.ok(Math.abs(w.y - 1.73 * 3.28084) < 1e-9);
+  assert.equal(w.frameId, 44);
+});
+
+test('FPS and mode HUD projected viewer-space bounds do not overlap', () => {
+  const fps = projectedHudBounds(HUD_VIEW_OFFSET, FPS_HUD_SIZE_M);
+  const mode = projectedHudBounds(MODE_HUD_VIEW_OFFSET, MODE_HUD_SIZE_M);
+  assert.equal(projectedHudBoundsOverlap(fps, mode), false);
+  assert.ok(fps.right < mode.left);
 });
 
 test('clearing UI placement does not leave a pending flag', () => {
