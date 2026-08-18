@@ -1268,6 +1268,7 @@ async function main() {
           const normalLaunch = window.__hardwarePosterDiagProbe
             ? null
             : null;
+          const last = window.__hwPosterDiag?.() ?? null;
           return {
             entered,
             stereoPass: stereo?.pass === true,
@@ -1278,6 +1279,9 @@ async function main() {
             menuDistance: placed?.distanceFromViewer ?? null,
             diagModes: modes,
             diagEnabled: window.__hwPosterDiag?.()?.enabled === true,
+            diagObserved: last?.observed ?? null,
+            diagProduction: last?.production ?? null,
+            diagWorldStable: last?.worldStable === true,
             contextLost: gpu?.contextLost === true,
             detailWidth: detail?.width ?? null,
             focusSlots: focus?.slotLimit ?? null,
@@ -1288,6 +1292,10 @@ async function main() {
         });
         fs.writeFileSync(
           path.join(jp4aDir, 'jp4a-round5b-iwer.json'),
+          JSON.stringify(scrub(result), null, 2),
+        );
+        fs.writeFileSync(
+          path.join(jp4aDir, 'jp4a-round5b1-iwer.json'),
           JSON.stringify(scrub(result), null, 2),
         );
         const pass = !!result.entered?.ok

@@ -550,11 +550,44 @@ async function main() {
       path.join(root, 'docs', 'review', 'jp4a', 'jp4a-round5b-hardware-diagnostic.json'),
       JSON.stringify(hwDiag, null, 2),
     );
+    fs.writeFileSync(
+      path.join(root, 'docs', 'review', 'jp4a', 'jp4a-round5b1-production-diag.json'),
+      JSON.stringify({ classification: 'DESKTOP_BROWSER', QUEST_HARDWARE: 'NOT_EXECUTED', ...hwDiag }, null, 2),
+    );
     evidence.scenarios.push({
       name: 'JP4A_HW_POSTER_DIAG',
       classification: 'DESKTOP_BROWSER',
-      pass: hwDiag?.pass === true && hwDiag?.contextLost !== true,
+      pass: hwDiag?.pass === true
+        && hwDiag?.contextLost !== true
+        && hwDiag?.worldStable === true
+        && hwDiag?.negativeControl === true
+        && hwDiag?.productionC === true
+        && hwDiag?.productionD === true
+        && hwDiag?.productionE === true,
       probe: hwDiag,
+    });
+    const admission = await storePage.evaluate(() => window.__uploadAdmissionProbe?.() ?? { pass: false });
+    fs.writeFileSync(
+      path.join(root, 'docs', 'review', 'jp4a', 'jp4a-round5b1-upload-admission.json'),
+      JSON.stringify(admission, null, 2),
+    );
+    fs.writeFileSync(
+      path.join(root, 'docs', 'review', 'jp4a', 'jp4a-round5b1-upload-metrics.json'),
+      JSON.stringify({
+        classification: 'DESKTOP_BROWSER',
+        QUEST_HARDWARE: 'NOT_EXECUTED',
+        texSubImageCallsAreObservedGl: false,
+        scheduledVsGl: admission?.metrics ?? null,
+        note: 'FOCUS DataTexture.needsUpdate is scheduled upload, not gl.texSubImage*.',
+      }, null, 2),
+    );
+    evidence.scenarios.push({
+      name: 'JP4A_UPLOAD_ADMISSION',
+      classification: 'DESKTOP_BROWSER',
+      pass: admission?.pass === true
+        && admission?.detailReject?.uploadInFlight === false
+        && admission?.afterDrain?.pendingUpload === 0,
+      probe: admission,
     });
     await storePage.close();
 
@@ -653,6 +686,7 @@ async function main() {
       'JP4A_FOCUS_QUALITY',
       'JP4A_UPLOAD_POLICY',
       'JP4A_HW_POSTER_DIAG',
+      'JP4A_UPLOAD_ADMISSION',
     ]) {
       const s = evidence.scenarios.find((x) => x.name === name);
       if (!s) continue;

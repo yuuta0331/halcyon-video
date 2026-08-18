@@ -15,11 +15,12 @@ export interface FocusActivateDeps {
     onDecoded: (result: FocusDecodeResult) => void,
     onSettled?: () => void,
   ): void;
-  queueUpload(run: () => void, movieId: string, generation: number): void;
+  queueUpload(run: () => void, movieId: string, generation: number): { accepted: boolean } | void;
   uploadFocus(slot: number, pixels: Uint8Array, width: number, height: number): boolean;
   setActive(slot: number, globalIndex: number): void;
   clearActive(globalIndex: number): void;
   requestRender?: () => void;
+  onUploadDeferred?: (movieId: string) => void;
 }
 
 function stillOwns(
@@ -59,9 +60,10 @@ function finish(
     residency.release(movieId);
     return;
   }
+  if (rec.uploadInFlight) return;
   rec.uploadInFlight = true;
   residency.markPendingUpload(movieId);
-  deps.queueUpload(() => {
+  const admitted = deps.queueUpload(() => {
     rec.uploadInFlight = false;
     if (!stillOwns(lease, generation, deps, residency)) return;
     if (!deps.isSelected(movieId) && residency.selected() !== movieId) {
@@ -83,6 +85,11 @@ function finish(
     deps.setActive(lease.slot, rec.globalIndex);
     deps.requestRender?.();
   }, movieId, generation);
+  if (admitted && admitted.accepted === false) {
+    rec.uploadInFlight = false;
+    residency.markPendingPixels(movieId);
+    deps.onUploadDeferred?.(movieId);
+  }
 }
 
 export function activateFocusTitle(

@@ -52,7 +52,10 @@ test('FOCUS fetch URL raises a Plex 400 cap without upscaling pixels', () => {
   assert.match(out, /height=960/);
   assert.match(out, /upscale=0/);
   const jellyfin = 'https://example.test/Items/abc/Images/Primary?api_key=x';
-  assert.equal(rewritePosterUrlForFocus(jellyfin), jellyfin);
+  const jf = rewritePosterUrlForFocus(jellyfin);
+  assert.match(jf, /maxWidth=640/);
+  assert.match(jf, /maxHeight=960/);
+  assert.equal(new URL(jf).searchParams.get('api_key'), 'x');
 });
 
 test('FOCUS GPU slot is 640x960 even when source is larger native art', () => {

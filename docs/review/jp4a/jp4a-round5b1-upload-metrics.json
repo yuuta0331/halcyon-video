@@ -1,0 +1,11 @@
+{
+  "classification": "DESKTOP_BROWSER",
+  "QUEST_HARDWARE": "NOT_EXECUTED",
+  "texSubImageCallsAreObservedGl": false,
+  "scheduledVsGl": {
+    "texSubImageCalls": 0,
+    "texturesScheduledForUpload": 0,
+    "bytesScheduledForUpload": 0
+  },
+  "note": "FOCUS DataTexture.needsUpdate is scheduled upload, not gl.texSubImage*."
+}

@@ -13,6 +13,7 @@ import {
   posterFocusActive,
   posterFocusActiveIndex,
 } from './poster-focus-texture';
+import { noteProductionPosterCompile } from './perf/hw-diag-observe.ts';
 
 let liveFocusUniforms: {
   posterFocusMap: { value: THREE.Texture | null };
@@ -66,6 +67,7 @@ export function posterShaderChunk(): string {
 }
 
 export function posterArrayUniforms(shader: THREE.WebGLProgramParametersWithUniforms) {
+  noteProductionPosterCompile();
   const lowResMapArray = shader.uniforms.lowResMapArray = {
     value: textureArrayManager.lowResArray ?? textureArrayManager.highResArray,
   };

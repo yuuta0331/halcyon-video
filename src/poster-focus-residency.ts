@@ -149,6 +149,11 @@ export class PosterFocusResidency {
     return true;
   }
 
+  markPendingPixels(movieId: string): void {
+    const rec = this.records.get(movieId);
+    if (rec && rec.phase !== 'ready') rec.phase = 'pendingPixels';
+  }
+
   markPendingUpload(movieId: string): void {
     const rec = this.records.get(movieId);
     if (rec && rec.phase !== 'ready') rec.phase = 'pendingUpload';

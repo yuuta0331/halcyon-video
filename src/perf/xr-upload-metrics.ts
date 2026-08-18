@@ -7,6 +7,9 @@ export interface XrUploadMetrics {
   uploadCallMs: number;
   texSubImageCalls: number;
   bytesUploaded: number;
+  texturesScheduledForUpload: number;
+  bytesScheduledForUpload: number;
+  uploadPreparationMs: number;
   pendingBase: number;
   pendingNear: number;
   pendingFocus: number;
@@ -28,6 +31,9 @@ const blank = (): XrUploadMetrics => ({
   uploadCallMs: 0,
   texSubImageCalls: 0,
   bytesUploaded: 0,
+  texturesScheduledForUpload: 0,
+  bytesScheduledForUpload: 0,
+  uploadPreparationMs: 0,
   pendingBase: 0,
   pendingNear: 0,
   pendingFocus: 0,
@@ -54,6 +60,17 @@ export function noteGpuSubmit(input: { durationMs: number; texSubImageCalls: num
   metrics.uploadCallMs += input.durationMs;
   metrics.texSubImageCalls += input.texSubImageCalls;
   metrics.bytesUploaded += input.bytes;
+}
+
+/** JS scheduled Three.js upload (needsUpdate). Not a measured gl.texSubImage* call. */
+export function noteScheduledUpload(input: {
+  textures: number;
+  bytes: number;
+  preparationMs: number;
+}): void {
+  metrics.texturesScheduledForUpload += input.textures;
+  metrics.bytesScheduledForUpload += input.bytes;
+  metrics.uploadPreparationMs += input.preparationMs;
 }
 
 export function noteUploadQueue(pending: { base: number; near: number; focus: number }): void {

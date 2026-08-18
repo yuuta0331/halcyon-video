@@ -108,12 +108,28 @@ export function shelfPosterSourceRequest(): PosterResolutionAudit['sourceRequest
 }
 
 /**
- * FOCUS fetch URL. Never invents pixels; only raises an existing cap so the
- * server can send a larger original. Does not log the URL (may contain tokens).
+ * FOCUS fetch URL. Never invents pixels; only raises an existing cap or adds a
+ * documented Jellyfin maxWidth/maxHeight so the server can send a source near
+ * 640×960 instead of a huge native Primary. Does not log the URL (may contain tokens).
  */
 export function rewritePosterUrlForFocus(url: string): string {
   try {
     const u = new URL(url);
+    const jellyfinPrimary = /\/Items\/[^/]+\/Images\/Primary$/i.test(u.pathname);
+    if (jellyfinPrimary) {
+      if (!u.searchParams.has('maxWidth')) {
+        u.searchParams.set('maxWidth', String(POSTER_FOCUS_WIDTH));
+      } else {
+        const cur = Number(u.searchParams.get('maxWidth'));
+        if (!Number.isFinite(cur) || cur < POSTER_FOCUS_WIDTH) {
+          u.searchParams.set('maxWidth', String(POSTER_FOCUS_WIDTH));
+        }
+      }
+      if (!u.searchParams.has('maxHeight')) {
+        u.searchParams.set('maxHeight', String(POSTER_FOCUS_HEIGHT));
+      }
+      return u.toString();
+    }
     if (u.searchParams.has('maxWidth')) {
       const cur = Number(u.searchParams.get('maxWidth'));
       if (!Number.isFinite(cur) || cur < POSTER_FOCUS_WIDTH) {

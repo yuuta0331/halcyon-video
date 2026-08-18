@@ -114,6 +114,10 @@ export function canEnqueueExpensive(): boolean {
   return state.pendingExpensive < XR_EXPENSIVE_QUEUE_CAP;
 }
 
+export function expensivePendingCount(): number {
+  return state.pendingExpensive;
+}
+
 export function decideExpensiveUpload(nowMs: number = state.lastSampleMs): DetailUploadDecision {
   const motion: MotionClass = state.moving ? 'MOVING' : 'STABLE';
   if (state.expensiveThisFrame >= XR_EXPENSIVE_PER_FRAME) {

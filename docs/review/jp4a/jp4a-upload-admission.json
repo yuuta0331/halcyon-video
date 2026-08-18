@@ -1,0 +1,63 @@
+{
+  "name": "JP4A_UPLOAD_ADMISSION",
+  "classification": "DESKTOP_BROWSER",
+  "pass": true,
+  "probe": {
+    "classification": "DESKTOP_BROWSER",
+    "QUEST_HARDWARE": "NOT_EXECUTED",
+    "pass": true,
+    "queueCap": 8,
+    "afterPressure": {
+      "pendingExpensive": 7,
+      "queued": {
+        "base": 0,
+        "near": 7,
+        "focus": 0
+      },
+      "pendingUpload": 7,
+      "leased": 9
+    },
+    "afterFocus": {
+      "queued": {
+        "base": 0,
+        "near": 7,
+        "focus": 1
+      },
+      "focusPendingUpload": 1,
+      "focusInFlight": true,
+      "focusPhase": "pendingUpload"
+    },
+    "afterDrain": {
+      "pending": 0,
+      "pendingExpensive": 0,
+      "focusReady": true,
+      "focusActive": true,
+      "nearReady": 12,
+      "pendingUpload": 0,
+      "leased": 12,
+      "lutStaleFocus": null
+    },
+    "detailReject": {
+      "acceptedFillers": 7,
+      "phase": "pendingPixels",
+      "uploadInFlight": false,
+      "pendingUpload": 0
+    },
+    "focusRejectOrPriority": {
+      "phase": "pendingUpload",
+      "uploadInFlight": true,
+      "queuedFocus": 1,
+      "pendingUpload": 1
+    },
+    "stale": {
+      "deadResident": false,
+      "lutHasDead": 11
+    },
+    "metrics": {
+      "texSubImageCalls": 0,
+      "texturesScheduledForUpload": 0,
+      "bytesScheduledForUpload": 0
+    },
+    "note": "Admission/activation integration. Not Quest GPU time."
+  }
+}

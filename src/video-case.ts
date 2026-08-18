@@ -22,7 +22,7 @@ import { getLowResFrontMaterial, disposeLowResFrontMaterials } from './hero-lowr
 // its line budget — see dvd-overlays.ts's header). They import this file's
 // shared text/measure helpers back; the cycle is function-level only.
 import { drawDvd2003Overlays, drawDvdBlueOverlays, DVD_BLUE_WRAP_LAYOUT } from './dvd-overlays';
-import { posterArrayUniforms, posterShaderChunk } from './poster-shader';
+import { compileProductionPosterFront } from './poster-front-compile';
 import {
   queueTextureUpload,
   textureArrayManager,
@@ -4795,73 +4795,7 @@ export function initGlobalMaterials() {
   globalFrontMaterialRegular.defines.USE_UV = '';
   globalFrontMaterialRegular.defines.REPR_MAP_ARRAY = '';
   globalFrontMaterialRegular.onBeforeCompile = (shader) => {
-    globalFrontMaterialRegular!.userData.compiledUniformsList = globalFrontMaterialRegular!.userData.compiledUniformsList || [];
-
-    const arrays = posterArrayUniforms(shader);
-    const uPosterCropX = shader.uniforms.uPosterCropX = { value: POSTER_CROP_X };
-
-    globalFrontMaterialRegular!.userData.compiledUniformsList.push({
-      ...arrays,
-      uPosterCropX
-    });
-
-    shader.vertexShader = `
-      attribute float aTextureIndex;
-      attribute float aPosterCropSkip;
-      varying float vTextureIndex;
-      varying float vPosterCropSkip;
-      ${shader.vertexShader}
-    `.replace(
-      '#include <uv_vertex>',
-      `
-      vUv = uv;
-      `
-    ).replace(
-      '#include <begin_vertex>',
-      `
-      #include <begin_vertex>
-      vTextureIndex = aTextureIndex;
-      vPosterCropSkip = aPosterCropSkip;
-      `
-    );
-
-    shader.fragmentShader = `
-      ${posterShaderChunk()}
-      uniform sampler2D highResLoadedTex;
-      uniform float maxMoviesCount;
-      uniform float uPosterCropX;
-      varying float vTextureIndex;
-      varying float vPosterCropSkip;
-      ${shader.fragmentShader}
-    `.replace(
-      '#include <map_fragment>',
-      `
-      #if defined( REPR_MAP_ARRAY )
-        // On VHS the face is narrower than the poster, so crop the poster's
-        // sides (uPosterCropX per side) rather than squashing it. 0 on DVD,
-        // and 0 for crop-exempt instances (game boxes keep their own face
-        // dims in both mediums, so their fill-decoded art must not be cut).
-        float cropX = uPosterCropX * (1.0 - vPosterCropSkip);
-        vec2 posterUv = vec2(cropX + vUv.x * (1.0 - 2.0 * cropX), vUv.y);
-        // Gradients computed in uniform control flow, before branching on
-        // loadStatus — see samplePosterBank.
-        vec2 posterUvDx = dFdx(posterUv);
-        vec2 posterUvDy = dFdy(posterUv);
-        float loadStatus = texture(highResLoadedTex, vec2((vTextureIndex + 0.5) / maxMoviesCount, 0.5)).r;
-        vec4 mapTexel;
-        if (loadStatus > 0.8) {
-          mapTexel = samplePosterBank(true, posterUv, vTextureIndex, posterUvDx, posterUvDy);
-        } else if (loadStatus > 0.3) {
-          mapTexel = samplePosterBank(false, posterUv, vTextureIndex, posterUvDx, posterUvDy);
-        } else {
-          mapTexel = texture(map, posterUv);
-        }
-        diffuseColor *= mapTexel;
-      #else
-        #include <map_fragment>
-      #endif
-      `
-    );
+    compileProductionPosterFront(globalFrontMaterialRegular!, shader, POSTER_CROP_X, 'regular');
   };
 
   // 2. Animated front material
@@ -4870,82 +4804,7 @@ export function initGlobalMaterials() {
   globalFrontMaterialAnimated.defines.USE_UV = '';
   globalFrontMaterialAnimated.defines.REPR_MAP_ARRAY = '';
   globalFrontMaterialAnimated.onBeforeCompile = (shader) => {
-    globalFrontMaterialAnimated!.userData.compiledUniformsList = globalFrontMaterialAnimated!.userData.compiledUniformsList || [];
-
-    const arrays = posterArrayUniforms(shader);
-    const uPosterCropX = shader.uniforms.uPosterCropX = { value: POSTER_CROP_X };
-
-    globalFrontMaterialAnimated!.userData.compiledUniformsList.push({
-      ...arrays,
-      uPosterCropX
-    });
-
-    shader.vertexShader = `
-      attribute float aTextureIndex;
-      attribute float aPosterCropSkip;
-      varying float vTextureIndex;
-      varying float vPosterCropSkip;
-      ${shader.vertexShader}
-    `.replace(
-      '#include <uv_vertex>',
-      `
-      vUv = uv;
-      `
-    ).replace(
-      '#include <begin_vertex>',
-      `
-      #include <begin_vertex>
-      vTextureIndex = aTextureIndex;
-      vPosterCropSkip = aPosterCropSkip;
-      `
-    );
-
-    shader.fragmentShader = `
-      ${posterShaderChunk()}
-      uniform sampler2D highResLoadedTex;
-      uniform float maxMoviesCount;
-      uniform float uPosterCropX;
-      varying float vTextureIndex;
-      varying float vPosterCropSkip;
-      ${shader.fragmentShader}
-    `.replace(
-      '#include <map_fragment>',
-      `
-      #if defined( REPR_MAP_ARRAY )
-        float border = 0.04;
-        // scaledUv/posterUv and their screen-space derivatives are computed
-        // unconditionally (outside the border if/else) so dFdx/dFdy — which,
-        // like implicit-LOD texture(), is undefined in non-uniform control
-        // flow per the GLSL ES 3.00 spec — always runs in uniform control
-        // flow, regardless of whether a given fragment is in the border strip.
-        vec2 scaledUv = vec2(vUv.x / (1.0 - border), (vUv.y - border) / (1.0 - 2.0 * border));
-        float cropX = uPosterCropX * (1.0 - vPosterCropSkip);
-        vec2 posterUv = vec2(cropX + scaledUv.x * (1.0 - 2.0 * cropX), scaledUv.y);
-        vec2 posterUvDx = dFdx(posterUv);
-        vec2 posterUvDy = dFdy(posterUv);
-        if (vUv.x > 1.0 - border || vUv.y < border || vUv.y > 1.0 - border) {
-          diffuseColor.rgb = vec3(1.0);
-        } else {
-          // See samplePosterBank for why this uses an explicit gradient:
-          // mip-mapped arrays + a branch that differs between adjacent
-          // instanced quads means implicit-LOD texture() calls here would be
-          // in non-uniform control flow.
-          float loadStatus = texture(highResLoadedTex, vec2((vTextureIndex + 0.5) / maxMoviesCount, 0.5)).r;
-          vec4 mapTexel;
-          if (loadStatus > 0.8) {
-            mapTexel = samplePosterBank(true, posterUv, vTextureIndex, posterUvDx, posterUvDy);
-          } else if (loadStatus > 0.3) {
-            mapTexel = samplePosterBank(false, posterUv, vTextureIndex, posterUvDx, posterUvDy);
-          } else {
-            mapTexel = texture(map, posterUv);
-          }
-          diffuseColor *= mapTexel;
-        }
-      #else
-        #include <map_fragment>
-      #endif
-      `
-    );
+    compileProductionPosterFront(globalFrontMaterialAnimated!, shader, POSTER_CROP_X, 'animated');
   };
 
   // 3. Regular spine material

@@ -7,7 +7,7 @@ import {
   POSTER_FOCUS_WIDTH,
 } from './poster-quality.ts';
 import { posterFocusResidency } from './poster-focus-residency.ts';
-import { noteGpuSubmit } from './perf/xr-upload-metrics.ts';
+import { noteScheduledUpload } from './perf/xr-upload-metrics.ts';
 
 let textures: Array<THREE.DataTexture | null> = [];
 let dummy: THREE.DataTexture | null = null;
@@ -99,9 +99,11 @@ export function uploadPosterFocusTexture(
   if (pixels.length < need) return false;
   const data = tex.image.data as Uint8Array;
   const n = Math.min(data.length, need);
+  const t0 = typeof performance !== 'undefined' ? performance.now() : 0;
   data.set(pixels.subarray(0, n));
   tex.needsUpdate = true;
-  noteGpuSubmit({ durationMs: 0, texSubImageCalls: 1, bytes: n });
+  const preparationMs = typeof performance !== 'undefined' ? performance.now() - t0 : 0;
+  noteScheduledUpload({ textures: 1, bytes: n, preparationMs });
   return true;
 }
 

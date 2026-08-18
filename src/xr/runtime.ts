@@ -82,7 +82,8 @@ import {
   requestUiPlacement,
   takeUiPlacementFromViewerPose,
 } from './ui-place-pending.ts';
-import { HardwarePosterDiagnostic } from './hardware-poster-diagnostic.ts';
+import { createHardwarePosterDiagnostic } from './hw-diag-factory.ts';
+import type { HardwarePosterDiagnostic } from './hardware-poster-diagnostic.ts';
 import { beginXrUploadFrame, detailUploadPolicySnapshot, sampleXrMotion } from '../perf/xr-detail-upload-policy.ts';
 import { noteMotionPolicy, noteXrFrameDelta } from '../perf/xr-upload-metrics.ts';
 import { setPresentationMode } from '../perf/presentation-mode.ts';
@@ -401,8 +402,8 @@ export class XrRuntime {
     this.rig = new XrPlayerRig(this.host.camera);
     this.rig.attach(this.host.scene);
     if (this.flags.posterHwDiag) {
-      this.hwDiag = new HardwarePosterDiagnostic();
-      this.hwDiag.attach(this.rig.xrOrigin);
+      this.hwDiag = createHardwarePosterDiagnostic();
+      this.hwDiag.attach(this.host.scene, this.rig.xrOrigin);
     }
     this.ensureUi();
     if (!this.flags.minimal) this.installControllers(xrMgr);

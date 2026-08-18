@@ -65,6 +65,7 @@ import {
   queueTextureUpload,
   resetTextureUploadQueueForTests,
   setUploadTurbo,
+  type UploadEnqueueResult,
 } from './perf/texture-upload-queue';
 
 export {
@@ -77,6 +78,7 @@ export {
   queueTextureUpload,
   resetTextureUploadQueueForTests,
   setUploadTurbo,
+  type UploadEnqueueResult,
 };
 
 // Poster DataArrayTextures (low/high-res) are mip-mapped for distance LOD, but

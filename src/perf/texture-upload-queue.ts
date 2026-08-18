@@ -16,22 +16,29 @@ import {
 } from './store-visible-work.ts';
 import { refreshStoreVisualReady } from '../store-visual-ready.ts';
 import {
-  canEnqueueExpensive,
   decideExpensiveUpload,
+  expensivePendingCount,
   isExpensiveUpload,
   noteExpensiveDeferred,
   noteExpensivePromotion,
   noteExpensiveQueued,
+  XR_EXPENSIVE_QUEUE_CAP,
   type UploadCostClass,
 } from './xr-detail-upload-policy.ts';
 import { noteUploadQueue } from './xr-upload-metrics.ts';
+import { requestPosterDetailWake } from './poster-detail-wake.ts';
 
 export type TextureUploadMeta = {
   scope?: UploadScope;
   generation?: number;
   movieId?: string;
   cost?: UploadCostClass;
+  onEvict?: () => void;
 };
+
+export type UploadEnqueueResult =
+  | { accepted: true }
+  | { accepted: false; reason: 'expensive-queue-cap' };
 
 type QueuedUpload = {
   run: () => void;
@@ -39,6 +46,7 @@ type QueuedUpload = {
   generation: number;
   movieId: string | null;
   cost: UploadCostClass;
+  onEvict?: () => void;
 };
 
 const priorityUploadQueue: QueuedUpload[] = [];
@@ -96,6 +104,7 @@ function wrapTask(task: () => void, meta?: TextureUploadMeta): QueuedUpload {
     generation,
     movieId,
     cost,
+    onEvict: meta?.onEvict,
     run: () => {
       try {
         if (movieId && !storeVisibleWork.allowsGpuMutation(movieId, generation)) {
@@ -105,6 +114,7 @@ function wrapTask(task: () => void, meta?: TextureUploadMeta): QueuedUpload {
           if (storeVisibleWork.isStableFallback(movieId)) {
             storeVisibleWork.noteLateRealRejected();
           }
+          meta?.onEvict?.();
           return;
         }
         task();
@@ -124,6 +134,7 @@ function dropFrom(queue: QueuedUpload[], pred: (item: QueuedUpload) => boolean):
     queue.splice(i, 1);
     if (isExpensiveUpload(item.cost)) noteExpensiveQueued(-1);
     storeVisibleWork.noteUploadFinished(item.scope);
+    item.onEvict?.();
     if (item.movieId && storeVisibleWork.isStableFallback(item.movieId)) {
       storeVisibleWork.noteLateRealRejected();
     } else if (item.generation !== storeVisibleWork.currentGeneration()) {
@@ -203,6 +214,7 @@ function processUploads(source: UploadPumpOwner = 'page') {
       console.warn('Texture upload task failed:', err);
     }
     count++;
+    if (isExpensiveUpload(item.cost)) requestPosterDetailWake();
   }
   for (let i = skipped.length - 1; i >= 0; i--) {
     priorityUploadQueue.unshift(skipped[i]!);
@@ -255,12 +267,28 @@ export function queueTextureUpload(
   task: () => void,
   lane: 'bulk' | 'priority' = 'bulk',
   meta?: TextureUploadMeta,
-) {
+): UploadEnqueueResult {
   const cost = meta?.cost ?? 'base';
-  if (isExpensiveUpload(cost) && !canEnqueueExpensive()) return;
+  if (isExpensiveUpload(cost)) {
+    const pending = expensivePendingCount();
+    if (cost === 'near') {
+      const reserve = queuedFocusCount() === 0 ? 1 : 0;
+      if (pending >= XR_EXPENSIVE_QUEUE_CAP - reserve) {
+        return { accepted: false, reason: 'expensive-queue-cap' };
+      }
+    } else if (pending >= XR_EXPENSIVE_QUEUE_CAP) {
+      if (!dropOneQueuedNear()) {
+        return { accepted: false, reason: 'expensive-queue-cap' };
+      }
+    }
+  }
   posterUploadJobsQueued++;
   const item = wrapTask(task, meta);
-  (lane === 'priority' ? priorityUploadQueue : textureUploadQueue).push(item);
+  if (cost === 'focus') {
+    priorityUploadQueue.unshift(item);
+  } else {
+    (lane === 'priority' ? priorityUploadQueue : textureUploadQueue).push(item);
+  }
   publishUploadQueueMetrics();
   if (!isUploading) {
     isUploading = true;
@@ -271,4 +299,30 @@ export function queueTextureUpload(
       isUploading = false;
     }
   }
+  return { accepted: true };
+}
+
+function queuedFocusCount(): number {
+  let n = 0;
+  for (const q of priorityUploadQueue) if (q.cost === 'focus') n++;
+  for (const q of textureUploadQueue) if (q.cost === 'focus') n++;
+  return n;
+}
+
+function dropOneQueuedNear(): boolean {
+  const queues = [textureUploadQueue, priorityUploadQueue];
+  for (const queue of queues) {
+    for (let i = queue.length - 1; i >= 0; i--) {
+      const item = queue[i]!;
+      if (item.cost !== 'near') continue;
+      queue.splice(i, 1);
+      noteExpensiveQueued(-1);
+      storeVisibleWork.noteUploadFinished(item.scope);
+      item.onEvict?.();
+      requestPosterDetailWake();
+      publishUploadQueueMetrics();
+      return true;
+    }
+  }
+  return false;
 }

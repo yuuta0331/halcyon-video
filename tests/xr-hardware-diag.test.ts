@@ -35,8 +35,8 @@ test('mode metadata reports shader/texture/depth policy', () => {
   assert.equal(a.array, false);
   assert.equal(a.depthTest, false);
   assert.equal(c.array, true);
-  assert.equal(c.materialType, 'ShaderMaterial-array');
-  assert.equal(e.materialType, 'MeshStandardMaterial');
+  assert.equal(c.shaderPath, 'posterShaderChunk');
+  assert.equal(e.focusEnabled, true);
   assert.equal(e.depthWrite, true);
   assert.equal(a.stereoBothEyes, true);
 });

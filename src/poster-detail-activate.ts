@@ -15,7 +15,7 @@ export interface DetailMovieRef {
   posterUrl?: string;
 }
 
-export interface DetailActivateDeps {
+export type DetailActivateDeps = {
   getMovie(id: string): DetailMovieRef | null;
   getGlobalIndex(id: string): number;
   isDesired(id: string): boolean;
@@ -28,13 +28,14 @@ export interface DetailActivateDeps {
     onPixels: (pixels: Uint8Array) => void,
     onSettled?: () => void,
   ): void;
-  queueUpload(run: () => void, movieId: string, generation: number): void;
+  queueUpload(run: () => void, movieId: string, generation: number): { accepted: boolean } | void;
   uploadLayer(slot: number, pixels: Uint8Array): boolean;
   setLut(globalIndex: number, slotPlusOne: number): boolean;
   clearLut(globalIndex: number): void;
   requestRender?: () => void;
   now?: () => number;
-}
+  onUploadDeferred?: (movieId: string) => void;
+};
 
 export const DETAIL_PIXEL_BYTES = 320 * 480 * 4;
 
@@ -112,7 +113,7 @@ function finishUpload(
   if (rec.uploadInFlight) return;
   rec.uploadInFlight = true;
   residency.markPendingUpload(movieId);
-  deps.queueUpload(() => {
+  const admitted = deps.queueUpload(() => {
     rec.uploadInFlight = false;
     if (!requestStillOwns(movieId, lease, generation, deps, residency)) return;
     if (!wanted(movieId, deps)) {
@@ -133,6 +134,11 @@ function finishUpload(
     retry.noteSuccess(movieId);
     deps.requestRender?.();
   }, movieId, generation);
+  if (admitted && admitted.accepted === false) {
+    rec.uploadInFlight = false;
+    residency.markPendingPixels(movieId);
+    deps.onUploadDeferred?.(movieId);
+  }
 }
 
 function startLoad(

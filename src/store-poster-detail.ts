@@ -6,6 +6,7 @@ import * as THREE from 'three';
 import { posterPixelCache, posterQueue } from './video-case';
 import { storeVisibleResidency } from './store-visible-residency';
 import { dropQueuedUploadsForMovie, queueTextureUpload, textureArrayManager } from './poster-textures';
+import { requestPosterDetailWake, setPosterDetailWakeHandler, resetPosterDetailWakeForTests } from './perf/poster-detail-wake';
 import { storeVisibleWork } from './perf/store-visible-work';
 import { latestViewerWorldPose } from './xr/viewer-pose';
 import {
@@ -32,6 +33,7 @@ import { runInlineProfileProbe } from './perf/inline-profile-probe';
 import { runFocusQualityProbe } from './perf/focus-quality-probe';
 import { runUploadPolicyProbe } from './perf/upload-policy-probe';
 import { runHardwarePosterDiagProbe } from './perf/hardware-diag-probe';
+import { runUploadAdmissionProbe } from './perf/upload-admission-probe';
 import { activateFocusTitle, demoteFocusTitle, type FocusActivateDeps } from './poster-focus-activate';
 import { posterFocusResidency } from './poster-focus-residency';
 import {
@@ -57,6 +59,23 @@ let lastSelected: string | null = null;
 let lastDesired = new Set<string>();
 const spatial: DetailCandidate[] = [];
 const movies = new Map<string, { id: string; posterUrl?: string }>();
+let wakeScene: StoreScene | null = null;
+
+function evictDetailUpload(movieId: string): void {
+  const rec = posterDetailResidency.peekRecord(movieId);
+  if (!rec) return;
+  rec.uploadInFlight = false;
+  posterDetailResidency.markPendingPixels(movieId);
+  requestPosterDetailWake();
+}
+
+function evictFocusUpload(movieId: string): void {
+  const rec = posterFocusResidency.peekRecord(movieId);
+  if (!rec) return;
+  rec.uploadInFlight = false;
+  posterFocusResidency.markPendingPixels(movieId);
+  requestPosterDetailWake();
+}
 
 export function resetPosterDetailReconcileForTests(): void {
   lastX = NaN;
@@ -67,6 +86,8 @@ export function resetPosterDetailReconcileForTests(): void {
   spatial.length = 0;
   movies.clear();
   posterDetailRetry.reset();
+  wakeScene = null;
+  resetPosterDetailWakeForTests();
 }
 
 export function cachePosterDetailSpatial(slots: MovieSlot[]): void {
@@ -141,12 +162,19 @@ function makeDeps(scene: StoreScene): DetailActivateDeps {
       posterQueue.load(movie as never, priority, onPixels, onSettled);
     },
     queueUpload: (run, movieId, generation) => {
-      queueTextureUpload(run, 'priority', { scope: 'ON_DEMAND', generation, movieId, cost: 'near' });
+      return queueTextureUpload(run, 'priority', {
+        scope: 'ON_DEMAND',
+        generation,
+        movieId,
+        cost: 'near',
+        onEvict: () => evictDetailUpload(movieId),
+      });
     },
     uploadLayer: (slot, pixels) => uploadPosterDetailLayer(scene.renderer, slot, pixels),
     setLut: (globalIndex, slotPlusOne) => setPosterDetailLut(globalIndex, slotPlusOne),
     clearLut: (globalIndex) => { clearPosterDetailLut(globalIndex); },
     requestRender: () => scene.requestRender(),
+    onUploadDeferred: () => requestPosterDetailWake(),
   };
 }
 
@@ -167,18 +195,29 @@ function makeFocusDeps(scene: StoreScene): FocusActivateDeps {
       void decodeFocusFromUrl(movie.posterUrl).then(onDecoded).catch(() => onSettled?.());
     },
     queueUpload: (run, movieId, generation) => {
-      queueTextureUpload(run, 'priority', { scope: 'ON_DEMAND', generation, movieId, cost: 'focus' });
+      return queueTextureUpload(run, 'priority', {
+        scope: 'ON_DEMAND',
+        generation,
+        movieId,
+        cost: 'focus',
+        onEvict: () => evictFocusUpload(movieId),
+      });
     },
     uploadFocus: (slot, pixels, width, height) => uploadPosterFocusTexture(slot, pixels, width, height),
     setActive: (slot, globalIndex) => setPosterFocusActive(slot, globalIndex),
     clearActive: () => clearPosterFocusActive(),
     requestRender: () => scene.requestRender(),
+    onUploadDeferred: () => requestPosterDetailWake(),
   };
 }
 
 export function bindPosterDetailTier(scene: StoreScene, slots: MovieSlot[]): void {
   if (!textureArrayManager.residencyBound) return;
   resetPosterDetailReconcileForTests();
+  wakeScene = scene;
+  setPosterDetailWakeHandler(() => {
+    if (wakeScene) reconcilePosterDetail(wakeScene, { force: true });
+  });
   cachePosterDetailSpatial(slots);
   posterDetailRetry.reset();
   initPosterDetailGpu({
@@ -250,6 +289,7 @@ export function installPosterDetailTestHooks(scene: StoreScene): void {
     __focusQualityProbe?: () => Promise<unknown>;
     __uploadPolicyProbe?: () => unknown;
     __hardwarePosterDiagProbe?: () => unknown;
+    __uploadAdmissionProbe?: () => unknown;
   };
   w.__posterDetail = () => posterDetailResourceSnapshot();
   w.__posterFocus = () => posterFocusResourceSnapshot();
@@ -296,4 +336,5 @@ export function installPosterDetailTestHooks(scene: StoreScene): void {
   };
   w.__uploadPolicyProbe = () => runUploadPolicyProbe();
   w.__hardwarePosterDiagProbe = () => runHardwarePosterDiagProbe(scene.renderer);
+  w.__uploadAdmissionProbe = () => runUploadAdmissionProbe();
 }
