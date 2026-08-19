@@ -40,7 +40,7 @@ export class XrFpsHud {
   sync(parent: THREE.Object3D | null, pose?: {
     x: number; y: number; z: number;
     qx: number; qy: number; qz: number; qw: number;
-  } | null, atMs = typeof performance !== 'undefined' ? performance.now() : 0): void {
+  } | null, atMs = typeof performance !== 'undefined' ? performance.now() : 0, targetHz: number | null = null): void {
     const on = isFpsMeterEnabled();
     if (!on || !parent) {
       this.mesh.visible = false;
@@ -62,7 +62,8 @@ export class XrFpsHud {
     const low = readout.p99Ms == null ? '1% --' : `1% ${Math.round(1000 / readout.p99Ms)}`;
     const worst = readout.worstMs == null ? 'worst --' : `worst ${readout.worstMs.toFixed(1)}ms`;
     const mean = readout.meanMs == null ? 'mean --' : `mean ${readout.meanMs.toFixed(1)}ms`;
-    const key = `${major}|${low}|${worst}|${mean}`;
+    const target = `target ${targetHz == null ? '--' : Math.round(targetHz)} Hz`;
+    const key = `${major}|${low}|${worst}|${mean}|${target}`;
     if (key === this.lastPaintKey) return;
     this.lastPaintKey = key;
     const ctx = this.canvas.getContext('2d');
@@ -74,14 +75,14 @@ export class XrFpsHud {
     ctx.lineWidth = 8;
     ctx.strokeRect(5, 5, W - 10, H - 10);
     ctx.fillStyle = '#f4fffc';
-    ctx.font = 'bold 116px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace';
-    ctx.fillText(major, 34, 128);
+    ctx.font = 'bold 126px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace';
+    ctx.fillText(major, 34, 134);
     ctx.fillStyle = '#9fe8d8';
     ctx.font = '52px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace';
     ctx.fillText(`${low}   ${worst}`, 36, 226);
     ctx.fillStyle = '#d8e5e2';
     ctx.font = '42px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace';
-    ctx.fillText(mean, 36, 300);
+    ctx.fillText(`${mean}   ${target}`, 36, 300);
     this.texture.needsUpdate = true;
   }
 
@@ -99,6 +100,8 @@ export class XrFpsHud {
       sizeM: FPS_HUD_SIZE_M,
       canvas: { width: W, height: H },
       paintIntervalMs: PAINT_INTERVAL_MS,
+      centeredForDirectGaze: true,
+      primaryText: 'FPS',
     };
   }
 

@@ -38,6 +38,15 @@ merge `351947a`. This slice does not reopen that verdict.
 | `jp4a-round5b2-review.md` | Round 5B.2 implementation/status package (new HEAD not run on Quest) |
 | `jp4a-round5b2-iwer.json` | IWER_EMULATED placement/world-stability/HUD/A–E logic (not hardware proof) |
 | `jp4a-round5b2-software-validation.json` | Unit/build/browser/IWER result summary; Quest not executed |
+| `jp4a-round5b3-review.md` | Round 5B.3 software handoff; new-head Quest not executed |
+| `jp4a-round5b3-investigation.md` | Live shelf, mip/bank/geometry/material/upload investigation and hypotheses |
+| `jp4a-round5b3-performance-analysis.md` | Confirmed CPU/upload causes and Quest-only performance unknowns |
+| `jp4a-round5b3-root-cause-matrix.md` | Falsifiable interpretation table for the next Quest result |
+| `jp4a-round5b3-quest-procedure.md` | Short `/xr-test/jp4a` single-run hardware procedure |
+| `jp4a-round5b3-hardware-result-template.md` | Privacy-safe result handoff template |
+| `jp4a-round5b3-software-validation.json` | Unit/build/browser/IWER summary; Quest not executed |
+| `jp4a-round5b3-iwer.json` | IWER-emulated console/session/persistence evidence; not hardware proof |
+| `jp4a-round5b3-console.png` | Quick Test Console browser capture |
 | `jp4a.5-catalog-delta-sync.md` | Deferred persistent catalog / delta sync (not in this PR) |
 | `jp4a-round4-preload-stability.json` | DESKTOP_BROWSER STORE_VISIBLE_BASE drain |
 | `jp4a-round4-production-multibank.json` | DESKTOP_BROWSER production shelf 3+ bank render |

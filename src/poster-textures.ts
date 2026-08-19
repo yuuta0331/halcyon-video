@@ -27,6 +27,8 @@ import { storeVisibleResidency } from './store-visible-residency';
 import { PosterResidencyWindow, estimatePosterArrayBytes, type PosterLease } from './poster-residency';
 import { pixelStorei } from './xr/gl-state';
 import { noteCpuWork, noteGpuSubmit } from './perf/xr-upload-metrics.ts';
+import { boxFilterPosterHalf, buildPosterMipChainForTest } from './poster-mip-chain.ts';
+export { buildPosterMipChainForTest } from './poster-mip-chain.ts';
 
 const SP_UPLOAD = perfSlot('texUploadMs');  // uploadTextureNow (initTexture + mipmaps)
 const CT_UPLOAD = perfSlot('texUploadN');
@@ -119,22 +121,6 @@ function getMipChainScratch(w: number, h: number): Array<{ data: Uint8Array; w: 
 // 2x2 box filter (clamped at odd edges). Averages in sRGB space — technically
 // generateMipmap on an sRGB texture filters in linear space, but at poster
 // scale the difference is invisible and the table-free path stays cheap.
-function boxFilterHalf(src: Uint8Array, sw: number, sh: number, dst: Uint8Array, dw: number, dh: number) {
-  for (let y = 0; y < dh; y++) {
-    const r0 = Math.min(y * 2, sh - 1) * sw;
-    const r1 = Math.min(y * 2 + 1, sh - 1) * sw;
-    for (let x = 0; x < dw; x++) {
-      const sx0 = Math.min(x * 2, sw - 1);
-      const sx1 = Math.min(x * 2 + 1, sw - 1);
-      const a = (r0 + sx0) << 2, b = (r0 + sx1) << 2, c = (r1 + sx0) << 2, d = (r1 + sx1) << 2;
-      const o = (y * dw + x) << 2;
-      dst[o] = (src[a] + src[b] + src[c] + src[d] + 2) >> 2;
-      dst[o + 1] = (src[a + 1] + src[b + 1] + src[c + 1] + src[d + 1] + 2) >> 2;
-      dst[o + 2] = (src[a + 2] + src[b + 2] + src[c + 2] + src[d + 2] + 2) >> 2;
-      dst[o + 3] = (src[a + 3] + src[b + 3] + src[c + 3] + src[d + 3] + 2) >> 2;
-    }
-  }
-}
 
 // The renderer is registered here so the upload queue can force each texture's
 // GPU upload + mipmap generation to happen *synchronously inside the budgeted
@@ -313,7 +299,7 @@ function updateTextureArrayLayerImpl(
       let sh = arrayTexture.image.height;
       for (let level = 0; level < chain.length; level++) {
         const mip = chain[level];
-        boxFilterHalf(src, sw, sh, mip.data, mip.w, mip.h);
+        boxFilterPosterHalf(src, sw, sh, mip.data, mip.w, mip.h);
         gl.texSubImage3D(
           gl.TEXTURE_2D_ARRAY,
           level + 1,
@@ -776,6 +762,26 @@ class TextureArrayManager {
     if (bank <= 0) return this.highResArray;
     if (bank === 1) return this.lowResArray ?? this.highResArray;
     return this.extraBanks[bank - 2] ?? null;
+  }
+
+  /** CPU mirror/mip evidence for one real bank layer; never includes an id/url. */
+  public debugMipChain(bank: number, layer: number) {
+    const tex = this.bankTexture(bank);
+    if (!tex) return null;
+    const { width, height, depth, data } = tex.image;
+    if (layer < 0 || layer >= depth || !data) return null;
+    const bytes = width * height * 4;
+    const source = (data as Uint8Array).slice(layer * bytes, (layer + 1) * bytes);
+    return buildPosterMipChainForTest(source, width, height).map((mip) => ({
+      level: mip.level,
+      width: mip.width,
+      height: mip.height,
+      byteLength: mip.data.byteLength,
+      firstPixel: Array.from(mip.data.subarray(0, 4)),
+      middlePixel: Array.from(mip.data.subarray((Math.floor((mip.width * mip.height) / 2)) * 4,
+        (Math.floor((mip.width * mip.height) / 2)) * 4 + 4)),
+      lastPixel: Array.from(mip.data.subarray(Math.max(0, mip.data.length - 4))),
+    }));
   }
 
   public bindDrawBank(bank: number): void {

@@ -2,7 +2,11 @@
 // diagnostic must not drift apart on vertex attributes or samplePosterBank.
 
 import type * as THREE from 'three';
-import { posterArrayUniforms, posterShaderChunk } from './poster-shader.ts';
+import {
+  livePosterShaderDiagnosticsEnabled,
+  posterArrayUniforms,
+  posterShaderChunk,
+} from './poster-shader.ts';
 
 export type PosterFrontCompileVariant = 'regular' | 'animated';
 
@@ -50,6 +54,17 @@ export function compileProductionPosterFront(
       varying float vPosterCropSkip;
       ${shader.fragmentShader}
     `.replace('#include <map_fragment>', mapFragment);
+  if (livePosterShaderDiagnosticsEnabled()) {
+    shader.fragmentShader = shader.fragmentShader.replace('#include <opaque_fragment>', `
+      // LIVE-UNLIT keeps the selected production geometry and chosen texture
+      // tier, but removes MeshStandard lighting as the sole diagnostic change.
+      if (livePosterDiagIndex >= 0.0 && abs(vTextureIndex - livePosterDiagIndex) < 0.5
+          && livePosterDiagMode == 7.0) {
+        outgoingLight = diffuseColor.rgb;
+      }
+      #include <opaque_fragment>
+      `);
+  }
 }
 
 const REGULAR_MAP_FRAGMENT = `

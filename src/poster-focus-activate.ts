@@ -4,6 +4,7 @@
 import { posterFocusResidency, type FocusLease, type PosterFocusResidency } from './poster-focus-residency.ts';
 import { POSTER_FOCUS_HEIGHT, POSTER_FOCUS_WIDTH } from './poster-quality.ts';
 import { focusPixelsFromSourceRgba, type FocusDecodeResult } from './poster-focus-decode.ts';
+import type { PosterFocusUploadTask } from './poster-focus-texture.ts';
 
 export interface FocusActivateDeps {
   getGlobalIndex(id: string): number;
@@ -16,7 +17,7 @@ export interface FocusActivateDeps {
     onSettled?: () => void,
   ): void;
   queueUpload(run: () => void, movieId: string, generation: number): { accepted: boolean } | void;
-  uploadFocus(slot: number, pixels: Uint8Array, width: number, height: number): boolean;
+  createUploadTask(slot: number, pixels: Uint8Array, width: number, height: number): PosterFocusUploadTask | null;
   setActive(slot: number, globalIndex: number): void;
   clearActive(globalIndex: number): void;
   requestRender?: () => void;
@@ -62,34 +63,76 @@ function finish(
   }
   if (rec.uploadInFlight) return;
   rec.uploadInFlight = true;
+  rec.uploadProgress = 0;
   residency.markPendingUpload(movieId);
-  const admitted = deps.queueUpload(() => {
+  const upload = deps.createUploadTask(
+    lease.slot, decoded.pixels, POSTER_FOCUS_WIDTH, POSTER_FOCUS_HEIGHT,
+  );
+  if (!upload) {
     rec.uploadInFlight = false;
-    if (!stillOwns(lease, generation, deps, residency)) return;
-    if (!deps.isSelected(movieId) && residency.selected() !== movieId) {
-      deps.clearActive(rec.globalIndex);
-      residency.release(movieId);
-      return;
-    }
-    if (!deps.uploadFocus(lease.slot, decoded.pixels, POSTER_FOCUS_WIDTH, POSTER_FOCUS_HEIGHT)) {
-      deps.clearActive(rec.globalIndex);
-      residency.release(movieId);
-      return;
-    }
-    residency.markReady(movieId, {
-      sourceW: decoded.sourceWidth,
-      sourceH: decoded.sourceHeight,
-      decodeW: decoded.decodeWidth,
-      decodeH: decoded.decodeHeight,
-    });
-    deps.setActive(lease.slot, rec.globalIndex);
-    deps.requestRender?.();
-  }, movieId, generation);
-  if (admitted && admitted.accepted === false) {
-    rec.uploadInFlight = false;
-    residency.markPendingPixels(movieId);
-    deps.onUploadDeferred?.(movieId);
+    deps.clearActive(rec.globalIndex);
+    residency.release(movieId);
+    return;
   }
+  let retryTimer: ReturnType<typeof setTimeout> | null = null;
+  const failOrStale = () => {
+    if (retryTimer != null) clearTimeout(retryTimer);
+    retryTimer = null;
+    upload.cancel();
+    const live = residency.peekRecord(movieId);
+    if (live) live.uploadInFlight = false;
+  };
+  const queueNext = () => {
+    if (!stillOwns(lease, generation, deps, residency)) {
+      failOrStale();
+      return;
+    }
+    if (!deps.isSelected(movieId) && residency.selected() !== movieId) {
+      failOrStale();
+      deps.clearActive(rec.globalIndex);
+      residency.release(movieId);
+      return;
+    }
+    const admitted = deps.queueUpload(() => {
+      if (!stillOwns(lease, generation, deps, residency)) {
+        failOrStale();
+        return;
+      }
+      try {
+        const progress = upload.runChunk();
+        rec.uploadProgress = progress.progress;
+        if (!progress.done) {
+          queueNext();
+          return;
+        }
+      } catch {
+        failOrStale();
+        deps.clearActive(rec.globalIndex);
+        residency.release(movieId);
+        return;
+      }
+      rec.uploadInFlight = false;
+      residency.markReady(movieId, {
+        sourceW: decoded.sourceWidth,
+        sourceH: decoded.sourceHeight,
+        decodeW: decoded.decodeWidth,
+        decodeH: decoded.decodeHeight,
+      });
+      // The sampler is switched only after the final actual texSubImage2D.
+      deps.setActive(lease.slot, rec.globalIndex);
+      deps.requestRender?.();
+    }, movieId, generation);
+    if (admitted && admitted.accepted === false) {
+      deps.onUploadDeferred?.(movieId);
+      // Capacity retry owns the decoded pixels and does not require head motion
+      // or a second network/decode. This timer does not render or add a rAF.
+      retryTimer = setTimeout(() => {
+        retryTimer = null;
+        queueNext();
+      }, 80);
+    }
+  };
+  queueNext();
 }
 
 export function activateFocusTitle(

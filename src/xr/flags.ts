@@ -20,6 +20,8 @@ export interface XrRuntimeFlags {
   raw: boolean;
   /** Diagnostic Three-native baseline (`?xrThreeBaseline=1`). */
   threeBaseline: boolean;
+  /** Short-route JP-4A Round 5B.3 hardware test console/session. */
+  jp4aTest: boolean;
 }
 
 export function readXrFlags(
@@ -38,6 +40,8 @@ export function readXrFlags(
     posterHwDiag: q.get('xrPosterHwDiag') === '1',
     raw: q.get('xrRaw') === '1',
     threeBaseline: q.get('xrThreeBaseline') === '1',
+    jp4aTest: (typeof location !== 'undefined' && location.pathname.replace(/\/$/, '') === '/xr-test/jp4a')
+      || q.get('xrTest') === 'jp4a',
   };
 }
 

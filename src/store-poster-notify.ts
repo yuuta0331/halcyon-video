@@ -3,6 +3,8 @@ import { setPosterIndexNotify, setPosterLoadedNotify, textureArrayManager } from
 import { noteStoreVisibleResolved } from './store-visual-ready';
 import { recordResourceSnapshot, setGpuLiveState } from './xr/gpu-diagnostics';
 import type { StoreScene } from './three-scene';
+import { posterIndexNotifyBankSafe } from './poster-bank-invariant.ts';
+export { posterIndexNotifyBankSafe } from './poster-bank-invariant.ts';
 
 /** Cover-loaded / residency-index callbacks that re-dirty the wearing slots. */
 export function bindStorePosterNotifies(scene: StoreScene): void {
@@ -21,6 +23,16 @@ export function bindStorePosterNotifies(scene: StoreScene): void {
     const slots = scene.slotsByMovieId.get(movieId);
     if (!slots) return;
     for (const slot of slots) {
+      const frontBank = Number(slot.frontMesh.userData.posterBank ?? 0);
+      const backBank = Number(slot.backMesh.userData.posterBank ?? 0);
+      if (textureArrayManager.mappingsFrozen && !posterIndexNotifyBankSafe(
+        index, textureArrayManager.bankSize, frontBank, backBank,
+      )) {
+        console.error('[posters] rejected frozen index notify across bank boundary', {
+          index, frontBank, backBank,
+        });
+        continue;
+      }
       const fIdx = slot.frontMesh.geometry.getAttribute('aTextureIndex') as THREE.InstancedBufferAttribute | undefined;
       if (fIdx) { fIdx.setX(slot.instanceIdx, index); fIdx.needsUpdate = true; }
       const bIdx = slot.backMesh.geometry.getAttribute('aTextureIndex') as THREE.InstancedBufferAttribute | undefined;

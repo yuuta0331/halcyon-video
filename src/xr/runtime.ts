@@ -70,9 +70,11 @@ import { XrUiShell } from './ui-shell';
 import { applyXrDepthNear, restoreCameraNear, DESKTOP_CAMERA_NEAR } from './near-plane';
 import { ensureXrEyesSeeWorld } from './stereo-view';
 import { XrFpsHud } from './fps-panel.ts';
+import { Jp4aTestHud } from './jp4a-test-hud.ts';
 import { placeHudFromViewerPose } from './hud-placement.ts';
 import {
   latestViewerPose,
+  latestViewerWorldPose,
   setViewerWorldPose,
   updateViewerPoseFromXrFrame,
   viewerPoseToWorld,
@@ -120,6 +122,15 @@ import {
   noteContextAttributes,
   noteSessionVisibility,
 } from './startup-journal';
+import {
+  jp4aTestSnapshot,
+  markJp4aXrEnded,
+  markJp4aXrStarted,
+  noteJp4aFocusState,
+  recordJp4aSample,
+  type Jp4aPhase,
+  type LivePosterMode,
+} from './jp4a-test-state.ts';
 
 export interface XrRuntimeHost {
   renderer: THREE.WebGLRenderer;
@@ -138,6 +149,10 @@ export interface XrRuntimeHost {
   setXrAnimationLoop: (enabled: boolean) => void;
   claimRenderLoop: () => void;
   getSettingsScene?: () => import('../settings-registry').SettingsApplyTarget | null;
+  onJp4aLockSlot?: (slot: MovieSlot) => { changed: boolean; verdict: string };
+  cycleJp4aMode?: (direction: -1 | 1) => LivePosterMode;
+  tickJp4aDiagnostic?: (viewer: { x: number; y: number; z: number } | null) => void;
+  jp4aDiagnosticSnapshot?: () => Record<string, unknown>;
 }
 
 type XrManager = THREE.WebGLRenderer['xr'];
@@ -194,10 +209,16 @@ export class XrRuntime {
   private uiShell: XrUiShell | null = null;
   private uiPlacedFromWorld = false;
   private fpsHud: XrFpsHud | null = null;
+  private jp4aHud: Jp4aTestHud | null = null;
   private hwDiag: HardwarePosterDiagnostic | null = null;
   private uiButtons = emptyXrButtonSnapshot();
   private prevUiButtons = emptyXrButtonSnapshot();
   private prevUiStick = { x: 0, y: 0 };
+  private jp4aPrevThumb = false;
+  private jp4aPrevSqueeze = false;
+  private jp4aLastSampleAt = -Infinity;
+  private jp4aSampleStartAt = 0;
+  private jp4aLastDistance: number | null = null;
   private onFrameRateChange = (): void => {
     this.startup.frameratechangeCount += 1;
     appendXrJournal('frameratechange', {
@@ -515,6 +536,10 @@ export class XrRuntime {
     setPresentationMode('IMMERSIVE_XR');
     this.host.onConsole('[XR] Immersive VR session started.', 'system');
     this.host.requestRender();
+    if (this.flags.jp4aTest && jp4aTestSnapshot()?.active) {
+      this.jp4aSampleStartAt = nowMs();
+      markJp4aXrStarted(Date.now(), this.classify());
+    }
     this.maybeInitOptionalLayers();
     this.publishDiagnostics();
   }
@@ -532,6 +557,7 @@ export class XrRuntime {
   tick(dt: number): void {
     if (this.ending || !this.presenting || !this.rig) return;
     this.updateControllers();
+    this.tickJp4aButtons();
     this.tickUi();
     const heading = this.rig.headingYaw();
     const sticks = this.locomotionSticks();
@@ -618,6 +644,8 @@ export class XrRuntime {
         viewerYaw: pose.yaw,
         frameId: pose.frameId,
       }));
+      const world = latestViewerWorldPose();
+      this.host.tickJp4aDiagnostic?.(world ? { x: world.x, y: world.y, z: world.z } : null);
       const sticks = this.locomotionSticks();
       sampleXrMotion({
         x: pose.x, y: pose.y, z: pose.z, yaw: pose.yaw,
@@ -631,6 +659,7 @@ export class XrRuntime {
         promotedWhileStable: pol.promotedWhileStable,
         fairnessForced: pol.fairnessForced,
       });
+      this.sampleJp4aTelemetry(at);
     }
   }
 
@@ -974,6 +1003,10 @@ export class XrRuntime {
       this.rayScratch.direction,
       WALK_INTERACT_RANGE,
     );
+    if (slot && this.flags.jp4aTest && jp4aTestSnapshot()?.active && this.host.onJp4aLockSlot) {
+      this.host.onJp4aLockSlot(slot);
+      return;
+    }
     if (slot) this.host.onSelectSlot(slot);
   }
 
@@ -1234,6 +1267,7 @@ export class XrRuntime {
     }
     if (!this.uiShell) this.uiShell = new XrUiShell();
     if (!this.fpsHud) this.fpsHud = new XrFpsHud();
+    if (this.flags.jp4aTest && !this.jp4aHud) this.jp4aHud = new Jp4aTestHud();
   }
 
   private tickUi(): void {
@@ -1297,7 +1331,8 @@ export class XrRuntime {
     }
     shell.flush();
     const hudPose = placeHudFromViewerPose(latestViewerPose());
-    this.fpsHud?.sync(this.rig.xrOrigin, hudPose);
+    this.fpsHud?.sync(this.rig.xrOrigin, hudPose, nowMs(), this.targetHz);
+    this.jp4aHud?.sync(this.rig.xrOrigin, latestViewerPose());
     if (this.hwDiag) {
       this.hwDiag.noteButtons(this.uiButtons.thumbstick);
       const cam = this.host.camera;
@@ -1347,6 +1382,8 @@ export class XrRuntime {
     this.uiShell?.hide();
     this.fpsHud?.dispose();
     this.fpsHud = null;
+    this.jp4aHud?.dispose();
+    this.jp4aHud = null;
     this.hwDiag?.dispose();
     this.hwDiag = null;
     clearUiPlacement();
@@ -1384,6 +1421,7 @@ export class XrRuntime {
     setXrSessionActive(false);
     this.host.renderer.xr.enabled = this.immersiveVrSupported && !getPlatform().isTauri;
     this.host.onSessionChange?.(false);
+    if (this.flags.jp4aTest && jp4aTestSnapshot()) markJp4aXrEnded();
     setXrUploadPresenting(false);
     setPresentationMode('INLINE');
     this.host.onConsole('[XR] Immersive VR session ended.', 'system');
@@ -1391,6 +1429,86 @@ export class XrRuntime {
     this.ending = false;
     appendXrJournal('session-end', { sessionEnded: true, phase: 'idle' });
     this.publishDiagnostics();
+  }
+
+  private tickJp4aButtons(): void {
+    const session = jp4aTestSnapshot();
+    const enabled = this.flags.jp4aTest && session?.active && this.uiMode === 'WORLD';
+    if (enabled && this.uiButtons.thumbstick && !this.jp4aPrevThumb) {
+      this.host.cycleJp4aMode?.(1);
+    }
+    if (enabled && this.uiButtons.squeeze && !this.jp4aPrevSqueeze) {
+      this.host.cycleJp4aMode?.(-1);
+    }
+    this.jp4aPrevThumb = this.uiButtons.thumbstick;
+    this.jp4aPrevSqueeze = this.uiButtons.squeeze;
+  }
+
+  private sampleJp4aTelemetry(at: number): void {
+    if (!this.flags.jp4aTest || !jp4aTestSnapshot()?.active || at - this.jp4aLastSampleAt < 250) return;
+    this.jp4aLastSampleAt = at;
+    const live = this.host.jp4aDiagnosticSnapshot?.() ?? {};
+    const frame = fpsMeterReadout(at);
+    const upload = xrUploadMetricsSnapshot();
+    const queue = pendingUploadsByCost();
+    const info = this.host.renderer.info;
+    const focusPhase = typeof live.focusPhase === 'string' ? live.focusPhase : null;
+    noteJp4aFocusState(focusPhase);
+    const distance = typeof live.viewerDistanceM === 'number' ? live.viewerDistanceM : null;
+    let phase: Jp4aPhase = 'live_mode';
+    if (!live.locked) phase = 'baseline';
+    else if (focusPhase === 'pendingPixels' || focusPhase === 'pendingUpload') phase = 'focus_transition';
+    else if (focusPhase === 'ready') phase = 'focus_settled';
+    else if (distance != null && this.jp4aLastDistance != null && distance < this.jp4aLastDistance - 0.01) phase = 'approach';
+    this.jp4aLastDistance = distance;
+    const base = (this.host.renderer.xr as XrManager).getBaseLayer?.() as {
+      framebufferWidth?: number; framebufferHeight?: number; textureWidth?: number; textureHeight?: number;
+    } | undefined;
+    const focusUpload = live.focusUpload as {
+      progress?: number; bytesUploaded?: number; submitMs?: number;
+    } | undefined;
+    recordJp4aSample({
+      timestamp: new Date().toISOString(),
+      elapsedMs: Math.max(0, at - this.jp4aSampleStartAt),
+      phase,
+      mode: (typeof live.mode === 'string' ? live.mode : 'LIVE-NORMAL') as LivePosterMode,
+      fps: frame.fps,
+      meanMs: frame.meanMs,
+      onePercentLowFps: frame.p99Ms ? 1000 / frame.p99Ms : null,
+      p95Ms: frame.p95Ms,
+      p99Ms: frame.p99Ms,
+      worstMs: frame.worstMs,
+      frameCount: this.xrFrameCount,
+      targetHz: this.targetHz,
+      supportedHz: this.supportedHz,
+      framebufferWidth: base?.framebufferWidth ?? base?.textureWidth ?? null,
+      framebufferHeight: base?.framebufferHeight ?? base?.textureHeight ?? null,
+      framebufferScale: xrQualityPolicy().framebufferScale,
+      foveation: this.foveationEffective,
+      drawCalls: info.render.calls,
+      triangles: info.render.triangles,
+      textures: info.memory.textures,
+      programs: info.programs?.length ?? 0,
+      posterBankCount: typeof live.posterBankCount === 'number' ? live.posterBankCount : null,
+      renderBatchCount: typeof live.renderBatchCount === 'number' ? live.renderBatchCount : null,
+      lockedPosterOpaqueId: typeof live.opaqueId === 'string' ? live.opaqueId : null,
+      globalIndex: typeof live.globalIndex === 'number' ? live.globalIndex : null,
+      expectedBank: typeof live.expectedBank === 'number' ? live.expectedBank : null,
+      meshBank: typeof live.meshBank === 'number' ? live.meshBank : null,
+      expectedLayer: typeof live.expectedLayer === 'number' ? live.expectedLayer : null,
+      loadedFlag: typeof live.loadedFlag === 'number' ? live.loadedFlag : null,
+      detailPhase: typeof live.detailPhase === 'string' ? live.detailPhase : null,
+      focusPhase,
+      focusUploadProgress: typeof focusUpload?.progress === 'number' ? focusUpload.progress : null,
+      pendingBase: queue.base,
+      pendingNear: queue.near,
+      pendingFocus: queue.focus,
+      gpuUploadBytes: focusUpload?.bytesUploaded ?? upload.bytesUploaded,
+      gpuUploadSubmitMs: focusUpload?.submitMs ?? upload.uploadCallMs,
+      decodeMs: upload.decodeMs,
+      viewerDistanceM: distance,
+      viewerYawToPosterDeg: typeof live.viewerYawToPosterDeg === 'number' ? live.viewerYawToPosterDeg : null,
+    });
   }
 }
 

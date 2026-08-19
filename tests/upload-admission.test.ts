@@ -10,6 +10,7 @@ import {
   noteExpensiveQueued,
   resetDetailUploadPolicyForTests,
   sampleXrMotion,
+  setExpensiveQueued,
   XR_EXPENSIVE_QUEUE_CAP,
 } from '../src/perf/xr-detail-upload-policy.ts';
 import {
@@ -198,7 +199,7 @@ test('generation change while deferred does not resurrect content', () => {
   assert.equal(lut.size, 0);
 });
 
-test('FOCUS activation rejection cannot leave pendingUpload', () => {
+test('FOCUS activation rejection retains decoded pixels and retries without motion', async () => {
   setUploadTurbo(true);
   setXrUploadPresenting(true);
   settle();
@@ -211,17 +212,27 @@ test('FOCUS activation rejection cannot leave pendingUpload', () => {
     getSourcePixels: () => focusSrc(),
     loadSource: () => {},
     queueUpload: (run, movieId, generation) => queueTextureUpload(run, 'priority', { movieId, generation, cost: 'focus' }),
-    uploadFocus: () => true,
+    createUploadTask: () => ({
+      runChunk: () => ({ done: true, progress: 1, bytesUploaded: 640 * 960 * 4 }),
+      cancel: () => {},
+      snapshot: () => ({} as never),
+    }),
     setActive: () => {},
     clearActive: () => {},
   };
   activateFocusTitle('sel', deps, residency);
   const rec = residency.peekRecord('sel');
   assert.ok(rec);
-  assert.equal(rec.uploadInFlight, false);
-  assert.notEqual(rec.phase, 'pendingUpload');
-  assert.equal(residency.snapshot().pendingUpload, 0);
+  assert.equal(rec.uploadInFlight, true);
+  assert.equal(rec.phase, 'pendingUpload');
+  assert.equal(residency.snapshot().pendingUpload, 1);
   assert.equal(pendingUploadsByCost().focus, 0);
+  setExpensiveQueued(0);
+  await new Promise((resolve) => setTimeout(resolve, 95));
+  beginXrUploadFrame(99);
+  pumpTextureUploads();
+  assert.equal(residency.peekRecord('sel')?.phase, 'ready');
+  assert.equal(residency.peekRecord('sel')?.uploadProgress, 1);
 });
 
 test('production admission probe covers pressure + FOCUS priority', () => {

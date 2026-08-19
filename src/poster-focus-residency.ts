@@ -17,6 +17,7 @@ export interface FocusRecord {
   sceneGeneration: number;
   loadInFlight: boolean;
   uploadInFlight: boolean;
+  uploadProgress: number;
   sourceWidth: number;
   sourceHeight: number;
   decodeWidth: number;
@@ -117,6 +118,7 @@ export class PosterFocusResidency {
       sceneGeneration: opts.sceneGeneration ?? 0,
       loadInFlight: false,
       uploadInFlight: false,
+      uploadProgress: 0,
       sourceWidth: 0,
       sourceHeight: 0,
       decodeWidth: this.width,
@@ -140,6 +142,7 @@ export class PosterFocusResidency {
     rec.phase = 'ready';
     rec.loadInFlight = false;
     rec.uploadInFlight = false;
+    rec.uploadProgress = 1;
     if (dims) {
       rec.sourceWidth = dims.sourceW;
       rec.sourceHeight = dims.sourceH;
@@ -156,7 +159,10 @@ export class PosterFocusResidency {
 
   markPendingUpload(movieId: string): void {
     const rec = this.records.get(movieId);
-    if (rec && rec.phase !== 'ready') rec.phase = 'pendingUpload';
+    if (rec && rec.phase !== 'ready') {
+      rec.phase = 'pendingUpload';
+      rec.uploadProgress = Math.max(0, rec.uploadProgress);
+    }
   }
 
   reset(): void {

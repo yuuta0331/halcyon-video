@@ -2,12 +2,12 @@
 
 import type { XrViewerPoseState } from './viewer-pose.ts';
 
-/** Upper-left peripheral, meters in viewer space. */
-export const HUD_VIEW_OFFSET = { x: -0.25, y: 0.17, z: -0.62 };
-/** Upper-right; kept disjoint from the FPS panel in projected viewer space. */
-export const MODE_HUD_VIEW_OFFSET = { x: 0.24, y: 0.16, z: -0.62 };
-export const FPS_HUD_SIZE_M = { width: 0.34, height: 0.16 };
-export const MODE_HUD_SIZE_M = { width: 0.34, height: 0.14 };
+/** Center-bottom: readable by eye movement without turning toward a corner. */
+export const HUD_VIEW_OFFSET = { x: 0, y: -0.20, z: -0.72 };
+/** Center-top; vertically disjoint from the FPS panel. */
+export const MODE_HUD_VIEW_OFFSET = { x: 0, y: 0.21, z: -0.72 };
+export const FPS_HUD_SIZE_M = { width: 0.44, height: 0.18 };
+export const MODE_HUD_SIZE_M = { width: 0.56, height: 0.17 };
 
 export interface HudLocalTransform {
   x: number;
@@ -44,7 +44,7 @@ export function hudFollowsViewer(hudYaw: number, viewerYaw: number, eps = 0.12):
 }
 
 export function hudOffsetIsReadableSide(offset = HUD_VIEW_OFFSET): boolean {
-  return offset.x < 0 && offset.y > 0 && offset.z < -0.3;
+  return Math.abs(offset.x) <= 0.08 && Math.abs(offset.y) <= 0.28 && offset.z < -0.45;
 }
 
 export interface ProjectedHudBounds {

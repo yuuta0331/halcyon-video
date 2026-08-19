@@ -18,6 +18,8 @@ import { lastUiPlacementEvidence } from './xr/ui-place-pending';
 import { latestViewerPose } from './xr/viewer-pose';
 import { xrUploadMetricsSnapshot } from './perf/xr-upload-metrics.ts';
 import { noteStoreWorldClassProgress, refreshStoreVisualReady } from './store-visual-ready';
+import { jp4aTestRequested } from './xr/jp4a-test-state.ts';
+import { LivePosterDiagnostic } from './xr/live-poster-diagnostic.ts';
 
 export function attachXrRuntime(
   scene: StoreScene,
@@ -25,6 +27,9 @@ export function attachXrRuntime(
   restoreDesktopLoop: () => void,
 ): XrRuntime {
   installXrStartupJournal('HALCYON');
+  const liveDiag = jp4aTestRequested()
+    ? new LivePosterDiagnostic(() => scene.slotsByPosition.values())
+    : null;
   const xr = new XrRuntime({
     renderer: scene.renderer,
     scene: scene.scene,
@@ -66,12 +71,28 @@ export function attachXrRuntime(
     },
     onLocomotionTick: () => {
       updatePosterWorkingSet(scene);
-      publishXrContent(scene);
+      // publishXrContent traverses the entire scene. It belongs on structural
+      // changes/selection, not every 72Hz XR tick; detail reconciliation above
+      // already has its own pose hysteresis.
     },
+    onJp4aLockSlot: liveDiag ? (slot) => {
+      const result = liveDiag.lock(slot);
+      if (result.changed) {
+        walk.xrSelectSlot(scene, slot);
+        publishXrContent(scene);
+      }
+      return result;
+    } : undefined,
+    cycleJp4aMode: liveDiag ? (direction) => liveDiag.cycle(direction) : undefined,
+    tickJp4aDiagnostic: liveDiag ? (viewer) => liveDiag.tickViewer(viewer) : undefined,
+    jp4aDiagnosticSnapshot: liveDiag ? () => liveDiag.observation(false) : undefined,
   });
   (window as unknown as { __xrDiagnostics?: unknown }).__xrDiagnostics = () => scene.xr?.diagnostics ?? null;
   (window as unknown as { __xrContent?: unknown }).__xrContent = () => xrContentSnapshot();
   installPosterDetailTestHooks(scene);
+  if (liveDiag) {
+    (window as unknown as { __livePosterDiag?: unknown }).__livePosterDiag = () => liveDiag.observation();
+  }
   (window as unknown as { __closeRangeProbe?: unknown }).__closeRangeProbe = () => {
     const samples = closeRangeSweepPlan().map((step) => inspectCloseRangePosters(scene.scene, step, 'mono'));
     return {

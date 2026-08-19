@@ -120,7 +120,7 @@ test('reopening after changed viewer yaw recenters', () => {
   assert.ok(Math.abs(second.x - first.x) > 0.4);
 });
 
-test('FPS HUD follows viewer pose, readable-side offset, matching orientation', () => {
+test('FPS HUD follows viewer pose at center-bottom with matching orientation', () => {
   assert.equal(hudOffsetIsReadableSide(), true);
   const pose = viewerPoseFromTransform(
     { x: 1, y: 1.6, z: 2 },
@@ -129,8 +129,8 @@ test('FPS HUD follows viewer pose, readable-side offset, matching orientation', 
   );
   const hud = placeHudFromViewerPose(pose);
   assert.ok(hud);
-  assert.ok(hud.offsetY > 0);
-  assert.ok(hud.offsetX < 0);
+  assert.ok(hud.offsetY < 0);
+  assert.ok(Math.abs(hud.offsetX) < 1e-9);
   assert.ok(hud.z < pose.z);
   assert.equal(hudFollowsViewer(pose.yaw, pose.yaw), true);
   const turned = viewerPoseFromTransform(
@@ -168,7 +168,7 @@ test('FPS and mode HUD projected viewer-space bounds do not overlap', () => {
   const fps = projectedHudBounds(HUD_VIEW_OFFSET, FPS_HUD_SIZE_M);
   const mode = projectedHudBounds(MODE_HUD_VIEW_OFFSET, MODE_HUD_SIZE_M);
   assert.equal(projectedHudBoundsOverlap(fps, mode), false);
-  assert.ok(fps.right < mode.left);
+  assert.ok(fps.top < mode.bottom);
 });
 
 test('clearing UI placement does not leave a pending flag', () => {

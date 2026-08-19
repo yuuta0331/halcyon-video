@@ -39,12 +39,12 @@ import { activateFocusTitle, demoteFocusTitle, type FocusActivateDeps } from './
 import { posterFocusResidency } from './poster-focus-residency';
 import {
   clearPosterFocusActive,
+  createPosterFocusUploadTask,
   initPosterFocusGpu,
   posterFocusActive,
   posterFocusActiveIndex,
   posterFocusResourceSnapshot,
   setPosterFocusActive,
-  uploadPosterFocusTexture,
 } from './poster-focus-texture';
 import { decodeFocusFromUrl } from './poster-focus-decode';
 import { POSTER_FOCUS_SLOT_LIMIT } from './poster-quality';
@@ -169,6 +169,7 @@ export function liveShelfPosterObservation(scene: StoreScene): Record<string, un
       generation: focus.lease.generation,
       sceneGeneration: focus.sceneGeneration,
       uploadInFlight: focus.uploadInFlight,
+      uploadProgress: focus.uploadProgress,
       active: posterFocusActive() && posterFocusActiveIndex() === focus.globalIndex,
     } : null,
     queue: pendingUploadsByCost(),
@@ -269,7 +270,8 @@ function makeFocusDeps(scene: StoreScene): FocusActivateDeps {
         onEvict: () => evictFocusUpload(movieId),
       });
     },
-    uploadFocus: (slot, pixels, width, height) => uploadPosterFocusTexture(slot, pixels, width, height),
+    createUploadTask: (slot, pixels, width, height) =>
+      createPosterFocusUploadTask(scene.renderer, slot, pixels, width, height),
     setActive: (slot, globalIndex) => setPosterFocusActive(slot, globalIndex),
     clearActive: () => clearPosterFocusActive(),
     requestRender: () => scene.requestRender(),
@@ -291,7 +293,7 @@ export function bindPosterDetailTier(scene: StoreScene, slots: MovieSlot[]): voi
     catalogCount: catalogCountFromSpatial(),
     renderer: scene.renderer,
   });
-  initPosterFocusGpu({ slotLimit: POSTER_FOCUS_SLOT_LIMIT });
+  initPosterFocusGpu({ slotLimit: POSTER_FOCUS_SLOT_LIMIT, renderer: scene.renderer });
 }
 
 export function reconcilePosterDetail(scene: StoreScene, opts: { force?: boolean } = {}): void {
@@ -376,7 +378,7 @@ export function installPosterDetailTestHooks(scene: StoreScene): void {
       catalogCount: Math.max(prev.needed, catalogCountFromSpatial()),
       renderer: scene.renderer,
     });
-    initPosterFocusGpu({ slotLimit: POSTER_FOCUS_SLOT_LIMIT });
+    initPosterFocusGpu({ slotLimit: POSTER_FOCUS_SLOT_LIMIT, renderer: scene.renderer });
     posterDetailRetry.reset();
     reconcilePosterDetail(scene, { force: true });
   };

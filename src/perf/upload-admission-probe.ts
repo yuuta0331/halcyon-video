@@ -129,7 +129,11 @@ export function runUploadAdmissionProbe() {
         },
       });
     },
-    uploadFocus: () => true,
+    createUploadTask: () => ({
+      runChunk: () => ({ done: true, progress: 1, bytesUploaded: 640 * 960 * 4 }),
+      cancel: () => {},
+      snapshot: () => ({} as never),
+    }),
     setActive: (slot, globalIndex) => { focusActive.slot = slot; focusActive.index = globalIndex; },
     clearActive: () => { focusActive.slot = -1; focusActive.index = -1; },
     onUploadDeferred: (id) => { wakes.push(id); requestPosterDetailWake(); },

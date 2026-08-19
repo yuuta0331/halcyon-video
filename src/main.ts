@@ -5,11 +5,13 @@ import { installDebugLog, debugLogPath } from './debug-log';
 import { bootMark, installBootDiagnostics } from './perf/boot-diagnostics';
 import { readResourceFlags } from './perf/resource-profile';
 import { installXrEmulatorIfRequested } from './dev/install-xr-emu';
+import { installJp4aTestConsole } from './xr/jp4a-test-console';
 
 // Before anything else that might fail: a packaged build has no devtools and
 // no stdout, so without this every console line is written to nowhere.
 installDebugLog();
 installBootDiagnostics();
+installJp4aTestConsole();
 bootMark('appStart');
 
 // Sample the compositor's real refresh rate while the boot overlay is up, so
@@ -4244,4 +4246,3 @@ if (document.readyState === 'loading') {
   switchMember,
   switchRenderMode,
 };
-

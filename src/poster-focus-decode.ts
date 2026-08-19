@@ -85,9 +85,77 @@ export async function decodeFocusFromUrl(
   targetW = POSTER_FOCUS_WIDTH,
   targetH = POSTER_FOCUS_HEIGHT,
 ): Promise<FocusDecodeResult> {
+  if (typeof Worker !== 'undefined') {
+    try {
+      return await decodeFocusInWorker(rewritePosterUrlForFocus(url), targetW, targetH);
+    } catch {
+      // Older WebViews may expose Worker while lacking worker-side
+      // OffscreenCanvas/createImageBitmap. Keep FOCUS functional there.
+    }
+  }
   const res = await fetch(rewritePosterUrlForFocus(url));
   const buf = await res.arrayBuffer();
   const blob = new Blob([buf]);
   const bitmap = await createImageBitmap(blob);
   return decodeFocusFromImageBitmap(bitmap, targetW, targetH);
+}
+
+let focusWorker: Worker | null = null;
+let focusWorkerId = 1;
+const focusCallbacks = new Map<number, {
+  resolve: (value: FocusDecodeResult) => void;
+  reject: (reason: Error) => void;
+  targetW: number;
+  targetH: number;
+}>();
+
+function ensureFocusWorker(): Worker {
+  if (focusWorker) return focusWorker;
+  focusWorker = new Worker(new URL('./poster-focus-worker.ts', import.meta.url), { type: 'module' });
+  focusWorker.onmessage = (event: MessageEvent<{
+    id: number;
+    success: boolean;
+    pixels?: ArrayBuffer;
+    sourceWidth?: number;
+    sourceHeight?: number;
+    decodeMs?: number;
+    error?: string;
+  }>) => {
+    const cb = focusCallbacks.get(event.data.id);
+    if (!cb) return;
+    focusCallbacks.delete(event.data.id);
+    if (!event.data.success || !event.data.pixels) {
+      cb.reject(new Error(event.data.error ?? 'FOCUS worker decode failed'));
+      return;
+    }
+    const sourceWidth = event.data.sourceWidth ?? cb.targetW;
+    const sourceHeight = event.data.sourceHeight ?? cb.targetH;
+    const chosen = chooseFocusDecodeSize(sourceWidth, sourceHeight, cb.targetW, cb.targetH);
+    noteCpuWork('decode', event.data.decodeMs ?? 0);
+    cb.resolve({
+      pixels: new Uint8Array(event.data.pixels),
+      sourceWidth,
+      sourceHeight,
+      decodeWidth: chosen.width,
+      decodeHeight: chosen.height,
+      upscaledFromNear: false,
+      nativeLimited: chosen.nativeLimited,
+    });
+  };
+  focusWorker.onerror = () => {
+    const pending = [...focusCallbacks.values()];
+    focusCallbacks.clear();
+    focusWorker?.terminate();
+    focusWorker = null;
+    for (const cb of pending) cb.reject(new Error('FOCUS worker unavailable'));
+  };
+  return focusWorker;
+}
+
+function decodeFocusInWorker(url: string, targetW: number, targetH: number): Promise<FocusDecodeResult> {
+  return new Promise((resolve, reject) => {
+    const id = focusWorkerId++;
+    focusCallbacks.set(id, { resolve, reject, targetW, targetH });
+    ensureFocusWorker().postMessage({ id, url, targetW, targetH });
+  });
 }
