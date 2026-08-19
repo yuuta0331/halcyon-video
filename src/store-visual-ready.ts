@@ -57,6 +57,7 @@ let state: StoreReadinessState = 'STORE_GEOMETRY_READY';
 let startedAt: number | null = null;
 let readyAt: number | null = null;
 let waiters: Array<() => void> = [];
+const readyListeners = new Set<() => void>();
 
 function nowMs(): number {
   return typeof performance !== 'undefined' ? performance.now() : Date.now();
@@ -117,6 +118,10 @@ function computeVisualReady(): boolean {
   return worldClassesReady();
 }
 
+function emitReadyChange(): void {
+  for (const fn of readyListeners) fn();
+}
+
 function maybeReady(): void {
   if (state === 'STORE_VISUAL_READY' || state === 'STORE_INTERACTIVE') return;
   syncPosterLive();
@@ -126,6 +131,7 @@ function maybeReady(): void {
   const done = waiters;
   waiters = [];
   for (const cb of done) cb();
+  emitReadyChange();
 }
 
 export function resetStoreVisualReady(): void {
@@ -141,6 +147,7 @@ export function resetStoreVisualReady(): void {
   waiters = [];
   storeVisibleWork.reset();
   resetXrContentLiveStateForTests();
+  emitReadyChange();
 }
 
 export function beginStoreVisibleLoading(input: {
@@ -160,6 +167,7 @@ export function beginStoreVisibleLoading(input: {
   state = 'STORE_VISIBLE_LOADING';
   startedAt = nowMs();
   readyAt = null;
+  emitReadyChange();
   maybeReady();
 }
 
@@ -219,6 +227,11 @@ export function storeVisualReadyPromise(): Promise<void> {
   return new Promise((resolve) => {
     waiters.push(resolve);
   });
+}
+
+export function onStoreVisualReadyChange(fn: () => void): () => void {
+  readyListeners.add(fn);
+  return () => readyListeners.delete(fn);
 }
 
 function remainingWorldReadyCount(): { expected: number; ready: number } {

@@ -130,6 +130,7 @@ import {
 } from './counter-terminal-flow';
 import { buildControlsHelpPanel, HELP_ROW_PREFIX } from './controls-help';
 import { syncXrEntryLabels, toggleXrSession, wireXrEntry } from './xr/boot';
+import { bindJp4aConsoleStoreScene, notifyJp4aConsoleEntry } from './xr/jp4a-console-entry';
 import type { CandyRow } from './fixtures/period-fixtures';
 import { getCandyDeliveryAdapter } from './candy-delivery';
 import { isDemoMode } from './demo-mode';
@@ -209,6 +210,11 @@ function refreshStoreCatalog() {
 // history or a Jellyseerr integration (real or synthetic).
 let staffPicks: StaffPicks = EMPTY_STAFF_PICKS;
 let storeScene: StoreScene | null = null;
+bindJp4aConsoleStoreScene(() => storeScene);
+function setStoreScene(next: StoreScene | null): void {
+  storeScene = next;
+  notifyJp4aConsoleEntry();
+}
 let videoPlayer: VideoPlayer | null = null;
 // WebGL context died during playback; reload when the player closes (issue #70).
 let pendingContextLostReload = false;
@@ -2345,7 +2351,7 @@ async function initializeStoreScene(preservePosterCache = false) {
     // flat boot where no scene was ever built.
     if (storeScene) {
       storeScene.destroy(true);
-      storeScene = null;
+      setStoreScene(null);
     }
     const canvasContainer = document.getElementById('canvas-container') as HTMLDivElement;
     if (canvasContainer) {
@@ -2393,7 +2399,7 @@ async function initializeStoreScene(preservePosterCache = false) {
   }
   if (storeScene) {
     storeScene.destroy(preservePosterCache);
-    storeScene = null;
+    setStoreScene(null);
   }
 
   // The shelf arrangement defaults to herringbone and only sticks when the user
@@ -2465,6 +2471,7 @@ async function initializeStoreScene(preservePosterCache = false) {
       getVideo: () => videoPlayer?.videoElement ?? null,
       onPowerButtonsNeedXr: offerXrPowerButton,
       log: logToConsole,
+      onXrSupport: notifyJp4aConsoleEntry,
     });
 
     let lastLoggedPct = -1;
@@ -2649,7 +2656,7 @@ async function initializeStoreScene(preservePosterCache = false) {
     scene.texturesReadyPromise.then(() => {
       bootMark('criticalTextureReady');
       bootMark('storeInteractive');
-      storeScene = scene;
+      setStoreScene(scene);
       (window as any).storeScene = storeScene;
       (window as any).librariesList = storeLibraries;
       // Which overlay owns the keyboard, as the app itself sees it. Several
@@ -2977,7 +2984,7 @@ function expireSession(reason: string) {
 
   if (storeScene) {
     storeScene.destroy();
-    storeScene = null;
+    setStoreScene(null);
   }
   if (aisleIndicatorInterval !== null) {
     clearInterval(aisleIndicatorInterval);
@@ -3582,7 +3589,7 @@ async function main() {
     teardownScene: () => {
       if (storeScene) {
         storeScene.destroy();
-        storeScene = null;
+        setStoreScene(null);
       }
       if (aisleIndicatorInterval !== null) {
         clearInterval(aisleIndicatorInterval);
