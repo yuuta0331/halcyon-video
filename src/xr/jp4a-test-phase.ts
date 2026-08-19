@@ -77,7 +77,7 @@ export function jp4aHudStep(testPhase: Jp4aTestPhase, baselineReady: boolean): {
           index: 1,
           title: 'STEP 2 / 6',
           instruction: 'TRIGGER TAP = LOCK ONLY',
-          hint: 'LOCK DOES NOT START FOCUS',
+          hint: 'SAME CONTROLLER RAY + TRIGGER',
         }
         : {
           index: 0,

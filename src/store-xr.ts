@@ -23,8 +23,11 @@ import { LivePosterDiagnostic } from './xr/live-poster-diagnostic.ts';
 import { createJp4aHostBindings } from './xr/jp4a-diagnostic-lock.ts';
 import {
   emptyJp4aTriggerPressState,
+  emptyJp4aTriggerSourceState,
+  stepJp4aHandedTrigger,
   stepJp4aTrigger,
   type Jp4aTriggerPressState,
+  type Jp4aTriggerSourceState,
 } from './xr/jp4a-trigger-input.ts';
 
 export function attachXrRuntime(
@@ -101,14 +104,16 @@ export function attachXrRuntime(
   installPosterDetailTestHooks(scene);
   if (liveDiag && jp4a) {
     let triggerPress: Jp4aTriggerPressState = emptyJp4aTriggerPressState();
-    const firstVisible = () => {
-      for (const slot of scene.slotsByPosition.values()) {
-        if (!slot.hidden) return slot;
-      }
-      return null;
-    };
+    let triggerSource: Jp4aTriggerSourceState = emptyJp4aTriggerSourceState();
+    let prevLeftTrigger = false;
+    let prevRightTrigger = false;
+    const visibleSlots = () => [...scene.slotsByPosition.values()].filter((slot) => !slot.hidden);
+    const firstVisible = () => visibleSlots()[0] ?? null;
     const resetLive = () => {
       triggerPress = emptyJp4aTriggerPressState();
+      triggerSource = emptyJp4aTriggerSourceState();
+      prevLeftTrigger = false;
+      prevRightTrigger = false;
       jp4a.resetProductionSelectCount();
       liveDiag.reset(() => scene.requestRender());
     };
@@ -127,8 +132,65 @@ export function attachXrRuntime(
       cycle: (direction: -1 | 1) => liveDiag.cycle(direction),
       cycleVerdict: () => liveDiag.cycleVerdict(),
       productionSelectCount: () => jp4a.productionSelectCount(),
-      triggerPress: () => ({ ...triggerPress }),
-      resetTrigger: () => { triggerPress = emptyJp4aTriggerPressState(); },
+      triggerPress: () => ({
+        ...triggerPress,
+        source: triggerSource.source,
+        ambiguous: triggerSource.ambiguous,
+      }),
+      resetTrigger: () => {
+        triggerPress = emptyJp4aTriggerPressState();
+        triggerSource = emptyJp4aTriggerSourceState();
+        prevLeftTrigger = false;
+        prevRightTrigger = false;
+      },
+      stepHandedTrigger: (input: {
+        leftTrigger: boolean;
+        rightTrigger: boolean;
+        leftHit?: 0 | 1 | null;
+        rightHit?: 0 | 1 | null;
+        now: number;
+        leftConnected?: boolean;
+        rightConnected?: boolean;
+      }) => {
+        const slots = visibleSlots();
+        const resolve = (index: 0 | 1 | null | undefined) =>
+          index === 0 || index === 1 ? slots[index] ?? null : null;
+        const handed = stepJp4aHandedTrigger({
+          press: triggerPress,
+          source: triggerSource,
+          leftTrigger: input.leftTrigger,
+          rightTrigger: input.rightTrigger,
+          prevLeftTrigger,
+          prevRightTrigger,
+          leftConnected: input.leftConnected !== false,
+          rightConnected: input.rightConnected !== false,
+          leftHit: resolve(input.leftHit),
+          rightHit: resolve(input.rightHit),
+          now: input.now,
+          phase: jp4aTestSnapshot()?.testPhase ?? 'BASELINE',
+          hasLock: liveDiag.hasLock(),
+        });
+        triggerPress = handed.press;
+        triggerSource = handed.source;
+        prevLeftTrigger = input.leftTrigger;
+        prevRightTrigger = input.rightTrigger;
+        jp4a.applyJp4aTriggerCommand(handed.command);
+        const locked = liveDiag.lockedSlot();
+        const lockedIndex = locked ? slots.findIndex((slot) => slot === locked) : -1;
+        return {
+          command: handed.command?.type ?? null,
+          cancelled: handed.cancelled,
+          phase: jp4aTestSnapshot()?.testPhase ?? null,
+          verdicts: jp4aTestSnapshot()?.modeVerdicts ?? null,
+          mode: jp4aTestSnapshot()?.mode ?? null,
+          locked: liveDiag.hasLock(),
+          lockedIndex,
+          productionSelectCount: jp4a.productionSelectCount(),
+          source: triggerSource.source,
+          ambiguous: triggerSource.ambiguous,
+          press: { ...triggerPress, target: !!triggerPress.target },
+        };
+      },
       stepTrigger: (down: boolean, now: number, useHit = true) => {
         const session = jp4aTestSnapshot();
         const rising = down && !triggerPress.down;

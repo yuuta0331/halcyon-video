@@ -139,9 +139,13 @@ import {
 } from './jp4a-test-phase.ts';
 import {
   emptyJp4aTriggerPressState,
-  stepJp4aTrigger,
+  emptyJp4aTriggerSourceState,
+  chooseJp4aTriggerSource,
+  stepJp4aHandedTrigger,
   type Jp4aTriggerCommand,
+  type Jp4aTriggerHand,
   type Jp4aTriggerPressState,
+  type Jp4aTriggerSourceState,
 } from './jp4a-trigger-input.ts';
 
 export interface XrRuntimeHost {
@@ -235,6 +239,18 @@ export class XrRuntime {
   private jp4aLastSampleAt = -Infinity;
   private jp4aSampleStartAt = 0;
   private jp4aTriggerPress: Jp4aTriggerPressState = emptyJp4aTriggerPressState();
+  private jp4aTriggerSource: Jp4aTriggerSourceState = emptyJp4aTriggerSourceState();
+  private jp4aPrevLeftTrigger = false;
+  private jp4aPrevRightTrigger = false;
+  private onControllerConnected = (event: { target?: THREE.Object3D; data?: { handedness?: string } }) => {
+    const hand = event.data?.handedness;
+    if ((hand === 'left' || hand === 'right') && event.target) {
+      event.target.userData.jp4aHand = hand;
+    }
+  };
+  private onControllerDisconnected = (event: { target?: THREE.Object3D }) => {
+    if (event.target) event.target.userData.jp4aHand = undefined;
+  };
   private onFrameRateChange = (): void => {
     this.startup.frameratechangeCount += 1;
     appendXrJournal('frameratechange', {
@@ -556,6 +572,9 @@ export class XrRuntime {
       this.jp4aSampleStartAt = nowMs();
       this.jp4aLastSampleAt = -Infinity;
       this.jp4aTriggerPress = emptyJp4aTriggerPressState();
+      this.jp4aTriggerSource = emptyJp4aTriggerSourceState();
+      this.jp4aPrevLeftTrigger = false;
+      this.jp4aPrevRightTrigger = false;
       markJp4aXrStarted(Date.now(), this.classify());
     }
     this.maybeInitOptionalLayers();
@@ -939,6 +958,8 @@ export class XrRuntime {
       ));
       grip.add(makeGripMarker());
       (controller as XrControllerObj).addEventListener('selectstart', this.onSelectStart);
+      (controller as XrControllerObj).addEventListener('connected', this.onControllerConnected);
+      (controller as XrControllerObj).addEventListener('disconnected', this.onControllerDisconnected);
       this.rig.xrOrigin.add(controller);
       this.rig.xrOrigin.add(grip);
       this.controllerObjects.push(controller);
@@ -949,6 +970,9 @@ export class XrRuntime {
   private teardownControllers(): void {
     for (const c of this.controllerObjects) {
       (c as XrControllerObj).removeEventListener('selectstart', this.onSelectStart);
+      (c as XrControllerObj).removeEventListener('connected', this.onControllerConnected);
+      (c as XrControllerObj).removeEventListener('disconnected', this.onControllerDisconnected);
+      c.userData.jp4aHand = undefined;
       while (c.children.length) {
         const child = c.children[0];
         c.remove(child);
@@ -994,6 +1018,15 @@ export class XrRuntime {
     }
     this.controllers = snap;
     this.uiButtons = uiButtons;
+    if (this.flags.jp4aTest) {
+      const ordered = Array.from(session.inputSources);
+      for (let i = 0; i < this.controllerObjects.length; i++) {
+        const source = ordered[i];
+        const hand = source?.handedness;
+        this.controllerObjects[i]!.userData.jp4aHand =
+          hand === 'left' || hand === 'right' ? hand : undefined;
+      }
+    }
   }
 
   private locomotionSticks(): { moveX: number; moveY: number; snapX: number } {
@@ -1409,6 +1442,9 @@ export class XrRuntime {
     this.hwDiag?.dispose();
     this.hwDiag = null;
     this.jp4aTriggerPress = emptyJp4aTriggerPressState();
+    this.jp4aTriggerSource = emptyJp4aTriggerSourceState();
+    this.jp4aPrevLeftTrigger = false;
+    this.jp4aPrevRightTrigger = false;
     this.jp4aPrevThumb = false;
     this.jp4aPrevSqueeze = false;
     clearUiPlacement();
@@ -1460,10 +1496,15 @@ export class XrRuntime {
     if (!this.flags.jp4aTest) return;
     const session = jp4aTestSnapshot();
     const enabled = !!session?.active && this.uiMode === 'WORLD';
+    const left = this.controllers.left;
+    const right = this.controllers.right;
     if (!enabled) {
       this.jp4aTriggerPress = emptyJp4aTriggerPressState();
+      this.jp4aTriggerSource = emptyJp4aTriggerSourceState();
       this.jp4aPrevThumb = this.uiButtons.thumbstick;
       this.jp4aPrevSqueeze = this.uiButtons.squeeze;
+      this.jp4aPrevLeftTrigger = left.select;
+      this.jp4aPrevRightTrigger = right.select;
       return;
     }
     const phase = session.testPhase;
@@ -1473,33 +1514,55 @@ export class XrRuntime {
     if (jp4aModeCycleAllowed(phase) && this.uiButtons.squeeze && !this.jp4aPrevSqueeze) {
       this.host.cycleJp4aMode?.(-1);
     }
-    const rising = this.uiButtons.trigger && !this.jp4aTriggerPress.down;
-    const hit = rising ? this.pickJp4aTriggerTarget() : this.jp4aTriggerPress.target;
-    const stepped = stepJp4aTrigger({
-      prev: this.jp4aTriggerPress,
-      triggerDown: this.uiButtons.trigger,
+    const sourceInput = {
+      prev: this.jp4aTriggerSource,
+      leftTrigger: left.select,
+      rightTrigger: right.select,
+      prevLeftTrigger: this.jp4aPrevLeftTrigger,
+      prevRightTrigger: this.jp4aPrevRightTrigger,
+      leftConnected: left.connected,
+      rightConnected: right.connected,
+    };
+    const chosen = chooseJp4aTriggerSource(sourceInput);
+    let leftHit: MovieSlot | null = null;
+    let rightHit: MovieSlot | null = null;
+    if (!chosen.cancel && chosen.triggerDown && !this.jp4aTriggerPress.down && chosen.next.source) {
+      if (chosen.next.source === 'left') leftHit = this.pickJp4aTriggerTarget('left');
+      else rightHit = this.pickJp4aTriggerTarget('right');
+    }
+    const handed = stepJp4aHandedTrigger({
+      press: this.jp4aTriggerPress,
+      source: this.jp4aTriggerSource,
+      leftTrigger: left.select,
+      rightTrigger: right.select,
+      prevLeftTrigger: this.jp4aPrevLeftTrigger,
+      prevRightTrigger: this.jp4aPrevRightTrigger,
+      leftConnected: left.connected,
+      rightConnected: right.connected,
+      leftHit,
+      rightHit,
       now: nowMs(),
-      hit,
       phase,
       hasLock: !!session.lockedPoster,
     });
-    this.jp4aTriggerPress = stepped.press;
-    if (stepped.command) this.host.applyJp4aTriggerCommand?.(stepped.command);
+    this.jp4aTriggerPress = handed.press;
+    this.jp4aTriggerSource = handed.source;
+    if (handed.command) this.host.applyJp4aTriggerCommand?.(handed.command);
     this.jp4aPrevThumb = this.uiButtons.thumbstick;
     this.jp4aPrevSqueeze = this.uiButtons.squeeze;
+    this.jp4aPrevLeftTrigger = left.select;
+    this.jp4aPrevRightTrigger = right.select;
   }
 
-  private pickJp4aTriggerTarget(): MovieSlot | null {
-    for (const controller of this.controllerObjects) {
-      targetRayFromController(controller, this.rayScratch);
-      const slot = this.host.pickSlot(
-        this.rayScratch.origin,
-        this.rayScratch.direction,
-        jp4aSelectPickRange(true),
-      );
-      if (slot) return slot;
-    }
-    return null;
+  private pickJp4aTriggerTarget(hand: Jp4aTriggerHand): MovieSlot | null {
+    const controller = this.controllerObjects.find((c) => c.userData.jp4aHand === hand) ?? null;
+    if (!controller) return null;
+    targetRayFromController(controller, this.rayScratch);
+    return this.host.pickSlot(
+      this.rayScratch.origin,
+      this.rayScratch.direction,
+      jp4aSelectPickRange(true),
+    );
   }
 
   private sampleJp4aTelemetry(at: number): void {
@@ -1583,8 +1646,8 @@ interface XrQuadLayerHandle {
 }
 
 type XrControllerObj = THREE.Object3D & {
-  addEventListener(type: string, listener: (event: { target?: THREE.Object3D }) => void): void;
-  removeEventListener(type: string, listener: (event: { target?: THREE.Object3D }) => void): void;
+  addEventListener(type: string, listener: (event: { target?: THREE.Object3D; data?: { handedness?: string } }) => void): void;
+  removeEventListener(type: string, listener: (event: { target?: THREE.Object3D; data?: { handedness?: string } }) => void): void;
 };
 
 function disposeObject(obj: THREE.Object3D): void {
