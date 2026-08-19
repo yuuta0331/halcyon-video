@@ -1,0 +1,125 @@
+{
+  "phase": "ROUND5B3_HF3_HF2_INITIAL_CONTROLLER_CONNECTION_RACE_CORRECTION",
+  "finalState": "READY_FOR_SINGLE_QUEST_JP4A_ROUND5B3_DIAGNOSTIC",
+  "QUEST_HARDWARE": "NOT_EXECUTED",
+  "questPassClaimed": false,
+  "NOT_HARDWARE_VISUAL_PROOF": true,
+  "classification": "IWER_EMULATED",
+  "implementationTestedHead": "14c9d45f9945a4418695ef8acf1cc95518c52c2e",
+  "evidenceCommitHead": "NEWER_THAN_TESTED_SOURCE",
+  "previousReviewedHead": "df4f07f9099ec047c8dc72e998f60783f0b4c838",
+  "previousHf3Hf1ImplementationHead": "60e090fe77b52a0ae3db336451c8a20e093d5c23",
+  "previousReviewedHf3EvidenceHead": "c759ed5c45f336cdc3ab441765a3ef7c69ae4c2e",
+  "installedThreeJs": "0.184.0",
+  "threeWebXRManager": {
+    "file": "node_modules/three/src/renderers/webxr/WebXRManager.js",
+    "inputsourceschangeListenerLine": 412,
+    "makeXRCompatibleAwaitLine": 416,
+    "listenerBeforeCompatAwait": true
+  },
+  "startupRaceBefore": "await ensureXrCompatible(gl) between installControllers and xrMgr.setSession(session)",
+  "startupOrderingAfter": [
+    "requestSession resolves",
+    "session assigned",
+    "installControllers (connected/disconnected already bound)",
+    "NO_APP_LEVEL_AWAIT",
+    "xrMgr.setSession(session) enter",
+    "Three.js installs session inputsourceschange",
+    "Three.js optional await gl.makeXRCompatible"
+  ],
+  "appPreflightMakeXRCompatible": false,
+  "ensureXrCompatibleOnHalcyonPath": "REMOVED",
+  "makeXRCompatibleOwner": "THREE_WEBXR_MANAGER",
+  "contextXrCompatibleBefore": "PRESERVED_SYNC_GETCONTEXTATTRIBUTES",
+  "simultaneousTriggerPolicy": "AMBIGUOUS_NO_ACTION_UNTIL_BOTH_RELEASED",
+  "controllerSemantics": {
+    "connectedEventOwnsObjectHand": true,
+    "disconnectedClearsObjectHand": true,
+    "inputSourcesIndexDoesNotRewriteObjectHand": true,
+    "noAsyncGapBetweenInstallControllersAndSetSessionEnter": true,
+    "initialRightSourceAssociatesActualRightObject": true,
+    "initialLeftSourceAssociatesActualLeftObject": true,
+    "rightTriggerUsesActualRightObjectRay": true,
+    "leftTriggerUsesActualLeftObjectRay": true,
+    "oppositeRayNeverFallback": true,
+    "unknownAssociationFailsClosed": true,
+    "sourceBoundUntilRelease": true,
+    "secondTriggerCannotSteal": true,
+    "disconnectCancelsWithoutCommit": true,
+    "holdNeverChangesVerdict": true,
+    "focusSelectsProductionOnce": true
+  },
+  "checks": {
+    "typescript": {
+      "command": "npx tsc --noEmit",
+      "pass": true
+    },
+    "targeted": {
+      "command": "node --experimental-strip-types --test tests/jp4a-round5b3-hf3-hf2.test.ts tests/jp4a-round5b3-hf3-hf1.test.ts tests/jp4a-round5b3-hf3.test.ts tests/jp4a-round5b3-hf2.test.ts tests/jp4a-round5b3-hf1.test.ts tests/jp4a-round5b3.test.ts tests/poster-focus.test.ts tests/upload-admission.test.ts tests/xr-viewer-pose.test.ts tests/hw-diag-production.test.ts tests/xr-hardware-diag.test.ts tests/xr-lifecycle.test.ts tests/xr-session-request.test.ts tests/xr-entry-order.test.ts tests/xr-startup-journal.test.ts",
+      "pass": true,
+      "tests": 137,
+      "failed": 0
+    },
+    "hf3Hf2Unit": {
+      "file": "tests/jp4a-round5b3-hf3-hf2.test.ts",
+      "pass": true,
+      "tests": 10,
+      "failed": 0
+    },
+    "fullUnit": {
+      "command": "npm test",
+      "pass": true,
+      "tests": 621,
+      "failed": 0
+    },
+    "productionBuild": {
+      "command": "npm run build",
+      "pass": true,
+      "includes": [
+        "file-budget",
+        "signage-slot-validation",
+        "typescript",
+        "vite-production-build"
+      ]
+    },
+    "browserIwerIntegration": {
+      "command": "npm run test:jp4a-round5b3-hf3-hf2",
+      "pass": true,
+      "classification": "IWER_EMULATED",
+      "NOT_HARDWARE_VISUAL_PROOF": true,
+      "QUEST_HARDWARE": "NOT_EXECUTED",
+      "implementationTestedHead": "14c9d45f9945a4418695ef8acf1cc95518c52c2e",
+      "validated": [
+        "no app-level ensureXrCompatible await before setSession",
+        "fake setSession installs inputsourceschange before fake compat await",
+        "initial RIGHT+LEFT sources during fake compat set jp4aHand on actual objects",
+        "slot 0 stays RIGHT and slot 1 stays LEFT after reconnect plus reordered [LEFT, RIGHT]",
+        "RIGHT Trigger locks logical right shelf slot 0",
+        "LEFT Trigger locks logical left shelf slot 1",
+        "opposite ray is not a fallback",
+        "simultaneous Trigger edges are ambiguous and lock nothing",
+        "TAP lock-only UNKNOWN then BLACK then CLEAN",
+        "HOLD BEGIN APPROACH leaves CLEAN unchanged",
+        "HOLD BEGIN FOCUS production-selects exactly once",
+        "same-page RESET then START",
+        "second IWER session with no stale held Trigger",
+        "normal URL console absent",
+        "normal URL has no JP-4A live control, association seam, or startup-race seam",
+        "live shelf invariant checkedSlots=3692 PASS"
+      ],
+      "evidence": "docs/review/jp4a/jp4a-round5b3-hf3-hf2-iwer.json",
+      "startupRaceSeam": "jp4a_initial_inputsourceschange_during_three_compat"
+    }
+  },
+  "softwareEvidence": {
+    "bankInvariantZeroSlot": "NOT_EXERCISED",
+    "iwerLiveShelfInvariant": "PASS",
+    "iwerLiveShelfCheckedSlots": 3692,
+    "productionWalkInteractRangeFt": 14,
+    "jp4aDiagnosticLockRangeM": 12,
+    "focusActualTexSubImageChunks": "PRESERVED",
+    "implementationCiRunId": 32263150418,
+    "implementationCiConclusion": "success"
+  },
+  "nextStep": "Independent review, then exactly one fresh Quest 3 Round 5B.3 diagnostic on /xr-test/jp4a. Do not start JP-4B. Do not create HF3-HF3."
+}

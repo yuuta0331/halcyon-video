@@ -66,6 +66,10 @@ merge `351947a`. This slice does not reopen that verdict.
 | `jp4a-round5b3-hf3-hf1-software-validation.json` | HF3-HF1 unit/build/browser/IWER summary; Quest not executed |
 | `jp4a-round5b3-hf3-hf1-iwer.json` | Connected-lifecycle vs reordered `[LEFT,RIGHT]` active list; not hardware proof |
 | `jp4a-round5b3-hf3-hf1-console.png` | HF3-HF1 Quick Test Console capture |
+| `jp4a-round5b3-hf3-hf2-review.md` | Round 5B.3 HF3-HF2 initial controller connection race (not Quest-ready) |
+| `jp4a-round5b3-hf3-hf2-software-validation.json` | HF3-HF2 unit/build/browser/IWER summary; Quest not executed |
+| `jp4a-round5b3-hf3-hf2-iwer.json` | Fake setSession captures initial `inputsourceschange` during compat await; not hardware proof |
+| `jp4a-round5b3-hf3-hf2-console.png` | HF3-HF2 Quick Test Console capture |
 | `jp4a.5-catalog-delta-sync.md` | Deferred persistent catalog / delta sync (not in this PR) |
 | `jp4a-round4-preload-stability.json` | DESKTOP_BROWSER STORE_VISIBLE_BASE drain |
 | `jp4a-round4-production-multibank.json` | DESKTOP_BROWSER production shelf 3+ bank render |

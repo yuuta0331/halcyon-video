@@ -1,0 +1,377 @@
+{
+  "phase": "ROUND5B3_HF3_HF2_INITIAL_CONTROLLER_CONNECTION_RACE_CORRECTION",
+  "classification": "IWER_EMULATED",
+  "scope": "INITIAL_INPUTSOURCESCHANGE_BEFORE_THREE_COMPAT_AWAIT",
+  "NOT_HARDWARE_VISUAL_PROOF": true,
+  "QUEST_HARDWARE": "NOT_EXECUTED",
+  "implementationTestedHead": "14c9d45f9945a4418695ef8acf1cc95518c52c2e",
+  "evidenceCommitHead": "NEWER_THAN_TESTED_SOURCE",
+  "sourceHead": "14c9d45f9945a4418695ef8acf1cc95518c52c2e",
+  "ciCheckoutSha": "same as source",
+  "pass": true,
+  "url": "/xr-test/jp4a",
+  "controllerSeam": "jp4a_initial_inputsourceschange_during_three_compat",
+  "associationSeam": "window.__jp4aLiveControl.controllerAssociation",
+  "startupRaceSeam": "window.__jp4aLiveControl.startupRace.simulateInitialSourcesDuringCompat",
+  "simultaneousTriggerPolicy": "AMBIGUOUS_NO_ACTION_UNTIL_BOTH_RELEASED",
+  "iwerRayPickBoundary": "Headless IWER cannot prove Quest physical initial inputsourceschange timing. This run installs controller-object listeners, then uses a Three.js r184-like fake setSession that attaches inputsourceschange immediately and emits the initial RIGHT+LEFT sources during a fake compatibility await. NOT_HARDWARE_VISUAL_PROOF.",
+  "before": {
+    "heading": "JP-4A TEST",
+    "start": true,
+    "meta": "Round 5B.3 HF3\nSource HEAD: 14c9d45f9945a4418695ef8acf1cc95518c52c2e\nCI checkout: same as source\nBuild: 14c9d45f9945a4418695ef8acf1cc95518c52c2e\nSession: not started"
+  },
+  "firstRun": {
+    "entered": {
+      "ok": true
+    },
+    "firstWorldRender": true,
+    "startupRace": {
+      "events": [
+        "installControllers",
+        "setSession-enter",
+        "three-session-listeners-installed",
+        "optional-compatibility-await",
+        "initial-inputsourceschange",
+        "controller-connected:right",
+        "controller-connected:left"
+      ],
+      "slotHands": [
+        "right",
+        "left"
+      ],
+      "listenerInstalledBeforeCompatAwait": true,
+      "capturedInitialEvent": true,
+      "pickRight": 0,
+      "pickLeft": 1
+    },
+    "association": {
+      "ok": true,
+      "classification": "IWER_EMULATED",
+      "NOT_HARDWARE_VISUAL_PROOF": true,
+      "injected": {
+        "rightSlot0": true,
+        "leftSlot1": true
+      },
+      "afterInject": {
+        "slotHands": [
+          "right",
+          "left"
+        ],
+        "pickRight": 0,
+        "pickLeft": 1
+      },
+      "reorder": {
+        "before": [
+          "right",
+          "left"
+        ],
+        "after": [
+          "right",
+          "left"
+        ],
+        "unchanged": true,
+        "pickRight": 0,
+        "pickLeft": 1,
+        "logicalLeftConnected": true,
+        "logicalRightConnected": true
+      },
+      "afterRightDisconnect": {
+        "slotHands": [
+          null,
+          "left"
+        ],
+        "pickRight": -1,
+        "pickLeft": 1
+      },
+      "afterRepeat": {
+        "slotHands": [
+          "right",
+          "left"
+        ],
+        "pickRight": 0,
+        "pickLeft": 1
+      },
+      "reorder2": {
+        "before": [
+          "right",
+          "left"
+        ],
+        "after": [
+          "right",
+          "left"
+        ],
+        "unchanged": true,
+        "pickRight": 0,
+        "pickLeft": 1,
+        "logicalLeftConnected": true,
+        "logicalRightConnected": true
+      },
+      "iwerCannotProveQuestPose": true
+    },
+    "simultaneous": {
+      "locked": false,
+      "ambiguous": true,
+      "source": null
+    },
+    "fallback": {
+      "locked": false,
+      "source": "right"
+    },
+    "rightSource": {
+      "lockedIndex": 0,
+      "source": "right",
+      "locked": true
+    },
+    "leftSource": {
+      "lockedIndex": 1,
+      "source": "left",
+      "locked": true
+    },
+    "afterLock": {
+      "locked": true,
+      "phase": "LOCKED_LIVE_DIAG",
+      "verdict": "UNKNOWN",
+      "selects": 0,
+      "source": "right"
+    },
+    "afterBlack": {
+      "verdict": "BLACK",
+      "phase": "LOCKED_LIVE_DIAG",
+      "selects": 0,
+      "mode": "LIVE-NORMAL"
+    },
+    "afterClean": {
+      "verdict": "CLEAN",
+      "phase": "LOCKED_LIVE_DIAG"
+    },
+    "modes": [
+      "LIVE-NORMAL",
+      "LIVE-BASE",
+      "LIVE-LOD0",
+      "LIVE-LOD1",
+      "LIVE-LOD2",
+      "LIVE-LOD3",
+      "LIVE-LINEAR",
+      "LIVE-UNLIT",
+      "LIVE-DEPTH-ISOLATED"
+    ],
+    "afterApproach": {
+      "command": "BEGIN_APPROACH",
+      "phase": "APPROACH",
+      "verdictBefore": "CLEAN",
+      "verdictAfter": "CLEAN",
+      "selects": 0,
+      "releaseSelects": 0,
+      "source": "right"
+    },
+    "approachSamples": 2,
+    "afterFocus": {
+      "command": "BEGIN_FOCUS",
+      "phase": "FOCUS_REQUESTED",
+      "verdict": "CLEAN",
+      "selectsAtFire": 1,
+      "selectsWhileHeld": 1
+    },
+    "afterExtra": {
+      "phase": "FOCUS_REQUESTED",
+      "selects": 1,
+      "verdict": "CLEAN"
+    },
+    "iwerTrigger": {
+      "attempted": true,
+      "mutatedVerdict": false
+    },
+    "completed": true,
+    "competingLoops": null
+  },
+  "liveShelfInvariant": "PASS",
+  "invariant": {
+    "checkedSlots": 3692,
+    "bankMismatchCount": 0,
+    "layerOutOfRangeCount": 0,
+    "missingIndexCount": 0,
+    "invalidLoadedFlagCount": 0,
+    "pass": true,
+    "verdict": "PASS"
+  },
+  "afterReset": {
+    "heading": "JP-4A TEST",
+    "resetSession": {
+      "schema": 1,
+      "round": "JP-4A Round 5B.3",
+      "build": "14c9d45f9945a4418695ef8acf1cc95518c52c2e",
+      "sourceHead": "14c9d45f9945a4418695ef8acf1cc95518c52c2e",
+      "testedSha": "14c9d45f9945a4418695ef8acf1cc95518c52c2e",
+      "sessionId": "jp4a-mt06mpdu-f97393ef",
+      "startedAt": "2026-08-19T14:23:54.882Z",
+      "xrStartedAt": null,
+      "completedAt": null,
+      "active": false,
+      "mode": "LIVE-NORMAL",
+      "step": 1,
+      "testPhase": "BASELINE",
+      "lockedPoster": null,
+      "modeVerdicts": {
+        "LIVE-NORMAL": "UNKNOWN",
+        "LIVE-BASE": "UNKNOWN",
+        "LIVE-LOD0": "UNKNOWN",
+        "LIVE-LOD1": "UNKNOWN",
+        "LIVE-LOD2": "UNKNOWN",
+        "LIVE-LOD3": "UNKNOWN",
+        "LIVE-LINEAR": "UNKNOWN",
+        "LIVE-UNLIT": "UNKNOWN",
+        "LIVE-DEPTH-ISOLATED": "UNKNOWN"
+      },
+      "bankInvariant": {
+        "checkedSlots": 3692,
+        "bankMismatchCount": 0,
+        "layerOutOfRangeCount": 0,
+        "missingIndexCount": 0,
+        "invalidLoadedFlagCount": 0,
+        "pass": true,
+        "verdict": "PASS"
+      },
+      "samples": [],
+      "events": [
+        {
+          "timestamp": "2026-08-19T14:23:54.882Z",
+          "type": "session_reset"
+        }
+      ],
+      "environment": "IWER_EMULATED",
+      "questHardware": "NOT_EXECUTED"
+    },
+    "started": {
+      "schema": 1,
+      "round": "JP-4A Round 5B.3",
+      "build": "14c9d45f9945a4418695ef8acf1cc95518c52c2e",
+      "sourceHead": "14c9d45f9945a4418695ef8acf1cc95518c52c2e",
+      "testedSha": "14c9d45f9945a4418695ef8acf1cc95518c52c2e",
+      "sessionId": "jp4a-mt06mpdw-6903f50e",
+      "startedAt": "2026-08-19T14:23:54.884Z",
+      "xrStartedAt": null,
+      "completedAt": null,
+      "active": true,
+      "mode": "LIVE-NORMAL",
+      "step": 1,
+      "testPhase": "BASELINE",
+      "lockedPoster": null,
+      "modeVerdicts": {
+        "LIVE-NORMAL": "UNKNOWN",
+        "LIVE-BASE": "UNKNOWN",
+        "LIVE-LOD0": "UNKNOWN",
+        "LIVE-LOD1": "UNKNOWN",
+        "LIVE-LOD2": "UNKNOWN",
+        "LIVE-LOD3": "UNKNOWN",
+        "LIVE-LINEAR": "UNKNOWN",
+        "LIVE-UNLIT": "UNKNOWN",
+        "LIVE-DEPTH-ISOLATED": "UNKNOWN"
+      },
+      "bankInvariant": {
+        "checkedSlots": 3692,
+        "bankMismatchCount": 0,
+        "layerOutOfRangeCount": 0,
+        "missingIndexCount": 0,
+        "invalidLoadedFlagCount": 0,
+        "pass": true,
+        "verdict": "PASS"
+      },
+      "samples": [],
+      "events": [
+        {
+          "timestamp": "2026-08-19T14:23:54.884Z",
+          "type": "session_reset"
+        },
+        {
+          "timestamp": "2026-08-19T14:23:54.897Z",
+          "type": "test_started"
+        }
+      ],
+      "environment": "IWER_EMULATED",
+      "questHardware": "NOT_EXECUTED"
+    },
+    "liveAfterReset": {
+      "enabled": true,
+      "mode": "LIVE-NORMAL",
+      "locked": false,
+      "opaqueId": null,
+      "shader": {
+        "index": -1,
+        "mode": "LIVE-NORMAL",
+        "code": 0
+      },
+      "depthOffsetStoreUnits": 0,
+      "viewerDistanceM": null,
+      "viewerYawToPosterDeg": null,
+      "bankInvariant": {
+        "checkedSlots": 3692,
+        "bankMismatchCount": 0,
+        "layerOutOfRangeCount": 0,
+        "missingIndexCount": 0,
+        "invalidLoadedFlagCount": 0,
+        "pass": true,
+        "verdict": "PASS"
+      },
+      "testPhase": "BASELINE",
+      "verdict": "UNKNOWN",
+      "globalIndex": null,
+      "expectedBank": null,
+      "meshBank": null,
+      "backMeshBank": null,
+      "expectedLayer": null,
+      "posterBankCount": 1,
+      "renderBatchCount": 46,
+      "aTextureIndex": null,
+      "loadedFlag": null,
+      "arrayDepth": null,
+      "detailPhase": null,
+      "detailLut": null,
+      "focusPhase": null,
+      "focusUpload": {
+        "status": "uploading",
+        "slot": 1,
+        "bytesTotal": 2457600,
+        "bytesUploaded": 0,
+        "chunksTotal": 15,
+        "chunksComplete": 0,
+        "submitMs": 0,
+        "lastError": null,
+        "uploadId": 2,
+        "progress": 0,
+        "actualTransferOwnedByBudgetQueue": true,
+        "timingSemantics": "CPU_BLOCKING_GL_SUBMIT_NOT_GPU_EXECUTION"
+      },
+      "privacy": "OPAQUE_ID_NO_TITLE_NO_URL_NO_TOKEN"
+    },
+    "shader": {
+      "index": -1,
+      "mode": "LIVE-NORMAL",
+      "code": 0
+    },
+    "locked": false,
+    "mode": "LIVE-NORMAL",
+    "testPhase": "BASELINE"
+  },
+  "secondRun": {
+    "entered": {
+      "ok": true
+    },
+    "firstWorldRender": true,
+    "stalePressDown": false,
+    "secondLock": true,
+    "secondVerdict": "UNKNOWN",
+    "completed": true,
+    "hasCopyResult": true,
+    "hasCopyJson": true
+  },
+  "privacy": {
+    "containsTitle": false,
+    "opaqueOnly": true
+  },
+  "normalConsoleAbsent": true,
+  "normalLiveControlAbsent": true,
+  "normalAssociationAbsent": true,
+  "normalStartupRaceAbsent": true,
+  "seriousErrors": [],
+  "knownDemoResourceErrors": 9
+}
