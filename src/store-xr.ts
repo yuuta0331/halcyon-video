@@ -216,6 +216,7 @@ export function attachXrRuntime(
         };
       },
       controllerAssociation: () => xr.jp4aControllerAssociationSeam(),
+      startupRace: () => xr.jp4aControllerAssociationSeam(),
     };
   }
   (window as unknown as { __closeRangeProbe?: unknown }).__closeRangeProbe = () => {

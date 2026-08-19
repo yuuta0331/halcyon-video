@@ -53,6 +53,10 @@ import {
 } from './input';
 import { snapshotControllersFromInputSources } from './input-policy.ts';
 import {
+  simulateThreeR184SetSessionWithInitialSources,
+  type StartupRaceTraceEvent,
+} from './webxr-set-session-order.ts';
+import {
   bindJp4aControllerObjectEvents,
   clearJp4aControllerHand,
   pickJp4aControllerByHand,
@@ -118,7 +122,6 @@ import {
 } from './gpu-diagnostics';
 import {
   detectSessionCompositorBackend,
-  ensureXrCompatible,
   probeXrBindingApis,
 } from './gl-compat';
 import {
@@ -297,6 +300,14 @@ export class XrRuntime {
       logicalLeftConnected: boolean;
       logicalRightConnected: boolean;
     };
+    simulateInitialSourcesDuringCompat: (hands: Array<'left' | 'right'>) => Promise<{
+      events: StartupRaceTraceEvent[];
+      slotHands: Array<'left' | 'right' | null>;
+      listenerInstalledBeforeCompatAwait: boolean;
+      capturedInitialEvent: boolean;
+      pickRight: number;
+      pickLeft: number;
+    }>;
   } | null {
     if (!this.flags.jp4aTest) return null;
     const slotHands = () => this.controllerObjects.map((c) => {
@@ -340,6 +351,27 @@ export class XrRuntime {
           pickLeft: this.controllerObjects.findIndex((c) => c.userData.jp4aHand === 'left'),
           logicalLeftConnected: logical.controllers.left.connected,
           logicalRightConnected: logical.controllers.right.connected,
+        };
+      },
+      simulateInitialSourcesDuringCompat: async (hands) => {
+        const objects = this.controllerObjects as Array<{
+          userData: Record<string, unknown>;
+          addEventListener(type: string, listener: (event: { type: string; target?: { userData: Record<string, unknown> }; data?: { handedness?: string } }) => void): void;
+          removeEventListener(type: string, listener: (event: { type: string; target?: { userData: Record<string, unknown> }; data?: { handedness?: string } }) => void): void;
+          dispatchEvent(event: { type: string; data?: { handedness?: string } }): void;
+        }>;
+        const result = await simulateThreeR184SetSessionWithInitialSources({
+          controllerObjects: objects,
+          initialSources: hands.map((handedness) => ({ handedness })),
+          emitDuringCompat: true,
+        });
+        return {
+          events: result.events,
+          slotHands: result.slotHands.map((hand) => hand ?? null),
+          listenerInstalledBeforeCompatAwait: result.listenerInstalledBeforeCompatAwait,
+          capturedInitialEvent: result.capturedInitialEvent,
+          pickRight: this.controllerObjects.findIndex((c) => c.userData.jp4aHand === 'right'),
+          pickLeft: this.controllerObjects.findIndex((c) => c.userData.jp4aHand === 'left'),
         };
       },
     };
@@ -577,6 +609,8 @@ export class XrRuntime {
     // `inputsourceschange` inside setSession. Listeners must already be on
     // getController(i) objects before that assignment, which this order
     // guarantees. Do not recover missed connections via inputSources[i].
+    // Do not preflight-await XR compatibility here. Three.js attaches
+    // inputsourceschange first, then handles compatibility inside setSession.
 
     this.scheduler = reduceFrameScheduler(this.scheduler, 'enter-xr');
     this.phase = 'binding';
@@ -587,16 +621,12 @@ export class XrRuntime {
     const gl = this.host.renderer.getContext() as WebGL2RenderingContext;
     const attrs = noteContextAttributes(gl);
     this.startup.contextXrCompatibleBefore = attrs.xrCompatible;
-    this.startup = markStartupStage(this.startup, 'makeXRCompatibleStart', nowMs());
-    appendXrJournal('makeXRCompatible-start');
-    const compat = await ensureXrCompatible(gl);
-    this.startup.makeXRCompatibleError = compat.error;
-    this.startup = markStartupStage(this.startup, 'makeXRCompatibleEnd', nowMs());
-    appendXrJournal('makeXRCompatible-end', { makeXRCompatibleError: compat.error });
     const bindings = probeXrBindingApis();
     appendXrJournal('xr-binding-apis', {}, {
       hasXRWebGLBinding: bindings.hasXRWebGLBinding,
       hasCreateProjectionLayer: bindings.hasCreateProjectionLayer,
+      makeXRCompatibleOwner: 'THREE_WEBXR_MANAGER',
+      appPreflightMakeXRCompatible: false,
     });
 
     if (this.startupWasAborted(session)) {
@@ -623,6 +653,10 @@ export class XrRuntime {
     this.startup = markStartupStage(this.startup, 'rendererSetSessionEnd', nowMs());
     this.startup.compositorBackend = detectSessionCompositorBackend(session);
     appendXrJournal('setSession-end', { compositorBackend: this.startup.compositorBackend });
+    appendXrJournal('makeXRCompatible-owned-by-three', {}, {
+      makeXRCompatibleOwner: 'THREE_WEBXR_MANAGER',
+      appPreflightMakeXRCompatible: false,
+    });
     try {
       trySetRuntimeFoveation(xrMgr, this.foveationRequested);
       const getFoveation = (xrMgr as XrManager & { getFoveation?: () => number }).getFoveation;

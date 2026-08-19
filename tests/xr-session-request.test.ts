@@ -89,7 +89,6 @@ test('entry order remains setSession then first render; first world before fps',
     'requestSession',
     'selectReferenceSpaceType',
     'configureRendererPreSession',
-    'makeXRCompatible',
     'renderer.setSession',
     'firstXrRender',
   ]);

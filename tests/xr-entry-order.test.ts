@@ -13,7 +13,6 @@ test('entry critical path places setSession before first render and fps after', 
     'requestSession',
     'selectReferenceSpaceType',
     'configureRendererPreSession',
-    'makeXRCompatible',
     'renderer.setSession',
     'firstXrRender',
   ]);
