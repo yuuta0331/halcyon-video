@@ -34,3 +34,7 @@ jobs:
         env:
           VITE_DEMO: "1"
           PUPPETEER_SKIP_DOWNLOAD: "1"
+          # PR head is the source identity. GITHUB_SHA remains the merge-ref
+          # checkout that this job actually tests.
+          HALCYON_SOURCE_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          HALCYON_TESTED_SHA: ${{ github.sha }}

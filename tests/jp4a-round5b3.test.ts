@@ -96,6 +96,7 @@ test('bank invariant passes valid slots and catches mismatch/out-of-range fixtur
     bankCount: 2, arrayDepth: 4, loadedFlag: 255,
   }]);
   assert.equal(valid.pass, true);
+  assert.equal(valid.verdict, 'PASS');
   const bad = summarizePosterBankInvariant([
     { globalIndex: 5, expectedBank: 1, expectedLayer: 4,
       frontBank: 0, backBank: 1, frontIndex: 4, backIndex: 5,
@@ -105,12 +106,20 @@ test('bank invariant passes valid slots and catches mismatch/out-of-range fixtur
       bankCount: 2, arrayDepth: 4, loadedFlag: null },
   ]);
   assert.equal(bad.pass, false);
+  assert.equal(bad.verdict, 'FAIL');
   assert.equal(bad.bankMismatchCount, 1);
   assert.equal(bad.layerOutOfRangeCount, 1);
   assert.equal(bad.missingIndexCount, 1);
   assert.equal(bad.invalidLoadedFlagCount, 1);
   assert.equal(posterIndexNotifyBankSafe(5, 4, 1, 1), true);
   assert.equal(posterIndexNotifyBankSafe(5, 4, 0, 1), false);
+});
+
+test('zero-slot bank invariant is NOT_EXERCISED and never PASS', () => {
+  const empty = summarizePosterBankInvariant([]);
+  assert.equal(empty.checkedSlots, 0);
+  assert.equal(empty.pass, false);
+  assert.equal(empty.verdict, 'NOT_EXERCISED');
 });
 
 test('session reset/persistence/result APIs remain opaque and JSON-backed', () => {

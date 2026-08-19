@@ -13,30 +13,19 @@ import { spawn, execFileSync } from "node:child_process";
 import * as net from "node:net";
 // @ts-expect-error plain-js module, no declarations (see header note)
 import { remotePlayPlugin } from "./tools/remote-play-server.mjs";
+// @ts-expect-error plain-js module, no declarations (see header note)
+import { readGitHead, resolveHalcyonBuildIdentity } from "./tools/halcyon-build-identity.mjs";
 
 // @ts-expect-error process is a nodejs global
 const host = process.env.TAURI_DEV_HOST;
 
-// Short, truthful build identity for the JP-4A hardware-test console. Prefer
-// CI's immutable SHA, otherwise ask the current worktree. A source hard-code
-// would become stale on the very next diagnostic commit.
-function buildHead(): string {
+// Source HEAD is the PR/worktree commit. GitHub pull_request GITHUB_SHA is the
+// merge ref and is exposed separately as the tested/checkout SHA.
+const injectedIdentity = resolveHalcyonBuildIdentity(
   // @ts-expect-error process is a nodejs global
-  const fromCi = process.env.GITHUB_SHA || process.env.VERCEL_GIT_COMMIT_SHA;
-  if (fromCi) return String(fromCi).slice(0, 40);
-  try {
-    return execFileSync("git", ["rev-parse", "HEAD"], {
-      cwd: import.meta.dirname,
-      timeout: 1500,
-      stdio: ["ignore", "pipe", "ignore"],
-      encoding: "utf8",
-    }).trim();
-  } catch {
-    return "unknown";
-  }
-}
-
-const injectedBuildHead = buildHead();
+  process.env,
+  readGitHead(execFileSync, import.meta.dirname),
+);
 
 // ─── Which Host headers this server answers to ────────────────────────────────
 //
@@ -519,7 +508,9 @@ function hostGuardPlugin() {
 // https://vite.dev/config/
 export default defineConfig(async () => ({
   define: {
-    __HALCYON_BUILD_SHA__: JSON.stringify(injectedBuildHead),
+    __HALCYON_BUILD_SHA__: JSON.stringify(injectedIdentity.sourceHeadSha),
+    __HALCYON_SOURCE_HEAD_SHA__: JSON.stringify(injectedIdentity.sourceHeadSha),
+    __HALCYON_TESTED_SHA__: JSON.stringify(injectedIdentity.testedSha),
   },
   plugins: [
     // First: everything below it answers only to an allowed Host header.

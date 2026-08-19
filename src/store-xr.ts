@@ -18,8 +18,9 @@ import { lastUiPlacementEvidence } from './xr/ui-place-pending';
 import { latestViewerPose } from './xr/viewer-pose';
 import { xrUploadMetricsSnapshot } from './perf/xr-upload-metrics.ts';
 import { noteStoreWorldClassProgress, refreshStoreVisualReady } from './store-visual-ready';
-import { jp4aTestRequested } from './xr/jp4a-test-state.ts';
+import { jp4aTestRequested, registerJp4aLiveDiagnosticReset } from './xr/jp4a-test-state.ts';
 import { LivePosterDiagnostic } from './xr/live-poster-diagnostic.ts';
+import { createJp4aHostBindings } from './xr/jp4a-diagnostic-lock.ts';
 
 export function attachXrRuntime(
   scene: StoreScene,
@@ -30,6 +31,17 @@ export function attachXrRuntime(
   const liveDiag = jp4aTestRequested()
     ? new LivePosterDiagnostic(() => scene.slotsByPosition.values())
     : null;
+  const jp4a = liveDiag
+    ? createJp4aHostBindings(liveDiag, (slot) => {
+      walk.xrSelectSlot(scene, slot);
+      publishXrContent(scene);
+    })
+    : null;
+  if (liveDiag) {
+    registerJp4aLiveDiagnosticReset(() => {
+      liveDiag.reset(() => scene.requestRender());
+    });
+  }
   const xr = new XrRuntime({
     renderer: scene.renderer,
     scene: scene.scene,
@@ -75,23 +87,32 @@ export function attachXrRuntime(
       // changes/selection, not every 72Hz XR tick; detail reconciliation above
       // already has its own pose hysteresis.
     },
-    onJp4aLockSlot: liveDiag ? (slot) => {
-      const result = liveDiag.lock(slot);
-      if (result.changed) {
-        walk.xrSelectSlot(scene, slot);
-        publishXrContent(scene);
-      }
-      return result;
-    } : undefined,
-    cycleJp4aMode: liveDiag ? (direction) => liveDiag.cycle(direction) : undefined,
-    tickJp4aDiagnostic: liveDiag ? (viewer) => liveDiag.tickViewer(viewer) : undefined,
-    jp4aDiagnosticSnapshot: liveDiag ? () => liveDiag.observation(false) : undefined,
+    onJp4aLockSlot: jp4a?.onJp4aLockSlot,
+    cycleJp4aMode: jp4a?.cycleJp4aMode,
+    tickJp4aDiagnostic: jp4a?.tickJp4aDiagnostic,
+    jp4aDiagnosticSnapshot: jp4a?.jp4aDiagnosticSnapshot,
+    advanceJp4aTestPhase: jp4a?.advanceJp4aTestPhase,
+    beginJp4aFocus: jp4a?.beginJp4aFocus,
   });
   (window as unknown as { __xrDiagnostics?: unknown }).__xrDiagnostics = () => scene.xr?.diagnostics ?? null;
   (window as unknown as { __xrContent?: unknown }).__xrContent = () => xrContentSnapshot();
   installPosterDetailTestHooks(scene);
-  if (liveDiag) {
+  if (liveDiag && jp4a) {
     (window as unknown as { __livePosterDiag?: unknown }).__livePosterDiag = () => liveDiag.observation();
+    (window as unknown as { __jp4aLiveControl?: unknown }).__jp4aLiveControl = {
+      reset: () => liveDiag.reset(() => scene.requestRender()),
+      snapshot: () => liveDiag.observation(false),
+      hasLock: () => liveDiag.hasLock(),
+      lockFirstVisible: () => {
+        for (const slot of scene.slotsByPosition.values()) {
+          if (!slot.hidden) return liveDiag.lock(slot);
+        }
+        return null;
+      },
+      beginApproach: () => liveDiag.beginApproach(),
+      beginFocus: () => jp4a.beginJp4aFocus(),
+      cycle: (direction: -1 | 1) => liveDiag.cycle(direction),
+    };
   }
   (window as unknown as { __closeRangeProbe?: unknown }).__closeRangeProbe = () => {
     const samples = closeRangeSweepPlan().map((step) => inspectCloseRangePosters(scene.scene, step, 'mono'));

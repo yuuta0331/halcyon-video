@@ -2,17 +2,10 @@ import * as THREE from 'three';
 import { MODE_HUD_SIZE_M, MODE_HUD_VIEW_OFFSET, placeHudFromViewerPose } from './hud-placement.ts';
 import type { XrViewerPoseState } from './viewer-pose.ts';
 import { jp4aTestSnapshot, type LivePosterMode } from './jp4a-test-state.ts';
+import { jp4aHudStep, type Jp4aTestPhase } from './jp4a-test-phase.ts';
 
 const W = 1024;
 const H = 320;
-
-const STEPS = [
-  ['STEP 1 / 5', 'CHECK BASELINE FPS'],
-  ['STEP 2 / 5', 'POINT AT A BLACK POSTER — TRIGGER TO LOCK'],
-  ['STEP 3 / 5', 'THUMBSTICK: NEXT  •  GRIP: PREVIOUS'],
-  ['STEP 4 / 5', 'APPROACH POSTER / WAIT FOR FOCUS'],
-  ['STEP 5 / 5', 'DONE — EXIT VR AND COPY RESULT'],
-] as const;
 
 export class Jp4aTestHud {
   readonly mesh: THREE.Mesh;
@@ -50,7 +43,14 @@ export class Jp4aTestHud {
       this.mesh.position.set(placed.x, placed.y, placed.z);
       this.mesh.quaternion.set(placed.qx, placed.qy, placed.qz, placed.qw);
     }
-    this.paint(session.step, session.mode, session.modeVerdicts[session.mode], session.lockedPoster?.opaqueId ?? null);
+    const baselineReady = session.samples.filter((s) => s.phase === 'baseline').length >= 8;
+    this.paint(
+      session.testPhase,
+      baselineReady,
+      session.mode,
+      session.modeVerdicts[session.mode],
+      session.lockedPoster?.opaqueId ?? null,
+    );
   }
 
   snapshot() {
@@ -70,9 +70,15 @@ export class Jp4aTestHud {
     (this.mesh.material as THREE.Material).dispose();
   }
 
-  private paint(step: number, mode: LivePosterMode, verdict: string, opaqueId: string | null): void {
-    const i = Math.max(0, Math.min(4, step - 1));
-    const key = `${i}|${mode}|${verdict}|${opaqueId}`;
+  private paint(
+    testPhase: Jp4aTestPhase,
+    baselineReady: boolean,
+    mode: LivePosterMode,
+    verdict: string,
+    opaqueId: string | null,
+  ): void {
+    const step = jp4aHudStep(testPhase, baselineReady);
+    const key = `${step.title}|${step.instruction}|${mode}|${verdict}|${opaqueId}|${step.hint}`;
     if (key === this.lastKey) return;
     this.lastKey = key;
     const ctx = this.canvas.getContext('2d');
@@ -85,17 +91,20 @@ export class Jp4aTestHud {
     ctx.strokeRect(5, 5, W - 10, H - 10);
     ctx.textAlign = 'center';
     ctx.fillStyle = '#9fe8d8';
-    ctx.font = 'bold 54px ui-monospace,Menlo,Consolas,monospace';
-    ctx.fillText(STEPS[i]![0], W / 2, 67);
-    ctx.fillStyle = '#f4fffc';
-    ctx.font = 'bold 44px ui-monospace,Menlo,Consolas,monospace';
-    ctx.fillText(STEPS[i]![1], W / 2, 126);
-    ctx.fillStyle = '#ffd56a';
     ctx.font = 'bold 46px ui-monospace,Menlo,Consolas,monospace';
-    ctx.fillText(`${mode}  [${verdict}]`, W / 2, 200);
+    ctx.fillText(step.title, W / 2, 58);
+    ctx.fillStyle = '#f4fffc';
+    ctx.font = 'bold 32px ui-monospace,Menlo,Consolas,monospace';
+    ctx.fillText(step.instruction, W / 2, 108);
+    ctx.fillStyle = '#ffd56a';
+    ctx.font = 'bold 40px ui-monospace,Menlo,Consolas,monospace';
+    ctx.fillText(`${mode}  [${verdict}]`, W / 2, 168);
     ctx.fillStyle = '#d8e5e2';
-    ctx.font = '34px ui-monospace,Menlo,Consolas,monospace';
-    ctx.fillText(opaqueId ? `${opaqueId}  •  TRIGGER MARKS BLACK/CLEAN` : 'TRIGGER: LOCK POSTER', W / 2, 260);
+    ctx.font = '26px ui-monospace,Menlo,Consolas,monospace';
+    ctx.fillText(step.hint, W / 2, 220);
+    ctx.fillStyle = '#9fe8d8';
+    ctx.font = '28px ui-monospace,Menlo,Consolas,monospace';
+    ctx.fillText(opaqueId ? opaqueId : 'NO LOCK — TRIGGER LOCKS ONLY', W / 2, 270);
     this.texture.needsUpdate = true;
   }
 }

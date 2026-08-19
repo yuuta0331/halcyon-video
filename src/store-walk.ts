@@ -335,10 +335,23 @@ export function pickWalkSlotFromRay(
 ): MovieSlot | null {
   bindSlotRaycaster(scene._raycaster, scene.camera, origin, direction, maxDist);
   const intersects = scene._raycaster.intersectObjects(scene.scene.children, true);
-  for (const hit of intersects) {
+  return pickNearestVisibleSlotFromHits(
+    intersects,
+    (object, instanceId) => getSlotFromIntersection(scene, object, instanceId),
+    maxDist,
+  );
+}
+
+/** Nearest valid visible MovieSlot along an already-sorted raycast list. */
+export function pickNearestVisibleSlotFromHits(
+  hits: ReadonlyArray<{ distance: number; instanceId?: number; object: THREE.Object3D }>,
+  resolveSlot: (object: THREE.Object3D, instanceId: number) => MovieSlot | null,
+  maxDist: number,
+): MovieSlot | null {
+  for (const hit of hits) {
     if (hit.distance > maxDist) break;
     if (hit.instanceId === undefined) continue;
-    const slot = scene.getSlotFromIntersection(hit.object, hit.instanceId);
+    const slot = resolveSlot(hit.object, hit.instanceId);
     if (slot && !slot.hidden) return slot;
   }
   return null;

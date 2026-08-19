@@ -1,0 +1,217 @@
+{
+  "phase": "ROUND5B3_HF1_DIAGNOSTIC_HARNESS_CORRECTION",
+  "classification": "IWER_EMULATED",
+  "scope": "SAME_PAGE_RESET_RERUN_LOCK_SEPARATION_AND_TRUTHFUL_INVARIANT",
+  "NOT_HARDWARE_VISUAL_PROOF": true,
+  "QUEST_HARDWARE": "NOT_EXECUTED",
+  "pass": true,
+  "url": "/xr-test/jp4a",
+  "before": {
+    "heading": "JP-4A TEST",
+    "start": true,
+    "meta": "Round 5B.3 HF1\nSource HEAD: cab25d09f4a01bd13082e727b4d7d303937d511c\nCI checkout: same as source\nBuild: cab25d09f4a01bd13082e727b4d7d303937d511c\nSession: not started"
+  },
+  "firstRun": {
+    "entered": {
+      "ok": true
+    },
+    "firstWorldRender": true,
+    "realLock": true,
+    "modes": [
+      "LIVE-NORMAL",
+      "LIVE-BASE",
+      "LIVE-LOD0",
+      "LIVE-LOD1",
+      "LIVE-LOD2",
+      "LIVE-LOD3",
+      "LIVE-LINEAR",
+      "LIVE-UNLIT",
+      "LIVE-DEPTH-ISOLATED"
+    ],
+    "completed": true
+  },
+  "liveShelfInvariant": "PASS",
+  "invariant": {
+    "checkedSlots": 3692,
+    "bankMismatchCount": 0,
+    "layerOutOfRangeCount": 0,
+    "missingIndexCount": 0,
+    "invalidLoadedFlagCount": 0,
+    "pass": true,
+    "verdict": "PASS"
+  },
+  "afterReset": {
+    "heading": "JP-4A TEST",
+    "resetSession": {
+      "schema": 1,
+      "round": "JP-4A Round 5B.3",
+      "build": "cab25d09f4a01bd13082e727b4d7d303937d511c",
+      "sourceHead": "cab25d09f4a01bd13082e727b4d7d303937d511c",
+      "testedSha": "cab25d09f4a01bd13082e727b4d7d303937d511c",
+      "sessionId": "jp4a-mszoeydp-fc7b8f9c",
+      "startedAt": "2026-08-19T05:54:00.205Z",
+      "xrStartedAt": null,
+      "completedAt": null,
+      "active": false,
+      "mode": "LIVE-NORMAL",
+      "step": 1,
+      "testPhase": "BASELINE",
+      "lockedPoster": null,
+      "modeVerdicts": {
+        "LIVE-NORMAL": "UNKNOWN",
+        "LIVE-BASE": "UNKNOWN",
+        "LIVE-LOD0": "UNKNOWN",
+        "LIVE-LOD1": "UNKNOWN",
+        "LIVE-LOD2": "UNKNOWN",
+        "LIVE-LOD3": "UNKNOWN",
+        "LIVE-LINEAR": "UNKNOWN",
+        "LIVE-UNLIT": "UNKNOWN",
+        "LIVE-DEPTH-ISOLATED": "UNKNOWN"
+      },
+      "bankInvariant": {
+        "checkedSlots": 3692,
+        "bankMismatchCount": 0,
+        "layerOutOfRangeCount": 0,
+        "missingIndexCount": 0,
+        "invalidLoadedFlagCount": 0,
+        "pass": true,
+        "verdict": "PASS"
+      },
+      "samples": [],
+      "events": [
+        {
+          "timestamp": "2026-08-19T05:54:00.205Z",
+          "type": "session_reset"
+        }
+      ],
+      "environment": "IWER_EMULATED",
+      "questHardware": "NOT_EXECUTED"
+    },
+    "started": {
+      "schema": 1,
+      "round": "JP-4A Round 5B.3",
+      "build": "cab25d09f4a01bd13082e727b4d7d303937d511c",
+      "sourceHead": "cab25d09f4a01bd13082e727b4d7d303937d511c",
+      "testedSha": "cab25d09f4a01bd13082e727b4d7d303937d511c",
+      "sessionId": "jp4a-mszoeydu-79b049d5",
+      "startedAt": "2026-08-19T05:54:00.210Z",
+      "xrStartedAt": null,
+      "completedAt": null,
+      "active": true,
+      "mode": "LIVE-NORMAL",
+      "step": 1,
+      "testPhase": "BASELINE",
+      "lockedPoster": null,
+      "modeVerdicts": {
+        "LIVE-NORMAL": "UNKNOWN",
+        "LIVE-BASE": "UNKNOWN",
+        "LIVE-LOD0": "UNKNOWN",
+        "LIVE-LOD1": "UNKNOWN",
+        "LIVE-LOD2": "UNKNOWN",
+        "LIVE-LOD3": "UNKNOWN",
+        "LIVE-LINEAR": "UNKNOWN",
+        "LIVE-UNLIT": "UNKNOWN",
+        "LIVE-DEPTH-ISOLATED": "UNKNOWN"
+      },
+      "bankInvariant": {
+        "checkedSlots": 3692,
+        "bankMismatchCount": 0,
+        "layerOutOfRangeCount": 0,
+        "missingIndexCount": 0,
+        "invalidLoadedFlagCount": 0,
+        "pass": true,
+        "verdict": "PASS"
+      },
+      "samples": [],
+      "events": [
+        {
+          "timestamp": "2026-08-19T05:54:00.210Z",
+          "type": "session_reset"
+        },
+        {
+          "timestamp": "2026-08-19T05:54:00.212Z",
+          "type": "test_started"
+        }
+      ],
+      "environment": "IWER_EMULATED",
+      "questHardware": "NOT_EXECUTED"
+    },
+    "liveAfterReset": {
+      "enabled": true,
+      "mode": "LIVE-NORMAL",
+      "locked": false,
+      "opaqueId": null,
+      "shader": {
+        "index": -1,
+        "mode": "LIVE-NORMAL",
+        "code": 0
+      },
+      "depthOffsetStoreUnits": 0,
+      "viewerDistanceM": null,
+      "viewerYawToPosterDeg": null,
+      "bankInvariant": {
+        "checkedSlots": 3692,
+        "bankMismatchCount": 0,
+        "layerOutOfRangeCount": 0,
+        "missingIndexCount": 0,
+        "invalidLoadedFlagCount": 0,
+        "pass": true,
+        "verdict": "PASS"
+      },
+      "testPhase": "BASELINE",
+      "verdict": "UNKNOWN",
+      "globalIndex": null,
+      "expectedBank": null,
+      "meshBank": null,
+      "backMeshBank": null,
+      "expectedLayer": null,
+      "posterBankCount": 1,
+      "renderBatchCount": 46,
+      "aTextureIndex": null,
+      "loadedFlag": null,
+      "arrayDepth": null,
+      "detailPhase": null,
+      "detailLut": null,
+      "focusPhase": null,
+      "focusUpload": {
+        "status": "uploading",
+        "slot": 0,
+        "bytesTotal": 2457600,
+        "bytesUploaded": 1310720,
+        "chunksTotal": 15,
+        "chunksComplete": 8,
+        "submitMs": 3989,
+        "lastError": null,
+        "uploadId": 1,
+        "progress": 0.5333333333333333,
+        "actualTransferOwnedByBudgetQueue": true,
+        "timingSemantics": "CPU_BLOCKING_GL_SUBMIT_NOT_GPU_EXECUTION"
+      },
+      "privacy": "OPAQUE_ID_NO_TITLE_NO_URL_NO_TOKEN"
+    },
+    "shader": {
+      "index": -1,
+      "mode": "LIVE-NORMAL",
+      "code": 0
+    },
+    "locked": false,
+    "mode": "LIVE-NORMAL",
+    "testPhase": "BASELINE"
+  },
+  "secondRun": {
+    "entered": {
+      "ok": true
+    },
+    "firstWorldRender": true,
+    "completed": true,
+    "hasCopyResult": true,
+    "hasCopyJson": true
+  },
+  "privacy": {
+    "containsTitle": false,
+    "opaqueOnly": true
+  },
+  "normalConsoleAbsent": true,
+  "seriousErrors": [],
+  "knownDemoResourceErrors": 9
+}

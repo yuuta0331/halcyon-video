@@ -1,11 +1,20 @@
 // JP-4A Round 5B.3 diagnostic session: privacy-safe persistence, telemetry,
 // result formatting, and one shared source of truth for DOM/XR/API consumers.
 
+import {
+  type Jp4aTestPhase,
+} from './jp4a-test-phase.ts';
+
 export const JP4A_TEST_PATH = '/xr-test/jp4a';
 export const JP4A_STORAGE_KEY = 'halcyon.jp4a.round5b3.session.v1';
 export const JP4A_ROUND = 'JP-4A Round 5B.3';
 
 declare const __HALCYON_BUILD_SHA__: string;
+declare const __HALCYON_SOURCE_HEAD_SHA__: string;
+declare const __HALCYON_TESTED_SHA__: string;
+
+export type { Jp4aTestPhase } from './jp4a-test-phase.ts';
+export { jp4aTelemetryPhase } from './jp4a-test-phase.ts';
 
 export type LivePosterMode =
   | 'LIVE-NORMAL'
@@ -52,6 +61,8 @@ export function livePosterModeMeta(mode: LivePosterMode): LivePosterModeMeta {
 
 export type LiveVerdict = 'UNKNOWN' | 'BLACK' | 'CLEAN';
 export type Jp4aPhase = 'baseline' | 'approach' | 'focus_transition' | 'focus_settled' | 'live_mode';
+
+export type Jp4aBankInvariantVerdict = 'PASS' | 'FAIL' | 'NOT_EXERCISED';
 
 export interface Jp4aTelemetrySample {
   timestamp: string;
@@ -112,12 +123,15 @@ export interface Jp4aBankInvariant {
   missingIndexCount: number;
   invalidLoadedFlagCount: number;
   pass: boolean;
+  verdict?: Jp4aBankInvariantVerdict;
 }
 
 export interface Jp4aSession {
   schema: 1;
   round: typeof JP4A_ROUND;
   build: string;
+  sourceHead: string;
+  testedSha: string;
   sessionId: string;
   startedAt: string;
   xrStartedAt: string | null;
@@ -125,6 +139,7 @@ export interface Jp4aSession {
   active: boolean;
   mode: LivePosterMode;
   step: number;
+  testPhase: Jp4aTestPhase;
   lockedPoster: Jp4aLockedPoster | null;
   modeVerdicts: Record<LivePosterMode, LiveVerdict>;
   bankInvariant: Jp4aBankInvariant | null;
@@ -139,6 +154,11 @@ type Listener = (session: Jp4aSession | null) => void;
 const listeners = new Set<Listener>();
 let current: Jp4aSession | null = null;
 let lastPersistAt = -Infinity;
+let liveDiagnosticReset: (() => void) | null = null;
+
+export function registerJp4aLiveDiagnosticReset(fn: (() => void) | null): void {
+  liveDiagnosticReset = fn;
+}
 
 export function jp4aTestRequested(
   pathname = typeof location !== 'undefined' ? location.pathname : '',
@@ -148,14 +168,39 @@ export function jp4aTestRequested(
   return pathname.replace(/\/$/, '') === JP4A_TEST_PATH || q.get('xrTest') === 'jp4a';
 }
 
-export function jp4aBuildId(): string {
+function injectedSha(name: '__HALCYON_BUILD_SHA__' | '__HALCYON_SOURCE_HEAD_SHA__' | '__HALCYON_TESTED_SHA__'): string {
   try {
+    if (name === '__HALCYON_SOURCE_HEAD_SHA__') {
+      return typeof __HALCYON_SOURCE_HEAD_SHA__ === 'string' && __HALCYON_SOURCE_HEAD_SHA__
+        ? __HALCYON_SOURCE_HEAD_SHA__ : '';
+    }
+    if (name === '__HALCYON_TESTED_SHA__') {
+      return typeof __HALCYON_TESTED_SHA__ === 'string' && __HALCYON_TESTED_SHA__
+        ? __HALCYON_TESTED_SHA__ : '';
+    }
     return typeof __HALCYON_BUILD_SHA__ === 'string' && __HALCYON_BUILD_SHA__
-      ? __HALCYON_BUILD_SHA__
-      : 'unknown';
+      ? __HALCYON_BUILD_SHA__ : '';
   } catch {
-    return 'unknown';
+    return '';
   }
+}
+
+export function jp4aBuildId(): string {
+  return injectedSha('__HALCYON_SOURCE_HEAD_SHA__') || injectedSha('__HALCYON_BUILD_SHA__') || 'unknown';
+}
+
+export function jp4aTestedSha(): string {
+  return injectedSha('__HALCYON_TESTED_SHA__') || jp4aBuildId();
+}
+
+export function jp4aBuildLabels(): { sourceHead: string; testedSha: string; checkoutLabel: string } {
+  const sourceHead = jp4aBuildId();
+  const testedSha = jp4aTestedSha();
+  return {
+    sourceHead,
+    testedSha,
+    checkoutLabel: sourceHead === testedSha ? 'same as source' : testedSha,
+  };
 }
 
 function makeSessionId(now = Date.now()): string {
@@ -176,10 +221,13 @@ function detectedEnvironment(): Jp4aSession['environment'] {
 }
 
 export function resetJp4aTest(now = Date.now()): Jp4aSession {
+  const labels = jp4aBuildLabels();
   current = {
     schema: 1,
     round: JP4A_ROUND,
-    build: jp4aBuildId(),
+    build: labels.sourceHead,
+    sourceHead: labels.sourceHead,
+    testedSha: labels.testedSha,
     sessionId: makeSessionId(now),
     startedAt: new Date(now).toISOString(),
     xrStartedAt: null,
@@ -187,6 +235,7 @@ export function resetJp4aTest(now = Date.now()): Jp4aSession {
     active: false,
     mode: 'LIVE-NORMAL',
     step: 1,
+    testPhase: 'BASELINE',
     lockedPoster: null,
     modeVerdicts: blankVerdicts(),
     bankInvariant: null,
@@ -197,6 +246,7 @@ export function resetJp4aTest(now = Date.now()): Jp4aSession {
   };
   persist(true);
   emit();
+  liveDiagnosticReset?.();
   return snapshot()!;
 }
 
@@ -244,8 +294,25 @@ export function markJp4aXrEnded(now = Date.now()): void {
 export function setJp4aLockedPoster(poster: Jp4aLockedPoster | null): void {
   if (!current?.active) return;
   current.lockedPoster = poster ? { ...poster } : null;
-  if (poster) current.step = Math.max(current.step, 3);
+  if (poster) {
+    current.step = Math.max(current.step, 3);
+    if (current.testPhase === 'BASELINE') current.testPhase = 'LOCKED_LIVE_DIAG';
+  }
   event(poster ? 'poster_locked' : 'poster_unlocked', poster?.opaqueId);
+  persist(true);
+  emit();
+}
+
+export function setJp4aTestPhase(phase: Jp4aTestPhase): void {
+  if (!current) return;
+  if (current.testPhase === phase) return;
+  current.testPhase = phase;
+  if (phase === 'LOCKED_LIVE_DIAG') current.step = Math.max(current.step, 3);
+  if (phase === 'APPROACH') current.step = Math.max(current.step, 4);
+  if (phase === 'FOCUS_REQUESTED' || phase === 'FOCUS_TRANSITION' || phase === 'FOCUS_SETTLED') {
+    current.step = Math.max(current.step, 5);
+  }
+  event('test_phase', phase);
   persist(true);
   emit();
 }
@@ -319,6 +386,11 @@ export function restoreJp4aTest(): Jp4aSession | null {
     const parsed = JSON.parse(raw) as Jp4aSession;
     if (parsed?.schema !== 1 || parsed.round !== JP4A_ROUND) return null;
     current = parsed;
+    if (!current.testPhase) {
+      current.testPhase = current.lockedPoster ? 'LOCKED_LIVE_DIAG' : 'BASELINE';
+    }
+    if (!current.sourceHead) current.sourceHead = current.build;
+    if (!current.testedSha) current.testedSha = current.build;
     return snapshot();
   } catch {
     return null;
@@ -350,9 +422,16 @@ export function onJp4aTestChange(fn: Listener): () => void {
 
 function phaseSummary(s: Jp4aSession, phase: Jp4aPhase): string {
   const xs = s.samples.filter((x) => x.phase === phase && x.fps != null);
-  if (!xs.length) return '--';
+  if (!xs.length) return 'NOT_RECORDED';
   const mean = xs.reduce((n, x) => n + (x.fps ?? 0), 0) / xs.length;
   return `${mean.toFixed(1)} FPS (${xs.length} samples)`;
+}
+
+export function jp4aBankInvariantVerdict(inv: Jp4aBankInvariant | null | undefined): Jp4aBankInvariantVerdict | 'NOT_RECORDED' {
+  if (!inv) return 'NOT_RECORDED';
+  if (inv.verdict) return inv.verdict;
+  if (inv.checkedSlots <= 0) return 'NOT_EXERCISED';
+  return inv.pass ? 'PASS' : 'FAIL';
 }
 
 export function formatJp4aResult(session = current): string {
@@ -361,6 +440,9 @@ export function formatJp4aResult(session = current): string {
     ?? [...session.samples].reverse().find((x) => x.focusPhase);
   const lines = [
     JP4A_ROUND,
+    `Source HEAD: ${session.sourceHead ?? session.build}`,
+    `CI checkout: ${session.testedSha && session.testedSha !== (session.sourceHead ?? session.build)
+      ? session.testedSha : 'same as source'}`,
     `Build: ${session.build}`,
     `Session: ${session.sessionId}`,
     `Environment: ${session.environment}`,
@@ -374,7 +456,7 @@ export function formatJp4aResult(session = current): string {
     `Locked poster: ${session.lockedPoster?.opaqueId ?? '--'}`,
     ...LIVE_POSTER_MODES.map((mode) => `${mode}: ${session.modeVerdicts[mode]}`),
     '',
-    `Bank invariant: ${session.bankInvariant?.pass ? 'PASS' : session.bankInvariant ? 'FAIL' : 'NOT_RECORDED'}`,
+    `Bank invariant: ${jp4aBankInvariantVerdict(session.bankInvariant)}`,
     `Bank mismatches: ${session.bankInvariant?.bankMismatchCount ?? '--'}`,
     `Layer out of range: ${session.bankInvariant?.layerOutOfRangeCount ?? '--'}`,
     `Missing indices: ${session.bankInvariant?.missingIndexCount ?? '--'}`,
@@ -412,6 +494,11 @@ export function installJp4aTestApis(): void {
       }),
       cycleMode: (direction: -1 | 1 = 1) => cycleJp4aMode(direction),
       markVerdict: () => cycleJp4aModeVerdict(),
+      beginApproach: () => setJp4aTestPhase('APPROACH'),
+      beginFocus: () => setJp4aTestPhase('FOCUS_REQUESTED'),
+      liveSnapshot: () => (typeof window !== 'undefined'
+        ? (window as unknown as { __livePosterDiag?: () => Record<string, unknown> }).__livePosterDiag?.()
+        : null),
       recordSyntheticSample: () => recordJp4aSample({
         timestamp: new Date().toISOString(), elapsedMs: 1000, phase: 'approach', mode: current?.mode ?? 'LIVE-NORMAL',
         fps: 60, meanMs: 16.67, onePercentLowFps: 55, p95Ms: 18, p99Ms: 20, worstMs: 24,

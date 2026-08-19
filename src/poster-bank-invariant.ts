@@ -11,6 +11,8 @@ export interface PosterBankInvariantRecord {
   loadedFlag: number | null;
 }
 
+export type PosterBankInvariantVerdict = 'PASS' | 'FAIL' | 'NOT_EXERCISED';
+
 export interface PosterBankInvariantSummary {
   checkedSlots: number;
   bankMismatchCount: number;
@@ -18,6 +20,7 @@ export interface PosterBankInvariantSummary {
   missingIndexCount: number;
   invalidLoadedFlagCount: number;
   pass: boolean;
+  verdict: PosterBankInvariantVerdict;
 }
 
 export function posterIndexNotifyBankSafe(
@@ -52,13 +55,29 @@ export function summarizePosterBankInvariant(
       invalidLoadedFlagCount++;
     }
   }
-  return {
+  return classifyPosterBankInvariant({
     checkedSlots: records.length,
     bankMismatchCount,
     layerOutOfRangeCount,
     missingIndexCount,
     invalidLoadedFlagCount,
-    pass: bankMismatchCount === 0 && layerOutOfRangeCount === 0
-      && missingIndexCount === 0 && invalidLoadedFlagCount === 0,
-  };
+  });
+}
+
+export function classifyPosterBankInvariant(input: {
+  checkedSlots: number;
+  bankMismatchCount: number;
+  layerOutOfRangeCount: number;
+  missingIndexCount: number;
+  invalidLoadedFlagCount: number;
+}): PosterBankInvariantSummary {
+  const pass = input.checkedSlots > 0
+    && input.bankMismatchCount === 0
+    && input.layerOutOfRangeCount === 0
+    && input.missingIndexCount === 0
+    && input.invalidLoadedFlagCount === 0;
+  const verdict: PosterBankInvariantVerdict = input.checkedSlots <= 0
+    ? 'NOT_EXERCISED'
+    : pass ? 'PASS' : 'FAIL';
+  return { ...input, pass, verdict };
 }

@@ -13,6 +13,9 @@ No extra query parameters or settings toggles are required.
 
 ## One guided pass
 
+HF1 changed the controller/test flow. For the next Quest run use
+`jp4a-round5b3-hf1-quest-procedure.md`. Historical observations below are not rewritten.
+
 1. Stand still long enough for baseline samples; read the large center-bottom FPS number.
 2. Point at an actually affected shelf poster and press Trigger once to lock it. The HUD shows only a privacy-safe `opaque-…` id.
 3. Thumbstick click advances the mode. Grip/squeeze returns to the previous mode. Menu behavior is unchanged.

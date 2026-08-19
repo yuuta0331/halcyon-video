@@ -39,10 +39,10 @@ export function emptyControllerSnapshot(): XrControllerSnapshot {
   };
 }
 
-export function makeControllerRay(): THREE.Line {
+export function makeControllerRay(length = WALK_INTERACT_RANGE): THREE.Line {
   const geom = new THREE.BufferGeometry().setFromPoints([
     new THREE.Vector3(0, 0, 0),
-    new THREE.Vector3(0, 0, -WALK_INTERACT_RANGE),
+    new THREE.Vector3(0, 0, -length),
   ]);
   const mat = new THREE.LineBasicMaterial({
     color: 0xffd56a,

@@ -5,7 +5,7 @@ import { enableFpsMeter } from '../fps-meter.ts';
 import {
   formatJp4aResult,
   installJp4aTestApis,
-  jp4aBuildId,
+  jp4aBuildLabels,
   jp4aResultJson,
   jp4aTestRequested,
   jp4aTestSnapshot,
@@ -97,14 +97,23 @@ function render(session: Jp4aSession | null): void {
   const h = document.createElement('h1');
   h.textContent = session?.completedAt ? 'TEST COMPLETE' : 'JP-4A TEST';
   h.style.cssText = 'margin:0 0 8px;font:900 42px ui-monospace,Menlo,Consolas,monospace;color:#f4fffc';
+  const labels = jp4aBuildLabels();
+  const source = session?.sourceHead ?? session?.build ?? labels.sourceHead;
+  const tested = session?.testedSha ?? labels.testedSha;
   const meta = document.createElement('div');
   meta.style.cssText = 'white-space:pre-wrap;color:#9fe8d8;font:16px/1.5 ui-monospace,Menlo,Consolas,monospace';
-  meta.textContent = `Round 5B.3\nBuild: ${session?.build ?? jp4aBuildId()}\nSession: ${session?.sessionId ?? 'not started'}`;
+  meta.textContent = [
+    'Round 5B.3 HF1',
+    `Source HEAD: ${source}`,
+    `CI checkout: ${tested === source ? 'same as source' : tested}`,
+    `Build: ${source}`,
+    `Session: ${session?.sessionId ?? 'not started'}`,
+  ].join('\n');
   const help = document.createElement('p');
   help.style.cssText = 'max-width:720px;color:#d8e5e2;font:18px/1.5 system-ui,sans-serif';
   help.textContent = session?.completedAt
-    ? '結果は端末内に保存されています。そのまま COPY RESULT を ChatGPT へ貼り付けてください。'
-    : 'START で FPS・LIVE poster 診断・自動保存をまとめて有効化します。VR 内では表示される STEP に従ってください。';
+    ? '結果は端末内に保存されています。そのまま COPY RESULT を ChatGPT へ貼り付けてください。RESET TEST でページを再読み込みせずに次の診断を開始できます。'
+    : 'START で FPS・LIVE poster 診断・自動保存を有効化します。Trigger はロックのみ。HOLD TRIGGER で APPROACH のあと FOCUS を開始します。Menu は通常どおりです。';
   const actions = document.createElement('div');
   actions.style.cssText = 'display:flex;flex-wrap:wrap;gap:12px;margin-top:18px';
   if (!session?.active && !session?.completedAt) actions.append(button('START JP-4A TEST', start, true));

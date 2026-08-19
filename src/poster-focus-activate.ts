@@ -126,6 +126,10 @@ function finish(
       deps.onUploadDeferred?.(movieId);
       // Capacity retry owns the decoded pixels and does not require head motion
       // or a second network/decode. This timer does not render or add a rAF.
+      // HF1 OPTION A: this bounded FOCUS-local timer is what resumes the
+      // retained pixels. Queue capacity notifications help DETAIL/FOCUS
+      // reconcile, but they do not re-enter activateFocusTitle while
+      // uploadInFlight is true.
       retryTimer = setTimeout(() => {
         retryTimer = null;
         queueNext();

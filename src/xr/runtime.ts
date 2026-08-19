@@ -9,6 +9,7 @@ import {
   STORE_UNITS_PER_METER,
 } from '../platform';
 import { WALK_INTERACT_RANGE } from '../store-walk';
+import { jp4aSelectPickRange } from './jp4a-diagnostic-lock.ts';
 import type { MovieSlot } from '../store-layout';
 import type { XrDiagnostics, XrSessionPhase, WalkCollisionFn } from './types';
 import {
@@ -128,9 +129,15 @@ import {
   markJp4aXrStarted,
   noteJp4aFocusState,
   recordJp4aSample,
-  type Jp4aPhase,
+  setJp4aTestPhase,
   type LivePosterMode,
 } from './jp4a-test-state.ts';
+import {
+  jp4aHoldTriggerAction,
+  jp4aModeCycleAllowed,
+  jp4aTelemetryPhase,
+  nextJp4aTestPhaseFromFocus,
+} from './jp4a-test-phase.ts';
 
 export interface XrRuntimeHost {
   renderer: THREE.WebGLRenderer;
@@ -153,6 +160,8 @@ export interface XrRuntimeHost {
   cycleJp4aMode?: (direction: -1 | 1) => LivePosterMode;
   tickJp4aDiagnostic?: (viewer: { x: number; y: number; z: number } | null) => void;
   jp4aDiagnosticSnapshot?: () => Record<string, unknown>;
+  advanceJp4aTestPhase?: () => 'BEGIN_APPROACH' | 'BEGIN_FOCUS' | null;
+  beginJp4aFocus?: () => boolean;
 }
 
 type XrManager = THREE.WebGLRenderer['xr'];
@@ -218,7 +227,9 @@ export class XrRuntime {
   private jp4aPrevSqueeze = false;
   private jp4aLastSampleAt = -Infinity;
   private jp4aSampleStartAt = 0;
-  private jp4aLastDistance: number | null = null;
+  private jp4aTriggerDownAt: number | null = null;
+  private jp4aHoldFired = false;
+  private jp4aHoldFromLockPress = false;
   private onFrameRateChange = (): void => {
     this.startup.frameratechangeCount += 1;
     appendXrJournal('frameratechange', {
@@ -538,6 +549,10 @@ export class XrRuntime {
     this.host.requestRender();
     if (this.flags.jp4aTest && jp4aTestSnapshot()?.active) {
       this.jp4aSampleStartAt = nowMs();
+      this.jp4aLastSampleAt = -Infinity;
+      this.jp4aHoldFromLockPress = false;
+      this.jp4aHoldFired = false;
+      this.jp4aTriggerDownAt = null;
       markJp4aXrStarted(Date.now(), this.classify());
     }
     this.maybeInitOptionalLayers();
@@ -916,7 +931,9 @@ export class XrRuntime {
     for (let i = 0; i < 2; i++) {
       const controller = xrMgr.getController(i);
       const grip = xrMgr.getControllerGrip(i);
-      controller.add(makeControllerRay());
+      controller.add(makeControllerRay(
+        this.flags.jp4aTest ? jp4aSelectPickRange(true) : undefined,
+      ));
       grip.add(makeGripMarker());
       (controller as XrControllerObj).addEventListener('selectstart', this.onSelectStart);
       this.rig.xrOrigin.add(controller);
@@ -998,13 +1015,15 @@ export class XrRuntime {
       }
       return;
     }
+    const jp4aLock = this.flags.jp4aTest && jp4aTestSnapshot()?.active && !!this.host.onJp4aLockSlot;
     const slot = this.host.pickSlot(
       this.rayScratch.origin,
       this.rayScratch.direction,
-      WALK_INTERACT_RANGE,
+      jp4aLock ? jp4aSelectPickRange(true) : WALK_INTERACT_RANGE,
     );
-    if (slot && this.flags.jp4aTest && jp4aTestSnapshot()?.active && this.host.onJp4aLockSlot) {
-      this.host.onJp4aLockSlot(slot);
+    if (slot && jp4aLock) {
+      const result = this.host.onJp4aLockSlot!(slot);
+      if (result?.changed) this.jp4aHoldFromLockPress = true;
       return;
     }
     if (slot) this.host.onSelectSlot(slot);
@@ -1434,11 +1453,29 @@ export class XrRuntime {
   private tickJp4aButtons(): void {
     const session = jp4aTestSnapshot();
     const enabled = this.flags.jp4aTest && session?.active && this.uiMode === 'WORLD';
-    if (enabled && this.uiButtons.thumbstick && !this.jp4aPrevThumb) {
+    const phase = session?.testPhase ?? 'BASELINE';
+    if (enabled && jp4aModeCycleAllowed(phase) && this.uiButtons.thumbstick && !this.jp4aPrevThumb) {
       this.host.cycleJp4aMode?.(1);
     }
-    if (enabled && this.uiButtons.squeeze && !this.jp4aPrevSqueeze) {
+    if (enabled && jp4aModeCycleAllowed(phase) && this.uiButtons.squeeze && !this.jp4aPrevSqueeze) {
       this.host.cycleJp4aMode?.(-1);
+    }
+    const at = nowMs();
+    if (enabled && this.uiButtons.trigger) {
+      if (this.jp4aTriggerDownAt == null) this.jp4aTriggerDownAt = at;
+      const hold = jp4aHoldTriggerAction({
+        triggerDown: true,
+        heldMs: at - this.jp4aTriggerDownAt,
+        alreadyFired: this.jp4aHoldFired,
+        ignoreThisPress: this.jp4aHoldFromLockPress,
+        testPhase: phase,
+      });
+      this.jp4aHoldFired = hold.fired;
+      if (hold.fire) this.host.advanceJp4aTestPhase?.();
+    } else {
+      this.jp4aTriggerDownAt = null;
+      this.jp4aHoldFired = false;
+      this.jp4aHoldFromLockPress = false;
     }
     this.jp4aPrevThumb = this.uiButtons.thumbstick;
     this.jp4aPrevSqueeze = this.uiButtons.squeeze;
@@ -1454,13 +1491,12 @@ export class XrRuntime {
     const info = this.host.renderer.info;
     const focusPhase = typeof live.focusPhase === 'string' ? live.focusPhase : null;
     noteJp4aFocusState(focusPhase);
+    const session = jp4aTestSnapshot();
+    const advanced = nextJp4aTestPhaseFromFocus(session?.testPhase ?? 'BASELINE', focusPhase);
+    if (advanced !== (session?.testPhase ?? 'BASELINE')) setJp4aTestPhase(advanced);
+    const testPhase = jp4aTestSnapshot()?.testPhase ?? 'BASELINE';
+    const phase = jp4aTelemetryPhase(testPhase);
     const distance = typeof live.viewerDistanceM === 'number' ? live.viewerDistanceM : null;
-    let phase: Jp4aPhase = 'live_mode';
-    if (!live.locked) phase = 'baseline';
-    else if (focusPhase === 'pendingPixels' || focusPhase === 'pendingUpload') phase = 'focus_transition';
-    else if (focusPhase === 'ready') phase = 'focus_settled';
-    else if (distance != null && this.jp4aLastDistance != null && distance < this.jp4aLastDistance - 0.01) phase = 'approach';
-    this.jp4aLastDistance = distance;
     const base = (this.host.renderer.xr as XrManager).getBaseLayer?.() as {
       framebufferWidth?: number; framebufferHeight?: number; textureWidth?: number; textureHeight?: number;
     } | undefined;
