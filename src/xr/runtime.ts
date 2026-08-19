@@ -46,13 +46,19 @@ import {
 import { XrPlayerRig } from './player-rig';
 import {
   emptyControllerSnapshot,
-  ignoreHandTrackingSource,
   makeControllerRay,
   makeGripMarker,
-  readXrGamepadStick,
   targetRayFromController,
   type XrControllerSnapshot,
 } from './input';
+import { snapshotControllersFromInputSources } from './input-policy.ts';
+import {
+  bindJp4aControllerObjectEvents,
+  clearJp4aControllerHand,
+  pickJp4aControllerByHand,
+  setJp4aControllerHandFromConnection,
+  unbindJp4aControllerObjectEvents,
+} from './jp4a-controller-association.ts';
 import { XrHelpPanel, xrPanelContent } from './panel';
 import { createMediaQuadLayer, planMediaLayer, xrMediaLayerFlag, type XrMediaBindingLike } from './media';
 import { readXrFlags, type XrRuntimeFlags } from './flags';
@@ -61,8 +67,6 @@ import { isIwerActive } from './emu-state';
 import { blankXrDiagnostics, mergeSessionDiagnostics } from './diagnostics';
 import {
   emptyXrButtonSnapshot,
-  mergeXrButtons,
-  readXrButtons,
   xrUiActions,
 } from './ui-input';
 import { locomotionAllowed, uiOwnsInput, type XrUiMode } from './ui-mode';
@@ -196,8 +200,8 @@ export class XrRuntime {
   } | null = null;
   private session: XRSession | null = null;
   private onSessionEnd = (): void => { void this.cleanupAfterEnd(); };
-  private onSelectStart = (event: { target?: THREE.Object3D }) => {
-    this.handleSelect(event.target ?? null);
+  private onSelectStart = (event: { target?: { userData?: Record<string, unknown> } }) => {
+    this.handleSelect((event.target as THREE.Object3D | undefined) ?? null);
   };
   private controllerObjects: THREE.Object3D[] = [];
   private gripObjects: THREE.Object3D[] = [];
@@ -242,14 +246,13 @@ export class XrRuntime {
   private jp4aTriggerSource: Jp4aTriggerSourceState = emptyJp4aTriggerSourceState();
   private jp4aPrevLeftTrigger = false;
   private jp4aPrevRightTrigger = false;
-  private onControllerConnected = (event: { target?: THREE.Object3D; data?: { handedness?: string } }) => {
-    const hand = event.data?.handedness;
-    if ((hand === 'left' || hand === 'right') && event.target) {
-      event.target.userData.jp4aHand = hand;
-    }
+  private onControllerConnected = (event: { target?: { userData: Record<string, unknown> }; data?: { handedness?: string } }) => {
+    const target = event.target;
+    if (!target) return;
+    setJp4aControllerHandFromConnection(target, event.data?.handedness, event.data);
   };
-  private onControllerDisconnected = (event: { target?: THREE.Object3D }) => {
-    if (event.target) event.target.userData.jp4aHand = undefined;
+  private onControllerDisconnected = (event: { target?: { userData: Record<string, unknown> } }) => {
+    clearJp4aControllerHand(event.target);
   };
   private onFrameRateChange = (): void => {
     this.startup.frameratechangeCount += 1;
@@ -276,6 +279,70 @@ export class XrRuntime {
 
   get uiMode(): XrUiMode {
     return this.uiSession?.mode ?? 'WORLD';
+  }
+
+  jp4aControllerAssociationSeam(): {
+    classification: 'IWER_EMULATED';
+    NOT_HARDWARE_VISUAL_PROOF: true;
+    slotHands: Array<'left' | 'right' | null>;
+    pickIndex: (hand: 'left' | 'right') => number;
+    injectConnection: (slot: number, hand: 'left' | 'right') => boolean;
+    injectDisconnection: (slot: number) => boolean;
+    simulateReorderedInputSources: (order: Array<'left' | 'right'>) => {
+      before: Array<'left' | 'right' | null>;
+      after: Array<'left' | 'right' | null>;
+      unchanged: boolean;
+      pickRight: number;
+      pickLeft: number;
+      logicalLeftConnected: boolean;
+      logicalRightConnected: boolean;
+    };
+  } | null {
+    if (!this.flags.jp4aTest) return null;
+    const slotHands = () => this.controllerObjects.map((c) => {
+      const hand = c.userData.jp4aHand;
+      return hand === 'left' || hand === 'right' ? hand : null;
+    });
+    const dispatch = (slot: number, type: 'connected' | 'disconnected', hand?: 'left' | 'right') => {
+      const controller = this.controllerObjects[slot] as XrControllerObj | undefined;
+      if (!controller) return false;
+      controller.dispatchEvent(hand
+        ? { type, data: { handedness: hand } }
+        : { type });
+      return true;
+    };
+    return {
+      classification: 'IWER_EMULATED',
+      NOT_HARDWARE_VISUAL_PROOF: true,
+      get slotHands() { return slotHands(); },
+      pickIndex: (hand) => this.controllerObjects.findIndex((c) => c.userData.jp4aHand === hand),
+      injectConnection: (slot, hand) => {
+        if (!dispatch(slot, 'connected', hand)) return false;
+        return this.controllerObjects[slot]?.userData.jp4aHand === hand;
+      },
+      injectDisconnection: (slot) => {
+        if (!dispatch(slot, 'disconnected')) return false;
+        return this.controllerObjects[slot]?.userData.jp4aHand == null;
+      },
+      simulateReorderedInputSources: (order) => {
+        const before = slotHands();
+        const logical = snapshotControllersFromInputSources(
+          order.map((handedness) => ({ handedness, targetRayMode: 'tracked-pointer' })),
+        );
+        this.controllers = logical.controllers;
+        this.uiButtons = logical.uiButtons;
+        const after = slotHands();
+        return {
+          before,
+          after,
+          unchanged: before.length === after.length && before.every((hand, i) => hand === after[i]),
+          pickRight: this.controllerObjects.findIndex((c) => c.userData.jp4aHand === 'right'),
+          pickLeft: this.controllerObjects.findIndex((c) => c.userData.jp4aHand === 'left'),
+          logicalLeftConnected: logical.controllers.left.connected,
+          logicalRightConnected: logical.controllers.right.connected,
+        };
+      },
+    };
   }
 
   openXrMenu(): void {
@@ -506,6 +573,10 @@ export class XrRuntime {
     }
     this.ensureUi();
     if (!this.flags.minimal) this.installControllers(xrMgr);
+    // Three.js r184 dispatches controller `connected` from session
+    // `inputsourceschange` inside setSession. Listeners must already be on
+    // getController(i) objects before that assignment, which this order
+    // guarantees. Do not recover missed connections via inputSources[i].
 
     this.scheduler = reduceFrameScheduler(this.scheduler, 'enter-xr');
     this.phase = 'binding';
@@ -957,9 +1028,7 @@ export class XrRuntime {
         this.flags.jp4aTest ? jp4aSelectPickRange(true) : undefined,
       ));
       grip.add(makeGripMarker());
-      (controller as XrControllerObj).addEventListener('selectstart', this.onSelectStart);
-      (controller as XrControllerObj).addEventListener('connected', this.onControllerConnected);
-      (controller as XrControllerObj).addEventListener('disconnected', this.onControllerDisconnected);
+      bindJp4aControllerObjectEvents(controller as XrControllerObj, this.controllerObjectHandlers);
       this.rig.xrOrigin.add(controller);
       this.rig.xrOrigin.add(grip);
       this.controllerObjects.push(controller);
@@ -969,10 +1038,7 @@ export class XrRuntime {
 
   private teardownControllers(): void {
     for (const c of this.controllerObjects) {
-      (c as XrControllerObj).removeEventListener('selectstart', this.onSelectStart);
-      (c as XrControllerObj).removeEventListener('connected', this.onControllerConnected);
-      (c as XrControllerObj).removeEventListener('disconnected', this.onControllerDisconnected);
-      c.userData.jp4aHand = undefined;
+      unbindJp4aControllerObjectEvents(c as XrControllerObj, this.controllerObjectHandlers);
       while (c.children.length) {
         const child = c.children[0];
         c.remove(child);
@@ -990,43 +1056,23 @@ export class XrRuntime {
     this.gripObjects = [];
   }
 
+  private get controllerObjectHandlers() {
+    return {
+      selectstart: this.onSelectStart,
+      connected: this.onControllerConnected,
+      disconnected: this.onControllerDisconnected,
+    };
+  }
+
   private updateControllers(): void {
-    const snap = emptyControllerSnapshot();
-    let uiButtons = emptyXrButtonSnapshot();
-    const session = this.session;
-    if (!session) {
-      this.controllers = snap;
-      this.uiButtons = uiButtons;
+    if (!this.session) {
+      this.controllers = emptyControllerSnapshot();
+      this.uiButtons = emptyXrButtonSnapshot();
       return;
     }
-    const sources = Array.from(session.inputSources);
-    for (const source of sources) {
-      if (ignoreHandTrackingSource(source)) continue;
-      const stick = readXrGamepadStick(source.gamepad);
-      const side = source.handedness === 'left' ? snap.left
-        : source.handedness === 'right' ? snap.right
-        : null;
-      if (!side) continue;
-      side.connected = true;
-      side.hasGrip = source.targetRayMode === 'tracked-pointer';
-      side.stickX = stick.x;
-      side.stickY = stick.y;
-      const mapped = readXrButtons(source.gamepad);
-      side.select = mapped.trigger;
-      side.squeeze = mapped.squeeze;
-      uiButtons = mergeXrButtons(uiButtons, mapped);
-    }
-    this.controllers = snap;
-    this.uiButtons = uiButtons;
-    if (this.flags.jp4aTest) {
-      const ordered = Array.from(session.inputSources);
-      for (let i = 0; i < this.controllerObjects.length; i++) {
-        const source = ordered[i];
-        const hand = source?.handedness;
-        this.controllerObjects[i]!.userData.jp4aHand =
-          hand === 'left' || hand === 'right' ? hand : undefined;
-      }
-    }
+    const logical = snapshotControllersFromInputSources(this.session.inputSources);
+    this.controllers = logical.controllers;
+    this.uiButtons = logical.uiButtons;
   }
 
   private locomotionSticks(): { moveX: number; moveY: number; snapX: number } {
@@ -1555,7 +1601,7 @@ export class XrRuntime {
   }
 
   private pickJp4aTriggerTarget(hand: Jp4aTriggerHand): MovieSlot | null {
-    const controller = this.controllerObjects.find((c) => c.userData.jp4aHand === hand) ?? null;
+    const controller = pickJp4aControllerByHand(this.controllerObjects, hand);
     if (!controller) return null;
     targetRayFromController(controller, this.rayScratch);
     return this.host.pickSlot(
@@ -1648,6 +1694,7 @@ interface XrQuadLayerHandle {
 type XrControllerObj = THREE.Object3D & {
   addEventListener(type: string, listener: (event: { target?: THREE.Object3D; data?: { handedness?: string } }) => void): void;
   removeEventListener(type: string, listener: (event: { target?: THREE.Object3D; data?: { handedness?: string } }) => void): void;
+  dispatchEvent(event: { type: string; data?: { handedness?: string } }): void;
 };
 
 function disposeObject(obj: THREE.Object3D): void {

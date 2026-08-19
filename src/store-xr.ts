@@ -215,6 +215,7 @@ export function attachXrRuntime(
           press: { ...triggerPress, target: !!triggerPress.target },
         };
       },
+      controllerAssociation: () => xr.jp4aControllerAssociationSeam(),
     };
   }
   (window as unknown as { __closeRangeProbe?: unknown }).__closeRangeProbe = () => {
