@@ -1,0 +1,89 @@
+{
+  "phase": "ROUND5B3_HF3_CONTROLLER_SOURCE_FIDELITY_CORRECTION",
+  "finalState": "READY_FOR_SINGLE_QUEST_JP4A_ROUND5B3_DIAGNOSTIC",
+  "QUEST_HARDWARE": "NOT_EXECUTED",
+  "questPassClaimed": false,
+  "NOT_HARDWARE_VISUAL_PROOF": true,
+  "classification": "IWER_EMULATED",
+  "implementationTestedHead": "d178a0f708c57f4f31f702619f8d3505502fb21d",
+  "evidenceCommitHead": "NEWER_THAN_TESTED_SOURCE",
+  "reviewedHf2EvidenceHead": "3bee8609fce74f678646244ce4ed4bfdf8f2fd7c",
+  "simultaneousTriggerPolicy": "AMBIGUOUS_NO_ACTION_UNTIL_BOTH_RELEASED",
+  "controllerSemantics": {
+    "rightTriggerUsesRightRay": true,
+    "leftTriggerUsesLeftRay": true,
+    "oppositeRayNeverFallback": true,
+    "sourceBoundUntilRelease": true,
+    "secondTriggerCannotSteal": true,
+    "disconnectCancelsWithoutCommit": true,
+    "holdNeverChangesVerdict": true,
+    "focusSelectsProductionOnce": true
+  },
+  "checks": {
+    "typescript": {
+      "command": "npx tsc --noEmit",
+      "pass": true
+    },
+    "targeted": {
+      "command": "node --experimental-strip-types --test tests/jp4a-round5b3-hf3.test.ts tests/jp4a-round5b3-hf2.test.ts tests/jp4a-round5b3-hf1.test.ts tests/jp4a-round5b3.test.ts tests/poster-focus.test.ts tests/upload-admission.test.ts tests/xr-viewer-pose.test.ts tests/hw-diag-production.test.ts tests/xr-hardware-diag.test.ts tests/xr-lifecycle.test.ts",
+      "pass": true,
+      "tests": 103,
+      "failed": 0
+    },
+    "fullUnit": {
+      "command": "npm test",
+      "pass": true,
+      "tests": 599,
+      "failed": 0
+    },
+    "productionBuild": {
+      "command": "npm run build",
+      "pass": true,
+      "includes": [
+        "file-budget",
+        "signage-slot-validation",
+        "typescript",
+        "vite-production-build"
+      ]
+    },
+    "browserIwerIntegration": {
+      "command": "npm run test:jp4a-round5b3-hf3",
+      "pass": true,
+      "classification": "IWER_EMULATED",
+      "NOT_HARDWARE_VISUAL_PROOF": true,
+      "QUEST_HARDWARE": "NOT_EXECUTED",
+      "implementationTestedHead": "d178a0f708c57f4f31f702619f8d3505502fb21d",
+      "validated": [
+        "right Trigger locks logical right shelf slot 0",
+        "left Trigger locks logical left shelf slot 1",
+        "opposite ray is not a fallback",
+        "simultaneous Trigger edges are ambiguous and lock nothing",
+        "TAP lock-only UNKNOWN then BLACK then CLEAN",
+        "HOLD BEGIN APPROACH leaves CLEAN unchanged",
+        "approach telemetry samples recorded",
+        "HOLD BEGIN FOCUS production-selects exactly once",
+        "same-page RESET then START",
+        "second IWER session with no stale held Trigger",
+        "normal URL console absent",
+        "live shelf invariant checkedSlots=3692 PASS"
+      ],
+      "evidence": "docs/review/jp4a/jp4a-round5b3-hf3-iwer.json",
+      "controllerSeam": "jp4a_stepHandedTrigger_runtime_source_routing"
+    }
+  },
+  "softwareEvidence": {
+    "bankInvariantZeroSlot": "NOT_EXERCISED",
+    "iwerLiveShelfInvariant": "PASS",
+    "iwerLiveShelfCheckedSlots": 3692,
+    "productionWalkInteractRangeFt": 14,
+    "jp4aDiagnosticLockRangeM": 12,
+    "focusActualTexSubImageChunks": "PRESERVED",
+    "stationaryFocusLocal80msRetry": "PRESERVED_OPTION_A",
+    "extraAnimationLoop": "ABSENT"
+  },
+  "timingBoundary": {
+    "gpuUploadSubmitMs": "CPU_BLOCKING_GL_SUBMIT_NOT_GPU_EXECUTION",
+    "questGpuExecution": "REQUIRES_QUEST",
+    "questBlackArtifactVisualResult": "REQUIRES_QUEST"
+  }
+}
