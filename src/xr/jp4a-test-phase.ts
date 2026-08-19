@@ -76,7 +76,7 @@ export function jp4aHudStep(testPhase: Jp4aTestPhase, baselineReady: boolean): {
         ? {
           index: 1,
           title: 'STEP 2 / 6',
-          instruction: 'POINT AT BLACK POSTER — TRIGGER LOCKS ONLY',
+          instruction: 'TRIGGER TAP = LOCK ONLY',
           hint: 'LOCK DOES NOT START FOCUS',
         }
         : {
@@ -89,15 +89,15 @@ export function jp4aHudStep(testPhase: Jp4aTestPhase, baselineReady: boolean): {
       return {
         index: 2,
         title: 'STEP 3 / 6',
-        instruction: 'THUMBSTICK NEXT  •  GRIP PREV',
-        hint: 'TRIGGER: BLACK/CLEAN  •  HOLD TRIGGER: BEGIN APPROACH',
+        instruction: 'STICK/GRIP CYCLE  •  TAP = BLACK/CLEAN',
+        hint: 'HOLD = APPROACH  •  HOLD DOES NOT CHANGE BLACK/CLEAN',
       };
     case 'APPROACH':
       return {
         index: 3,
         title: 'STEP 4 / 6',
         instruction: 'WALK TOWARD POSTER — APPROACH FPS',
-        hint: 'HOLD TRIGGER: BEGIN FOCUS',
+        hint: 'HOLD TRIGGER = BEGIN FOCUS  •  NO VERDICT CHANGE',
       };
     case 'FOCUS_REQUESTED':
     case 'FOCUS_TRANSITION':

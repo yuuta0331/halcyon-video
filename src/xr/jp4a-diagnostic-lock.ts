@@ -5,6 +5,7 @@ import type { MovieSlot } from '../store-layout.ts';
 import { STORE_UNITS_PER_METER } from '../platform/index.ts';
 import type { LivePosterDiagRuntime } from './live-poster-diag-runtime.ts';
 import type { LivePosterMode } from './jp4a-test-state.ts';
+import type { Jp4aTriggerCommand } from './jp4a-trigger-input.ts';
 
 /** Production walk reach. JP-4A lock must not change this constant. */
 export const JP4A_PRODUCTION_INTERACT_RANGE_FT = 14;
@@ -54,25 +55,59 @@ export function pickNearestVisibleDiagnosticSlot<T extends { hidden: boolean }>(
 
 export interface Jp4aHostBindings {
   onJp4aLockSlot: (slot: MovieSlot) => { changed: boolean; verdict: string };
+  cycleJp4aVerdict: () => { changed: boolean; verdict: string };
   cycleJp4aMode: (direction: -1 | 1) => LivePosterMode;
   tickJp4aDiagnostic: (viewer: { x: number; y: number; z: number } | null) => void;
   jp4aDiagnosticSnapshot: () => Record<string, unknown>;
   advanceJp4aTestPhase: () => 'BEGIN_APPROACH' | 'BEGIN_FOCUS' | null;
   beginJp4aFocus: () => boolean;
+  applyJp4aTriggerCommand: (command: Jp4aTriggerCommand | null) => void;
+  productionSelectCount: () => number;
+  resetProductionSelectCount: () => void;
+}
+
+export function applyJp4aTriggerCommand(
+  command: Jp4aTriggerCommand | null,
+  liveDiag: LivePosterDiagRuntime,
+  selectProduction: (slot: MovieSlot) => void,
+): void {
+  if (!command) return;
+  if (command.type === 'LOCK') {
+    liveDiag.lock(command.slot);
+    return;
+  }
+  if (command.type === 'CYCLE_VERDICT') {
+    liveDiag.cycleVerdict();
+    return;
+  }
+  if (command.type === 'BEGIN_APPROACH') {
+    liveDiag.beginApproach();
+    return;
+  }
+  if (command.type === 'BEGIN_FOCUS' && liveDiag.beginFocus()) {
+    const slot = liveDiag.lockedSlot();
+    if (slot) selectProduction(slot);
+  }
 }
 
 export function createJp4aHostBindings(
   liveDiag: LivePosterDiagRuntime,
   selectProduction: (slot: MovieSlot) => void,
 ): Jp4aHostBindings {
+  let productionSelects = 0;
+  const countedSelect = (slot: MovieSlot): void => {
+    productionSelects += 1;
+    selectProduction(slot);
+  };
   const selectLocked = (): boolean => {
     const slot = liveDiag.lockedSlot();
     if (!slot) return false;
-    selectProduction(slot);
+    countedSelect(slot);
     return true;
   };
   return {
     onJp4aLockSlot: (slot) => liveDiag.lock(slot),
+    cycleJp4aVerdict: () => liveDiag.cycleVerdict(),
     cycleJp4aMode: (direction) => liveDiag.cycle(direction),
     tickJp4aDiagnostic: (viewer) => liveDiag.tickViewer(viewer),
     jp4aDiagnosticSnapshot: () => liveDiag.observation(false),
@@ -85,5 +120,8 @@ export function createJp4aHostBindings(
       if (!liveDiag.beginFocus()) return false;
       return selectLocked();
     },
+    applyJp4aTriggerCommand: (command) => applyJp4aTriggerCommand(command, liveDiag, countedSelect),
+    productionSelectCount: () => productionSelects,
+    resetProductionSelectCount: () => { productionSelects = 0; },
   };
 }

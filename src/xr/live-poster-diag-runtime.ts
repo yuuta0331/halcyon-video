@@ -69,7 +69,7 @@ export class LivePosterDiagRuntime {
 
   lock(slot: MovieSlot): { changed: boolean; verdict: string } {
     if (this.locked === slot) {
-      return { changed: false, verdict: cycleJp4aModeVerdict(this.mode) };
+      return { changed: false, verdict: this.currentModeVerdict() };
     }
     const phase = this.sessionPhase();
     if (this.locked && !jp4aLockReplacementAllowed(phase)) {
@@ -100,6 +100,13 @@ export class LivePosterDiagRuntime {
     return { changed: true, verdict: 'UNKNOWN' };
   }
 
+  cycleVerdict(): { changed: boolean; verdict: string } {
+    if (!this.locked || this.sessionPhase() !== 'LOCKED_LIVE_DIAG') {
+      return { changed: false, verdict: this.currentModeVerdict() };
+    }
+    return { changed: true, verdict: cycleJp4aModeVerdict(this.mode) };
+  }
+
   cycle(direction: -1 | 1): LivePosterMode {
     if (this.sessionPhase() !== 'LOCKED_LIVE_DIAG') return this.mode;
     if (direction === 1 && this.mode === 'LIVE-DEPTH-ISOLATED') {
@@ -117,6 +124,9 @@ export class LivePosterDiagRuntime {
   }
 
   currentMode(): LivePosterMode { return this.mode; }
+  currentModeVerdict(): string {
+    return jp4aTestSnapshot()?.modeVerdicts[this.mode] ?? 'UNKNOWN';
+  }
   hasLock(): boolean { return this.locked != null; }
   lockedSlot(): MovieSlot | null { return this.locked; }
   depthIsolationActive(): boolean { return this.originalMatrix != null; }

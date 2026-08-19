@@ -13,6 +13,7 @@
     "test:xr-resource": "node tools/xr-resource-harness.mjs",
     "test:jp4a-round5b3": "node tools/jp4a-round5b3-harness.mjs",
     "test:jp4a-round5b3-hf1": "node tools/jp4a-round5b3-hf1-harness.mjs",
+    "test:jp4a-round5b3-hf2": "node tools/jp4a-round5b3-hf2-harness.mjs",
     "measure:boot": "node tools/boot-measure.mjs",
     "test:rental": "node --experimental-strip-types --test tests/rental-clock.test.ts",
     "test:shelf": "node --experimental-strip-types --test tests/shelf-order.test.ts",

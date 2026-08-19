@@ -18,9 +18,14 @@ import { lastUiPlacementEvidence } from './xr/ui-place-pending';
 import { latestViewerPose } from './xr/viewer-pose';
 import { xrUploadMetricsSnapshot } from './perf/xr-upload-metrics.ts';
 import { noteStoreWorldClassProgress, refreshStoreVisualReady } from './store-visual-ready';
-import { jp4aTestRequested, registerJp4aLiveDiagnosticReset } from './xr/jp4a-test-state.ts';
+import { jp4aTestRequested, jp4aTestSnapshot, registerJp4aLiveDiagnosticReset } from './xr/jp4a-test-state.ts';
 import { LivePosterDiagnostic } from './xr/live-poster-diagnostic.ts';
 import { createJp4aHostBindings } from './xr/jp4a-diagnostic-lock.ts';
+import {
+  emptyJp4aTriggerPressState,
+  stepJp4aTrigger,
+  type Jp4aTriggerPressState,
+} from './xr/jp4a-trigger-input.ts';
 
 export function attachXrRuntime(
   scene: StoreScene,
@@ -37,11 +42,6 @@ export function attachXrRuntime(
       publishXrContent(scene);
     })
     : null;
-  if (liveDiag) {
-    registerJp4aLiveDiagnosticReset(() => {
-      liveDiag.reset(() => scene.requestRender());
-    });
-  }
   const xr = new XrRuntime({
     renderer: scene.renderer,
     scene: scene.scene,
@@ -89,29 +89,70 @@ export function attachXrRuntime(
     },
     onJp4aLockSlot: jp4a?.onJp4aLockSlot,
     cycleJp4aMode: jp4a?.cycleJp4aMode,
+    cycleJp4aVerdict: jp4a?.cycleJp4aVerdict,
     tickJp4aDiagnostic: jp4a?.tickJp4aDiagnostic,
     jp4aDiagnosticSnapshot: jp4a?.jp4aDiagnosticSnapshot,
     advanceJp4aTestPhase: jp4a?.advanceJp4aTestPhase,
     beginJp4aFocus: jp4a?.beginJp4aFocus,
+    applyJp4aTriggerCommand: jp4a?.applyJp4aTriggerCommand,
   });
   (window as unknown as { __xrDiagnostics?: unknown }).__xrDiagnostics = () => scene.xr?.diagnostics ?? null;
   (window as unknown as { __xrContent?: unknown }).__xrContent = () => xrContentSnapshot();
   installPosterDetailTestHooks(scene);
   if (liveDiag && jp4a) {
+    let triggerPress: Jp4aTriggerPressState = emptyJp4aTriggerPressState();
+    const firstVisible = () => {
+      for (const slot of scene.slotsByPosition.values()) {
+        if (!slot.hidden) return slot;
+      }
+      return null;
+    };
+    const resetLive = () => {
+      triggerPress = emptyJp4aTriggerPressState();
+      jp4a.resetProductionSelectCount();
+      liveDiag.reset(() => scene.requestRender());
+    };
+    registerJp4aLiveDiagnosticReset(resetLive);
     (window as unknown as { __livePosterDiag?: unknown }).__livePosterDiag = () => liveDiag.observation();
     (window as unknown as { __jp4aLiveControl?: unknown }).__jp4aLiveControl = {
-      reset: () => liveDiag.reset(() => scene.requestRender()),
+      reset: resetLive,
       snapshot: () => liveDiag.observation(false),
       hasLock: () => liveDiag.hasLock(),
       lockFirstVisible: () => {
-        for (const slot of scene.slotsByPosition.values()) {
-          if (!slot.hidden) return liveDiag.lock(slot);
-        }
-        return null;
+        const slot = firstVisible();
+        return slot ? liveDiag.lock(slot) : null;
       },
       beginApproach: () => liveDiag.beginApproach(),
       beginFocus: () => jp4a.beginJp4aFocus(),
       cycle: (direction: -1 | 1) => liveDiag.cycle(direction),
+      cycleVerdict: () => liveDiag.cycleVerdict(),
+      productionSelectCount: () => jp4a.productionSelectCount(),
+      triggerPress: () => ({ ...triggerPress }),
+      resetTrigger: () => { triggerPress = emptyJp4aTriggerPressState(); },
+      stepTrigger: (down: boolean, now: number, useHit = true) => {
+        const session = jp4aTestSnapshot();
+        const rising = down && !triggerPress.down;
+        const hit = rising && useHit ? firstVisible() : triggerPress.target;
+        const stepped = stepJp4aTrigger({
+          prev: triggerPress,
+          triggerDown: down,
+          now,
+          hit,
+          phase: session?.testPhase ?? 'BASELINE',
+          hasLock: liveDiag.hasLock(),
+        });
+        triggerPress = stepped.press;
+        jp4a.applyJp4aTriggerCommand(stepped.command);
+        return {
+          command: stepped.command?.type ?? null,
+          phase: jp4aTestSnapshot()?.testPhase ?? null,
+          verdicts: jp4aTestSnapshot()?.modeVerdicts ?? null,
+          mode: jp4aTestSnapshot()?.mode ?? null,
+          locked: liveDiag.hasLock(),
+          productionSelectCount: jp4a.productionSelectCount(),
+          press: { ...triggerPress, target: !!triggerPress.target },
+        };
+      },
     };
   }
   (window as unknown as { __closeRangeProbe?: unknown }).__closeRangeProbe = () => {

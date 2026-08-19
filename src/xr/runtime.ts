@@ -133,11 +133,16 @@ import {
   type LivePosterMode,
 } from './jp4a-test-state.ts';
 import {
-  jp4aHoldTriggerAction,
   jp4aModeCycleAllowed,
   jp4aTelemetryPhase,
   nextJp4aTestPhaseFromFocus,
 } from './jp4a-test-phase.ts';
+import {
+  emptyJp4aTriggerPressState,
+  stepJp4aTrigger,
+  type Jp4aTriggerCommand,
+  type Jp4aTriggerPressState,
+} from './jp4a-trigger-input.ts';
 
 export interface XrRuntimeHost {
   renderer: THREE.WebGLRenderer;
@@ -158,10 +163,12 @@ export interface XrRuntimeHost {
   getSettingsScene?: () => import('../settings-registry').SettingsApplyTarget | null;
   onJp4aLockSlot?: (slot: MovieSlot) => { changed: boolean; verdict: string };
   cycleJp4aMode?: (direction: -1 | 1) => LivePosterMode;
+  cycleJp4aVerdict?: () => { changed: boolean; verdict: string };
   tickJp4aDiagnostic?: (viewer: { x: number; y: number; z: number } | null) => void;
   jp4aDiagnosticSnapshot?: () => Record<string, unknown>;
   advanceJp4aTestPhase?: () => 'BEGIN_APPROACH' | 'BEGIN_FOCUS' | null;
   beginJp4aFocus?: () => boolean;
+  applyJp4aTriggerCommand?: (command: Jp4aTriggerCommand | null) => void;
 }
 
 type XrManager = THREE.WebGLRenderer['xr'];
@@ -227,9 +234,7 @@ export class XrRuntime {
   private jp4aPrevSqueeze = false;
   private jp4aLastSampleAt = -Infinity;
   private jp4aSampleStartAt = 0;
-  private jp4aTriggerDownAt: number | null = null;
-  private jp4aHoldFired = false;
-  private jp4aHoldFromLockPress = false;
+  private jp4aTriggerPress: Jp4aTriggerPressState = emptyJp4aTriggerPressState();
   private onFrameRateChange = (): void => {
     this.startup.frameratechangeCount += 1;
     appendXrJournal('frameratechange', {
@@ -550,9 +555,7 @@ export class XrRuntime {
     if (this.flags.jp4aTest && jp4aTestSnapshot()?.active) {
       this.jp4aSampleStartAt = nowMs();
       this.jp4aLastSampleAt = -Infinity;
-      this.jp4aHoldFromLockPress = false;
-      this.jp4aHoldFired = false;
-      this.jp4aTriggerDownAt = null;
+      this.jp4aTriggerPress = emptyJp4aTriggerPressState();
       markJp4aXrStarted(Date.now(), this.classify());
     }
     this.maybeInitOptionalLayers();
@@ -1015,17 +1018,17 @@ export class XrRuntime {
       }
       return;
     }
-    const jp4aLock = this.flags.jp4aTest && jp4aTestSnapshot()?.active && !!this.host.onJp4aLockSlot;
+    const jp4aActive = this.flags.jp4aTest && jp4aTestSnapshot()?.active && !!this.host.onJp4aLockSlot;
+    if (jp4aActive) {
+      // JP-4A Trigger commits on the polled DOWN/HOLD/UP machine, not on
+      // XR selectstart. Keep this listener only so Menu UI still receives it.
+      return;
+    }
     const slot = this.host.pickSlot(
       this.rayScratch.origin,
       this.rayScratch.direction,
-      jp4aLock ? jp4aSelectPickRange(true) : WALK_INTERACT_RANGE,
+      WALK_INTERACT_RANGE,
     );
-    if (slot && jp4aLock) {
-      const result = this.host.onJp4aLockSlot!(slot);
-      if (result?.changed) this.jp4aHoldFromLockPress = true;
-      return;
-    }
     if (slot) this.host.onSelectSlot(slot);
   }
 
@@ -1405,6 +1408,9 @@ export class XrRuntime {
     this.jp4aHud = null;
     this.hwDiag?.dispose();
     this.hwDiag = null;
+    this.jp4aTriggerPress = emptyJp4aTriggerPressState();
+    this.jp4aPrevThumb = false;
+    this.jp4aPrevSqueeze = false;
     clearUiPlacement();
     this.uiSession?.closeToWorld();
     if (this.desktopPose) {
@@ -1451,34 +1457,49 @@ export class XrRuntime {
   }
 
   private tickJp4aButtons(): void {
+    if (!this.flags.jp4aTest) return;
     const session = jp4aTestSnapshot();
-    const enabled = this.flags.jp4aTest && session?.active && this.uiMode === 'WORLD';
-    const phase = session?.testPhase ?? 'BASELINE';
-    if (enabled && jp4aModeCycleAllowed(phase) && this.uiButtons.thumbstick && !this.jp4aPrevThumb) {
+    const enabled = !!session?.active && this.uiMode === 'WORLD';
+    if (!enabled) {
+      this.jp4aTriggerPress = emptyJp4aTriggerPressState();
+      this.jp4aPrevThumb = this.uiButtons.thumbstick;
+      this.jp4aPrevSqueeze = this.uiButtons.squeeze;
+      return;
+    }
+    const phase = session.testPhase;
+    if (jp4aModeCycleAllowed(phase) && this.uiButtons.thumbstick && !this.jp4aPrevThumb) {
       this.host.cycleJp4aMode?.(1);
     }
-    if (enabled && jp4aModeCycleAllowed(phase) && this.uiButtons.squeeze && !this.jp4aPrevSqueeze) {
+    if (jp4aModeCycleAllowed(phase) && this.uiButtons.squeeze && !this.jp4aPrevSqueeze) {
       this.host.cycleJp4aMode?.(-1);
     }
-    const at = nowMs();
-    if (enabled && this.uiButtons.trigger) {
-      if (this.jp4aTriggerDownAt == null) this.jp4aTriggerDownAt = at;
-      const hold = jp4aHoldTriggerAction({
-        triggerDown: true,
-        heldMs: at - this.jp4aTriggerDownAt,
-        alreadyFired: this.jp4aHoldFired,
-        ignoreThisPress: this.jp4aHoldFromLockPress,
-        testPhase: phase,
-      });
-      this.jp4aHoldFired = hold.fired;
-      if (hold.fire) this.host.advanceJp4aTestPhase?.();
-    } else {
-      this.jp4aTriggerDownAt = null;
-      this.jp4aHoldFired = false;
-      this.jp4aHoldFromLockPress = false;
-    }
+    const rising = this.uiButtons.trigger && !this.jp4aTriggerPress.down;
+    const hit = rising ? this.pickJp4aTriggerTarget() : this.jp4aTriggerPress.target;
+    const stepped = stepJp4aTrigger({
+      prev: this.jp4aTriggerPress,
+      triggerDown: this.uiButtons.trigger,
+      now: nowMs(),
+      hit,
+      phase,
+      hasLock: !!session.lockedPoster,
+    });
+    this.jp4aTriggerPress = stepped.press;
+    if (stepped.command) this.host.applyJp4aTriggerCommand?.(stepped.command);
     this.jp4aPrevThumb = this.uiButtons.thumbstick;
     this.jp4aPrevSqueeze = this.uiButtons.squeeze;
+  }
+
+  private pickJp4aTriggerTarget(): MovieSlot | null {
+    for (const controller of this.controllerObjects) {
+      targetRayFromController(controller, this.rayScratch);
+      const slot = this.host.pickSlot(
+        this.rayScratch.origin,
+        this.rayScratch.direction,
+        jp4aSelectPickRange(true),
+      );
+      if (slot) return slot;
+    }
+    return null;
   }
 
   private sampleJp4aTelemetry(at: number): void {
