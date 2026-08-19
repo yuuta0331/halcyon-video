@@ -1,0 +1,75 @@
+{
+  "phase": "ROUND5B.3_LIVE_SHELF_BLACK_AND_FRAME_HITCH_FIX",
+  "finalState": "READY_FOR_SINGLE_QUEST_JP4A_ROUND5B3_DIAGNOSTIC",
+  "testedImplementationHead": "845046171a168028f823f73556499c0a4898d1bc",
+  "QUEST_HARDWARE": "NOT_EXECUTED",
+  "questPassClaimed": false,
+  "checks": {
+    "typescript": {
+      "command": "npx tsc --noEmit",
+      "pass": true
+    },
+    "targeted": {
+      "command": "node --experimental-strip-types --test tests/jp4a-round5b3.test.ts tests/poster-focus.test.ts tests/upload-admission.test.ts tests/xr-viewer-pose.test.ts tests/hw-diag-production.test.ts tests/xr-hardware-diag.test.ts tests/xr-lifecycle.test.ts",
+      "pass": true,
+      "tests": 69,
+      "failed": 0
+    },
+    "fullUnit": {
+      "command": "npm test",
+      "pass": true,
+      "tests": 565,
+      "failed": 0
+    },
+    "productionBuild": {
+      "command": "npm run build",
+      "pass": true,
+      "includes": [
+        "file-budget",
+        "signage-slot-validation",
+        "typescript",
+        "vite-production-build"
+      ]
+    },
+    "browserIwerIntegration": {
+      "command": "npm run test:jp4a-round5b3",
+      "pass": true,
+      "classification": "IWER_EMULATED",
+      "NOT_HARDWARE_VISUAL_PROOF": true,
+      "QUEST_HARDWARE": "NOT_EXECUTED",
+      "validated": [
+        "short route and build SHA",
+        "one-click start",
+        "actual IWER session entry",
+        "first world render",
+        "automatic telemetry",
+        "all nine LIVE mode state transitions",
+        "session end and localStorage restore",
+        "Copy Result and Copy JSON targets",
+        "normal URL console absent",
+        "privacy-safe opaque result"
+      ],
+      "evidence": "docs/review/jp4a/jp4a-round5b3-iwer.json"
+    }
+  },
+  "softwareEvidence": {
+    "bankInvariantPositiveFixture": "PASS",
+    "bankInvariantNegativeFixture": "PASS",
+    "iwerLiveShelfInvariant": "PASS",
+    "mipLevelsThrough1x1": "PASS",
+    "oddDimensionEdges": "PASS",
+    "firstMiddleLastLayerRepresentatives": "PASS",
+    "focusActualTexSubImageChunks": "PASS",
+    "focusActiveOnlyAfterFinalChunk": "PASS",
+    "staleOrEvictedFocusNeverActivates": "PASS",
+    "stationaryRetryAndRenderWake": "PASS",
+    "hudProjectedNonOverlap": "PASS",
+    "extraAnimationLoop": "ABSENT"
+  },
+  "timingBoundary": {
+    "gpuUploadSubmitMs": "CPU_BLOCKING_GL_SUBMIT_NOT_GPU_EXECUTION",
+    "questGpuExecution": "REQUIRES_QUEST",
+    "questCompositor": "REQUIRES_QUEST",
+    "questBlackArtifactVisualResult": "REQUIRES_QUEST"
+  }
+}
