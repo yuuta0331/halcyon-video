@@ -1,0 +1,109 @@
+{
+  "phase": "ROUND5B3_HF2_CONTROLLER_INPUT_AND_EVIDENCE_CORRECTION",
+  "finalState": "READY_FOR_SINGLE_QUEST_JP4A_ROUND5B3_DIAGNOSTIC",
+  "QUEST_HARDWARE": "NOT_EXECUTED",
+  "questPassClaimed": false,
+  "NOT_HARDWARE_VISUAL_PROOF": true,
+  "classification": "IWER_EMULATED",
+  "implementationTestedHead": "8dba63243a130860a6db76b433346763536db200",
+  "evidenceCommitHead": "NEWER_THAN_TESTED_SOURCE",
+  "reviewedHf1Head": "1a3042d7beabd6e6b7462fdb2b5c7a337711b75d",
+  "controllerSemantics": {
+    "shortTapUnlocked": "LOCK_ONLY",
+    "initialLockHeldPastThreshold": "LOCK_ONLY_NO_APPROACH",
+    "shortTapLocked": "CYCLE_VERDICT_ONCE_ON_RELEASE",
+    "holdLockedLiveDiag": "BEGIN_APPROACH_NO_VERDICT_CHANGE",
+    "holdApproach": "BEGIN_FOCUS_PRODUCTION_SELECT_ONCE",
+    "holdNeverChangesVerdict": true,
+    "selectstartDoesNotCommitVerdict": true
+  },
+  "reviewFindingsClosed": [
+    "hold Trigger no longer cycles LIVE verdicts via same-slot lock()",
+    "short Trigger cycles BLACK/CLEAN exactly once on release",
+    "initial lock press cannot skip into APPROACH",
+    "BEGIN FOCUS production-selects exactly once",
+    "IWER evidence records the committed implementation SHA it executed"
+  ],
+  "focusWakeWording": "OPTION_A_FOCUS_LOCAL_80MS_RETRY",
+  "checks": {
+    "typescript": {
+      "command": "npx tsc --noEmit",
+      "pass": true
+    },
+    "targeted": {
+      "command": "node --experimental-strip-types --test tests/jp4a-round5b3-hf2.test.ts tests/jp4a-round5b3-hf1.test.ts tests/jp4a-round5b3.test.ts tests/poster-focus.test.ts tests/upload-admission.test.ts tests/xr-viewer-pose.test.ts tests/hw-diag-production.test.ts tests/xr-hardware-diag.test.ts tests/xr-lifecycle.test.ts",
+      "pass": true,
+      "tests": 89,
+      "failed": 0
+    },
+    "fullUnit": {
+      "command": "npm test",
+      "pass": true,
+      "tests": 585,
+      "failed": 0
+    },
+    "productionBuild": {
+      "command": "npm run build",
+      "pass": true,
+      "includes": [
+        "file-budget",
+        "signage-slot-validation",
+        "typescript",
+        "vite-production-build"
+      ]
+    },
+    "browserIwerIntegration": {
+      "command": "npm run test:jp4a-round5b3-hf2",
+      "pass": true,
+      "classification": "IWER_EMULATED",
+      "NOT_HARDWARE_VISUAL_PROOF": true,
+      "QUEST_HARDWARE": "NOT_EXECUTED",
+      "implementationTestedHead": "8dba63243a130860a6db76b433346763536db200",
+      "validated": [
+        "short route and Source HEAD / CI checkout labels",
+        "one-click start",
+        "actual IWER session entry",
+        "first world render",
+        "first tap locks only with UNKNOWN",
+        "short tap BLACK then CLEAN",
+        "hold BEGIN APPROACH leaves CLEAN unchanged",
+        "approach telemetry samples recorded",
+        "hold BEGIN FOCUS production-selects exactly once",
+        "FOCUS Trigger does not mutate verdict or select again",
+        "same-page RESET then START without reload",
+        "second IWER session with no stale held Trigger",
+        "Copy Result and Copy JSON targets",
+        "normal URL console absent",
+        "live shelf invariant checkedSlots=3692 PASS",
+        "checkedSlots=0 cannot be PASS"
+      ],
+      "evidence": "docs/review/jp4a/jp4a-round5b3-hf2-iwer.json",
+      "controllerSeam": "jp4a_stepTrigger_runtime_state_machine"
+    }
+  },
+  "softwareEvidence": {
+    "bankInvariantPositiveFixture": "PASS",
+    "bankInvariantNegativeFixture": "FAIL",
+    "bankInvariantZeroSlot": "NOT_EXERCISED",
+    "iwerLiveShelfInvariant": "PASS",
+    "iwerLiveShelfCheckedSlots": 3692,
+    "samePageResetRerun": "PASS",
+    "holdDoesNotChangeVerdict": "PASS",
+    "shortTapCyclesVerdictOnce": "PASS",
+    "initialLockCannotSkipToApproach": "PASS",
+    "explicitFocusSelectsProductionOnce": "PASS",
+    "approachPhaseIndependentOfFocusResidency": "PASS",
+    "productionWalkInteractRangeFt": 14,
+    "jp4aDiagnosticLockRangeM": 12,
+    "buildIdentitySourceVsMergeRef": "PASS",
+    "focusActualTexSubImageChunks": "PRESERVED",
+    "stationaryFocusLocal80msRetry": "PRESERVED_OPTION_A",
+    "extraAnimationLoop": "ABSENT"
+  },
+  "timingBoundary": {
+    "gpuUploadSubmitMs": "CPU_BLOCKING_GL_SUBMIT_NOT_GPU_EXECUTION",
+    "questGpuExecution": "REQUIRES_QUEST",
+    "questCompositor": "REQUIRES_QUEST",
+    "questBlackArtifactVisualResult": "REQUIRES_QUEST"
+  }
+}

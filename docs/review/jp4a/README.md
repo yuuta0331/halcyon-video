@@ -52,6 +52,11 @@ merge `351947a`. This slice does not reopen that verdict.
 | `jp4a-round5b3-hf1-software-validation.json` | HF1 unit/build/browser/IWER summary; Quest not executed |
 | `jp4a-round5b3-hf1-iwer.json` | Same-page RESET/re-run and truthful live-shelf invariant; not hardware proof |
 | `jp4a-round5b3-hf1-console.png` | HF1 Quick Test Console capture |
+| `jp4a-round5b3-hf2-review.md` | Round 5B.3 HF2 Trigger TAP/HOLD correction (not Quest-ready) |
+| `jp4a-round5b3-hf2-quest-procedure.md` | HF2 Trigger semantics for the next Quest 3 run |
+| `jp4a-round5b3-hf2-software-validation.json` | HF2 unit/build/browser/IWER summary; Quest not executed |
+| `jp4a-round5b3-hf2-iwer.json` | TAP/HOLD controller seam plus truthful live-shelf invariant; not hardware proof |
+| `jp4a-round5b3-hf2-console.png` | HF2 Quick Test Console capture |
 | `jp4a.5-catalog-delta-sync.md` | Deferred persistent catalog / delta sync (not in this PR) |
 | `jp4a-round4-preload-stability.json` | DESKTOP_BROWSER STORE_VISIBLE_BASE drain |
 | `jp4a-round4-production-multibank.json` | DESKTOP_BROWSER production shelf 3+ bank render |
