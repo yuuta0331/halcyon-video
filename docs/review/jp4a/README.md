@@ -3,8 +3,10 @@
 Branch: `feat/jp4-xr-functional-parity`
 
 Evidence class for this folder is **IWER_EMULATED** plus UNIT tests.
-**QUEST_HARDWARE = NOT_EXECUTED / PENDING.** Do not treat emulator
-captures as Quest 3 results.
+**QUEST_HARDWARE** for the latest HF3-HF3 slice is
+`ATTEMPTED_BUT_DIAGNOSTIC_NOT_STARTED` (user-supplied console-entry block;
+visual diagnostic was not executed). Do not treat emulator captures as
+Quest 3 results. Do not treat that blocked attempt as a visual FAIL.
 
 JP-3 architecture acceptance remains PASS on `195f695` /
 merge `351947a`. This slice does not reopen that verdict.
@@ -70,6 +72,11 @@ merge `351947a`. This slice does not reopen that verdict.
 | `jp4a-round5b3-hf3-hf2-software-validation.json` | HF3-HF2 unit/build/browser/IWER summary; Quest not executed |
 | `jp4a-round5b3-hf3-hf2-iwer.json` | Fake setSession captures initial `inputsourceschange` during compat await; not hardware proof |
 | `jp4a-round5b3-hf3-hf2-console.png` | HF3-HF2 Quick Test Console capture |
+| `jp4a-round5b3-hf3-hf3-review.md` | Round 5B.3 HF3-HF3 JP-4A console ENTER VR action bridge (not Quest visual proof) |
+| `jp4a-round5b3-hf3-hf3-quest-procedure.md` | HF3-HF3 launch/UI retry: wait until ENTER VR reports READY |
+| `jp4a-round5b3-hf3-hf3-software-validation.json` | HF3-HF3 unit/build/browser/IWER summary; Quest visual diagnostic not executed |
+| `jp4a-round5b3-hf3-hf3-iwer.json` | Actual DOM ENTER VR / COPY / RESET / second session; not hardware proof |
+| `jp4a-round5b3-hf3-hf3-console.png` | HF3-HF3 Quick Test Console capture |
 | `jp4a.5-catalog-delta-sync.md` | Deferred persistent catalog / delta sync (not in this PR) |
 | `jp4a-round4-preload-stability.json` | DESKTOP_BROWSER STORE_VISIBLE_BASE drain |
 | `jp4a-round4-production-multibank.json` | DESKTOP_BROWSER production shelf 3+ bank render |

@@ -1,0 +1,200 @@
+{
+  "phase": "ROUND5B3_HF3_HF3_JP4A_CONSOLE_ENTRY_UI_CORRECTION",
+  "classification": "IWER_EMULATED",
+  "scope": "JP4A_CONSOLE_ACTUAL_DOM_ENTER_VR",
+  "NOT_HARDWARE_VISUAL_PROOF": true,
+  "QUEST_HARDWARE": "ATTEMPTED_BUT_DIAGNOSTIC_NOT_STARTED",
+  "hardwareAttempt": {
+    "attempted": true,
+    "xrSessionEntered": false,
+    "visualDiagnosticExecuted": false,
+    "reason": "JP4A_TEST_CONSOLE_ENTRY_UI_BLOCKED",
+    "source": "USER_SUPPLIED_HARDWARE_OBSERVATION"
+  },
+  "newHardwareRunAfterFix": "NOT_EXECUTED_AFTER_FIX",
+  "implementationTestedHead": "f92ca7554f9360949130e23f6ebf32458a5045ac",
+  "evidenceCommitHead": "NEWER_THAN_TESTED_SOURCE",
+  "sourceHead": "f92ca7554f9360949130e23f6ebf32458a5045ac",
+  "ciCheckoutSha": "same as source",
+  "pass": true,
+  "url": "/xr-test/jp4a",
+  "usedXrTestEnter": false,
+  "iwerCannotProveQuestUserActivation": true,
+  "before": {
+    "heading": "JP-4A TEST",
+    "start": true,
+    "meta": "JP-4A TESTRound 5B.3 HF3\nSource HEAD: f92ca7554f9360949130e23f6ebf32458a5045ac\nCI checkout: same as source\nBuild: f92ca7554f9360949130e23f6ebf32458a5045ac\nSession: not startedSTART で FPS・LIVE poster 診断・自動保存を有効化します。ENTER VR が READY になってから VR を開始してください。ポスターを指しているコントローラの Trigger TAP は LOCK または BLACK/CLEAN。HOLD は判定を変えず APPROACH と FOCUS です。Menu は通常どおりです。START JP-4A TEST"
+  },
+  "started": {
+    "clicked": "START JP-4A TEST",
+    "usedXrTestEnter": false,
+    "consoleHidden": true,
+    "reopenVisible": true,
+    "active": true,
+    "sessionId": "jp4a-mt0dnwzk-2c89fc49"
+  },
+  "storeReady": true,
+  "reopened": {
+    "consoleHidden": false,
+    "reopenHidden": true,
+    "hasEnter": true
+  },
+  "enterReady": {
+    "exists": true,
+    "disabled": false,
+    "label": "ENTER VR",
+    "status": "ENTER VR",
+    "readiness": "READY_TO_ENTER_VR"
+  },
+  "firstEnter": {
+    "usedXrTestEnter": false,
+    "clickedLabel": "ENTER VR",
+    "enterCalls": 1,
+    "readiness": "PRESENTING",
+    "status": "VR ACTIVE",
+    "firstWorldRender": true,
+    "presenting": true
+  },
+  "continueReopen": {
+    "consoleHidden": true,
+    "reopenVisible": true,
+    "sessionId": "jp4a-mt0dnwzk-2c89fc49",
+    "restored": true,
+    "sessionUnchanged": true,
+    "active": true
+  },
+  "copies": {
+    "resultLabel": "COPIED RESULT",
+    "jsonLabel": "COPIED JSON",
+    "resultOk": true,
+    "jsonOk": true,
+    "fallbackVisible": false,
+    "fallbackText": ""
+  },
+  "afterReset": {
+    "resetSession": {
+      "schema": 1,
+      "round": "JP-4A Round 5B.3",
+      "build": "f92ca7554f9360949130e23f6ebf32458a5045ac",
+      "sourceHead": "f92ca7554f9360949130e23f6ebf32458a5045ac",
+      "testedSha": "f92ca7554f9360949130e23f6ebf32458a5045ac",
+      "sessionId": "jp4a-mt0dr6jm-1e48b0dd",
+      "startedAt": "2026-08-19T17:43:21.058Z",
+      "xrStartedAt": null,
+      "completedAt": null,
+      "active": false,
+      "mode": "LIVE-NORMAL",
+      "step": 1,
+      "testPhase": "BASELINE",
+      "lockedPoster": null,
+      "modeVerdicts": {
+        "LIVE-NORMAL": "UNKNOWN",
+        "LIVE-BASE": "UNKNOWN",
+        "LIVE-LOD0": "UNKNOWN",
+        "LIVE-LOD1": "UNKNOWN",
+        "LIVE-LOD2": "UNKNOWN",
+        "LIVE-LOD3": "UNKNOWN",
+        "LIVE-LINEAR": "UNKNOWN",
+        "LIVE-UNLIT": "UNKNOWN",
+        "LIVE-DEPTH-ISOLATED": "UNKNOWN"
+      },
+      "bankInvariant": {
+        "checkedSlots": 3692,
+        "bankMismatchCount": 0,
+        "layerOutOfRangeCount": 0,
+        "missingIndexCount": 0,
+        "invalidLoadedFlagCount": 0,
+        "pass": true,
+        "verdict": "PASS"
+      },
+      "samples": [],
+      "events": [
+        {
+          "timestamp": "2026-08-19T17:43:21.058Z",
+          "type": "session_reset"
+        }
+      ],
+      "environment": "IWER_EMULATED",
+      "questHardware": "NOT_EXECUTED"
+    },
+    "startedSession": {
+      "schema": 1,
+      "round": "JP-4A Round 5B.3",
+      "build": "f92ca7554f9360949130e23f6ebf32458a5045ac",
+      "sourceHead": "f92ca7554f9360949130e23f6ebf32458a5045ac",
+      "testedSha": "f92ca7554f9360949130e23f6ebf32458a5045ac",
+      "sessionId": "jp4a-mt0dr6jr-9d5037f6",
+      "startedAt": "2026-08-19T17:43:21.063Z",
+      "xrStartedAt": null,
+      "completedAt": null,
+      "active": true,
+      "mode": "LIVE-NORMAL",
+      "step": 1,
+      "testPhase": "BASELINE",
+      "lockedPoster": null,
+      "modeVerdicts": {
+        "LIVE-NORMAL": "UNKNOWN",
+        "LIVE-BASE": "UNKNOWN",
+        "LIVE-LOD0": "UNKNOWN",
+        "LIVE-LOD1": "UNKNOWN",
+        "LIVE-LOD2": "UNKNOWN",
+        "LIVE-LOD3": "UNKNOWN",
+        "LIVE-LINEAR": "UNKNOWN",
+        "LIVE-UNLIT": "UNKNOWN",
+        "LIVE-DEPTH-ISOLATED": "UNKNOWN"
+      },
+      "bankInvariant": {
+        "checkedSlots": 3692,
+        "bankMismatchCount": 0,
+        "layerOutOfRangeCount": 0,
+        "missingIndexCount": 0,
+        "invalidLoadedFlagCount": 0,
+        "pass": true,
+        "verdict": "PASS"
+      },
+      "samples": [],
+      "events": [
+        {
+          "timestamp": "2026-08-19T17:43:21.063Z",
+          "type": "session_reset"
+        },
+        {
+          "timestamp": "2026-08-19T17:43:21.068Z",
+          "type": "test_started"
+        }
+      ],
+      "environment": "IWER_EMULATED",
+      "questHardware": "NOT_EXECUTED"
+    },
+    "heading": "JP-4A TEST"
+  },
+  "secondEnter": {
+    "usedXrTestEnter": false,
+    "firstWorldRender": true,
+    "enterCalls": 2,
+    "status": "VR ACTIVE"
+  },
+  "liveShelfInvariant": "PASS",
+  "invariant": {
+    "checkedSlots": 3692,
+    "bankMismatchCount": 0,
+    "layerOutOfRangeCount": 0,
+    "missingIndexCount": 0,
+    "invalidLoadedFlagCount": 0,
+    "pass": true,
+    "verdict": "PASS"
+  },
+  "normalControl": {
+    "consoleAbsent": true,
+    "reopenAbsent": true,
+    "liveControlAbsent": true,
+    "hasHudEnter": true,
+    "hasMenuEnter": true
+  },
+  "privacy": {
+    "containsTitle": false,
+    "opaqueOnly": true
+  },
+  "seriousErrors": [],
+  "knownDemoResourceErrors": 9
+}
