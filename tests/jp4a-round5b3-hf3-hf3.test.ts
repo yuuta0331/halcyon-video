@@ -31,9 +31,11 @@ import {
 } from '../src/xr/jp4a-test-console.ts';
 import {
   jp4aTestSnapshot,
+  markJp4aXrStarted,
   resetJp4aTest,
   startJp4aTest,
 } from '../src/xr/jp4a-test-state.ts';
+import { resetXrSupportProbeForTests } from '../src/xr/xr-support-probe.ts';
 
 class MemoryStorage {
   private data = new Map<string, string>();
@@ -169,6 +171,7 @@ function fakeScene(opts: {
   presenting?: boolean;
   enter?: () => Promise<void> | void;
   fail?: string;
+  confirmXrStart?: boolean;
 }): XrEntryScene {
   let presenting = !!opts.presenting;
   return {
@@ -179,6 +182,8 @@ function fakeScene(opts: {
       if (opts.fail) throw new Error(opts.fail);
       await opts.enter?.();
       presenting = true;
+      // XrRuntime.enter() records this after Three's setSession resolved.
+      if (opts.confirmXrStart !== false) markJp4aXrStarted(Date.now(), 'UNIT');
     },
     async exitXr() { presenting = false; },
   };
@@ -197,6 +202,7 @@ function resetAll(): void {
   uninstallJp4aTestConsoleForTests();
   resetJp4aConsoleEntryForTests();
   resetXrSessionActionForTests();
+  resetXrSupportProbeForTests();
   resetStoreVisualReady();
   installFakeDom();
   resetJp4aTest();
@@ -217,7 +223,7 @@ test('HF3-HF3 activation boundary: click handler has no pre-entry await', () => 
   assert.match(fn, /void invokeJp4aEnterVr\(\)/);
   assert.equal(fn.includes('await'), false);
   const boot = readFileSync(new URL('../src/xr/boot.ts', import.meta.url), 'utf8');
-  const enter = boot.indexOf('await scene.enterXr()');
+  const enter = boot.indexOf('await scene.enterXr(enterOpts)');
   const ready = boot.indexOf('if (!isStoreVisualReady())');
   assert.ok(enter > 0 && ready > 0 && ready < enter);
 });
@@ -231,7 +237,9 @@ test('HF3-HF3 A: console mounts before action registration', () => {
   assert.ok(enter);
   assert.equal(enter!.disabled, true);
   assert.equal(jp4aConsoleEntrySnapshot().readiness, 'BOOTING');
-  assert.match(status?.textContent ?? '', /Checking XR support/i);
+  // HF3-HF4: app boot time is no longer labelled as XR support checking.
+  assert.match(status?.textContent ?? '', /Preparing XR runtime/i);
+  assert.doesNotMatch(status?.textContent ?? '', /Checking XR support/i);
 });
 
 test('HF3-HF3 B: action registration enables ENTER VR', () => {
@@ -419,8 +427,9 @@ test('HF3-HF3 N: actual START button starts one session', () => {
   actionButton('start')?.click();
   assert.equal(jp4aTestSnapshot()?.active, true);
   assert.ok(jp4aTestSnapshot()?.sessionId);
-  assert.equal(byId('jp4a-test-console')?.hidden, true);
-  assert.equal(byId('jp4a-test-reopen')?.hidden, false);
+  // HF3-HF4: START keeps the operator on the console; no reopen hunt.
+  assert.equal(byId('jp4a-test-console')?.hidden, false);
+  assert.equal(byId('jp4a-test-reopen')?.hidden, true);
 });
 
 test('HF3-HF3 O/P: RESET then second START+ENTER keeps a single callback', async () => {
@@ -432,14 +441,13 @@ test('HF3-HF3 O/P: RESET then second START+ENTER keeps a single callback', async
   setWiredXrSupportedForTests(true);
   installJp4aTestConsole();
   actionButton('start')!.click();
-  byId('jp4a-test-reopen')!.click();
   actionButton('enter-vr')!.click();
   await new Promise((resolve) => setTimeout(resolve, 0));
   await scene.exitXr();
+  byId('jp4a-test-reopen')!.click();
   actionButton('reset')!.click();
   assert.equal(jp4aTestSnapshot()?.active, false);
   actionButton('start')!.click();
-  byId('jp4a-test-reopen')!.click();
   actionButton('enter-vr')!.click();
   await new Promise((resolve) => setTimeout(resolve, 0));
   assert.equal(enters, 2);

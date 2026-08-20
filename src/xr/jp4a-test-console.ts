@@ -2,6 +2,10 @@
 // Never mounts outside /xr-test/jp4a or ?xrTest=jp4a.
 // ENTER VR calls the registered application action; it does not click
 // xr-enter-btn / btn-enter-vr.
+//
+// This is a full-screen opaque overlay, so on desktop it would sit on top of
+// the very emulated XR view the operator is trying to inspect. It therefore
+// hides itself on CONFIRMED entry only, and comes back on exit/failure.
 
 import { enableFpsMeter } from '../fps-meter.ts';
 import { onStoreVisualReadyChange } from '../store-visual-ready.ts';
@@ -31,6 +35,8 @@ let card: HTMLDivElement | null = null;
 let output: HTMLTextAreaElement | null = null;
 let compact: HTMLButtonElement | null = null;
 let starting = false;
+let autoHidden = false;
+let lastReadiness: string | null = null;
 let unsubTest: (() => void) | null = null;
 let unsubEntry: (() => void) | null = null;
 let unsubReady: (() => void) | null = null;
@@ -95,33 +101,49 @@ function updateQueryForTest(): void {
   history.replaceState(history.state, '', `${u.pathname}${u.search}${u.hash}`);
 }
 
+// The root carries an inline `display:flex`, which beats the UA stylesheet's
+// `[hidden] { display: none }`. Toggling `hidden` alone left a full-screen
+// opaque overlay sitting on top of the XR canvas, so display is toggled too.
 function hideConsole(): void {
-  if (root) root.hidden = true;
-  if (compact) compact.hidden = false;
+  if (root) {
+    root.hidden = true;
+    root.style.display = 'none';
+  }
+  if (compact) {
+    compact.hidden = false;
+    compact.style.display = '';
+  }
 }
 
 function showConsole(): void {
-  if (root) root.hidden = false;
-  if (compact) compact.hidden = true;
+  if (root) {
+    root.hidden = false;
+    root.style.display = 'flex';
+  }
+  if (compact) {
+    compact.hidden = true;
+    compact.style.display = 'none';
+  }
   render(jp4aTestSnapshot());
 }
 
 function start(): void {
   const session = jp4aTestSnapshot();
-  if (session?.active || starting) {
-    hideConsole();
-    return;
-  }
+  if (session?.active || starting) return;
   starting = true;
   updateQueryForTest();
   enableFpsMeter(true);
   startJp4aTest();
-  hideConsole();
   starting = false;
+  // Stay on the console: readiness updates live and ENTER VR becomes usable
+  // right here. Hunting for the reopen button was pure wasted operator time.
+  showConsole();
 }
 
 function reset(): void {
   starting = false;
+  autoHidden = false;
+  lastReadiness = null;
   copyUi = { kind: 'result', state: 'idle' };
   clearJp4aConsoleEntryFailure();
   resetJp4aTest();
@@ -130,6 +152,29 @@ function reset(): void {
 
 function enterVr(): void {
   void invokeJp4aEnterVr();
+}
+
+/**
+ * Hide the overlay only once the diagnostic has CONFIRMED XR startup, so the
+ * emulated/immersive canvas is unobstructed. A failed or unconfirmed entry
+ * keeps the console (and its failure reason) on screen.
+ */
+function syncConsoleVisibilityForEntry(): void {
+  const readiness = jp4aConsoleEntrySnapshot().readiness;
+  if (readiness === lastReadiness) return;
+  const wasPresenting = lastReadiness === 'PRESENTING';
+  lastReadiness = readiness;
+  if (readiness === 'PRESENTING') {
+    if (root && !root.hidden) {
+      autoHidden = true;
+      hideConsole();
+    }
+    return;
+  }
+  if (wasPresenting && autoHidden) {
+    autoHidden = false;
+    showConsole();
+  }
 }
 
 function render(session: Jp4aSession | null): void {
@@ -155,12 +200,15 @@ function render(session: Jp4aSession | null): void {
   help.style.cssText = 'max-width:720px;color:#d8e5e2;font:18px/1.5 system-ui,sans-serif';
   help.textContent = session?.completedAt
     ? '結果は端末内に保存されています。そのまま COPY RESULT を ChatGPT へ貼り付けてください。RESET TEST でページを再読み込みせずに次の診断を開始できます。'
-    : 'START で FPS・LIVE poster 診断・自動保存を有効化します。ENTER VR が READY になってから VR を開始してください。ポスターを指しているコントローラの Trigger TAP は LOCK または BLACK/CLEAN。HOLD は判定を変えず APPROACH と FOCUS です。Menu は通常どおりです。';
+    : 'START で FPS・LIVE poster 診断・自動保存を有効化します。この画面のまま ENTER VR が有効になるのを待ってください。VR 開始が確認されるとコンソールは自動的に隠れます。ポスターを指しているコントローラの Trigger TAP は LOCK または BLACK/CLEAN。HOLD は判定を変えず APPROACH と FOCUS です。Menu は通常どおりです。';
   const status = document.createElement('div');
   status.id = 'jp4a-entry-status';
   status.dataset.readiness = entry.readiness;
   status.dataset.reason = entry.lastResult?.reason ?? '';
   status.dataset.enterCalls = String(entry.enterCalls);
+  status.dataset.support = entry.supportState;
+  status.dataset.supportMs = entry.supportProbeMs == null ? '' : String(entry.supportProbeMs);
+  status.dataset.xrConfirmed = entry.xrConfirmed ? '1' : '0';
   status.style.cssText = 'margin-top:12px;color:#ffe08a;font:bold 22px ui-monospace,Menlo,Consolas,monospace';
   status.textContent = session?.active ? entry.status : '';
   const actions = document.createElement('div');
@@ -169,7 +217,7 @@ function render(session: Jp4aSession | null): void {
     actions.append(button('START JP-4A TEST', start, true, { actionId: 'start' }));
   }
   if (session?.active) {
-    actions.append(button('ENTER VR', enterVr, true, {
+    actions.append(button(entry.label, enterVr, true, {
       actionId: 'enter-vr',
       disabled: !entry.enabled,
     }));
@@ -240,10 +288,15 @@ export function installJp4aTestConsole(): boolean {
   document.body.append(root, compact);
   unsubTest = onJp4aTestChange((session) => {
     render(session);
-    if (session?.completedAt) showConsole();
+    syncConsoleVisibilityForEntry();
+    if (session?.completedAt) {
+      autoHidden = false;
+      showConsole();
+    }
   });
   unsubEntry = onJp4aConsoleEntryChange(() => {
     if (root && !root.hidden) render(jp4aTestSnapshot());
+    syncConsoleVisibilityForEntry();
   });
   unsubReady = onStoreVisualReadyChange(() => notifyJp4aConsoleEntry());
   render(restored);
@@ -264,5 +317,7 @@ export function uninstallJp4aTestConsoleForTests(): void {
   output = null;
   compact = null;
   starting = false;
+  autoHidden = false;
+  lastReadiness = null;
   copyUi = { kind: 'result', state: 'idle' };
 }

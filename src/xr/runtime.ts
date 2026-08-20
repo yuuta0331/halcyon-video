@@ -15,7 +15,6 @@ import type { XrDiagnostics, XrSessionPhase, WalkCollisionFn } from './types';
 import {
   halcyonInitialXrRequestOptions,
   pickXrTargetHz,
-  probeImmersiveVrSupported,
   selectReferenceSpaceTypeFromFeatures,
   XR_TARGET_HZ,
 } from './session-policy';
@@ -135,10 +134,18 @@ import {
   markJp4aXrEnded,
   markJp4aXrStarted,
   noteJp4aFocusState,
+  noteJp4aTimings,
   recordJp4aSample,
   setJp4aTestPhase,
   type LivePosterMode,
 } from './jp4a-test-state.ts';
+import { xrEntryTimingsFromStartup } from './xr-entry-timings.ts';
+import {
+  ensureXrSupportProbe,
+  xrRequestSessionAvailable,
+  xrSupportSnapshot,
+  xrSupportUnresolved,
+} from './xr-support-probe.ts';
 import {
   jp4aModeCycleAllowed,
   jp4aTelemetryPhase,
@@ -496,12 +503,18 @@ export class XrRuntime {
     return xrHeadBobAmount(desktopBob, this.presenting);
   }
 
+  /**
+   * Joins the single shared app-level support probe. It is started right after
+   * emulator installation in main(), long before StoreScene exists, so a scene
+   * rebuild can never restart it and this call is normally already settled.
+   */
   async probe(): Promise<boolean> {
     const platform = getPlatform();
-    this.immersiveVrSupported = await probeImmersiveVrSupported({
-      isTauri: platform.isTauri,
-      xr: platform.isTauri ? null : (navigator as Navigator & { xr?: XRSystem }).xr ?? null,
-    });
+    const support = await ensureXrSupportProbe({ isTauri: platform.isTauri });
+    // Production stays conservative: only an actual `true` from the API lights
+    // up Enter VR. TIMED_OUT/ERROR are not support, but they are not absence
+    // of support either — see canEnter(allowUnverifiedSupport).
+    this.immersiveVrSupported = support.state === 'SUPPORTED';
     this.diagnostics = {
       ...this.diagnostics,
       immersiveVrSupported: this.immersiveVrSupported,
@@ -509,19 +522,25 @@ export class XrRuntime {
     return this.immersiveVrSupported;
   }
 
-  canEnter(): boolean {
-    return this.immersiveVrSupported && !getPlatform().isTauri && this.phase === 'idle';
+  canEnter(allowUnverifiedSupport = false): boolean {
+    if (getPlatform().isTauri || this.phase !== 'idle') return false;
+    if (this.immersiveVrSupported) return true;
+    if (!allowUnverifiedSupport) return false;
+    // Diagnostic fast path: the support query never answered, so requestSession
+    // is the authoritative attempt. Never reported as support === true.
+    if (!xrSupportUnresolved(xrSupportSnapshot().state)) return false;
+    return xrRequestSessionAvailable((navigator as Navigator & { xr?: XRSystem }).xr ?? null);
   }
 
   /**
    * Must be called from a user-activation handler. The session request is
    * the first awaited XR call so the UA gesture is not consumed by font I/O.
    */
-  async enter(): Promise<void> {
+  async enter(opts?: { allowUnverifiedSupport?: boolean }): Promise<void> {
     if (!isStoreVisualReady()) {
       throw new Error('STORE_VISIBLE_LOADING');
     }
-    if (!this.canEnter()) {
+    if (!this.canEnter(opts?.allowUnverifiedSupport === true)) {
       throw new Error('WebXR immersive-vr is not available');
     }
     const xr = (navigator as Navigator & { xr?: XRSystem }).xr;
@@ -681,6 +700,10 @@ export class XrRuntime {
       this.jp4aPrevLeftTrigger = false;
       this.jp4aPrevRightTrigger = false;
       markJp4aXrStarted(Date.now(), this.classify());
+      noteJp4aTimings({
+        supportProbeMs: xrSupportSnapshot().elapsedMs,
+        ...xrEntryTimingsFromStartup(this.startup),
+      });
     }
     this.maybeInitOptionalLayers();
     this.publishDiagnostics();
@@ -817,6 +840,7 @@ export class XrRuntime {
       this.startup = markStartupStage(this.startup, 'firstWorldRenderCompletedAt', at);
       this.startup = markStartupStage(this.startup, 'firstVisibleFrameAt', at);
       appendXrJournal('first-world-frame', { firstWorldFrameAt: at });
+      if (this.flags.jp4aTest) noteJp4aTimings(xrEntryTimingsFromStartup(this.startup));
       this.requestTargetFrameRateBestEffort();
     }
     if (this.phase === 'binding' || this.phase === 'projecting') {

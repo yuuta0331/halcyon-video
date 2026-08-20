@@ -4,6 +4,8 @@
 import {
   type Jp4aTestPhase,
 } from './jp4a-test-phase.ts';
+import { blankXrEntryTimings, type XrEntryTimings } from './xr-entry-timings.ts';
+import { isIwerActive } from './emu-state.ts';
 
 export const JP4A_TEST_PATH = '/xr-test/jp4a';
 export const JP4A_STORAGE_KEY = 'halcyon.jp4a.round5b3.session.v1';
@@ -147,6 +149,12 @@ export interface Jp4aSession {
   events: Array<{ timestamp: string; type: string; value?: string }>;
   environment: 'QUEST_HARDWARE_PENDING' | 'IWER_EMULATED' | 'DESKTOP_BROWSER';
   questHardware: 'NOT_EXECUTED' | 'EXECUTED_RESULT_PENDING';
+  /**
+   * Independent timing buckets. Support probing and store readiness are
+   * measured separately on purpose: a slow store must never be able to hide
+   * behind (or be mistaken for) a slow XR support check.
+   */
+  timings: XrEntryTimings;
 }
 
 type Listener = (session: Jp4aSession | null) => void;
@@ -214,10 +222,28 @@ function blankVerdicts(): Record<LivePosterMode, LiveVerdict> {
   return Object.fromEntries(LIVE_POSTER_MODES.map((m) => [m, 'UNKNOWN'])) as Record<LivePosterMode, LiveVerdict>;
 }
 
+/**
+ * Pre-entry classification. Being on the JP-4A route says nothing about the
+ * hardware: an ordinary desktop Chromium (with or without an external
+ * Immersive Web Emulator extension) is DESKTOP_BROWSER, never Quest. Only an
+ * actual Quest/Oculus Browser UA may be pending-hardware before entry, and the
+ * runtime's own evidence class overrides this at markJp4aXrStarted().
+ */
+export function detectJp4aEnvironment(input: {
+  search?: string;
+  userAgent?: string;
+  iwerActive?: boolean;
+} = {}): Jp4aSession['environment'] {
+  const search = input.search ?? (typeof location !== 'undefined' ? location.search : '');
+  const q = new URLSearchParams(search.startsWith('?') ? search.slice(1) : search);
+  if (q.get('xrEmu') === '1' || input.iwerActive) return 'IWER_EMULATED';
+  const ua = input.userAgent ?? (typeof navigator !== 'undefined' ? navigator.userAgent : '');
+  if (/OculusBrowser|Quest/i.test(ua)) return 'QUEST_HARDWARE_PENDING';
+  return 'DESKTOP_BROWSER';
+}
+
 function detectedEnvironment(): Jp4aSession['environment'] {
-  const q = typeof location !== 'undefined' ? new URLSearchParams(location.search) : null;
-  if (q?.get('xrEmu') === '1') return 'IWER_EMULATED';
-  return 'QUEST_HARDWARE_PENDING';
+  return detectJp4aEnvironment({ iwerActive: isIwerActive() });
 }
 
 export function resetJp4aTest(now = Date.now()): Jp4aSession {
@@ -243,6 +269,7 @@ export function resetJp4aTest(now = Date.now()): Jp4aSession {
     events: [{ timestamp: new Date(now).toISOString(), type: 'session_reset' }],
     environment: detectedEnvironment(),
     questHardware: 'NOT_EXECUTED',
+    timings: blankXrEntryTimings(),
   };
   persist(true);
   emit();
@@ -279,6 +306,29 @@ export function markJp4aXrStarted(
   event('xr_started');
   persist(true);
   emit();
+}
+
+/** Merge measured timings into the active session. Never clears a known value. */
+export function noteJp4aTimings(patch: Partial<XrEntryTimings>): void {
+  if (!current) return;
+  const timings = { ...blankXrEntryTimings(), ...current.timings };
+  for (const [key, value] of Object.entries(patch)) {
+    if (value == null) continue;
+    (timings as Record<string, number | null>)[key] = value as number;
+  }
+  current.timings = timings;
+  persist(true);
+}
+
+/**
+ * The only authoritative answer to "did the JP-4A diagnostic actually start".
+ * Requires the runtime confirmation recorded after Three's setSession resolved,
+ * not a presenting flag. VR ACTIVE may never be shown without this.
+ */
+export function jp4aXrEntryConfirmed(session: Jp4aSession | null = current): boolean {
+  if (!session?.active) return false;
+  if (!session.xrStartedAt) return false;
+  return session.events.some((e) => e.type === 'xr_started');
 }
 
 export function markJp4aXrEnded(now = Date.now()): void {
@@ -391,6 +441,7 @@ export function restoreJp4aTest(): Jp4aSession | null {
     }
     if (!current.sourceHead) current.sourceHead = current.build;
     if (!current.testedSha) current.testedSha = current.build;
+    current.timings = { ...blankXrEntryTimings(), ...(current.timings ?? {}) };
     return snapshot();
   } catch {
     return null;
@@ -465,6 +516,14 @@ export function formatJp4aResult(session = current): string {
     `Focus: phase=${focus?.focusPhase ?? '--'} decode=${focus?.decodeMs?.toFixed(2) ?? '--'}ms ` +
       `gpu-submit=${focus?.gpuUploadSubmitMs?.toFixed(2) ?? '--'}ms bytes=${focus?.gpuUploadBytes ?? '--'} ` +
       `progress=${focus?.focusUploadProgress == null ? '--' : `${Math.round(focus.focusUploadProgress * 100)}%`}`,
+    '',
+    `XR entry confirmed: ${session.xrStartedAt ? 'YES' : 'NO'} (xrStartedAt=${session.xrStartedAt ?? 'null'})`,
+    `Support probe: ${session.timings?.supportProbeMs ?? '--'}ms`,
+    `Store ready: ${session.timings?.storeReadyMs ?? '--'}ms`,
+    `Enter action: ${session.timings?.enterActionMs ?? '--'}ms`,
+    `requestSession: ${session.timings?.requestSessionMs ?? '--'}ms`,
+    `setSession: ${session.timings?.setSessionMs ?? '--'}ms`,
+    `First world render: ${session.timings?.firstWorldRenderMs ?? '--'}ms`,
     '',
     'IWER_EMULATED is NOT HARDWARE VISUAL PROOF.',
     'Notes: paste any visual observations below this line.',

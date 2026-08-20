@@ -3528,7 +3528,15 @@ async function playExternally(path: string) {
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 async function main() {
+  // Built-in IWER must be able to inject navigator.xr before anything queries
+  // it. The very next thing after that is the shared immersive-vr support
+  // probe: it must not wait on login, catalog, fonts, quality calibration,
+  // StoreScene construction or texture readiness. It is soft-bounded, so a
+  // runtime that never answers isSessionSupported() cannot stall the app.
   await installXrEmulatorIfRequested();
+  const { ensureXrSupportProbe, xrSupportSnapshot } = await import('./xr/xr-support-probe');
+  void ensureXrSupportProbe({ isTauri });
+  (window as unknown as { __xrSupportProbe?: unknown }).__xrSupportProbe = () => xrSupportSnapshot();
   const { xrBareRequested, startBareXr } = await import('./xr/bare');
   if (xrBareRequested()) {
     try {

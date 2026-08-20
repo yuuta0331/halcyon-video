@@ -6188,7 +6188,7 @@ export class StoreScene {
   public toggleWalkAround() { return walk.toggleWalkAround(this); }
 
   public probeXr() { return xrBind.probeXr(this); }
-  public enterXr() { return xrBind.enterXr(this); }
+  public enterXr(opts?: { allowUnverifiedSupport?: boolean }) { return xrBind.enterXr(this, opts); }
   public exitXr() { return xrBind.exitXr(this); }
 
   private restoreDesktopAnimationLoop() {

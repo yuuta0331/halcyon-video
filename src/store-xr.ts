@@ -3,6 +3,7 @@
 
 import type { StoreScene } from './three-scene';
 import { XrRuntime } from './xr/runtime';
+import { ensureXrSupportProbe } from './xr/xr-support-probe.ts';
 import * as walk from './store-walk';
 import { posterArtSample, updatePosterWorkingSet } from './store-poster-window';
 import { installXrStartupJournal } from './xr/startup-journal';
@@ -323,11 +324,24 @@ function publishXrContent(scene: StoreScene): void {
 }
 
 export async function probeXr(scene: StoreScene): Promise<boolean> {
-  return scene.xr?.probe() ?? false;
+  if (scene.xr) return scene.xr.probe();
+  // No runtime attached yet: still join the shared app-level probe so the
+  // answer is cached, but do not claim support from a missing runtime.
+  return (await ensureXrSupportProbe()).state === 'SUPPORTED';
 }
 
-export async function enterXr(scene: StoreScene): Promise<void> {
-  await scene.xr?.enter();
+/**
+ * `scene.xr?.enter()` used to resolve silently when the runtime was absent, so
+ * the caller reported a successful entry that never happened. Absent runtime is
+ * now an explicit failure.
+ */
+export async function enterXr(
+  scene: StoreScene,
+  opts?: { allowUnverifiedSupport?: boolean },
+): Promise<void> {
+  const xr = scene.xr;
+  if (!xr) throw new Error('XR_RUNTIME_NOT_READY');
+  await xr.enter(opts);
 }
 
 export async function exitXr(scene: StoreScene): Promise<void> {
