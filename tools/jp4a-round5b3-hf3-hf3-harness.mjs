@@ -1,6 +1,11 @@
 #!/usr/bin/env node
 // Round 5B.3 HF3-HF3 IWER harness: actual JP-4A console ENTER VR / COPY / RESET.
 // This is not Quest visual proof and does not prove Quest user-activation.
+//
+// The START-hides-the-console expectation was superseded by HF3-HF4; see
+// jp4a-round5b3-hf3-hf4-harness.mjs for the current entry-flow gate. What this
+// file still guards is unchanged: the real DOM ENTER VR button starts the
+// authoritative action, with no proxy click and no window.__xrTest.enter().
 
 import fs from 'node:fs';
 import os from 'node:os';
@@ -69,8 +74,13 @@ try {
     return {
       clicked: btn?.textContent ?? null,
       usedXrTestEnter: false,
+      // HF3-HF4 superseded the old expectation that START hides the console:
+      // the operator now stays on it and ENTER VR is reachable without a
+      // reopen step. The HF3-HF3 guarantee under test here is unchanged --
+      // the real ENTER VR button drives the authoritative action.
       consoleHidden: document.getElementById('jp4a-test-console')?.hidden === true,
       reopenVisible: document.getElementById('jp4a-test-reopen')?.hidden === false,
+      hasEnterWithoutReopen: !!document.querySelector('#jp4a-test-console [data-jp4a-action="enter-vr"]'),
       active: !!window.__jp4aTestSnapshot?.()?.active,
       sessionId: window.__jp4aTestSnapshot?.()?.sessionId ?? null,
     };
@@ -260,7 +270,9 @@ try {
   const liveShelfInvariant = zeroSlotPass ? 'INVALID_VACUOUS_PASS' : invariantClass;
   const pass = before.heading === 'JP-4A TEST' && before.start
     && /Source HEAD: [0-9a-f]{40}/.test(before.meta)
-    && started.active && started.consoleHidden && started.reopenVisible
+    && started.active
+    && started.consoleHidden === false
+    && started.hasEnterWithoutReopen === true
     && started.usedXrTestEnter === false
     && storeReady
     && reopened.hasEnter && reopened.consoleHidden === false
