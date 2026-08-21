@@ -12,9 +12,9 @@
     "source": "USER_SUPPLIED_HARDWARE_OBSERVATION"
   },
   "newHardwareRunAfterFix": "NOT_EXECUTED_AFTER_FIX",
-  "implementationTestedHead": "f92ca7554f9360949130e23f6ebf32458a5045ac",
+  "implementationTestedHead": "90123177d7aeeaed9d914404df9910cc93a4233c",
   "evidenceCommitHead": "NEWER_THAN_TESTED_SOURCE",
-  "sourceHead": "f92ca7554f9360949130e23f6ebf32458a5045ac",
+  "sourceHead": "90123177d7aeeaed9d914404df9910cc93a4233c",
   "ciCheckoutSha": "same as source",
   "pass": true,
   "url": "/xr-test/jp4a",
@@ -23,15 +23,16 @@
   "before": {
     "heading": "JP-4A TEST",
     "start": true,
-    "meta": "JP-4A TESTRound 5B.3 HF3\nSource HEAD: f92ca7554f9360949130e23f6ebf32458a5045ac\nCI checkout: same as source\nBuild: f92ca7554f9360949130e23f6ebf32458a5045ac\nSession: not startedSTART で FPS・LIVE poster 診断・自動保存を有効化します。ENTER VR が READY になってから VR を開始してください。ポスターを指しているコントローラの Trigger TAP は LOCK または BLACK/CLEAN。HOLD は判定を変えず APPROACH と FOCUS です。Menu は通常どおりです。START JP-4A TEST"
+    "meta": "JP-4A TESTRound 5B.3 HF3\nSource HEAD: 90123177d7aeeaed9d914404df9910cc93a4233c\nCI checkout: same as source\nBuild: 90123177d7aeeaed9d914404df9910cc93a4233c\nSession: not startedSTART で FPS・LIVE poster 診断・自動保存を有効化します。この画面のまま ENTER VR が有効になるのを待ってください。VR 開始が確認されるとコンソールは自動的に隠れます。ポスターを指しているコントローラの Trigger TAP は LOCK または BLACK/CLEAN。HOLD は判定を変えず APPROACH と FOCUS です。Menu は通常どおりです。START JP-4A TEST"
   },
   "started": {
     "clicked": "START JP-4A TEST",
     "usedXrTestEnter": false,
-    "consoleHidden": true,
-    "reopenVisible": true,
+    "consoleHidden": false,
+    "reopenVisible": false,
+    "hasEnterWithoutReopen": true,
     "active": true,
-    "sessionId": "jp4a-mt0dnwzk-2c89fc49"
+    "sessionId": "jp4a-mt1v7l4z-d81e1695"
   },
   "storeReady": true,
   "reopened": {
@@ -58,7 +59,7 @@
   "continueReopen": {
     "consoleHidden": true,
     "reopenVisible": true,
-    "sessionId": "jp4a-mt0dnwzk-2c89fc49",
+    "sessionId": "jp4a-mt1v7l4z-d81e1695",
     "restored": true,
     "sessionUnchanged": true,
     "active": true
@@ -75,11 +76,11 @@
     "resetSession": {
       "schema": 1,
       "round": "JP-4A Round 5B.3",
-      "build": "f92ca7554f9360949130e23f6ebf32458a5045ac",
-      "sourceHead": "f92ca7554f9360949130e23f6ebf32458a5045ac",
-      "testedSha": "f92ca7554f9360949130e23f6ebf32458a5045ac",
-      "sessionId": "jp4a-mt0dr6jm-1e48b0dd",
-      "startedAt": "2026-08-19T17:43:21.058Z",
+      "build": "90123177d7aeeaed9d914404df9910cc93a4233c",
+      "sourceHead": "90123177d7aeeaed9d914404df9910cc93a4233c",
+      "testedSha": "90123177d7aeeaed9d914404df9910cc93a4233c",
+      "sessionId": "jp4a-mt1vacx5-fc0b9223",
+      "startedAt": "2026-08-20T18:41:55.433Z",
       "xrStartedAt": null,
       "completedAt": null,
       "active": false,
@@ -110,21 +111,29 @@
       "samples": [],
       "events": [
         {
-          "timestamp": "2026-08-19T17:43:21.058Z",
+          "timestamp": "2026-08-20T18:41:55.433Z",
           "type": "session_reset"
         }
       ],
       "environment": "IWER_EMULATED",
-      "questHardware": "NOT_EXECUTED"
+      "questHardware": "NOT_EXECUTED",
+      "timings": {
+        "supportProbeMs": null,
+        "storeReadyMs": null,
+        "enterActionMs": null,
+        "requestSessionMs": null,
+        "setSessionMs": null,
+        "firstWorldRenderMs": null
+      }
     },
     "startedSession": {
       "schema": 1,
       "round": "JP-4A Round 5B.3",
-      "build": "f92ca7554f9360949130e23f6ebf32458a5045ac",
-      "sourceHead": "f92ca7554f9360949130e23f6ebf32458a5045ac",
-      "testedSha": "f92ca7554f9360949130e23f6ebf32458a5045ac",
-      "sessionId": "jp4a-mt0dr6jr-9d5037f6",
-      "startedAt": "2026-08-19T17:43:21.063Z",
+      "build": "90123177d7aeeaed9d914404df9910cc93a4233c",
+      "sourceHead": "90123177d7aeeaed9d914404df9910cc93a4233c",
+      "testedSha": "90123177d7aeeaed9d914404df9910cc93a4233c",
+      "sessionId": "jp4a-mt1vacxa-c4785b77",
+      "startedAt": "2026-08-20T18:41:55.438Z",
       "xrStartedAt": null,
       "completedAt": null,
       "active": true,
@@ -155,16 +164,24 @@
       "samples": [],
       "events": [
         {
-          "timestamp": "2026-08-19T17:43:21.063Z",
+          "timestamp": "2026-08-20T18:41:55.438Z",
           "type": "session_reset"
         },
         {
-          "timestamp": "2026-08-19T17:43:21.068Z",
+          "timestamp": "2026-08-20T18:41:55.440Z",
           "type": "test_started"
         }
       ],
       "environment": "IWER_EMULATED",
-      "questHardware": "NOT_EXECUTED"
+      "questHardware": "NOT_EXECUTED",
+      "timings": {
+        "supportProbeMs": null,
+        "storeReadyMs": null,
+        "enterActionMs": null,
+        "requestSessionMs": null,
+        "setSessionMs": null,
+        "firstWorldRenderMs": null
+      }
     },
     "heading": "JP-4A TEST"
   },

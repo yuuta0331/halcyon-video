@@ -1,0 +1,293 @@
+{
+  "phase": "ROUND5B3_HF3_HF4_XR_SUPPORT_AND_EMULATED_ENTRY_TRUTH_CORRECTION",
+  "finalState": "READY_FOR_SINGLE_QUEST_JP4A_ROUND5B3_DIAGNOSTIC_RETRY_AFTER_HF4",
+  "supersedes": {
+    "previousApproval": "APPROVE_FOR_SINGLE_QUEST_JP4A_ROUND5B3_DIAGNOSTIC_RETRY",
+    "previousReviewedHead": "b4ee8e033fc2ad03ef1c0522d007560716f778de",
+    "reason": "USER_SUPPLIED_RUNTIME_EVIDENCE_ON_THAT_HEAD",
+    "readyStatusPreservedFromPriorReview": false
+  },
+  "QUEST_HARDWARE": "ATTEMPTED_BUT_DIAGNOSTIC_NOT_STARTED",
+  "hardwareAttempt": {
+    "attempted": true,
+    "sourceHead": "b4ee8e033fc2ad03ef1c0522d007560716f778de",
+    "xrSessionEntered": false,
+    "visualDiagnosticExecuted": false,
+    "reason": "XR_SUPPORT_CHECK_STALLED",
+    "source": "USER_SUPPLIED_HARDWARE_OBSERVATION"
+  },
+  "desktopEmulatedAttempt": {
+    "result": "ENTRY_NOT_USABLE",
+    "observed": [
+      "support check very slow but eventually READY",
+      "ENTER VR showed VR ACTIVE",
+      "no usable visible VR / emulated VR space"
+    ],
+    "copiedState": {
+      "xrStartedAt": null,
+      "completedAt": null,
+      "active": true,
+      "testPhase": "BASELINE",
+      "lockedPoster": null,
+      "bankInvariant": null,
+      "samples": 0,
+      "events": ["session_reset", "test_started"],
+      "xrStartedEventPresent": false,
+      "liveModeVerdicts": "ALL_UNKNOWN"
+    },
+    "source": "USER_SUPPLIED_DESKTOP_OBSERVATION",
+    "unknownLiveVerdictsAreNotVisualFindings": true
+  },
+  "NEW_QUEST_RUN_AFTER_HF4": "NOT_EXECUTED",
+  "questPassClaimed": false,
+  "jp4aPassClaimed": false,
+  "blackArtifactFixClaimed": false,
+  "performanceFixClaimed": false,
+  "focusFixClaimed": false,
+  "hardwareValidationComplete": false,
+  "mergePermissionClaimed": false,
+  "NOT_HARDWARE_VISUAL_PROOF": true,
+  "classification": "IWER_EMULATED",
+  "provenance": {
+    "previousHf3Hf3ImplementationHead": "f92ca7554f9360949130e23f6ebf32458a5045ac",
+    "previousReviewedEvidenceHead": "b4ee8e033fc2ad03ef1c0522d007560716f778de",
+    "implementationA": "d07eda1c196a5a64aa4c119ba61a4459d06cba9f",
+    "implementationTestedHead": "90123177d7aeeaed9d914404df9910cc93a4233c",
+    "a2ChangesOnly": ["tools/jp4a-round5b3-hf3-hf3-harness.mjs"],
+    "srcTestsDiffBetweenAAndA2": "EMPTY",
+    "evidenceCommitHead": "NEWER_THAN_TESTED_SOURCE",
+    "evidenceFileDoesNotProveItsOwnSha": true
+  },
+  "rootCauses": [
+    {
+      "id": 1,
+      "title": "XR support probe could hang and was owned by StoreScene",
+      "old": "probeImmersiveVrSupported() awaited isSessionSupported('immersive-vr') with no timeout, inside wireXrEntry -> scene.probeXr() -> XrRuntime.probe(), i.e. after StoreScene construction",
+      "new": "src/xr/xr-support-probe.ts: one shared single-flight cached probe started in main() immediately after installXrEmulatorIfRequested(), soft-bounded"
+    },
+    {
+      "id": 2,
+      "title": "VR ACTIVE was derived from a bare presenting flag",
+      "old": "presenting = !!scene?.xr?.presenting -> readiness PRESENTING -> 'VR ACTIVE'",
+      "new": "presenting && jp4aXrEntryConfirmed(session), i.e. xrStartedAt != null AND an xr_started event, both emitted by markJp4aXrStarted() after Three setSession resolved"
+    },
+    {
+      "id": 3,
+      "title": "Full-screen console covered the emulated XR view, and hiding it never worked",
+      "old": "root.hidden = true only; the inline display:flex beat the UA [hidden] { display: none } rule, so the opaque overlay stayed on screen",
+      "new": "hideConsole()/showConsole() toggle display as well; auto-hide on CONFIRMED entry only; restore on exit/failure"
+    }
+  ],
+  "supportProbe": {
+    "module": "src/xr/xr-support-probe.ts",
+    "states": ["NOT_STARTED", "PROBING", "SUPPORTED", "UNSUPPORTED", "TIMED_OUT", "ERROR"],
+    "softTimeoutMs": 1500,
+    "maxSoftTimeoutMs": 2000,
+    "callerRequestedTimeoutIsClamped": true,
+    "singleFlight": true,
+    "cached": true,
+    "restartedByStoreSceneRebuild": false,
+    "startedAfterEmulatorInstall": true,
+    "startedBeforeLoginCatalogFontsQualityStoreScene": true,
+    "timeoutEqualsUnsupported": false,
+    "errorEqualsUnsupported": false,
+    "unresolvedReadsAsNullNotFalse": true,
+    "lateResultRecorded": true,
+    "lateTruePromotedToSupported": true,
+    "lateRejectionUnhandled": false,
+    "duplicateProbeAfterLateResult": false,
+    "diagnosticFields": [
+      "probeStartedAt", "probeSettledAt", "elapsedMs", "softTimeoutMs",
+      "lateResult", "lateSettledAt", "lateElapsedMs", "reason", "error", "invoked"
+    ],
+    "storesPrivateApplicationData": false
+  },
+  "consoleWording": {
+    "NOT_STARTED": "Preparing XR runtime…",
+    "PROBING": "Checking XR support…",
+    "UNSUPPORTED": "Immersive VR unavailable",
+    "TIMED_OUT_OR_ERROR_WITH_PREREQS": "XR CHECK SLOW — READY TO TRY VR",
+    "SCENE_ABSENT": "WAITING FOR STORE…",
+    "STORE_NOT_VISUALLY_READY": "Store is still loading…",
+    "PRESENTING_CONFIRMED": "VR ACTIVE",
+    "PRESENTING_UNCONFIRMED": "VR ENTRY NOT CONFIRMED",
+    "appBootTimeLabelledAsSupportChecking": false
+  },
+  "readinessStates": [
+    "BOOTING",
+    "CHECKING_XR_SUPPORT",
+    "WAITING_FOR_STORE",
+    "XR_UNSUPPORTED",
+    "STORE_LOADING",
+    "READY_TO_ENTER_VR",
+    "XR_CHECK_SLOW_READY_TO_TRY",
+    "ENTERING_VR",
+    "PRESENTING",
+    "VR_ENTRY_NOT_CONFIRMED",
+    "ENTRY_FAILED"
+  ],
+  "entryTruth": {
+    "sceneXrAbsentBehavior": "store-xr.enterXr throws XR_RUNTIME_NOT_READY; boot.ts maps it to reason XR_RUNTIME_NOT_READY; no silent success",
+    "enterResolvedNotPresentingBehavior": "reason SESSION_NOT_PRESENTING; ok:false; never action:'entered'",
+    "vrActivePredicate": "presenting && session.active && session.xrStartedAt != null && events include xr_started",
+    "markJp4aXrStartedMovedEarlier": false,
+    "diagnosticFastPath": "TRY ENTER VR only when probe TIMED_OUT/ERROR and StoreScene + store visual readiness + callable requestSession; requestSession is authoritative; support never reported true",
+    "productionInheritsFastPath": false
+  },
+  "timings": {
+    "separatedBuckets": [
+      "supportProbeMs", "storeReadyMs", "enterActionMs",
+      "requestSessionMs", "setSessionMs", "firstWorldRenderMs"
+    ],
+    "supportBoundMs": 2000,
+    "no240sSupportAcceptance": true,
+    "storeReadinessTrackedSeparately": true,
+    "measuredOnA2": {
+      "supportProbeMs": 1,
+      "storeReadyMs": 133784.19999998808,
+      "enterActionMs": 16,
+      "requestSessionMs": 1.899999976158142,
+      "setSessionMs": 1.199999988079071,
+      "firstWorldRenderMs": 1810.3999999761581
+    }
+  },
+  "environmentClassification": {
+    "builtInXrEmu1": "IWER_EMULATED",
+    "iwerActive": "IWER_EMULATED",
+    "questOrOculusBrowserUa": "QUEST_HARDWARE_PENDING",
+    "ordinaryDesktopChromium": "DESKTOP_BROWSER",
+    "desktopWithExternalImmersiveWebEmulator": "DESKTOP_BROWSER",
+    "externalEmulatorFalselyMarkedQuest": false,
+    "runtimeEvidenceClassOverridesAfterEntry": true
+  },
+  "checks": {
+    "typescript": { "command": "npx tsc --noEmit", "pass": true },
+    "hf3Hf4Unit": {
+      "file": "tests/jp4a-round5b3-hf3-hf4.test.ts",
+      "pass": true, "tests": 46, "failed": 0
+    },
+    "targetedJp4aUnit": {
+      "files": {
+        "tests/jp4a-round5b3.test.ts": 8,
+        "tests/jp4a-round5b3-hf1.test.ts": 6,
+        "tests/jp4a-round5b3-hf2.test.ts": 13,
+        "tests/jp4a-round5b3-hf3.test.ts": 14,
+        "tests/jp4a-round5b3-hf3-hf1.test.ts": 12,
+        "tests/jp4a-round5b3-hf3-hf2.test.ts": 10,
+        "tests/jp4a-round5b3-hf3-hf3.test.ts": 18,
+        "tests/jp4a-round5b3-hf3-hf4.test.ts": 46
+      },
+      "tests": 127, "failed": 0, "pass": true
+    },
+    "targetedXrUnit": {
+      "files": {
+        "tests/xr.test.ts": 24,
+        "tests/xr-session-request.test.ts": 7,
+        "tests/xr-lifecycle.test.ts": 21,
+        "tests/store-visible-residency.test.ts": 14,
+        "tests/store-visible-work.test.ts": 14,
+        "tests/boot-readiness.test.ts": 7,
+        "tests/xr-entry-order.test.ts": 4,
+        "tests/xr-startup-journal.test.ts": 1
+      },
+      "tests": 92, "failed": 0, "pass": true
+    },
+    "fullUnit": { "command": "npm test", "pass": true, "tests": 685, "failed": 0 },
+    "productionBuild": {
+      "command": "npm run build",
+      "pass": true,
+      "includes": ["file-budget", "signage-slot-validation", "typescript", "vite-production-build"]
+    },
+    "browserIwerIntegration": {
+      "command": "npm run test:jp4a-round5b3-hf3-hf4",
+      "pass": true,
+      "classification": "IWER_EMULATED",
+      "inputMethod": "BROWSER_AUTOMATION",
+      "NOT_HARDWARE_VISUAL_PROOF": true,
+      "iwerCannotProveQuestUserActivation": true,
+      "implementationTestedHead": "90123177d7aeeaed9d914404df9910cc93a4233c",
+      "usedXrTestEnter": false,
+      "usedJsClickForEnter": false,
+      "inputProof": {
+        "start": "puppeteer.page.click #jp4a-test-console [data-jp4a-action=\"start\"]",
+        "enterVr": "puppeteer.page.click #jp4a-test-console [data-jp4a-action=\"enter-vr\"]"
+      },
+      "validated": [
+        "support probe settled in 1ms, bound 2000ms, state SUPPORTED reason API_TRUE",
+        "Checking XR support shown only while PROBING",
+        "START keeps the console visible; ENTER VR reachable with no reopen step",
+        "pre-entry environment IWER_EMULATED, not QUEST_HARDWARE_PENDING",
+        "trusted browser input ENTER VR (page.click), not JS .click()",
+        "xrStartedAt non-null and xr_started event recorded",
+        "runtime presenting true; firstWorldRender true",
+        "console auto-hidden after confirmed entry (hidden + display:none)",
+        "elementFromPoint at canvas centre returns CANVAS; occludedBy null",
+        "telemetry samples 4 (> 0)",
+        "bank invariant checkedSlots 3692 verdict PASS (non-vacuous)",
+        "XR exit restores the console automatically",
+        "COPY RESULT / COPY JSON usable",
+        "RESET then a second confirmed entry with a new session id",
+        "normal URL: console + reopen + live control absent; production Enter VR present"
+      ],
+      "evidence": "docs/review/jp4a/jp4a-round5b3-hf3-hf4-iwer.json"
+    },
+    "regressionHarnessesOnA2": {
+      "test:jp4a-round5b3-hf3-hf3": { "pass": true, "implementationTestedHead": "90123177d7aeeaed9d914404df9910cc93a4233c" },
+      "test:jp4a-round5b3-hf3-hf2": { "pass": true, "associationOk": true, "startupRaceOk": true },
+      "test:jp4a-round5b3-hf3-hf1": { "pass": true, "associationOk": true },
+      "test:jp4a-round5b3-hf3": { "pass": true },
+      "test:jp4a-round5b3-hf2": { "pass": true },
+      "test:jp4a-round5b3-hf1": { "pass": true },
+      "test:jp4a-round5b3": { "pass": true }
+    }
+  },
+  "preExistingHarnessFailuresNotCausedByThisChange": {
+    "note": "Verified by running each harness in a detached worktree at the previously reviewed HEAD b4ee8e0 and comparing. Identical failure sets. Out of scope for HF3-HF4; surfaced for the reviewer, not fixed here, and not claimed as passing.",
+    "method": "git worktree add <tmp> b4ee8e0; node tools/<harness>.mjs",
+    "npm run test:xr-emu": {
+      "baselineB4ee8e0": { "pass": false, "scenarioFailures": 3, "failing": ["JP4A_ROUND5A1_XR", "JP4A_ROUND5A2_XR", "JP4A_ROUND5B2_XR"] },
+      "a2_9012317": { "pass": false, "scenarioFailures": 3, "failing": ["JP4A_ROUND5A1_XR", "JP4A_ROUND5A2_XR", "JP4A_ROUND5B2_XR"] },
+      "regressionIntroducedByHf3Hf4": false
+    },
+    "npm run test:xr-resource": {
+      "baselineB4ee8e0": { "pass": false, "scenarioFailures": 1, "failing": ["JP4A_UPLOAD_POLICY"] },
+      "a2_9012317": { "pass": false, "scenarioFailures": 1, "failing": ["JP4A_UPLOAD_POLICY"] },
+      "regressionIntroducedByHf3Hf4": false
+    }
+  },
+  "preservedCorrections": {
+    "hf3Hf3NoSyntheticProductionButtonClick": true,
+    "hf3Hf3DirectActionBridge": true,
+    "hf3Hf3StructuredEntryFailures": true,
+    "hf3Hf3CopyFeedback": true,
+    "hf3Hf2NoAppAwaitBeforeThreeSetSessionListener": true,
+    "hf3Hf2ThreeOwnsMakeXRCompatible": true,
+    "hf3Hf1ConnectedEventOwnsObjectHandedness": true,
+    "hf3Hf1DisconnectClearsObjectHandedness": true,
+    "hf3Hf1NoInputSourcesIndexAssociation": true,
+    "hf3ControllerSourceFidelity": true,
+    "hf3AmbiguousSimultaneousPressFailsClosed": true,
+    "hf3NoOppositeRayFallback": true,
+    "hf2FirstTapLockOnly": true,
+    "hf2TapAfterLockIsVerdict": true,
+    "hf2HoldIsApproachFocus": true,
+    "hf2HoldNeverMutatesVerdict": true,
+    "hf2FocusProductionSelectExactlyOnce": true,
+    "round5b3DiagnosticLockRangeM": 12,
+    "round5b3ProductionInteractRangeFt": 14,
+    "round5b3LiveShaderModes": true,
+    "round5b3FocusUploadImplementation": true,
+    "round5b3NonVacuousBankInvariant": true
+  },
+  "ci": {
+    "implementationA": { "sha": "d07eda1c196a5a64aa4c119ba61a4459d06cba9f", "runId": 32401209965, "conclusion": "success" },
+    "implementationA2": { "sha": "90123177d7aeeaed9d914404df9910cc93a4233c", "runId": 32404057588, "conclusion": "success" }
+  },
+  "userInterventionRequiredDuringImplementation": false,
+  "toolLimitationsOrManualWorkarounds": [
+    "The forced termination of a background shell mid-session left orphaned vite dev servers holding harness ports 17425/17426; they were force-killed before re-running. No repository state was damaged and no gate result depended on it."
+  ],
+  "implementationEnvironment": "Claude Desktop / Claude Opus 5 High",
+  "selfReportedModel": "Claude Opus 5 High",
+  "nextStep": "Independent software review of support probe timing, the never-resolving support fake, the actual browser ENTER VR path, xrStartedAt/xr_started truth, non-empty samples, the non-vacuous bank invariant, the visible desktop IWER render, and exact-head CI/provenance. Only after that approval, exactly one fresh Quest 3 Round 5B.3 diagnostic. Do not start JP-4B. Do not merge."
+}

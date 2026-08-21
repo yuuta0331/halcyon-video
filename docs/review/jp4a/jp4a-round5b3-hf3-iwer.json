@@ -4,9 +4,9 @@
   "scope": "PER_HAND_TRIGGER_SOURCE_AND_TAP_HOLD",
   "NOT_HARDWARE_VISUAL_PROOF": true,
   "QUEST_HARDWARE": "NOT_EXECUTED",
-  "implementationTestedHead": "d178a0f708c57f4f31f702619f8d3505502fb21d",
+  "implementationTestedHead": "90123177d7aeeaed9d914404df9910cc93a4233c",
   "evidenceCommitHead": "NEWER_THAN_TESTED_SOURCE",
-  "sourceHead": "d178a0f708c57f4f31f702619f8d3505502fb21d",
+  "sourceHead": "90123177d7aeeaed9d914404df9910cc93a4233c",
   "ciCheckoutSha": "same as source",
   "pass": true,
   "url": "/xr-test/jp4a",
@@ -16,7 +16,7 @@
   "before": {
     "heading": "JP-4A TEST",
     "start": true,
-    "meta": "Round 5B.3 HF3\nSource HEAD: d178a0f708c57f4f31f702619f8d3505502fb21d\nCI checkout: same as source\nBuild: d178a0f708c57f4f31f702619f8d3505502fb21d\nSession: not started"
+    "meta": "Round 5B.3 HF3\nSource HEAD: 90123177d7aeeaed9d914404df9910cc93a4233c\nCI checkout: same as source\nBuild: 90123177d7aeeaed9d914404df9910cc93a4233c\nSession: not started"
   },
   "firstRun": {
     "entered": {
@@ -114,11 +114,11 @@
     "resetSession": {
       "schema": 1,
       "round": "JP-4A Round 5B.3",
-      "build": "d178a0f708c57f4f31f702619f8d3505502fb21d",
-      "sourceHead": "d178a0f708c57f4f31f702619f8d3505502fb21d",
-      "testedSha": "d178a0f708c57f4f31f702619f8d3505502fb21d",
-      "sessionId": "jp4a-mszx1yan-ec3f7954",
-      "startedAt": "2026-08-19T09:55:50.111Z",
+      "build": "90123177d7aeeaed9d914404df9910cc93a4233c",
+      "sourceHead": "90123177d7aeeaed9d914404df9910cc93a4233c",
+      "testedSha": "90123177d7aeeaed9d914404df9910cc93a4233c",
+      "sessionId": "jp4a-mt1vkrmc-40af3c37",
+      "startedAt": "2026-08-20T18:50:01.044Z",
       "xrStartedAt": null,
       "completedAt": null,
       "active": false,
@@ -149,21 +149,29 @@
       "samples": [],
       "events": [
         {
-          "timestamp": "2026-08-19T09:55:50.111Z",
+          "timestamp": "2026-08-20T18:50:01.044Z",
           "type": "session_reset"
         }
       ],
       "environment": "IWER_EMULATED",
-      "questHardware": "NOT_EXECUTED"
+      "questHardware": "NOT_EXECUTED",
+      "timings": {
+        "supportProbeMs": null,
+        "storeReadyMs": null,
+        "enterActionMs": null,
+        "requestSessionMs": null,
+        "setSessionMs": null,
+        "firstWorldRenderMs": null
+      }
     },
     "started": {
       "schema": 1,
       "round": "JP-4A Round 5B.3",
-      "build": "d178a0f708c57f4f31f702619f8d3505502fb21d",
-      "sourceHead": "d178a0f708c57f4f31f702619f8d3505502fb21d",
-      "testedSha": "d178a0f708c57f4f31f702619f8d3505502fb21d",
-      "sessionId": "jp4a-mszx1yap-ff5c9129",
-      "startedAt": "2026-08-19T09:55:50.113Z",
+      "build": "90123177d7aeeaed9d914404df9910cc93a4233c",
+      "sourceHead": "90123177d7aeeaed9d914404df9910cc93a4233c",
+      "testedSha": "90123177d7aeeaed9d914404df9910cc93a4233c",
+      "sessionId": "jp4a-mt1vkrmg-36b5847c",
+      "startedAt": "2026-08-20T18:50:01.048Z",
       "xrStartedAt": null,
       "completedAt": null,
       "active": true,
@@ -194,16 +202,24 @@
       "samples": [],
       "events": [
         {
-          "timestamp": "2026-08-19T09:55:50.113Z",
+          "timestamp": "2026-08-20T18:50:01.048Z",
           "type": "session_reset"
         },
         {
-          "timestamp": "2026-08-19T09:55:50.115Z",
+          "timestamp": "2026-08-20T18:50:01.050Z",
           "type": "test_started"
         }
       ],
       "environment": "IWER_EMULATED",
-      "questHardware": "NOT_EXECUTED"
+      "questHardware": "NOT_EXECUTED",
+      "timings": {
+        "supportProbeMs": null,
+        "storeReadyMs": null,
+        "enterActionMs": null,
+        "requestSessionMs": null,
+        "setSessionMs": null,
+        "firstWorldRenderMs": null
+      }
     },
     "liveAfterReset": {
       "enabled": true,

@@ -1,0 +1,185 @@
+{
+  "phase": "ROUND5B3_HF3_HF4_XR_SUPPORT_AND_EMULATED_ENTRY_TRUTH_CORRECTION",
+  "classification": "IWER_EMULATED",
+  "inputMethod": "BROWSER_AUTOMATION",
+  "scope": "BUILT_IN_IWER_JP4A_CONSOLE_TRUSTED_BROWSER_INPUT",
+  "NOT_HARDWARE_VISUAL_PROOF": true,
+  "QUEST_HARDWARE": "ATTEMPTED_BUT_DIAGNOSTIC_NOT_STARTED",
+  "hardwareAttempt": {
+    "attempted": true,
+    "xrSessionEntered": false,
+    "visualDiagnosticExecuted": false,
+    "reason": "XR_SUPPORT_CHECK_STALLED",
+    "source": "USER_SUPPLIED_HARDWARE_OBSERVATION",
+    "sourceHead": "b4ee8e033fc2ad03ef1c0522d007560716f778de"
+  },
+  "desktopEmulatedAttempt": {
+    "result": "ENTRY_NOT_USABLE",
+    "observed": [
+      "support check slow",
+      "VR ACTIVE shown",
+      "no usable visible XR scene"
+    ],
+    "copiedState": {
+      "xrStartedAt": null,
+      "samples": 0,
+      "bankInvariant": null,
+      "xrStartedEvent": false
+    },
+    "source": "USER_SUPPLIED_DESKTOP_OBSERVATION"
+  },
+  "newQuestRunAfterHf4": "NOT_EXECUTED",
+  "implementationTestedHead": "90123177d7aeeaed9d914404df9910cc93a4233c",
+  "evidenceCommitHead": "NEWER_THAN_TESTED_SOURCE",
+  "sourceHead": "90123177d7aeeaed9d914404df9910cc93a4233c",
+  "ciCheckoutSha": "same as source",
+  "pass": true,
+  "url": "/xr-test/jp4a?demo=1&xrEmu=1&nogate=1",
+  "usedXrTestEnter": false,
+  "usedJsClickForEnter": false,
+  "inputProof": {
+    "startClick": {
+      "selector": "#jp4a-test-console [data-jp4a-action=\"start\"]",
+      "method": "puppeteer.page.click"
+    },
+    "enterClick": {
+      "selector": "#jp4a-test-console [data-jp4a-action=\"enter-vr\"]",
+      "method": "puppeteer.page.click"
+    }
+  },
+  "iwerCannotProveQuestUserActivation": true,
+  "before": {
+    "heading": "JP-4A TEST",
+    "start": true,
+    "meta": "JP-4A TESTRound 5B.3 HF3\nSource HEAD: 90123177d7aeeaed9d914404df9910cc93a4233c\nCI checkout: same as source\nBuild: 90123177d7aeeaed9d914404df9910cc93a4233c\nSession: not startedSTART で FPS・LIVE poster 診断・自動保存を有効化します。この画面のまま ENTER VR が有効になるのを待ってください。VR 開始が確認されるとコンソールは自動的に隠れます。ポスターを指しているコントローラの Trigger TAP は LOCK または BLACK/CLEAN。HOLD は判定を変えず APPROACH と FOCUS です。Menu は通常どおりです。START JP-4A TEST"
+  },
+  "supportGate": {
+    "observed": true,
+    "state": "SUPPORTED",
+    "reason": "API_TRUE",
+    "invoked": true,
+    "supportProbeMs": 1,
+    "boundMs": 2000,
+    "softTimeoutMs": 1500,
+    "stillPending": false,
+    "pass": true
+  },
+  "supportWording": {
+    "text": "",
+    "readiness": "WAITING_FOR_STORE",
+    "supportState": "SUPPORTED"
+  },
+  "checkingOnlyWhileProbing": true,
+  "started": {
+    "consoleHidden": false,
+    "reopenVisible": false,
+    "hasEnterWithoutReopen": true,
+    "active": true,
+    "sessionId": "jp4a-mt1v3g5n-c9e92c41",
+    "environment": "IWER_EMULATED"
+  },
+  "storeReady": true,
+  "enterReady": {
+    "label": "ENTER VR",
+    "readiness": "READY_TO_ENTER_VR",
+    "status": "ENTER VR",
+    "support": "SUPPORTED",
+    "neverSaidCheckingWhileEnabled": true
+  },
+  "entered": {
+    "xrStartedAt": "2026-08-20T18:38:59.578Z",
+    "xrStartedEvent": true,
+    "environment": "IWER_EMULATED",
+    "firstWorldRender": true,
+    "presenting": true,
+    "startup": {
+      "requestSessionStart": 148833.80000001192,
+      "requestSessionEnd": 148835.69999998808,
+      "rendererSetSessionStart": 148842.69999998808,
+      "rendererSetSessionEnd": 148843.89999997616,
+      "firstWorldRenderCompletedAt": 150644.19999998808
+    }
+  },
+  "overlay": {
+    "consoleHidden": true,
+    "consoleDisplay": "none",
+    "reopenVisible": true,
+    "canvasPresent": true,
+    "canvasRect": {
+      "w": 1280,
+      "h": 800
+    },
+    "centerElement": "CANVAS",
+    "occludedBy": null,
+    "canvasUnobstructed": true
+  },
+  "telemetry": {
+    "samples": 4,
+    "timings": {
+      "supportProbeMs": 1,
+      "storeReadyMs": 133784.19999998808,
+      "enterActionMs": 16,
+      "requestSessionMs": 1.899999976158142,
+      "setSessionMs": 1.199999988079071,
+      "firstWorldRenderMs": 1810.3999999761581
+    }
+  },
+  "timings": {
+    "supportProbeMs": 1,
+    "supportBoundMs": 2000,
+    "storeReadyMs": 133784.19999998808,
+    "storeWaitObservedMs": 146366,
+    "enterActionMs": 16,
+    "requestSessionMs": 1.899999976158142,
+    "setSessionMs": 1.199999988079071,
+    "firstWorldRenderMs": 1810.3999999761581
+  },
+  "afterExit": {
+    "consoleVisible": true,
+    "reopenHidden": true,
+    "readiness": "VR_ENTRY_NOT_CONFIRMED"
+  },
+  "copies": {
+    "resultLabel": "COPIED RESULT",
+    "jsonLabel": "COPIED JSON",
+    "resultOk": true,
+    "jsonOk": true
+  },
+  "afterReset": {
+    "sessionId": "jp4a-mt1v73r7-05271ac5",
+    "active": false
+  },
+  "secondEntered": {
+    "xrStartedAt": "2026-08-20T18:39:25.034Z",
+    "xrStartedEvent": true,
+    "firstWorldRender": true,
+    "sessionId": "jp4a-mt1v74b0-c1d57dcf"
+  },
+  "secondHidden": {
+    "consoleHidden": true,
+    "reopenVisible": true
+  },
+  "liveShelfInvariant": "PASS",
+  "invariant": {
+    "checkedSlots": 3692,
+    "bankMismatchCount": 0,
+    "layerOutOfRangeCount": 0,
+    "missingIndexCount": 0,
+    "invalidLoadedFlagCount": 0,
+    "pass": true,
+    "verdict": "PASS"
+  },
+  "normalControl": {
+    "consoleAbsent": true,
+    "reopenAbsent": true,
+    "liveControlAbsent": true,
+    "hasHudEnter": true,
+    "hasMenuEnter": true
+  },
+  "privacy": {
+    "containsTitle": false,
+    "opaqueOnly": true
+  },
+  "seriousErrors": [],
+  "knownDemoResourceErrors": 9
+}

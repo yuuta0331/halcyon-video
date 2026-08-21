@@ -4,9 +4,9 @@
   "scope": "INITIAL_INPUTSOURCESCHANGE_BEFORE_THREE_COMPAT_AWAIT",
   "NOT_HARDWARE_VISUAL_PROOF": true,
   "QUEST_HARDWARE": "NOT_EXECUTED",
-  "implementationTestedHead": "14c9d45f9945a4418695ef8acf1cc95518c52c2e",
+  "implementationTestedHead": "90123177d7aeeaed9d914404df9910cc93a4233c",
   "evidenceCommitHead": "NEWER_THAN_TESTED_SOURCE",
-  "sourceHead": "14c9d45f9945a4418695ef8acf1cc95518c52c2e",
+  "sourceHead": "90123177d7aeeaed9d914404df9910cc93a4233c",
   "ciCheckoutSha": "same as source",
   "pass": true,
   "url": "/xr-test/jp4a",
@@ -18,7 +18,7 @@
   "before": {
     "heading": "JP-4A TEST",
     "start": true,
-    "meta": "Round 5B.3 HF3\nSource HEAD: 14c9d45f9945a4418695ef8acf1cc95518c52c2e\nCI checkout: same as source\nBuild: 14c9d45f9945a4418695ef8acf1cc95518c52c2e\nSession: not started"
+    "meta": "Round 5B.3 HF3\nSource HEAD: 90123177d7aeeaed9d914404df9910cc93a4233c\nCI checkout: same as source\nBuild: 90123177d7aeeaed9d914404df9910cc93a4233c\nSession: not started"
   },
   "firstRun": {
     "entered": {
@@ -199,11 +199,11 @@
     "resetSession": {
       "schema": 1,
       "round": "JP-4A Round 5B.3",
-      "build": "14c9d45f9945a4418695ef8acf1cc95518c52c2e",
-      "sourceHead": "14c9d45f9945a4418695ef8acf1cc95518c52c2e",
-      "testedSha": "14c9d45f9945a4418695ef8acf1cc95518c52c2e",
-      "sessionId": "jp4a-mt06mpdu-f97393ef",
-      "startedAt": "2026-08-19T14:23:54.882Z",
+      "build": "90123177d7aeeaed9d914404df9910cc93a4233c",
+      "sourceHead": "90123177d7aeeaed9d914404df9910cc93a4233c",
+      "testedSha": "90123177d7aeeaed9d914404df9910cc93a4233c",
+      "sessionId": "jp4a-mt1vdnfv-44daf730",
+      "startedAt": "2026-08-20T18:44:29.035Z",
       "xrStartedAt": null,
       "completedAt": null,
       "active": false,
@@ -234,21 +234,29 @@
       "samples": [],
       "events": [
         {
-          "timestamp": "2026-08-19T14:23:54.882Z",
+          "timestamp": "2026-08-20T18:44:29.035Z",
           "type": "session_reset"
         }
       ],
       "environment": "IWER_EMULATED",
-      "questHardware": "NOT_EXECUTED"
+      "questHardware": "NOT_EXECUTED",
+      "timings": {
+        "supportProbeMs": null,
+        "storeReadyMs": null,
+        "enterActionMs": null,
+        "requestSessionMs": null,
+        "setSessionMs": null,
+        "firstWorldRenderMs": null
+      }
     },
     "started": {
       "schema": 1,
       "round": "JP-4A Round 5B.3",
-      "build": "14c9d45f9945a4418695ef8acf1cc95518c52c2e",
-      "sourceHead": "14c9d45f9945a4418695ef8acf1cc95518c52c2e",
-      "testedSha": "14c9d45f9945a4418695ef8acf1cc95518c52c2e",
-      "sessionId": "jp4a-mt06mpdw-6903f50e",
-      "startedAt": "2026-08-19T14:23:54.884Z",
+      "build": "90123177d7aeeaed9d914404df9910cc93a4233c",
+      "sourceHead": "90123177d7aeeaed9d914404df9910cc93a4233c",
+      "testedSha": "90123177d7aeeaed9d914404df9910cc93a4233c",
+      "sessionId": "jp4a-mt1vdnfx-3e448a7a",
+      "startedAt": "2026-08-20T18:44:29.037Z",
       "xrStartedAt": null,
       "completedAt": null,
       "active": true,
@@ -279,16 +287,24 @@
       "samples": [],
       "events": [
         {
-          "timestamp": "2026-08-19T14:23:54.884Z",
+          "timestamp": "2026-08-20T18:44:29.037Z",
           "type": "session_reset"
         },
         {
-          "timestamp": "2026-08-19T14:23:54.897Z",
+          "timestamp": "2026-08-20T18:44:29.040Z",
           "type": "test_started"
         }
       ],
       "environment": "IWER_EMULATED",
-      "questHardware": "NOT_EXECUTED"
+      "questHardware": "NOT_EXECUTED",
+      "timings": {
+        "supportProbeMs": null,
+        "storeReadyMs": null,
+        "enterActionMs": null,
+        "requestSessionMs": null,
+        "setSessionMs": null,
+        "firstWorldRenderMs": null
+      }
     },
     "liveAfterReset": {
       "enabled": true,
