@@ -7,6 +7,9 @@ export interface GlSnapshot {
   unpackFlipY: boolean;
   unpackPremultiply: boolean;
   unpackAlignment: number;
+  unpackRowLength: number | null;
+  unpackSkipRows: number | null;
+  unpackSkipPixels: number | null;
 }
 
 type PixelStoreRenderer = {
@@ -29,12 +32,17 @@ export function pixelStorei(
 }
 
 export function snapshotGlTextureState(gl: WebGLRenderingContext): GlSnapshot {
+  const gl2 = gl as WebGL2RenderingContext;
+  const webgl2Unpack = typeof gl2.UNPACK_ROW_LENGTH === 'number';
   return {
     texture2D: gl.getParameter(gl.TEXTURE_BINDING_2D) as WebGLTexture | null,
     activeTexture: gl.getParameter(gl.ACTIVE_TEXTURE) as number,
     unpackFlipY: !!gl.getParameter(gl.UNPACK_FLIP_Y_WEBGL),
     unpackPremultiply: !!gl.getParameter(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL),
     unpackAlignment: gl.getParameter(gl.UNPACK_ALIGNMENT) as number,
+    unpackRowLength: webgl2Unpack ? gl.getParameter(gl2.UNPACK_ROW_LENGTH) as number : null,
+    unpackSkipRows: webgl2Unpack ? gl.getParameter(gl2.UNPACK_SKIP_ROWS) as number : null,
+    unpackSkipPixels: webgl2Unpack ? gl.getParameter(gl2.UNPACK_SKIP_PIXELS) as number : null,
   };
 }
 
@@ -48,6 +56,10 @@ export function restoreGlTextureState(
   pixelStorei(renderer ?? null, gl, gl.UNPACK_FLIP_Y_WEBGL, snap.unpackFlipY ? 1 : 0);
   pixelStorei(renderer ?? null, gl, gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, snap.unpackPremultiply ? 1 : 0);
   pixelStorei(renderer ?? null, gl, gl.UNPACK_ALIGNMENT, snap.unpackAlignment);
+  const gl2 = gl as WebGL2RenderingContext;
+  if (snap.unpackRowLength != null) pixelStorei(renderer ?? null, gl, gl2.UNPACK_ROW_LENGTH, snap.unpackRowLength);
+  if (snap.unpackSkipRows != null) pixelStorei(renderer ?? null, gl, gl2.UNPACK_SKIP_ROWS, snap.unpackSkipRows);
+  if (snap.unpackSkipPixels != null) pixelStorei(renderer ?? null, gl, gl2.UNPACK_SKIP_PIXELS, snap.unpackSkipPixels);
   renderer?.resetState?.();
 }
 

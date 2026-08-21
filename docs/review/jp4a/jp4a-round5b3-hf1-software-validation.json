@@ -1,0 +1,91 @@
+{
+  "phase": "ROUND5B3_HF1_DIAGNOSTIC_HARNESS_CORRECTION",
+  "finalState": "READY_FOR_SINGLE_QUEST_JP4A_ROUND5B3_DIAGNOSTIC",
+  "QUEST_HARDWARE": "NOT_EXECUTED",
+  "questPassClaimed": false,
+  "NOT_HARDWARE_VISUAL_PROOF": true,
+  "classification": "IWER_EMULATED",
+  "reviewFindingsClosed": [
+    "runtime diagnostic reset on RESET TEST",
+    "diagnostic lock separated from production FOCUS",
+    "explicit telemetry phase state machine",
+    "JP-4A-only 12m lock ray",
+    "zero-slot bank invariant is NOT_EXERCISED",
+    "source HEAD vs CI merge-ref build identity"
+  ],
+  "focusWakeWording": "OPTION_A_FOCUS_LOCAL_80MS_RETRY",
+  "checks": {
+    "typescript": {
+      "command": "npx tsc --noEmit",
+      "pass": true
+    },
+    "targeted": {
+      "command": "node --experimental-strip-types --test tests/jp4a-round5b3-hf1.test.ts tests/jp4a-round5b3.test.ts tests/poster-focus.test.ts tests/upload-admission.test.ts tests/xr-viewer-pose.test.ts tests/hw-diag-production.test.ts tests/xr-hardware-diag.test.ts tests/xr-lifecycle.test.ts",
+      "pass": true,
+      "tests": 76,
+      "failed": 0
+    },
+    "fullUnit": {
+      "command": "npm test",
+      "pass": true,
+      "tests": 572,
+      "failed": 0
+    },
+    "productionBuild": {
+      "command": "npm run build",
+      "pass": true,
+      "includes": [
+        "file-budget",
+        "signage-slot-validation",
+        "typescript",
+        "vite-production-build"
+      ]
+    },
+    "browserIwerIntegration": {
+      "command": "npm run test:jp4a-round5b3-hf1",
+      "pass": true,
+      "classification": "IWER_EMULATED",
+      "NOT_HARDWARE_VISUAL_PROOF": true,
+      "QUEST_HARDWARE": "NOT_EXECUTED",
+      "validated": [
+        "short route and Source HEAD / CI checkout labels",
+        "one-click start",
+        "actual IWER session entry",
+        "first world render",
+        "real shelf lock",
+        "all nine LIVE mode state transitions",
+        "same-page RESET then START without reload",
+        "clean live diagnostic state after reset",
+        "second IWER session",
+        "Copy Result and Copy JSON targets",
+        "normal URL console absent",
+        "live shelf invariant checkedSlots=3692 PASS",
+        "checkedSlots=0 cannot be PASS"
+      ],
+      "evidence": "docs/review/jp4a/jp4a-round5b3-hf1-iwer.json"
+    }
+  },
+  "softwareEvidence": {
+    "bankInvariantPositiveFixture": "PASS",
+    "bankInvariantNegativeFixture": "FAIL",
+    "bankInvariantZeroSlot": "NOT_EXERCISED",
+    "iwerLiveShelfInvariant": "PASS",
+    "iwerLiveShelfCheckedSlots": 3692,
+    "samePageResetRerun": "PASS",
+    "diagnosticLockDoesNotSelectProduction": "PASS",
+    "explicitFocusSelectsProductionOnce": "PASS",
+    "approachPhaseIndependentOfFocusResidency": "PASS",
+    "productionWalkInteractRangeFt": 14,
+    "jp4aDiagnosticLockRangeM": 12,
+    "buildIdentitySourceVsMergeRef": "PASS",
+    "focusActualTexSubImageChunks": "PRESERVED",
+    "stationaryFocusLocal80msRetry": "PRESERVED_OPTION_A",
+    "extraAnimationLoop": "ABSENT"
+  },
+  "timingBoundary": {
+    "gpuUploadSubmitMs": "CPU_BLOCKING_GL_SUBMIT_NOT_GPU_EXECUTION",
+    "questGpuExecution": "REQUIRES_QUEST",
+    "questCompositor": "REQUIRES_QUEST",
+    "questBlackArtifactVisualResult": "REQUIRES_QUEST"
+  }
+}

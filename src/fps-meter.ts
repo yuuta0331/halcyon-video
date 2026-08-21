@@ -33,7 +33,7 @@
 // allocation (percentile sort scratch views, strings) happens on the ≤2Hz
 // update path, never in the frame hook.
 
-import { perfTrace, perfSlot } from './perf-trace';
+import { perfTrace, perfSlot } from './perf-trace.ts';
 
 /** localStorage / settings-registry key for the overlay. */
 export const FPS_METER_KEY = 'bb_fps_meter';
@@ -66,6 +66,7 @@ let lineTop: HTMLDivElement | null = null;
 let lineBot: HTMLDivElement | null = null;
 let timer: ReturnType<typeof setInterval> | null = null;
 let enabled = false;
+let desired = false;
 let renderSlot = -1;
 let originalEnd: ((idx: number) => void) | null = null;
 let lastTop = '';
@@ -122,44 +123,81 @@ function paint(top: string, bot: string, dim: boolean): void {
 }
 
 /** Recompute + repaint. Called on resume-from-park and by the 2Hz interval. */
-function refresh(now: number): void {
-  if (!el) return;
+export interface FpsMeterReadout {
+  top: string;
+  bot: string;
+  idle: boolean;
+  fps: number | null;
+  meanMs: number | null;
+  p95Ms: number | null;
+  p99Ms: number | null;
+  worstMs: number | null;
+  over1389: number;
+  over20: number;
+  over333: number;
+  samples: number;
+}
+
+export function fpsMeterReadout(now = typeof performance !== 'undefined' ? performance.now() : 0): FpsMeterReadout {
   if (now - lastFrameTs > PARK_MS) {
-    // Honest idle state: the renderer is parked on a finished frame, so there
-    // is no frame rate to report. Stop the timer — the next composited frame
-    // restarts it (see onComposite).
-    paint('IDLE', 'renderer parked', true);
-    stopTimer();
-    return;
+    return {
+      top: 'IDLE', bot: 'renderer parked', idle: true,
+      fps: null, meanMs: null, p95Ms: null, p99Ms: null, worstMs: null, over1389: 0, over20: 0, over333: 0, samples: 0,
+    };
   }
-  // One pass: age-filter into the sort scratch while accumulating mean/max.
   const cutoff = now - MAX_AGE_MS;
   let n = 0;
   let sum = 0;
   let max = 0;
+  let over = 0;
+  let over20 = 0;
+  let over333 = 0;
   for (let i = 0; i < count; i++) {
     if (ts[i] < cutoff) continue;
     const v = dts[i];
     scratch[n++] = v;
     sum += v;
     if (v > max) max = v;
+    if (v > 13.89) over++;
+    if (v > 20) over20++;
+    if (v > 33.3) over333++;
   }
   if (n === 0) {
-    paint('-- FPS', 'measuring', true);
-    return;
+    return {
+      top: '-- FPS', bot: 'measuring', idle: true,
+      fps: null, meanMs: null, p95Ms: null, p99Ms: null, worstMs: null, over1389: 0, over20: 0, over333: 0, samples: 0,
+    };
   }
   const mean = sum / n;
-  // 1% low = the 99th-percentile frame time expressed in fps. Sorting a ≤180
-  // entry scratch twice a second is cheaper (and exact) versus any streaming
-  // estimator, and it keeps the per-frame path down to two stores.
   const view = scratch.subarray(0, n);
   view.sort();
+  const p95 = view[Math.min(n - 1, Math.floor(n * 0.95))] || mean;
   const p99 = view[Math.min(n - 1, Math.floor(n * 0.99))] || mean;
-  paint(
-    `${Math.round(1000 / mean)} FPS   ${mean.toFixed(1)} ms`,
-    `1% low ${Math.round(1000 / p99)}   worst ${max.toFixed(1)} ms`,
-    false,
-  );
+  return {
+    top: `${Math.round(1000 / mean)} FPS | ${mean.toFixed(1)} ms`,
+    bot: `1% low ${Math.round(1000 / p99)} | worst ${max.toFixed(1)} ms`,
+    idle: false,
+    fps: 1000 / mean,
+    meanMs: mean,
+    p95Ms: p95,
+    p99Ms: p99,
+    worstMs: max,
+    over1389: over,
+    over20,
+    over333,
+    samples: n,
+  };
+}
+
+function refresh(now: number): void {
+  if (!el) return;
+  const readout = fpsMeterReadout(now);
+  if (readout.idle && readout.top === 'IDLE') {
+    paint(readout.top, readout.bot, true);
+    stopTimer();
+    return;
+  }
+  paint(readout.top, readout.bot, readout.idle);
 }
 
 function tick(): void {
@@ -233,6 +271,7 @@ export function destroyFpsMeter(): void {
 
 /** Show or hide the meter. Idempotent, safe to call before the scene exists. */
 export function enableFpsMeter(on: boolean): void {
+  desired = !!on;
   if (!on) {
     if (enabled) destroyFpsMeter();
     return;
@@ -245,7 +284,7 @@ export function enableFpsMeter(on: boolean): void {
 }
 
 export function isFpsMeterEnabled(): boolean {
-  return enabled;
+  return typeof document === 'undefined' ? desired : enabled;
 }
 
 /** '1' (how the settings registry stores toggles) plus the friendly spellings. */

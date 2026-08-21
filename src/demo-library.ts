@@ -6,6 +6,7 @@ import { isPlatformEnabled } from './romm';
 import { isGamesOnly } from './games-only';
 import { assetUrl } from './asset-url';
 import { getDismissedTitleIds } from './jellyseerr';
+import { uniqueCoverDataUrl } from './perf/synthetic-cover';
 
 const GENRES = ['Drama', 'Comedy', 'Horror', 'Sci-Fi', 'Action', 'Family', 'Foreign', 'Documentary', 'Anime'];
 
@@ -595,4 +596,28 @@ export function makeSyntheticEpisodes(movie: Movie): Episode[] {
     }
   }
   return episodes;
+}
+
+/** Compact catalog with unique synthetic covers for production multibank evidence. */
+export function buildUniqueCoverLibraries(count: number): JellyfinLibrary[] {
+  const n = Math.max(3, Math.floor(count) || 24);
+  const movies: Movie[] = [];
+  for (let i = 0; i < n; i++) {
+    movies.push({
+      id: `mb_${String(i).padStart(3, '0')}`,
+      title: `Multibank Title ${i}`,
+      year: 1990 + (i % 30),
+      duration: 'N/A',
+      rating: 'PG',
+      overview: 'Controlled unique-cover title for production shelf bank sampling.',
+      director: demoDirector(i),
+      actors: demoActors(i, 2),
+      genres: [GENRES[i % GENRES.length]],
+      localPath: '',
+      dateCreated: new Date(2000, 0, 1 + i).toISOString(),
+      posterUrl: uniqueCoverDataUrl(i),
+      libraryName: 'Movies',
+    });
+  }
+  return [{ id: 'Movies', name: 'Movies', movies, genres: [...GENRES] }];
 }

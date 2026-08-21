@@ -9,6 +9,7 @@ import { Footprint, localZOffset } from '../layout-validator';
 import { createCategorySignTexture, createFlushTopperLabelTexture } from '../canvas-textures';
 import { gameCaseDims } from '../video-case';
 import { createTrapezoidGeometry, splitTrapezoidGroups, createLibraryEndCapMaterial, getSlatwallPanelMaterial, markSignMesh } from '../sign-builders';
+import { markMirrorSkip } from '../scene-layers';
 
 const SHELF_HEIGHTS = [1.0, 2.1, 3.2, 4.3]; // standard aisle heights
 
@@ -411,7 +412,7 @@ export class GameSection implements SlottedFixture {
         mesh.position.set(0, 5.1, 0);
         mesh.castShadow = true;
         mesh.receiveShadow = true;
-        mesh.layers.set(1);
+        markMirrorSkip(mesh);
         this.group!.add(mesh);
         this.ctx.addCollider(mesh);
       });
@@ -457,7 +458,6 @@ export class GameSection implements SlottedFixture {
         // Gondola frame tops out at 5.1; the card's BOTTOM edge lands there.
         signMesh.position.set(0, 5.1 + signHeight / 2, zSecCenter);
         markSignMesh(signMesh, { casts: true }); // free-hanging board: it does cast
-        signMesh.layers.set(1);
         this.group.add(signMesh);
         this.ctx.addCollider(signMesh);
       }
@@ -513,7 +513,7 @@ export class GameSection implements SlottedFixture {
             // card reads flush against it without z-fighting.
             p.position.z = face * 0.025;
             p.receiveShadow = true;
-            p.layers.set(1);
+            markMirrorSkip(p);
             holder.add(p);
           });
           // Flush on the divider face (aisle-side edge at edgeHalfTop), upright.

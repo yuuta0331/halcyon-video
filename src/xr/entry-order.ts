@@ -1,10 +1,12 @@
 // Pure XR entry ordering. Frame-rate negotiation is not setup.
+// makeXRCompatible is owned by Three.js r184 WebXRManager.setSession
+// AFTER it installs session `inputsourceschange`. The app must not await
+// it as a preflight before setSession.
 
 export const XR_ENTRY_CRITICAL_PATH = [
   'requestSession',
   'selectReferenceSpaceType',
   'configureRendererPreSession',
-  'makeXRCompatible',
   'renderer.setSession',
   'firstXrRender',
 ] as const;

@@ -1,0 +1,285 @@
+{
+  "name": "JP4A_REAL_GPU_MULTIBANK",
+  "classification": "DESKTOP_BROWSER",
+  "evidenceKind": "REAL_GPU_ALLOCATION",
+  "pass": true,
+  "probe": {
+    "classification": "DESKTOP_BROWSER",
+    "evidenceKind": "REAL_GPU_ALLOCATION",
+    "uniqueTextureCount": 24,
+    "bankCount": 3,
+    "layersPerBank": 8,
+    "sampled": 24,
+    "uniqueSamples": 24,
+    "aliased": false,
+    "contextLost": false,
+    "glFatal": false,
+    "capacityInvariantOk": true,
+    "samples": [
+      {
+        "id": "gpu-probe-000",
+        "bank": 0,
+        "layer": 0,
+        "rgba": [
+          53,
+          107,
+          69,
+          255
+        ]
+      },
+      {
+        "id": "gpu-probe-001",
+        "bank": 0,
+        "layer": 1,
+        "rgba": [
+          90,
+          198,
+          122,
+          255
+        ]
+      },
+      {
+        "id": "gpu-probe-002",
+        "bank": 0,
+        "layer": 2,
+        "rgba": [
+          127,
+          69,
+          175,
+          255
+        ]
+      },
+      {
+        "id": "gpu-probe-003",
+        "bank": 0,
+        "layer": 3,
+        "rgba": [
+          164,
+          160,
+          228,
+          255
+        ]
+      },
+      {
+        "id": "gpu-probe-004",
+        "bank": 0,
+        "layer": 4,
+        "rgba": [
+          201,
+          31,
+          61,
+          255
+        ]
+      },
+      {
+        "id": "gpu-probe-005",
+        "bank": 0,
+        "layer": 5,
+        "rgba": [
+          18,
+          122,
+          114,
+          255
+        ]
+      },
+      {
+        "id": "gpu-probe-006",
+        "bank": 0,
+        "layer": 6,
+        "rgba": [
+          55,
+          213,
+          167,
+          255
+        ]
+      },
+      {
+        "id": "gpu-probe-007",
+        "bank": 0,
+        "layer": 7,
+        "rgba": [
+          92,
+          84,
+          220,
+          255
+        ]
+      },
+      {
+        "id": "gpu-probe-008",
+        "bank": 1,
+        "layer": 0,
+        "rgba": [
+          129,
+          175,
+          53,
+          255
+        ]
+      },
+      {
+        "id": "gpu-probe-009",
+        "bank": 1,
+        "layer": 1,
+        "rgba": [
+          166,
+          46,
+          106,
+          255
+        ]
+      },
+      {
+        "id": "gpu-probe-010",
+        "bank": 1,
+        "layer": 2,
+        "rgba": [
+          203,
+          137,
+          159,
+          255
+        ]
+      },
+      {
+        "id": "gpu-probe-011",
+        "bank": 1,
+        "layer": 3,
+        "rgba": [
+          20,
+          228,
+          212,
+          255
+        ]
+      },
+      {
+        "id": "gpu-probe-012",
+        "bank": 1,
+        "layer": 4,
+        "rgba": [
+          57,
+          99,
+          45,
+          255
+        ]
+      },
+      {
+        "id": "gpu-probe-013",
+        "bank": 1,
+        "layer": 5,
+        "rgba": [
+          94,
+          190,
+          98,
+          255
+        ]
+      },
+      {
+        "id": "gpu-probe-014",
+        "bank": 1,
+        "layer": 6,
+        "rgba": [
+          131,
+          61,
+          151,
+          255
+        ]
+      },
+      {
+        "id": "gpu-probe-015",
+        "bank": 1,
+        "layer": 7,
+        "rgba": [
+          168,
+          152,
+          204,
+          255
+        ]
+      },
+      {
+        "id": "gpu-probe-016",
+        "bank": 2,
+        "layer": 0,
+        "rgba": [
+          205,
+          23,
+          37,
+          255
+        ]
+      },
+      {
+        "id": "gpu-probe-017",
+        "bank": 2,
+        "layer": 1,
+        "rgba": [
+          22,
+          114,
+          90,
+          255
+        ]
+      },
+      {
+        "id": "gpu-probe-018",
+        "bank": 2,
+        "layer": 2,
+        "rgba": [
+          59,
+          205,
+          143,
+          255
+        ]
+      },
+      {
+        "id": "gpu-probe-019",
+        "bank": 2,
+        "layer": 3,
+        "rgba": [
+          96,
+          76,
+          196,
+          255
+        ]
+      },
+      {
+        "id": "gpu-probe-020",
+        "bank": 2,
+        "layer": 4,
+        "rgba": [
+          133,
+          167,
+          29,
+          255
+        ]
+      },
+      {
+        "id": "gpu-probe-021",
+        "bank": 2,
+        "layer": 5,
+        "rgba": [
+          170,
+          38,
+          82,
+          255
+        ]
+      },
+      {
+        "id": "gpu-probe-022",
+        "bank": 2,
+        "layer": 6,
+        "rgba": [
+          207,
+          129,
+          135,
+          255
+        ]
+      },
+      {
+        "id": "gpu-probe-023",
+        "bank": 2,
+        "layer": 7,
+        "rgba": [
+          24,
+          220,
+          188,
+          255
+        ]
+      }
+    ]
+  }
+}

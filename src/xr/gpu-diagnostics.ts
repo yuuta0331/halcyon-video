@@ -6,7 +6,9 @@ import {
   activeResourceProfile,
   type GpuCapabilities,
 } from '../perf/resource-profile.ts';
+import { testPosterArrayLayerCeiling } from '../perf/test-array-layer-ceiling.ts';
 import { estimatePosterArrayBytes } from '../poster-residency.ts';
+import { xrContentSnapshot, type XrContentSnapshot } from './content-diagnostics.ts';
 
 export type ResourceSnapshotStage =
   | 'renderer-created'
@@ -41,14 +43,31 @@ export interface GpuDiagnostics {
   maxTextureSize: number | null;
   maxCubemapSize: number | null;
   maxArrayTextureLayers: number | null;
+  effectiveTestMaxArrayTextureLayers: number | null;
+  hardwareMaxArrayTextureLayers: number | null;
   maxRenderbufferSize: number | null;
   maxSamples: number | null;
   rendererTextures: number | null;
   rendererGeometries: number | null;
   rendererPrograms: number | null;
   posterCatalogTitles: number | null;
-  posterPhysicalSlots: number | null;
+  posterExpectedTitles: number | null;
+  posterLogicalMappedTitles: number | null;
+  posterActuallyRenderableTitles: number | null;
   posterResidentTitles: number | null;
+  posterBankCount: number | null;
+  posterLayersPerBank: number | null;
+  posterRenderBatchCount: number | null;
+  posterSourceMeshCount: number | null;
+  posterSamplersPerDraw: number | null;
+  posterBaseWidth: number | null;
+  posterBaseHeight: number | null;
+  posterCpuBytesEstimated: number | null;
+  posterCpuBytesActive: number | null;
+  posterCpuBytesAllocated: number | null;
+  posterGpuBytesEstimated: number | null;
+  posterCapacityInvariantOk: boolean | null;
+  posterPhysicalSlots: number | null;
   posterFreeSlots: number | null;
   posterResidencyInvariantOk: boolean | null;
   posterDuplicatePhysicalOwners: number | null;
@@ -100,6 +119,7 @@ export interface GpuDiagnostics {
   contextLost: boolean;
   lastContextLossAt: number | null;
   lastError: string | null;
+  xrContent: XrContentSnapshot;
   snapshots: Record<string, unknown>;
 }
 
@@ -167,6 +187,21 @@ export interface GpuLiveState {
     posterLeftWorkingSetCount?: number;
     posterDecodeJobsStarted?: number;
     lastWorkingSetTransition?: unknown;
+    cpuBytesActive?: number;
+    cpuBytesAllocated?: number;
+    expectedTitles?: number;
+    logicalMappedTitles?: number;
+    actuallyRenderableTitles?: number;
+    bankCount?: number;
+    layersPerBank?: number;
+    renderBatchCount?: number;
+    samplersPerDraw?: number;
+    arrayLayerCeiling?: number;
+    hardwareMaxArrayTextureLayers?: number;
+    sourcePosterMeshCount?: number;
+    capacityInvariantOk?: boolean;
+    shelfWidth?: number;
+    shelfHeight?: number;
   } | null;
 }
 
@@ -289,14 +324,31 @@ export function gpuDiagnosticsSnapshot(): GpuDiagnostics {
     maxTextureSize: caps?.maxTextureSize ?? null,
     maxCubemapSize: caps?.maxCubemapSize ?? null,
     maxArrayTextureLayers: caps?.maxArrayTextureLayers ?? null,
+    hardwareMaxArrayTextureLayers: caps?.maxArrayTextureLayers ?? null,
+    effectiveTestMaxArrayTextureLayers: testPosterArrayLayerCeiling(),
     maxRenderbufferSize: caps?.maxRenderbufferSize ?? null,
     maxSamples: caps?.maxSamples ?? null,
     rendererTextures: mem?.textures ?? null,
     rendererGeometries: mem?.geometries ?? null,
     rendererPrograms: programs?.length ?? null,
     posterCatalogTitles: poster?.catalogTitleCount ?? null,
-    posterPhysicalSlots: poster?.physicalSlots ?? posterEst.physicalPosterSlots,
+    posterExpectedTitles: poster?.expectedTitles ?? poster?.catalogTitleCount ?? null,
+    posterLogicalMappedTitles: poster?.logicalMappedTitles ?? null,
+    posterActuallyRenderableTitles: poster?.actuallyRenderableTitles ?? null,
     posterResidentTitles: poster?.residentCount ?? null,
+    posterBankCount: poster?.bankCount ?? null,
+    posterLayersPerBank: poster?.layersPerBank ?? null,
+    posterRenderBatchCount: poster?.renderBatchCount ?? null,
+    posterSourceMeshCount: poster?.sourcePosterMeshCount ?? null,
+    posterSamplersPerDraw: poster?.samplersPerDraw ?? 1,
+    posterBaseWidth: poster?.shelfWidth ?? null,
+    posterBaseHeight: poster?.shelfHeight ?? null,
+    posterCpuBytesEstimated: poster?.cpuBytes ?? posterEst.posterArrayCpuBytesEstimated,
+    posterCpuBytesActive: poster?.cpuBytesActive ?? null,
+    posterCpuBytesAllocated: poster?.cpuBytesAllocated ?? poster?.cpuBytes ?? null,
+    posterGpuBytesEstimated: poster?.gpuBytes ?? posterEst.posterArrayGpuBytesEstimated,
+    posterCapacityInvariantOk: poster?.capacityInvariantOk ?? poster?.residencyInvariantOk ?? null,
+    posterPhysicalSlots: poster?.physicalSlots ?? posterEst.physicalPosterSlots,
     posterFreeSlots: poster?.freeCount ?? null,
     posterResidencyInvariantOk: poster?.residencyInvariantOk ?? null,
     posterDuplicatePhysicalOwners: poster?.duplicatePhysicalOwners ?? null,
@@ -348,6 +400,7 @@ export function gpuDiagnosticsSnapshot(): GpuDiagnostics {
     contextLost: !!gl?.isContextLost?.() || lastContextLoss?.isContextLost === true,
     lastContextLossAt: lastContextLoss?.timestamp ?? null,
     lastError,
+    xrContent: xrContentSnapshot(),
     snapshots: Object.fromEntries(snapshots),
   };
 }

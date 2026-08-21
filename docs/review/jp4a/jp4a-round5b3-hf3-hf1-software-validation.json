@@ -1,0 +1,97 @@
+{
+  "phase": "ROUND5B3_HF3_HF1_CONTROLLER_SLOT_ASSOCIATION_CORRECTION",
+  "finalState": "READY_FOR_SINGLE_QUEST_JP4A_ROUND5B3_DIAGNOSTIC",
+  "QUEST_HARDWARE": "NOT_EXECUTED",
+  "questPassClaimed": false,
+  "NOT_HARDWARE_VISUAL_PROOF": true,
+  "classification": "IWER_EMULATED",
+  "implementationTestedHead": "60e090fe77b52a0ae3db336451c8a20e093d5c23",
+  "evidenceCommitHead": "NEWER_THAN_TESTED_SOURCE",
+  "previousReviewedHf3EvidenceHead": "c759ed5c45f336cdc3ab441765a3ef7c69ae4c2e",
+  "previousHf3ImplementationHead": "d178a0f708c57f4f31f702619f8d3505502fb21d",
+  "previousUnsafeMapping": "controllerObjects[i].userData.jp4aHand = session.inputSources[i].handedness",
+  "authoritativeMapping": "Three.js controller connected event.data.handedness on event.target",
+  "simultaneousTriggerPolicy": "AMBIGUOUS_NO_ACTION_UNTIL_BOTH_RELEASED",
+  "controllerSemantics": {
+    "connectedEventOwnsObjectHand": true,
+    "disconnectedClearsObjectHand": true,
+    "inputSourcesIndexDoesNotRewriteObjectHand": true,
+    "rightTriggerUsesActualRightObjectRay": true,
+    "leftTriggerUsesActualLeftObjectRay": true,
+    "oppositeRayNeverFallback": true,
+    "sourceBoundUntilRelease": true,
+    "secondTriggerCannotSteal": true,
+    "disconnectCancelsWithoutCommit": true,
+    "holdNeverChangesVerdict": true,
+    "focusSelectsProductionOnce": true
+  },
+  "checks": {
+    "typescript": {
+      "command": "npx tsc --noEmit",
+      "pass": true
+    },
+    "targeted": {
+      "command": "node --experimental-strip-types --test tests/jp4a-round5b3-hf3-hf1.test.ts tests/jp4a-round5b3-hf3.test.ts tests/jp4a-round5b3-hf2.test.ts tests/jp4a-round5b3-hf1.test.ts tests/jp4a-round5b3.test.ts tests/poster-focus.test.ts tests/upload-admission.test.ts tests/xr-viewer-pose.test.ts tests/hw-diag-production.test.ts tests/xr-hardware-diag.test.ts tests/xr-lifecycle.test.ts",
+      "pass": true,
+      "tests": 115,
+      "failed": 0
+    },
+    "fullUnit": {
+      "command": "npm test",
+      "pass": true,
+      "tests": 611,
+      "failed": 0
+    },
+    "productionBuild": {
+      "command": "npm run build",
+      "pass": true,
+      "includes": [
+        "file-budget",
+        "signage-slot-validation",
+        "typescript",
+        "vite-production-build"
+      ]
+    },
+    "browserIwerIntegration": {
+      "command": "npm run test:jp4a-round5b3-hf3-hf1",
+      "pass": true,
+      "classification": "IWER_EMULATED",
+      "NOT_HARDWARE_VISUAL_PROOF": true,
+      "QUEST_HARDWARE": "NOT_EXECUTED",
+      "implementationTestedHead": "60e090fe77b52a0ae3db336451c8a20e093d5c23",
+      "validated": [
+        "actual controller object 0 injected RIGHT, object 1 injected LEFT",
+        "reordered logical inputSources [LEFT, RIGHT] does not swap object hands",
+        "RIGHT still resolves controller object 0 after reorder",
+        "LEFT still resolves controller object 1 after reorder",
+        "RIGHT disconnect clears slot 0 and leaves LEFT on slot 1",
+        "repeated disconnect/reconnect leaves one RIGHT and one LEFT",
+        "right Trigger locks logical right shelf slot 0",
+        "left Trigger locks logical left shelf slot 1",
+        "opposite ray is not a fallback",
+        "simultaneous Trigger edges are ambiguous and lock nothing",
+        "TAP lock-only UNKNOWN then BLACK then CLEAN",
+        "HOLD BEGIN APPROACH leaves CLEAN unchanged",
+        "HOLD BEGIN FOCUS production-selects exactly once",
+        "same-page RESET then START",
+        "second IWER session with no stale held Trigger",
+        "normal URL console absent",
+        "normal URL has no JP-4A live control or association seam",
+        "live shelf invariant checkedSlots=3692 PASS"
+      ],
+      "evidence": "docs/review/jp4a/jp4a-round5b3-hf3-hf1-iwer.json",
+      "controllerSeam": "jp4a_controller_connected_lifecycle_not_inputSources_index"
+    }
+  },
+  "softwareEvidence": {
+    "bankInvariantZeroSlot": "NOT_EXERCISED",
+    "iwerLiveShelfInvariant": "PASS",
+    "iwerLiveShelfCheckedSlots": 3692,
+    "productionWalkInteractRangeFt": 14,
+    "jp4aDiagnosticLockRangeM": 12,
+    "focusActualTexSubImageChunks": "PRESERVED",
+    "implementationCiRunId": 32259890138,
+    "implementationCiConclusion": "success"
+  },
+  "nextStep": "Independent review, then exactly one fresh Quest 3 Round 5B.3 diagnostic on /xr-test/jp4a. Do not start JP-4B."
+}

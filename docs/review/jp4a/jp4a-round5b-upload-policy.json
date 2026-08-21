@@ -1,0 +1,9 @@
+{
+  "classification": "DESKTOP_BROWSER",
+  "QUEST_HARDWARE": "NOT_EXECUTED",
+  "pass": true,
+  "deferredWhileMoving": true,
+  "oneWhileStable": true,
+  "note": "JS submission policy only. Not Quest GPU timings.",
+  "movingDecision": "moving"
+}

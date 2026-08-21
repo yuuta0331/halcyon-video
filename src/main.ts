@@ -3,12 +3,15 @@ import { getCurrentWindow } from '@tauri-apps/api/window';
 import { measureDisplayHz } from './display-hz';
 import { installDebugLog, debugLogPath } from './debug-log';
 import { bootMark, installBootDiagnostics } from './perf/boot-diagnostics';
+import { readResourceFlags } from './perf/resource-profile';
 import { installXrEmulatorIfRequested } from './dev/install-xr-emu';
+import { installJp4aTestConsole } from './xr/jp4a-test-console';
 
 // Before anything else that might fail: a packaged build has no devtools and
 // no stdout, so without this every console line is written to nowhere.
 installDebugLog();
 installBootDiagnostics();
+installJp4aTestConsole();
 bootMark('appStart');
 
 // Sample the compositor's real refresh rate while the boot overlay is up, so
@@ -64,6 +67,7 @@ import {
   initBootFlow,
   showBootOverlay,
   hideBootOverlay,
+  updateStorePreloadOverlay,
   showLoginOrCards,
   switchMember,
   startDemoAndLoad,
@@ -95,7 +99,6 @@ import { InputManager } from './input';
 import type { InputCallbacks } from './input';
 import { refreshHoldHints, setHoldCheckoutProgress, setHoldDismissProgress } from './hold-hints';
 import { setupRemotePlay, isRemoteInstance, isRemotelyDriven } from './remote-play';
-import { enableFpsMeter, FPS_METER_KEY } from './fps-meter';
 import { VideoPlayer } from './video-player';
 // initCaseMedium and refreshPosterCrop are dynamically imported to avoid loading Three.js on boot in 2.5D mode.
 import {
@@ -106,6 +109,7 @@ import {
   visibleGroups,
   getSetting,
   setSetting,
+  commitSetting,
   getSettingDef,
   nextCycleValue,
   currentValueLabel,
@@ -126,6 +130,7 @@ import {
 } from './counter-terminal-flow';
 import { buildControlsHelpPanel, HELP_ROW_PREFIX } from './controls-help';
 import { syncXrEntryLabels, toggleXrSession, wireXrEntry } from './xr/boot';
+import { bindJp4aConsoleStoreScene, notifyJp4aConsoleEntry } from './xr/jp4a-console-entry';
 import type { CandyRow } from './fixtures/period-fixtures';
 import { getCandyDeliveryAdapter } from './candy-delivery';
 import { isDemoMode } from './demo-mode';
@@ -205,6 +210,11 @@ function refreshStoreCatalog() {
 // history or a Jellyseerr integration (real or synthetic).
 let staffPicks: StaffPicks = EMPTY_STAFF_PICKS;
 let storeScene: StoreScene | null = null;
+bindJp4aConsoleStoreScene(() => storeScene);
+function setStoreScene(next: StoreScene | null): void {
+  storeScene = next;
+  notifyJp4aConsoleEntry();
+}
 let videoPlayer: VideoPlayer | null = null;
 // WebGL context died during playback; reload when the player closes (issue #70).
 let pendingContextLostReload = false;
@@ -235,7 +245,7 @@ async function loadDiscoveryMovies(): Promise<void> {
   // Demo: no Jellyseerr server, but the shelved suggestions and the clerk's
   // "want me to order it?" dialog should still be showcased.
   if (isDemoMode) {
-    discoveryMovies = buildDemoDiscovery(24);
+    discoveryMovies = readResourceFlags().multibank ? [] : buildDemoDiscovery(24);
     return;
   }
   const TIMEOUT_MS = 15_000;
@@ -1421,18 +1431,18 @@ function activateSetting(key: string, dir: number) {
   const def = allSettings().find((d) => d.key === key);
   if (!def) return;
 
+  let nextValue: unknown;
   if (def.kind === 'toggle') {
-    setSetting(key, !getSetting<boolean>(key));
+    nextValue = !getSetting<boolean>(key);
   } else if (def.kind === 'cycle') {
     // nextCycleValue wraps forward; for a backward step, walk to the entry
     // before the current one.
     if (dir < 0 && def.values && def.values.length > 0) {
       const cur = String(getSetting(key));
       const i = def.values.findIndex((v) => v.id === cur);
-      const prev = def.values[(i - 1 + def.values.length) % def.values.length];
-      setSetting(key, prev.id);
+      nextValue = def.values[(i - 1 + def.values.length) % def.values.length].id;
     } else {
-      setSetting(key, nextCycleValue(key));
+      nextValue = nextCycleValue(key);
     }
   } else {
     // text/secret: activation just moves focus into the row's input; the
@@ -1441,17 +1451,17 @@ function activateSetting(key: string, dir: number) {
     return;
   }
 
+  const result = commitSetting(key, nextValue, {
+    scene: storeScene,
+    allowReload: true,
+    allowRebuild: true,
+  });
+
   if (key === 'bb_theme') {
     applyThemeCssVars(getActiveTheme());
   }
 
-  // Route the change by apply mode.
-  if (def.applyMode === 'live' && def.apply && storeScene) {
-    def.apply(getSetting(def.key), storeScene);
-    // Render-on-demand (issue #24): a live settings tweak changes the picture but
-    // doesn't move the camera, so wake the throttled renderer explicitly.
-    storeScene.requestRender();
-  } else if (def.applyMode === 'rebuild-scene') {
+  if (result.needsRebuild) {
     settingsPendingRebuild = true;
     // Arrangement changes must be marked as an explicit user choice, or the
     // next boot resets bb_arrangement to herringbone (see initializeStoreScene).
@@ -1461,14 +1471,9 @@ function activateSetting(key: string, dir: number) {
     // GAMES ONLY changes it the most of all — it swaps a 192-case budgeted
     // slice for the entire Romm library (and back) — so it refetches too.
     if (key.startsWith('bb_platform_') || key === 'bb_games_only') settingsPendingGameRefetch = true;
-  } else if (def.applyMode === 'reload') {
+  } else if (result.needsReload) {
     settingsPendingReload = true;
   }
-
-  // The FPS overlay is scene-independent (a DOM box fed by the perf tracer), so
-  // apply it even when the live branch above bailed for want of a StoreScene —
-  // i.e. from the drawer in 2.5D mode. enableFpsMeter is idempotent.
-  if (key === FPS_METER_KEY) enableFpsMeter(getSetting<boolean>(key));
 
   // Toggling the games master switch changes which rows exist on this page
   // (platform toggles and Romm fields are gated on it via visibleWhen), so
@@ -1480,12 +1485,7 @@ function activateSetting(key: string, dir: number) {
     setSettingsSelection(Math.max(0, settingsRowKeys.indexOf(key)));
   }
 
-  // Post-commit hook (e.g. changing Store Theme detaches era-follow so the
-  // pick can stick). Runs BEFORE the value/hint refresh below so both render
-  // the post-hook truth — the theme row must lose its "(AUTO)" the moment the
-  // follow detaches, not on the next drawer open.
-  const note = def.onChange?.(getSetting(key));
-  if (typeof note === 'string') logToConsole(`[System] ${note}`, 'system');
+  if (typeof result.onChangeMessage === 'string') logToConsole(`[System] ${result.onChangeMessage}`, 'system');
   if (typeof def.hint === 'function') {
     const row = document.getElementById(`setting-row-${key}`);
     if (row) row.dataset.hint = def.hint();
@@ -2351,7 +2351,7 @@ async function initializeStoreScene(preservePosterCache = false) {
     // flat boot where no scene was ever built.
     if (storeScene) {
       storeScene.destroy(true);
-      storeScene = null;
+      setStoreScene(null);
     }
     const canvasContainer = document.getElementById('canvas-container') as HTMLDivElement;
     if (canvasContainer) {
@@ -2399,7 +2399,7 @@ async function initializeStoreScene(preservePosterCache = false) {
   }
   if (storeScene) {
     storeScene.destroy(preservePosterCache);
-    storeScene = null;
+    setStoreScene(null);
   }
 
   // The shelf arrangement defaults to herringbone and only sticks when the user
@@ -2471,10 +2471,12 @@ async function initializeStoreScene(preservePosterCache = false) {
       getVideo: () => videoPlayer?.videoElement ?? null,
       onPowerButtonsNeedXr: offerXrPowerButton,
       log: logToConsole,
+      onXrSupport: notifyJp4aConsoleEntry,
     });
 
     let lastLoggedPct = -1;
     scene.onTextureLoadProgress = (loaded, total) => {
+      updateStorePreloadOverlay();
       if (total === 0) return;
       const pct = Math.floor((loaded / total) * 100);
       if (pct !== lastLoggedPct && (pct % 10 === 0 || loaded === total)) {
@@ -2654,7 +2656,7 @@ async function initializeStoreScene(preservePosterCache = false) {
     scene.texturesReadyPromise.then(() => {
       bootMark('criticalTextureReady');
       bootMark('storeInteractive');
-      storeScene = scene;
+      setStoreScene(scene);
       (window as any).storeScene = storeScene;
       (window as any).librariesList = storeLibraries;
       // Which overlay owns the keyboard, as the app itself sees it. Several
@@ -2982,7 +2984,7 @@ function expireSession(reason: string) {
 
   if (storeScene) {
     storeScene.destroy();
-    storeScene = null;
+    setStoreScene(null);
   }
   if (aisleIndicatorInterval !== null) {
     clearInterval(aisleIndicatorInterval);
@@ -3526,7 +3528,15 @@ async function playExternally(path: string) {
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 async function main() {
+  // Built-in IWER must be able to inject navigator.xr before anything queries
+  // it. The very next thing after that is the shared immersive-vr support
+  // probe: it must not wait on login, catalog, fonts, quality calibration,
+  // StoreScene construction or texture readiness. It is soft-bounded, so a
+  // runtime that never answers isSessionSupported() cannot stall the app.
   await installXrEmulatorIfRequested();
+  const { ensureXrSupportProbe, xrSupportSnapshot } = await import('./xr/xr-support-probe');
+  void ensureXrSupportProbe({ isTauri });
+  (window as unknown as { __xrSupportProbe?: unknown }).__xrSupportProbe = () => xrSupportSnapshot();
   const { xrBareRequested, startBareXr } = await import('./xr/bare');
   if (xrBareRequested()) {
     try {
@@ -3587,7 +3597,7 @@ async function main() {
     teardownScene: () => {
       if (storeScene) {
         storeScene.destroy();
-        storeScene = null;
+        setStoreScene(null);
       }
       if (aisleIndicatorInterval !== null) {
         clearInterval(aisleIndicatorInterval);
@@ -4251,4 +4261,3 @@ if (document.readyState === 'loading') {
   switchMember,
   switchRenderMode,
 };
-

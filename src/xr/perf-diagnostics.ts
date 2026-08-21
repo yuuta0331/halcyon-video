@@ -1,0 +1,101 @@
+// Secret-free XR / store residency diagnostics.
+
+import { fpsMeterReadout } from '../fps-meter.ts';
+import { pendingTextureUploads, posterUploadJobsStarted } from '../perf/texture-upload-queue.ts';
+import { storeVisibleProgress } from '../store-visual-ready.ts';
+import { storeVisibleWork } from '../perf/store-visible-work.ts';
+import { pendingScopedTextureUploads } from '../perf/texture-upload-queue.ts';
+import { storeVisibleResidency } from '../store-visible-residency.ts';
+import { textureArrayManager } from '../poster-textures.ts';
+import { gpuDiagnosticsSnapshot } from './gpu-diagnostics.ts';
+import { posterDetailGpuCreates, posterDetailGpuDisposals, posterDetailResourceSnapshot } from '../poster-detail-gpu.ts';
+
+export function xrPerfDiagnostics(): Record<string, unknown> {
+  const frame = fpsMeterReadout();
+  const ready = storeVisibleProgress();
+  const mem = textureArrayManager.memorySnapshot();
+  const layout = textureArrayManager.lastLayout;
+  const vis = storeVisibleResidency.validate();
+  const gpu = gpuDiagnosticsSnapshot();
+  return {
+    FRAME: {
+      rollingFps: frame.fps,
+      meanFrameTime: frame.meanMs,
+      p95: frame.p95Ms,
+      p99: frame.p99Ms,
+      worst: frame.worstMs,
+      over1389ms: frame.over1389,
+      over20ms: frame.over20,
+      over333ms: frame.over333,
+      longFrames: frame.over1389,
+      uiMode: null,
+      samples: frame.samples,
+      note: 'JavaScript inter-composite gap; not GPU time',
+    },
+    STORE_READINESS: {
+      state: ready.state,
+      visibleBaseTotal: ready.postersExpected,
+      visibleBaseUploaded: ready.postersUploaded,
+      visibleBaseFallback: ready.postersFallback,
+      visibleBaseMissing: ready.postersMissing,
+      visualReady: ready.visualReady,
+      worldReady: ready.worldReady,
+      requiredReady: ready.requiredReady,
+      timeToVisualReady: ready.timeToVisualReady,
+    },
+    STORE_VISIBLE_BASE: {
+      expected: ready.postersExpected,
+      realReady: ready.postersUploaded,
+      stableFallback: ready.postersFallback,
+      missing: ready.postersMissing,
+      pendingWork: ready.pendingBaseWork,
+      pendingUpload: ready.pendingBaseUpload,
+      pendingDecode: ready.pendingBaseDecode,
+      pendingWorkQueued: pendingScopedTextureUploads('STORE_VISIBLE_BASE'),
+      lateRealUploadRejected: ready.lateRealUploadRejected,
+      staleGenerationDrops: ready.staleGenerationDrops,
+      fallbackReplacementCount: ready.fallbackReplacementCount,
+      generation: ready.workGeneration,
+    },
+    UPLOAD: {
+      pendingUploads: pendingTextureUploads(),
+      pendingBaseUploads: pendingScopedTextureUploads('STORE_VISIBLE_BASE'),
+      pendingOnDemandUploads: pendingScopedTextureUploads('ON_DEMAND'),
+      totalUploads: posterUploadJobsStarted(),
+      staleDrops: mem.staleUploadDrops,
+      work: storeVisibleWork.snapshot(),
+    },
+    GPU: {
+    textures: gpu.rendererTextures,
+    geometries: gpu.rendererGeometries,
+    programs: gpu.rendererPrograms,
+      textureHighWater: mem.residentHighWaterMark,
+      creates: mem.acquisitionCount,
+      disposes: mem.evictionCount,
+      residentBaseTitleCount: mem.residentCount,
+      textureBankCount: mem.bankCount ?? layout?.bankCount ?? 1,
+      selectedBaseShelfResolution: { w: mem.shelfWidth, h: mem.shelfHeight },
+      estimatedCpuPosterBytes: mem.cpuBytes,
+      estimatedGpuPosterBytes: mem.gpuBytes,
+    },
+    RESIDENCY: {
+      baseResidentCount: mem.residentCount,
+      baseExpectedCount: vis.expectedCount || ready.postersExpected,
+      evictionCount: mem.evictionCount,
+      reacquisitionCount: mem.reacquisitionCount,
+      duplicateMappingCount: vis.duplicateOwners,
+      invalidFreeOwnedCollisionCount: mem.freeOwnedCollisions,
+      mappingOk: vis.ok && mem.residencyInvariantOk !== false,
+    },
+    HIGH_RES: posterDetailResourceSnapshot(),
+    DETAIL_GPU: {
+      creates: posterDetailGpuCreates(),
+      disposals: posterDetailGpuDisposals(),
+    },
+  };
+}
+
+export function publishXrPerfDiagnostics(): void {
+  if (typeof window === 'undefined') return;
+  (window as unknown as { __xrPerfDiagnostics?: () => unknown }).__xrPerfDiagnostics = xrPerfDiagnostics;
+}

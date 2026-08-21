@@ -1,0 +1,305 @@
+{
+  "phase": "ROUND5B3_HF3_CONTROLLER_SOURCE_FIDELITY_CORRECTION",
+  "classification": "IWER_EMULATED",
+  "scope": "PER_HAND_TRIGGER_SOURCE_AND_TAP_HOLD",
+  "NOT_HARDWARE_VISUAL_PROOF": true,
+  "QUEST_HARDWARE": "NOT_EXECUTED",
+  "implementationTestedHead": "90123177d7aeeaed9d914404df9910cc93a4233c",
+  "evidenceCommitHead": "NEWER_THAN_TESTED_SOURCE",
+  "sourceHead": "90123177d7aeeaed9d914404df9910cc93a4233c",
+  "ciCheckoutSha": "same as source",
+  "pass": true,
+  "url": "/xr-test/jp4a",
+  "controllerSeam": "jp4a_stepHandedTrigger_runtime_source_routing",
+  "simultaneousTriggerPolicy": "AMBIGUOUS_NO_ACTION_UNTIL_BOTH_RELEASED",
+  "iwerRayPickBoundary": "Headless IWER controller pose is not a faithful Quest 12 m dual-controller geometry. Source fidelity uses the same chooseJp4aTriggerSource + stepJp4aHandedTrigger routing as XR runtime, with two distinct real shelf slots as left/right logical hits.",
+  "before": {
+    "heading": "JP-4A TEST",
+    "start": true,
+    "meta": "Round 5B.3 HF3\nSource HEAD: 90123177d7aeeaed9d914404df9910cc93a4233c\nCI checkout: same as source\nBuild: 90123177d7aeeaed9d914404df9910cc93a4233c\nSession: not started"
+  },
+  "firstRun": {
+    "entered": {
+      "ok": true
+    },
+    "firstWorldRender": true,
+    "simultaneous": {
+      "locked": false,
+      "ambiguous": true,
+      "source": null
+    },
+    "fallback": {
+      "locked": false,
+      "source": "right"
+    },
+    "rightSource": {
+      "lockedIndex": 0,
+      "source": "right",
+      "locked": true
+    },
+    "leftSource": {
+      "lockedIndex": 1,
+      "source": "left",
+      "locked": true
+    },
+    "afterLock": {
+      "locked": true,
+      "phase": "LOCKED_LIVE_DIAG",
+      "verdict": "UNKNOWN",
+      "selects": 0,
+      "source": "right"
+    },
+    "afterBlack": {
+      "verdict": "BLACK",
+      "phase": "LOCKED_LIVE_DIAG",
+      "selects": 0,
+      "mode": "LIVE-NORMAL"
+    },
+    "afterClean": {
+      "verdict": "CLEAN",
+      "phase": "LOCKED_LIVE_DIAG"
+    },
+    "modes": [
+      "LIVE-NORMAL",
+      "LIVE-BASE",
+      "LIVE-LOD0",
+      "LIVE-LOD1",
+      "LIVE-LOD2",
+      "LIVE-LOD3",
+      "LIVE-LINEAR",
+      "LIVE-UNLIT",
+      "LIVE-DEPTH-ISOLATED"
+    ],
+    "afterApproach": {
+      "command": "BEGIN_APPROACH",
+      "phase": "APPROACH",
+      "verdictBefore": "CLEAN",
+      "verdictAfter": "CLEAN",
+      "selects": 0,
+      "releaseSelects": 0,
+      "source": "right"
+    },
+    "approachSamples": 2,
+    "afterFocus": {
+      "command": "BEGIN_FOCUS",
+      "phase": "FOCUS_REQUESTED",
+      "verdict": "CLEAN",
+      "selectsAtFire": 1,
+      "selectsWhileHeld": 1
+    },
+    "afterExtra": {
+      "phase": "FOCUS_REQUESTED",
+      "selects": 1,
+      "verdict": "CLEAN"
+    },
+    "iwerTrigger": {
+      "attempted": true,
+      "mutatedVerdict": false
+    },
+    "completed": true,
+    "competingLoops": null
+  },
+  "liveShelfInvariant": "PASS",
+  "invariant": {
+    "checkedSlots": 3692,
+    "bankMismatchCount": 0,
+    "layerOutOfRangeCount": 0,
+    "missingIndexCount": 0,
+    "invalidLoadedFlagCount": 0,
+    "pass": true,
+    "verdict": "PASS"
+  },
+  "afterReset": {
+    "heading": "JP-4A TEST",
+    "resetSession": {
+      "schema": 1,
+      "round": "JP-4A Round 5B.3",
+      "build": "90123177d7aeeaed9d914404df9910cc93a4233c",
+      "sourceHead": "90123177d7aeeaed9d914404df9910cc93a4233c",
+      "testedSha": "90123177d7aeeaed9d914404df9910cc93a4233c",
+      "sessionId": "jp4a-mt1vkrmc-40af3c37",
+      "startedAt": "2026-08-20T18:50:01.044Z",
+      "xrStartedAt": null,
+      "completedAt": null,
+      "active": false,
+      "mode": "LIVE-NORMAL",
+      "step": 1,
+      "testPhase": "BASELINE",
+      "lockedPoster": null,
+      "modeVerdicts": {
+        "LIVE-NORMAL": "UNKNOWN",
+        "LIVE-BASE": "UNKNOWN",
+        "LIVE-LOD0": "UNKNOWN",
+        "LIVE-LOD1": "UNKNOWN",
+        "LIVE-LOD2": "UNKNOWN",
+        "LIVE-LOD3": "UNKNOWN",
+        "LIVE-LINEAR": "UNKNOWN",
+        "LIVE-UNLIT": "UNKNOWN",
+        "LIVE-DEPTH-ISOLATED": "UNKNOWN"
+      },
+      "bankInvariant": {
+        "checkedSlots": 3692,
+        "bankMismatchCount": 0,
+        "layerOutOfRangeCount": 0,
+        "missingIndexCount": 0,
+        "invalidLoadedFlagCount": 0,
+        "pass": true,
+        "verdict": "PASS"
+      },
+      "samples": [],
+      "events": [
+        {
+          "timestamp": "2026-08-20T18:50:01.044Z",
+          "type": "session_reset"
+        }
+      ],
+      "environment": "IWER_EMULATED",
+      "questHardware": "NOT_EXECUTED",
+      "timings": {
+        "supportProbeMs": null,
+        "storeReadyMs": null,
+        "enterActionMs": null,
+        "requestSessionMs": null,
+        "setSessionMs": null,
+        "firstWorldRenderMs": null
+      }
+    },
+    "started": {
+      "schema": 1,
+      "round": "JP-4A Round 5B.3",
+      "build": "90123177d7aeeaed9d914404df9910cc93a4233c",
+      "sourceHead": "90123177d7aeeaed9d914404df9910cc93a4233c",
+      "testedSha": "90123177d7aeeaed9d914404df9910cc93a4233c",
+      "sessionId": "jp4a-mt1vkrmg-36b5847c",
+      "startedAt": "2026-08-20T18:50:01.048Z",
+      "xrStartedAt": null,
+      "completedAt": null,
+      "active": true,
+      "mode": "LIVE-NORMAL",
+      "step": 1,
+      "testPhase": "BASELINE",
+      "lockedPoster": null,
+      "modeVerdicts": {
+        "LIVE-NORMAL": "UNKNOWN",
+        "LIVE-BASE": "UNKNOWN",
+        "LIVE-LOD0": "UNKNOWN",
+        "LIVE-LOD1": "UNKNOWN",
+        "LIVE-LOD2": "UNKNOWN",
+        "LIVE-LOD3": "UNKNOWN",
+        "LIVE-LINEAR": "UNKNOWN",
+        "LIVE-UNLIT": "UNKNOWN",
+        "LIVE-DEPTH-ISOLATED": "UNKNOWN"
+      },
+      "bankInvariant": {
+        "checkedSlots": 3692,
+        "bankMismatchCount": 0,
+        "layerOutOfRangeCount": 0,
+        "missingIndexCount": 0,
+        "invalidLoadedFlagCount": 0,
+        "pass": true,
+        "verdict": "PASS"
+      },
+      "samples": [],
+      "events": [
+        {
+          "timestamp": "2026-08-20T18:50:01.048Z",
+          "type": "session_reset"
+        },
+        {
+          "timestamp": "2026-08-20T18:50:01.050Z",
+          "type": "test_started"
+        }
+      ],
+      "environment": "IWER_EMULATED",
+      "questHardware": "NOT_EXECUTED",
+      "timings": {
+        "supportProbeMs": null,
+        "storeReadyMs": null,
+        "enterActionMs": null,
+        "requestSessionMs": null,
+        "setSessionMs": null,
+        "firstWorldRenderMs": null
+      }
+    },
+    "liveAfterReset": {
+      "enabled": true,
+      "mode": "LIVE-NORMAL",
+      "locked": false,
+      "opaqueId": null,
+      "shader": {
+        "index": -1,
+        "mode": "LIVE-NORMAL",
+        "code": 0
+      },
+      "depthOffsetStoreUnits": 0,
+      "viewerDistanceM": null,
+      "viewerYawToPosterDeg": null,
+      "bankInvariant": {
+        "checkedSlots": 3692,
+        "bankMismatchCount": 0,
+        "layerOutOfRangeCount": 0,
+        "missingIndexCount": 0,
+        "invalidLoadedFlagCount": 0,
+        "pass": true,
+        "verdict": "PASS"
+      },
+      "testPhase": "BASELINE",
+      "verdict": "UNKNOWN",
+      "globalIndex": null,
+      "expectedBank": null,
+      "meshBank": null,
+      "backMeshBank": null,
+      "expectedLayer": null,
+      "posterBankCount": 1,
+      "renderBatchCount": 46,
+      "aTextureIndex": null,
+      "loadedFlag": null,
+      "arrayDepth": null,
+      "detailPhase": null,
+      "detailLut": null,
+      "focusPhase": null,
+      "focusUpload": {
+        "status": "uploading",
+        "slot": 1,
+        "bytesTotal": 2457600,
+        "bytesUploaded": 0,
+        "chunksTotal": 15,
+        "chunksComplete": 0,
+        "submitMs": 0,
+        "lastError": null,
+        "uploadId": 2,
+        "progress": 0,
+        "actualTransferOwnedByBudgetQueue": true,
+        "timingSemantics": "CPU_BLOCKING_GL_SUBMIT_NOT_GPU_EXECUTION"
+      },
+      "privacy": "OPAQUE_ID_NO_TITLE_NO_URL_NO_TOKEN"
+    },
+    "shader": {
+      "index": -1,
+      "mode": "LIVE-NORMAL",
+      "code": 0
+    },
+    "locked": false,
+    "mode": "LIVE-NORMAL",
+    "testPhase": "BASELINE"
+  },
+  "secondRun": {
+    "entered": {
+      "ok": true
+    },
+    "firstWorldRender": true,
+    "stalePressDown": false,
+    "secondLock": true,
+    "secondVerdict": "UNKNOWN",
+    "completed": true,
+    "hasCopyResult": true,
+    "hasCopyJson": true
+  },
+  "privacy": {
+    "containsTitle": false,
+    "opaqueOnly": true
+  },
+  "normalConsoleAbsent": true,
+  "seriousErrors": [],
+  "knownDemoResourceErrors": 9
+}

@@ -250,6 +250,7 @@ async function main() {
   const browser = await puppeteer.launch({
     headless: true,
     userDataDir: profileDir,
+    protocolTimeout: 300_000,
     args: ['--no-first-run', '--no-default-browser-check', '--mute-audio'],
   });
 
@@ -516,6 +517,850 @@ async function main() {
           iwerLayersBoundary: 'IWER Meta Quest 3 supportedFeatures do not include `layers`; compositor is mesh-fallback.',
           pre,
         };
+      },
+    ));
+
+    evidence.scenarios.push(await runScenario(
+      browser, 'JP4A_UI', '?demo=1&nogate=1&xrEmu=1&xrSafe=1',
+      async (page) => {
+        const jp4aDir = path.join(root, 'docs', 'review', 'jp4a');
+        fs.mkdirSync(jp4aDir, { recursive: true });
+        const shotJp4a = async (name) => {
+          const file = path.join(jp4aDir, name);
+          await page.screenshot({ path: file, type: 'png' });
+          return file;
+        };
+        const opened = await page.evaluate(async () => {
+          const until = Date.now() + 15000;
+          while (!window.__xrTest && Date.now() < until) {
+            await new Promise((r) => setTimeout(r, 150));
+          }
+          const xr = window.__xrTest;
+          const entered = xr ? await xr.enter() : { ok: false, error: 'no __xrTest' };
+          const untilWorld = Date.now() + 8000;
+          while (Date.now() < untilWorld) {
+            const dWait = window.__xrDiagnostics?.();
+            if (dWait?.startup?.firstWorldRenderCompletedAt != null) break;
+            await new Promise((r) => setTimeout(r, 100));
+          }
+          xr?.setControllerPose?.('right', { x: 0.2, y: 1.25, z: -0.25 });
+          await new Promise((r) => setTimeout(r, 200));
+          const d = window.__xrDiagnostics?.();
+          const firstFrame = d?.startup?.firstWorldRenderCompletedAt != null;
+          const ray = !!(window.storeScene?.scene?.getObjectByName?.('xr-target-ray'));
+          const contentBefore = xr?.content?.() ?? window.__xrContent?.() ?? null;
+          xr?.openMenu?.();
+          await new Promise((r) => setTimeout(r, 250));
+          const menuMode = xr?.uiMode?.();
+          const rigBefore = window.storeScene?.xr?.rigPose ?? null;
+          xr?.setStick?.('left', 0, -1);
+          await new Promise((r) => setTimeout(r, 700));
+          xr?.setStick?.('left', 0, 0);
+          const rigDuringMenu = window.storeScene?.xr?.rigPose ?? null;
+          const locomotionSuppressed = !!rigBefore && !!rigDuringMenu
+            && rigBefore.x === rigDuringMenu.x && rigBefore.z === rigDuringMenu.z;
+          xr?.openSettings?.();
+          await new Promise((r) => setTimeout(r, 250));
+          const settingsMode = xr?.uiMode?.();
+          const localeBefore = localStorage.getItem('bb_locale');
+          const outsideBefore = window.storeScene?.getOutsideMode?.();
+          const draftLocale = xr?.settingsDraft?.()?.bb_locale;
+          if (draftLocale !== 'en') {
+            xr?.cycleSetting?.('bb_locale');
+            xr?.applySettings?.();
+            await new Promise((r) => setTimeout(r, 100));
+          }
+          xr?.cycleSetting?.('bb_locale');
+          xr?.applySettings?.();
+          await new Promise((r) => setTimeout(r, 200));
+          const localeAfterApply = localStorage.getItem('bb_locale');
+          const paintJa = xr?.uiPaint?.();
+          xr?.cycleSetting?.('bb_outside');
+          xr?.applySettings?.();
+          await new Promise((r) => setTimeout(r, 200));
+          const outsideAfterApply = window.storeScene?.getOutsideMode?.();
+          const fpsBefore = localStorage.getItem('bb_fps_meter');
+          xr?.cycleSetting?.('bb_fps_meter');
+          xr?.applySettings?.();
+          await new Promise((r) => setTimeout(r, 200));
+          const fpsAfterApply = localStorage.getItem('bb_fps_meter');
+          const fpsRuntime = window.__fpsMeter?.isOn?.() === true;
+          const outsidePersisted = localStorage.getItem('bb_outside');
+          return {
+            entered,
+            firstFrame,
+            ray,
+            menuMode,
+            settingsMode,
+            locomotionSuppressed,
+            localeBefore,
+            localeAfterApply,
+            paintTitle: paintJa?.title ?? null,
+            outsideBefore,
+            outsideAfterApply,
+            outsidePersisted,
+            fpsBefore,
+            fpsAfterApply,
+            fpsRuntime,
+            contentBefore,
+          };
+        });
+        await shotJp4a('iwer-jp4a-settings.png');
+        const closed = await page.evaluate(async () => {
+          const xr = window.__xrTest;
+          const localeBeforeCancel = localStorage.getItem('bb_locale');
+          xr?.cycleSetting?.('bb_locale');
+          xr?.cancelSettings?.();
+          await new Promise((r) => setTimeout(r, 150));
+          const localeAfterCancel = localStorage.getItem('bb_locale');
+          const cancelDidNotPersist = localeAfterCancel === localeBeforeCancel;
+          xr?.openMenu?.();
+          await new Promise((r) => setTimeout(r, 150));
+          xr?.squeeze?.('right', true);
+          await new Promise((r) => setTimeout(r, 150));
+          xr?.squeeze?.('right', false);
+          await new Promise((r) => setTimeout(r, 250));
+          const worldMode = xr?.uiMode?.();
+          const rigWorld0 = window.storeScene?.xr?.rigPose ?? null;
+          xr?.setStick?.('left', 0, -1);
+          await new Promise((r) => setTimeout(r, 800));
+          xr?.setStick?.('left', 0, 0);
+          const rigWorld1 = window.storeScene?.xr?.rigPose ?? null;
+          const locomotionResumed = !!rigWorld0 && !!rigWorld1
+            && (rigWorld0.x !== rigWorld1.x || rigWorld0.z !== rigWorld1.z);
+          xr?.openSettings?.();
+          await new Promise((r) => setTimeout(r, 250));
+          const localeReopen = localStorage.getItem('bb_locale');
+          const outsideReopen = localStorage.getItem('bb_outside');
+          const fpsReopen = localStorage.getItem('bb_fps_meter');
+          const wrapsBeforeSelect = xr?.content?.()?.wraps ?? null;
+          const selected = xr?.selectFirstTitle?.() ?? { ok: false };
+          const untilWrap = Date.now() + 8000;
+          let wrapsAfterSelect = xr?.content?.()?.wraps ?? null;
+          while (Date.now() < untilWrap) {
+            wrapsAfterSelect = xr?.content?.()?.wraps ?? null;
+            if (wrapsAfterSelect?.activation === 'requested' && wrapsAfterSelect?.state === 'ready') break;
+            await new Promise((r) => setTimeout(r, 150));
+          }
+          const content = xr?.content?.() ?? window.__xrContent?.() ?? null;
+          const gpu = window.__gpuDiagnostics?.() ?? null;
+          const worldReady = content?.worldReady === true;
+          const decorativeDisabled = content?.decorativeFx?.state === 'disabled';
+          const parity = worldReady && decorativeDisabled;
+          await xr?.exit?.();
+          return {
+            worldMode,
+            locomotionResumed,
+            localeReopen,
+            outsideReopen,
+            fpsReopen,
+            cancelDidNotPersist,
+            wrapsBeforeSelect,
+            selected,
+            wrapsAfterSelect,
+            content,
+            worldReady,
+            decorativeDisabled,
+            parity,
+            contextLost: gpu?.contextLost === true,
+            posterPhysicalSlots: gpu?.posterPhysicalSlots ?? null,
+            posterResidentTitles: gpu?.posterResidentTitles ?? null,
+            posterHighWater: gpu?.posterResidentHighWaterMark ?? null,
+            residencyOk: gpu?.posterResidencyInvariantOk ?? null,
+            duplicateOwners: gpu?.posterDuplicatePhysicalOwners ?? null,
+            freeOwnedCollisions: gpu?.posterFreeOwnedCollisions ?? null,
+            framebufferScale: gpu?.xrFramebufferScaleRequested ?? null,
+          };
+        });
+        await shotJp4a('iwer-jp4a-japanese.png');
+        const pass = !!opened.entered?.ok
+          && opened.firstFrame
+          && opened.menuMode === 'MENU'
+          && opened.settingsMode === 'SETTINGS'
+          && closed.worldMode === 'WORLD'
+          && opened.locomotionSuppressed === true
+          && closed.locomotionResumed === true
+          && opened.localeAfterApply === 'ja'
+          && (opened.paintTitle === 'ストア設定' || /設定/.test(String(opened.paintTitle || '')))
+          && closed.localeReopen === 'ja'
+          && opened.outsideAfterApply != null
+          && opened.outsideAfterApply !== opened.outsideBefore
+          && opened.fpsRuntime === true
+          && closed.cancelDidNotPersist === true
+          && closed.worldReady === true
+          && closed.decorativeDisabled === true
+          && closed.parity === true
+          && closed.contextLost !== true
+          && closed.residencyOk !== false
+          && (closed.posterPhysicalSlots == null || closed.posterPhysicalSlots >= (closed.content?.poster?.visible ?? 0))
+          && (closed.framebufferScale == null || closed.framebufferScale === 0.8)
+          && closed.wrapsBeforeSelect?.activation === 'idle'
+          && closed.wrapsAfterSelect?.activation === 'requested'
+          && closed.wrapsAfterSelect?.state === 'ready';
+        fs.writeFileSync(path.join(jp4aDir, 'iwer-jp4a-ui.json'), JSON.stringify(scrub({
+          classification: 'IWER_EMULATED',
+          notQuestHardware: true,
+          pass,
+          opened,
+          closed,
+          shots: ['iwer-jp4a-settings.png', 'iwer-jp4a-japanese.png'],
+        }), null, 2));
+        return {
+          pass,
+          firstFrame: opened.firstFrame,
+          menuMode: opened.menuMode,
+          settingsMode: opened.settingsMode,
+          worldMode: closed.worldMode,
+          locomotionSuppressed: opened.locomotionSuppressed,
+          locomotionResumed: closed.locomotionResumed,
+          localeAfterApply: opened.localeAfterApply,
+          outsideAfterApply: opened.outsideAfterApply,
+          fpsRuntime: opened.fpsRuntime,
+          cancelDidNotPersist: closed.cancelDidNotPersist,
+          worldReady: closed.worldReady,
+          wrapsAfterSelect: closed.wrapsAfterSelect,
+          parity: closed.parity,
+          content: closed.content,
+        };
+      },
+    ));
+
+    evidence.scenarios.push(await runScenario(
+      browser, 'JP4A_NORMAL_STABLE_STORE', '?demo=1&nogate=1&xrEmu=1&xrSafe=1',
+      async (page) => {
+        const jp4aDir = path.join(root, 'docs', 'review', 'jp4a');
+        fs.mkdirSync(jp4aDir, { recursive: true });
+        const walked = await page.evaluate(async () => {
+          const readiness = () => window.__storeReadiness?.() ?? null;
+          const untilReady = Date.now() + 120000;
+          while (Date.now() < untilReady) {
+            const r = readiness();
+            if (r?.visualReady) break;
+            await new Promise((res) => setTimeout(res, 200));
+          }
+          const before = {
+            ready: readiness(),
+            gpu: window.__gpuDiagnostics?.(),
+            ws: window.__posterWorkingSet?.(),
+            perf: window.__xrPerfDiagnostics?.(),
+          };
+          const scene = window.storeScene;
+          const cam = scene?.camera;
+          const start = cam ? { x: cam.position.x, y: cam.position.y, z: cam.position.z } : null;
+          const backZ = scene?.backWallZ ?? -20;
+          if (cam) {
+            cam.position.z = (start.z + backZ) / 2;
+            scene.requestRender?.();
+            await new Promise((r) => setTimeout(r, 400));
+            cam.position.z = backZ + 2;
+            cam.rotation.y = Math.PI;
+            scene.requestRender?.();
+            await new Promise((r) => setTimeout(r, 400));
+            for (let i = 0; i < 8; i++) {
+              cam.rotation.y += Math.PI / 4;
+              scene.requestRender?.();
+              await new Promise((r) => setTimeout(r, 80));
+            }
+            cam.position.x = start.x;
+            cam.position.z = start.z;
+            scene.requestRender?.();
+          }
+          await new Promise((r) => setTimeout(r, 10_000));
+          const after = {
+            ready: readiness(),
+            gpu: window.__gpuDiagnostics?.(),
+            ws: window.__posterWorkingSet?.(),
+            perf: window.__xrPerfDiagnostics?.(),
+            content: window.__xrContent?.() ?? window.__gpuDiagnostics?.()?.xrContent ?? null,
+          };
+          return {
+            start,
+            before,
+            after,
+            visualReady: after.ready?.visualReady === true,
+            worldReady: after.ready?.worldReady === true || after.content?.worldReady === true,
+            requiredReady: after.ready?.requiredReady === true || after.content?.requiredReady === true,
+            content: after.content,
+            evictionDelta: (after.gpu?.posterEvictionCount ?? 0) - (before.gpu?.posterEvictionCount ?? 0),
+            reacqDelta: (after.gpu?.posterReacquisitionCount ?? 0) - (before.gpu?.posterReacquisitionCount ?? 0),
+            decodeDelta: (after.ws?.posterDecodeJobsStarted ?? 0) - (before.ws?.posterDecodeJobsStarted ?? 0),
+            uploadDelta: (after.ws?.posterUploadJobsStarted ?? 0) - (before.ws?.posterUploadJobsStarted ?? 0),
+            baseUploadDelta: (after.ready?.pendingBaseUpload ?? after.perf?.STORE_VISIBLE_BASE?.pendingUpload ?? 0)
+              - (before.ready?.pendingBaseUpload ?? before.perf?.STORE_VISIBLE_BASE?.pendingUpload ?? 0),
+            baseDecodeDelta: (after.ready?.pendingBaseDecode ?? 0) - (before.ready?.pendingBaseDecode ?? 0),
+            fallbackReplacementDelta: (after.ready?.fallbackReplacementCount ?? 0)
+              - (before.ready?.fallbackReplacementCount ?? 0),
+            pendingBaseAtReady: before.ready?.pendingBaseWork ?? before.perf?.STORE_VISIBLE_BASE?.pendingWork ?? null,
+            pendingBaseUploadAtReady: before.ready?.pendingBaseUpload ?? null,
+            residentBefore: before.gpu?.posterResidentTitles ?? null,
+            residentAfter: after.gpu?.posterResidentTitles ?? null,
+            posterWidth: after.gpu?.posterBaseWidth ?? after.gpu?.shelfWidth ?? null,
+            posterHeight: after.gpu?.posterBaseHeight ?? after.gpu?.shelfHeight ?? null,
+            cpuBytes: after.gpu?.posterCpuBytesAllocated ?? after.gpu?.posterArrayCpuBytesEstimated ?? null,
+            cpuBytesActive: after.gpu?.posterCpuBytesActive ?? null,
+            realUploads: after.ready?.postersUploaded ?? null,
+            fallbacks: after.ready?.postersFallback ?? null,
+            QUEST_HARDWARE: 'NOT_EXECUTED',
+          };
+        });
+        fs.writeFileSync(path.join(jp4aDir, 'jp4a-normal-stable-store.json'), JSON.stringify(scrub(walked), null, 2));
+        const pass = walked.visualReady === true
+          && walked.worldReady === true
+          && walked.requiredReady === true
+          && walked.evictionDelta === 0
+          && walked.reacqDelta === 0
+          && walked.decodeDelta === 0
+          && walked.uploadDelta === 0
+          && (walked.baseUploadDelta ?? 0) === 0
+          && (walked.fallbackReplacementDelta ?? 0) === 0
+          && (walked.pendingBaseAtReady ?? 0) === 0
+          && walked.residentBefore === walked.residentAfter
+          && (walked.residentAfter ?? 0) > 0;
+        return { pass, ...walked };
+      },
+    ));
+
+    evidence.scenarios.push(await runScenario(
+      browser, 'JP4A_ROUND4_XR', '?demo=1&nogate=1&xrEmu=1&xrSafe=1',
+      async (page) => {
+        const jp4aDir = path.join(root, 'docs', 'review', 'jp4a');
+        fs.mkdirSync(jp4aDir, { recursive: true });
+        const result = await page.evaluate(async () => {
+          const untilReady = Date.now() + 120000;
+          while (Date.now() < untilReady) {
+            if (window.__storeReadiness?.()?.visualReady) break;
+            await new Promise((r) => setTimeout(r, 200));
+          }
+          const visualReady = window.__storeReadiness?.()?.visualReady === true;
+          const readySnap = window.__storeReadiness?.();
+          const perfBefore = window.__xrPerfDiagnostics?.();
+          const contentBefore = window.__xrContent?.() ?? window.__gpuDiagnostics?.()?.xrContent ?? null;
+          const pendingBaseAtEntry = readySnap?.pendingBaseWork ?? perfBefore?.STORE_VISIBLE_BASE?.pendingWork ?? null;
+          const pendingBaseUploadAtEntry = readySnap?.pendingBaseUpload
+            ?? perfBefore?.STORE_VISIBLE_BASE?.pendingUpload ?? null;
+          const xr = window.__xrTest;
+          const entered = xr ? await xr.enter() : { ok: false, error: 'no __xrTest' };
+          const untilWorld = Date.now() + 8000;
+          while (Date.now() < untilWorld) {
+            if (window.__xrDiagnostics?.()?.startup?.firstWorldRenderCompletedAt != null) break;
+            await new Promise((r) => setTimeout(r, 100));
+          }
+          const gpu0 = window.__gpuDiagnostics?.();
+          const ws0 = window.__posterWorkingSet?.();
+          xr?.setStick?.('left', 0, -1);
+          await new Promise((r) => setTimeout(r, 1200));
+          xr?.setStick?.('left', 0, 0);
+          xr?.setStick?.('right', 1, 0);
+          await new Promise((r) => setTimeout(r, 400));
+          xr?.setStick?.('right', 0, 0);
+          xr?.openMenu?.();
+          await new Promise((r) => setTimeout(r, 200));
+          const menuPaint = xr?.uiPaint?.();
+          xr?.setStick?.('left', 0, -1);
+          await new Promise((r) => setTimeout(r, 120));
+          xr?.setStick?.('left', 0, 0);
+          const menuAfterUp = xr?.uiPaint?.();
+          xr?.setStick?.('left', 0, 1);
+          await new Promise((r) => setTimeout(r, 120));
+          xr?.setStick?.('left', 0, 0);
+          const menuAfterDown = xr?.uiPaint?.();
+          xr?.primaryButton?.('right', true);
+          await new Promise((r) => setTimeout(r, 80));
+          xr?.primaryButton?.('right', false);
+          await new Promise((r) => setTimeout(r, 200));
+          const afterPrimary = xr?.uiMode?.();
+          xr?.openSettings?.();
+          await new Promise((r) => setTimeout(r, 150));
+          if (window.__fpsMeter?.isOn?.() !== true) {
+            xr?.cycleSetting?.('bb_fps_meter');
+            xr?.applySettings?.();
+          }
+          await new Promise((r) => setTimeout(r, 400));
+          const fpsOn = window.__fpsMeter?.isOn?.() === true;
+          const fpsHud = !!window.storeScene?.scene?.getObjectByName?.('xr-fps-hud')
+            || !!window.storeScene?.xr?.rig?.xrOrigin?.getObjectByName?.('xr-fps-hud');
+          xr?.squeeze?.('right', true);
+          await new Promise((r) => setTimeout(r, 80));
+          xr?.squeeze?.('right', false);
+          await new Promise((r) => setTimeout(r, 150));
+          xr?.squeeze?.('right', true);
+          await new Promise((r) => setTimeout(r, 80));
+          xr?.squeeze?.('right', false);
+          await new Promise((r) => setTimeout(r, 200));
+          for (let i = 0; i < 3 && xr?.uiMode?.() !== 'WORLD'; i++) {
+            xr?.squeeze?.('right', true);
+            await new Promise((r) => setTimeout(r, 80));
+            xr?.squeeze?.('right', false);
+            await new Promise((r) => setTimeout(r, 200));
+          }
+          const worldMode = xr?.uiMode?.();
+          await new Promise((r) => setTimeout(r, 3000));
+          const gpu1 = window.__gpuDiagnostics?.();
+          const ws1 = window.__posterWorkingSet?.();
+          const perf = window.__xrPerfDiagnostics?.();
+          const content = xr?.content?.();
+          await xr?.exit?.();
+          return {
+            visualReady,
+            pendingBaseAtEntry,
+            pendingBaseUploadAtEntry,
+            worldReadyBefore: contentBefore?.worldReady === true || readySnap?.worldReady === true,
+            requiredReadyBefore: contentBefore?.requiredReady === true || readySnap?.requiredReady === true,
+            entered,
+            framebufferScale: gpu1?.xrFramebufferScaleRequested ?? gpu0?.xrFramebufferScaleRequested,
+            foveation: gpu1?.xrFoveationRequested ?? gpu0?.xrFoveationRequested,
+            menuLegend: menuPaint?.legend ?? null,
+            menuAfterUp,
+            menuAfterDown,
+            afterPrimary,
+            fpsOn,
+            fpsHud,
+            worldMode,
+            evictionDelta: (gpu1?.posterEvictionCount ?? 0) - (gpu0?.posterEvictionCount ?? 0),
+            reacqDelta: (gpu1?.posterReacquisitionCount ?? 0) - (gpu0?.posterReacquisitionCount ?? 0),
+            decodeDelta: (ws1?.posterDecodeJobsStarted ?? 0) - (ws0?.posterDecodeJobsStarted ?? 0),
+            contextLost: gpu1?.contextLost === true,
+            content,
+            perf,
+            classification: 'IWER_EMULATED',
+            QUEST_HARDWARE: 'NOT_EXECUTED',
+          };
+        });
+        fs.writeFileSync(path.join(jp4aDir, 'iwer-jp4a-round4.json'), JSON.stringify(scrub(result), null, 2));
+        fs.writeFileSync(path.join(jp4aDir, 'iwer-jp4a-round4.1.json'), JSON.stringify(scrub({
+          ...result,
+          round: '4.1',
+          classification: 'IWER_EMULATED',
+          QUEST_HARDWARE: 'NOT_EXECUTED',
+        }), null, 2));
+        const pass = result.visualReady === true
+          && result.worldReadyBefore === true
+          && result.requiredReadyBefore === true
+          && (result.pendingBaseAtEntry ?? 0) === 0
+          && (result.pendingBaseUploadAtEntry ?? 0) === 0
+          && !!result.entered?.ok
+          && result.framebufferScale === 0.8
+          && result.foveation === 0.5
+          && result.evictionDelta === 0
+          && result.reacqDelta === 0
+          && result.fpsOn === true
+          && result.worldMode === 'WORLD'
+          && result.contextLost !== true
+          && Array.isArray(result.menuLegend) && result.menuLegend.length >= 4;
+        return { pass, ...result };
+      },
+    ));
+
+    evidence.scenarios.push(await runScenario(
+      browser, 'JP4A_ROUND5A_XR', '?demo=1&nogate=1&xrEmu=1&xrSafe=1',
+      async (page) => {
+        const jp4aDir = path.join(root, 'docs', 'review', 'jp4a');
+        fs.mkdirSync(jp4aDir, { recursive: true });
+        const result = await page.evaluate(async () => {
+          const untilReady = Date.now() + 120000;
+          while (Date.now() < untilReady) {
+            if (window.__storeReadiness?.()?.visualReady) break;
+            await new Promise((r) => setTimeout(r, 200));
+          }
+          const xr = window.__xrTest;
+          const entered = xr ? await xr.enter() : { ok: false, error: 'no __xrTest' };
+          const untilWorld = Date.now() + 8000;
+          while (Date.now() < untilWorld) {
+            if (window.__xrDiagnostics?.()?.startup?.firstWorldRenderCompletedAt != null) break;
+            await new Promise((r) => setTimeout(r, 100));
+          }
+          xr?.openMenu?.();
+          await new Promise((r) => setTimeout(r, 200));
+          const paint1 = xr?.uiPaint?.();
+          const pose1 = xr?.getHeadsetPose?.();
+          xr?.setHeadsetPose?.({ y: (pose1?.y ?? 1.6), qy: 0.707, qw: 0.707 });
+          xr?.openMenu?.();
+          await new Promise((r) => setTimeout(r, 200));
+          const paint2 = xr?.uiPaint?.();
+          const stereo = window.__stereoSignage?.() ?? null;
+          const closeRange = window.__closeRangeProbe?.() ?? null;
+          const detail = window.__posterDetail?.() ?? null;
+          const perf = window.__xrPerfDiagnostics?.() ?? null;
+          const gpu = window.__gpuDiagnostics?.() ?? null;
+          const ready = window.__storeReadiness?.() ?? null;
+          return {
+            entered,
+            visualReady: ready?.visualReady === true,
+            worldReady: gpu?.xrContent?.worldReady === true,
+            uiOpen: paint1?.title != null && paint2?.title != null,
+            stereoPass: stereo?.pass === true,
+            stereoNegative: stereo?.negativeControl === true,
+            stereoSampleCount: stereo?.samples?.length ?? 0,
+            closeRangeHidden: (closeRange?.samples ?? []).reduce((n, s) => n + (s.hidden ?? 0), 0),
+            closeRangeDisposed: (closeRange?.samples ?? []).reduce((n, s) => n + (s.disposedMaterials ?? 0), 0),
+            detailLimit: detail?.slotLimit ?? null,
+            detailResident: detail?.resident ?? null,
+            detailWidth: detail?.width ?? null,
+            detailHeight: detail?.height ?? null,
+            baseWidth: gpu?.posterBaseWidth ?? null,
+            baseHeight: gpu?.posterBaseHeight ?? null,
+            contextLost: gpu?.contextLost === true,
+            framebufferScale: 0.8,
+            classification: 'IWER_EMULATED',
+            QUEST_HARDWARE: 'NOT_EXECUTED',
+            frame: perf?.FRAME ?? null,
+            highRes: perf?.HIGH_RES ?? detail,
+          };
+        });
+        fs.writeFileSync(
+          path.join(jp4aDir, 'jp4a-round5a-iwer.json'),
+          JSON.stringify(scrub(result), null, 2),
+        );
+        const pass = !!result.entered?.ok
+          && result.visualReady === true
+          && result.worldReady === true
+          && result.stereoPass === true
+          && result.stereoNegative === true
+          && (result.closeRangeHidden ?? 1) === 0
+          && (result.closeRangeDisposed ?? 1) === 0
+          && (result.detailLimit ?? 0) === 64
+          && result.contextLost !== true
+          && result.baseWidth !== 8
+          && result.detailWidth === 320;
+        return { pass, ...result };
+      },
+    ));
+
+    evidence.scenarios.push(await runScenario(
+      browser, 'JP4A_ROUND5A1_XR', '?demo=1&nogate=1&xrEmu=1&xrSafe=1',
+      async (page) => {
+        const jp4aDir = path.join(root, 'docs', 'review', 'jp4a');
+        fs.mkdirSync(jp4aDir, { recursive: true });
+        const result = await page.evaluate(async () => {
+          const untilReady = Date.now() + 120000;
+          while (Date.now() < untilReady) {
+            if (window.__storeReadiness?.()?.visualReady) break;
+            await new Promise((r) => setTimeout(r, 200));
+          }
+          const xr = window.__xrTest;
+          const entered = xr ? await xr.enter() : { ok: false, error: 'no __xrTest' };
+          const untilWorld = Date.now() + 8000;
+          while (Date.now() < untilWorld) {
+            if (window.__xrDiagnostics?.()?.startup?.firstWorldRenderCompletedAt != null) break;
+            await new Promise((r) => setTimeout(r, 100));
+          }
+          xr?.selectFirstTitle?.();
+          window.__posterDetailForceMiss?.();
+          const untilDetail = Date.now() + 45000;
+          let detail = window.__posterDetail?.() ?? null;
+          while (Date.now() < untilDetail) {
+            detail = window.__posterDetail?.() ?? null;
+            if ((detail?.decoded ?? 0) > 0 && (detail?.uploaded ?? 0) > 0 && (detail?.readyResident ?? 0) > 0) break;
+            await new Promise((r) => setTimeout(r, 200));
+          }
+          xr?.openMenu?.();
+          await new Promise((r) => setTimeout(r, 200));
+          const paint1 = xr?.uiPaint?.();
+          const pose1 = xr?.getHeadsetPose?.();
+          xr?.setHeadsetPose?.({ y: (pose1?.y ?? 1.6), qy: 0.707, qw: 0.707 });
+          xr?.openMenu?.();
+          await new Promise((r) => setTimeout(r, 200));
+          const paint2 = xr?.uiPaint?.();
+          const stereo = window.__stereoSignage?.() ?? null;
+          const closeRange = window.__closeRangeProbe?.() ?? null;
+          const perf = window.__xrPerfDiagnostics?.() ?? null;
+          const gpu = window.__gpuDiagnostics?.() ?? null;
+          const ready = window.__storeReadiness?.() ?? null;
+          return {
+            entered,
+            visualReady: ready?.visualReady === true,
+            worldReady: gpu?.xrContent?.worldReady === true,
+            uiOpen: paint1?.title != null && paint2?.title != null,
+            stereoPass: stereo?.pass === true,
+            stereoNegative: stereo?.negativeControl === true,
+            stereoSampleCount: stereo?.samples?.length ?? 0,
+            closeRangeHidden: (closeRange?.samples ?? []).reduce((n, s) => n + (s.hidden ?? 0), 0),
+            closeRangeDisposed: (closeRange?.samples ?? []).reduce((n, s) => n + (s.disposedMaterials ?? 0), 0),
+            detailLimit: detail?.slotLimit ?? null,
+            leased: detail?.leased ?? detail?.resident ?? null,
+            pendingPixels: detail?.pendingPixels ?? null,
+            pendingUpload: detail?.pendingUpload ?? null,
+            decoded: detail?.decoded ?? null,
+            uploaded: detail?.uploaded ?? null,
+            readyResident: detail?.readyResident ?? null,
+            promoted: detail?.promoted ?? null,
+            demoted: detail?.demoted ?? null,
+            evicted: detail?.evicted ?? null,
+            reacquired: detail?.reacquired ?? null,
+            staleDropped: detail?.staleDropped ?? null,
+            requested: detail?.requested ?? null,
+            detailWidth: detail?.width ?? null,
+            detailHeight: detail?.height ?? null,
+            lutCapacity: detail?.lutCapacity ?? null,
+            lutOk: detail?.lutOk ?? null,
+            textureCreates: detail?.textureCreates ?? null,
+            textureDisposals: detail?.textureDisposals ?? null,
+            baseWidth: gpu?.posterBaseWidth ?? null,
+            baseHeight: gpu?.posterBaseHeight ?? null,
+            contextLost: gpu?.contextLost === true,
+            framebufferScale: 0.8,
+            foveation: 0.5,
+            classification: 'IWER_EMULATED',
+            QUEST_HARDWARE: 'NOT_EXECUTED',
+            frame: perf?.FRAME ?? null,
+            highRes: perf?.HIGH_RES ?? detail,
+          };
+        });
+        fs.writeFileSync(
+          path.join(jp4aDir, 'jp4a-round5a1-iwer.json'),
+          JSON.stringify(scrub(result), null, 2),
+        );
+        const pass = !!result.entered?.ok
+          && result.visualReady === true
+          && result.worldReady === true
+          && result.stereoPass === true
+          && result.stereoNegative === true
+          && (result.closeRangeHidden ?? 1) === 0
+          && (result.closeRangeDisposed ?? 1) === 0
+          && (result.detailLimit ?? 0) === 64
+          && (result.decoded ?? 0) > 0
+          && (result.uploaded ?? 0) > 0
+          && (result.readyResident ?? 0) > 0
+          && result.contextLost !== true
+          && result.detailWidth === 320
+          && result.QUEST_HARDWARE === 'NOT_EXECUTED'
+          && result.classification === 'IWER_EMULATED';
+        return { pass, ...result };
+      },
+    ));
+
+    evidence.scenarios.push(await runScenario(
+      browser, 'JP4A_ROUND5A2_XR', '?demo=1&nogate=1&xrEmu=1&xrSafe=1',
+      async (page) => {
+        const jp4aDir = path.join(root, 'docs', 'review', 'jp4a');
+        fs.mkdirSync(jp4aDir, { recursive: true });
+        const result = await page.evaluate(async () => {
+          const untilReady = Date.now() + 120000;
+          while (Date.now() < untilReady) {
+            if (window.__storeReadiness?.()?.visualReady) break;
+            await new Promise((r) => setTimeout(r, 200));
+          }
+          const xr = window.__xrTest;
+          const entered = xr ? await xr.enter() : { ok: false, error: 'no __xrTest' };
+          const untilWorld = Date.now() + 8000;
+          while (Date.now() < untilWorld) {
+            if (window.__xrDiagnostics?.()?.startup?.firstWorldRenderCompletedAt != null) break;
+            await new Promise((r) => setTimeout(r, 100));
+          }
+          xr?.selectFirstTitle?.();
+          window.__posterDetailForceMiss?.();
+          const untilDetail = Date.now() + 45000;
+          let detail = window.__posterDetail?.() ?? null;
+          while (Date.now() < untilDetail) {
+            detail = window.__posterDetail?.() ?? null;
+            if ((detail?.decoded ?? 0) > 0 && (detail?.uploaded ?? 0) > 0 && (detail?.readyResident ?? 0) > 0
+              && (detail?.pendingPixels ?? 1) === 0 && (detail?.pendingUpload ?? 1) === 0) break;
+            await new Promise((r) => setTimeout(r, 200));
+          }
+          xr?.openMenu?.();
+          await new Promise((r) => setTimeout(r, 200));
+          const stereo = window.__stereoSignage?.() ?? null;
+          const closeRange = window.__closeRangeProbe?.() ?? null;
+          const gpu = window.__gpuDiagnostics?.() ?? null;
+          const ready = window.__storeReadiness?.() ?? null;
+          const perf = window.__xrPerfDiagnostics?.() ?? null;
+          return {
+            entered,
+            visualReady: ready?.visualReady === true,
+            worldReady: gpu?.xrContent?.worldReady === true,
+            stereoPass: stereo?.pass === true,
+            stereoNegative: stereo?.negativeControl === true,
+            stereoSampleCount: stereo?.samples?.length ?? 0,
+            closeRangeHidden: (closeRange?.samples ?? []).reduce((n, s) => n + (s.hidden ?? 0), 0),
+            closeRangeDisposed: (closeRange?.samples ?? []).reduce((n, s) => n + (s.disposedMaterials ?? 0), 0),
+            decoded: detail?.decoded ?? null,
+            uploaded: detail?.uploaded ?? null,
+            readyResident: detail?.readyResident ?? null,
+            pendingPixels: detail?.pendingPixels ?? null,
+            pendingUpload: detail?.pendingUpload ?? null,
+            leased: detail?.leased ?? null,
+            loadFailed: detail?.loadFailed ?? null,
+            detailWidth: detail?.width ?? null,
+            detailHeight: detail?.height ?? null,
+            detailLimit: detail?.slotLimit ?? null,
+            lutCapacity: detail?.lutCapacity ?? null,
+            baseWidth: gpu?.posterBaseWidth ?? null,
+            baseHeight: gpu?.posterBaseHeight ?? null,
+            contextLost: gpu?.contextLost === true,
+            framebufferScale: 0.8,
+            foveation: 0.5,
+            classification: 'IWER_EMULATED',
+            QUEST_HARDWARE: 'NOT_EXECUTED',
+            frame: perf?.FRAME ?? null,
+            highRes: perf?.HIGH_RES ?? detail,
+          };
+        });
+        fs.writeFileSync(
+          path.join(jp4aDir, 'jp4a-round5a2-iwer.json'),
+          JSON.stringify(scrub(result), null, 2),
+        );
+        const pass = !!result.entered?.ok
+          && result.visualReady === true
+          && result.worldReady === true
+          && result.stereoPass === true
+          && result.stereoNegative === true
+          && (result.closeRangeHidden ?? 1) === 0
+          && (result.closeRangeDisposed ?? 1) === 0
+          && (result.decoded ?? 0) > 0
+          && (result.uploaded ?? 0) > 0
+          && (result.readyResident ?? 0) > 0
+          && (result.pendingPixels ?? 1) === 0
+          && (result.pendingUpload ?? 1) === 0
+          && result.detailWidth === 320
+          && result.detailHeight === 480
+          && result.framebufferScale === 0.8
+          && result.foveation === 0.5
+          && (result.baseWidth == null || result.baseWidth === 96)
+          && result.contextLost !== true
+          && result.QUEST_HARDWARE === 'NOT_EXECUTED'
+          && result.classification === 'IWER_EMULATED';
+        return { pass, ...result };
+      },
+    ));
+
+    evidence.scenarios.push(await runScenario(
+      browser, 'JP4A_ROUND5B2_NORMAL_URL', '?demo=1&nogate=1&xrEmu=1&xrSafe=1',
+      async (page) => {
+        const result = await page.evaluate(async () => {
+          const xr = window.__xrTest;
+          const entered = xr ? await xr.enter() : { ok: false, error: 'no __xrTest' };
+          await new Promise((r) => setTimeout(r, 300));
+          const snap = window.__hwPosterDiag?.() ?? null;
+          const mesh = window.storeScene?.scene?.getObjectByName?.('xr-hw-poster-diag') ?? null;
+          await xr?.exit?.();
+          return { entered, enabled: snap?.enabled === true, meshCreated: !!mesh };
+        });
+        return { pass: !!result.entered?.ok && !result.enabled && !result.meshCreated, ...result };
+      },
+    ));
+
+    evidence.scenarios.push(await runScenario(
+      browser, 'JP4A_ROUND5B2_XR', '?demo=1&nogate=1&xrEmu=1&xrSafe=1&xrPosterHwDiag=1&fps=1',
+      async (page) => {
+        const jp4aDir = path.join(root, 'docs', 'review', 'jp4a');
+        fs.mkdirSync(jp4aDir, { recursive: true });
+        const result = await page.evaluate(async () => {
+          const untilReady = Date.now() + 120000;
+          while (Date.now() < untilReady) {
+            if (window.__storeReadiness?.()?.visualReady) break;
+            await new Promise((r) => setTimeout(r, 200));
+          }
+          const xr = window.__xrTest;
+          xr?.setHeadsetPose?.({ x: 0, y: 1.6, z: 0, qx: 0, qy: 0, qz: 0, qw: 1 });
+          const entered = xr ? await xr.enter() : { ok: false, error: 'no __xrTest' };
+          const untilWorld = Date.now() + 8000;
+          while (Date.now() < untilWorld) {
+            if (window.__xrDiagnostics?.()?.startup?.firstWorldRenderCompletedAt != null) break;
+            await new Promise((r) => setTimeout(r, 100));
+          }
+          xr?.setHeadsetPose?.({ x: 0, y: 1.6, z: 0, qx: 0, qy: 0, qz: 0, qw: 1 });
+          await new Promise((r) => setTimeout(r, 200));
+          const diagBeforeMove = window.__hwPosterDiag?.() ?? null;
+          xr?.setHeadsetPose?.({ x: 0.25, y: 1.72, z: -0.18, qx: 0, qy: Math.sin(0.35), qz: 0, qw: Math.cos(0.35) });
+          await new Promise((r) => setTimeout(r, 250));
+          const diagAfterMove = window.__hwPosterDiag?.() ?? null;
+          xr?.openMenu();
+          const untilMenu = Date.now() + 2000;
+          let pose = window.__xrViewerPose?.() ?? null;
+          let placed = window.__xrUiPlacement?.() ?? null;
+          while (Date.now() < untilMenu) {
+            pose = window.__xrViewerPose?.() ?? null;
+            placed = window.__xrUiPlacement?.() ?? null;
+            if (pose?.source === 'XR_VIEWER_POSE' && placed?.source === 'XR_VIEWER_POSE') break;
+            await new Promise((r) => setTimeout(r, 50));
+          }
+          const stereo = window.__stereoSignage?.() ?? null;
+          const modes = [];
+          let mode = window.__hwPosterDiag?.()?.mode ?? null;
+          modes.push(mode);
+          for (let i = 0; i < 5; i++) {
+            window.__cycleHwPosterDiag?.();
+            await new Promise((r) => setTimeout(r, 50));
+            modes.push(window.__hwPosterDiag?.()?.mode ?? null);
+          }
+          const gpu = window.__gpuDiagnostics?.() ?? null;
+          const detail = window.__posterDetail?.() ?? null;
+          const focus = window.__posterFocus?.() ?? null;
+          const last = window.__hwPosterDiag?.() ?? null;
+          const pos0 = diagBeforeMove?.placement?.position;
+          const pos1 = diagAfterMove?.placement?.position;
+          const worldStable = !!pos0 && !!pos1
+            && Math.hypot(pos0.x - pos1.x, pos0.y - pos1.y, pos0.z - pos1.z) < 1e-5;
+          const hud0 = diagBeforeMove?.modeHud?.position;
+          const hud1 = diagAfterMove?.modeHud?.position;
+          const hudFollows = !!hud0 && !!hud1
+            && Math.hypot(hud0.x - hud1.x, hud0.y - hud1.y, hud0.z - hud1.z) > 0.05;
+          const fps = last?.runtime?.hud?.fps;
+          const modeHud = last?.modeHud;
+          const projected = (offset, size) => ({
+            left: (offset.x - size.width / 2) / -offset.z,
+            right: (offset.x + size.width / 2) / -offset.z,
+            bottom: (offset.y - size.height / 2) / -offset.z,
+            top: (offset.y + size.height / 2) / -offset.z,
+          });
+          const fpsBounds = fps ? projected({ x: -0.25, y: 0.17, z: -0.62 }, fps.sizeM) : null;
+          const modeBounds = modeHud ? projected(modeHud.viewerOffsetM, modeHud.sizeM) : null;
+          const hudOverlap = !!fpsBounds && !!modeBounds
+            && fpsBounds.left < modeBounds.right && fpsBounds.right > modeBounds.left
+            && fpsBounds.bottom < modeBounds.top && fpsBounds.top > modeBounds.bottom;
+          return {
+            entered,
+            stereoPass: stereo?.pass === true,
+            stereoNegative: stereo?.negativeControl === true,
+            poseSource: pose?.source ?? null,
+            poseValid: pose?.valid === true,
+            menuSource: placed?.source ?? null,
+            menuDistance: placed?.distanceFromViewer ?? null,
+            diagModes: modes,
+            diagEnabled: window.__hwPosterDiag?.()?.enabled === true,
+            diagObserved: last?.observed ?? null,
+            diagProduction: last?.production ?? null,
+            diagWorldStable: last?.worldStable === true,
+            placedFromFreshPose: last?.placement?.source === 'INITIAL_FRESH_XR_VIEWER_POSE',
+            eyeHeightM: last?.placement?.viewerEyeHeightM ?? null,
+            posterHeightM: last?.placement?.posterWorldHeightM ?? null,
+            posterStableAfterViewerMove: worldStable,
+            modeHudFollowsViewer: hudFollows,
+            fpsHudVisible: fps?.visible === true,
+            fpsModeHudOverlap: hudOverlap,
+            telemetryPopulated: last?.runtime?.frame?.frameCount > 0
+              && last?.runtime?.display?.targetHz != null
+              && last?.runtime?.renderer?.drawCalls != null,
+            contextLost: gpu?.contextLost === true,
+            detailWidth: detail?.width ?? null,
+            focusSlots: focus?.slotLimit ?? null,
+            classification: 'IWER_EMULATED',
+            QUEST_HARDWARE: 'NOT_EXECUTED',
+            note: 'IWER_EMULATED logic only. Not hardware visual proof.',
+          };
+        });
+        fs.writeFileSync(
+          path.join(jp4aDir, 'jp4a-round5b2-iwer.json'),
+          JSON.stringify(scrub(result), null, 2),
+        );
+        const pass = !!result.entered?.ok
+          && result.stereoPass === true
+          && result.stereoNegative === true
+          && result.poseSource === 'XR_VIEWER_POSE'
+          && result.menuSource === 'XR_VIEWER_POSE'
+          && result.diagEnabled === true
+          && result.placedFromFreshPose === true
+          && Math.abs((result.eyeHeightM ?? 0) - 1.6) < 0.08
+          && result.posterStableAfterViewerMove === true
+          && result.modeHudFollowsViewer === true
+          && result.fpsHudVisible === true
+          && result.fpsModeHudOverlap === false
+          && result.telemetryPopulated === true
+          && JSON.stringify(result.diagModes) === JSON.stringify(['A', 'B', 'C', 'D', 'E', 'A'])
+          && result.contextLost !== true
+          && result.QUEST_HARDWARE === 'NOT_EXECUTED'
+          && result.classification === 'IWER_EMULATED';
+        return { pass, ...result };
       },
     ));
 

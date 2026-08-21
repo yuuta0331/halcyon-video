@@ -19,6 +19,7 @@ import { isDiscoveryRequested } from './jellyseerr';
 import { SP_HERO, CT_HERO, updatedMeshes } from './scene-shared';
 import { getGoldCaseMaterials } from './fixtures/gold-clamshell';
 import type { StoreScene } from './three-scene';
+import { noteOnDemandWrapRequest, noteOnDemandWrapUploaded } from './xr/content-diagnostics';
 
 // Whether the current hero back materials are the NR gold case — part of the
 // ensureHeroCases rebuild key alongside heroMovieId, so stepping between an
@@ -838,4 +839,28 @@ export function heroFocusDistance(scene: StoreScene): number {
     }
   }
   return nearest;
+}
+
+/** XR_SAFE: decode wrap / spine / back for the selected title only. */
+export function prefetchInspectCaseArt(scene: StoreScene, movie: Movie): void {
+  noteOnDemandWrapRequest(movie.id);
+  const probeIdx = Math.min(scene.selectedLibraryIdx, 4);
+  createHeroJellyfinMaterials(movie, undefined, false, true, probeIdx);
+  createHeroRentalMaterials(movie, true, probeIdx);
+  scene.ensureHeroCases(movie);
+  const meshes = [scene.heroFrontMesh, scene.heroBackMesh];
+  let allocated = 0;
+  let uploaded = 0;
+  let visible = 0;
+  for (const mesh of meshes) {
+    if (!mesh) continue;
+    allocated += 1;
+    if (mesh.visible) visible += 1;
+    const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+    for (const mat of mats as Array<{ map?: { image?: { width?: number; complete?: boolean } } }>) {
+      const img = mat?.map?.image;
+      if (img && img.complete !== false && (img.width ?? 1) > 0) uploaded += 1;
+    }
+  }
+  noteOnDemandWrapUploaded({ allocated, decoded: uploaded, uploaded, visible });
 }

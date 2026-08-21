@@ -17,6 +17,7 @@ import {
   wireSnapFrame
 } from './sign-fixtures';
 import { tryLoadUserSignArtTexture } from '../user-assets';
+import { markMirrorSkip } from '../scene-layers';
 import {
   createBrandLogoBodyTexture,
   createBrandLogoTextTexture,
@@ -314,7 +315,7 @@ export function buildSignage(ctx: FixtureContext, slots: SignSlot[], activeSigna
           const x = n > 1 ? -length / 2 + badgeSize / 2 + endInset + (usable * i) / (n - 1) : 0;
           const badge = new THREE.Mesh(badgeGeo, badgeMat);
           badge.position.set(x, badgeY, localZ);
-          badge.layers.set(1);
+          markMirrorSkip(badge);
           wallGroup.add(badge);
         }
         attemptUserSignArt(wallGroup, badgeTex,

@@ -8,70 +8,71 @@
     "xrTest": true,
     "diag": {
       "marks": {
-        "appStart": 367.9000000022352,
-        "credentialStart": 518.4000000022352,
-        "credentialEnd": 518.4000000022352,
-        "catalogStart": 518.4000000022352,
-        "catalogEnd": 544.7000000029802,
-        "sidecarsStart": 544.7000000029802,
-        "sidecarsEnd": 544.7000000029802,
-        "baseFontsStart": 544.7000000029802,
-        "brandPackStart": 544.9000000022352,
-        "brandPackEnd": 585.1000000014901,
-        "baseFontsEnd": 585.1000000014901,
-        "cjkFontsStart": 585.1000000014901,
-        "cjkFontsEnd": 628,
-        "qualityCalibrationStart": 1171.7000000029802,
-        "qualityCalibrationEnd": 1183.9000000022352,
-        "threeSceneImportStart": 1183.9000000022352,
-        "threeSceneImportEnd": 1324.9000000022352,
-        "storeSceneConstructStart": 1324.9000000022352,
-        "storeSceneConstructEnd": 5760.70000000298,
-        "criticalTextureReady": 10351.10000000149,
-        "storeInteractive": 10351.10000000149
+        "appStart": 409.5,
+        "credentialStart": 665.9000000059605,
+        "credentialEnd": 665.9000000059605,
+        "catalogStart": 665.9000000059605,
+        "catalogEnd": 693.0999999940395,
+        "sidecarsStart": 693.0999999940395,
+        "sidecarsEnd": 693.0999999940395,
+        "baseFontsStart": 693.1999999880791,
+        "brandPackStart": 693.2999999821186,
+        "brandPackEnd": 740.0999999940395,
+        "baseFontsEnd": 740.0999999940395,
+        "cjkFontsStart": 740.4000000059605,
+        "cjkFontsEnd": 788.2999999821186,
+        "qualityCalibrationStart": 1233,
+        "qualityCalibrationEnd": 1248.2999999821186,
+        "threeSceneImportStart": 1248.2999999821186,
+        "threeSceneImportEnd": 1421.7999999821186,
+        "storeSceneConstructStart": 1421.7999999821186,
+        "storeSceneConstructEnd": 7303.0999999940395,
+        "criticalTextureReady": 43101.40000000596,
+        "storeInteractive": 43101.5,
+        "allTexturesSettled": 43233.40000000596
       },
-      "qualityCalibrationMs": 12.199999999254942,
-      "storeSceneConstructMs": 4435.800000000745,
-      "timeToInteractive": 9983.199999999255,
-      "timeToFullTextures": null,
-      "criticalReadyBeforeAllTextures": null,
+      "qualityCalibrationMs": 15.299999982118607,
+      "storeSceneConstructMs": 5881.300000011921,
+      "timeToInteractive": 42692,
+      "timeToFullTextures": 42823.90000000596,
+      "criticalReadyBeforeAllTextures": true,
       "construct": {
         "stages": [
           {
             "name": "initThree",
-            "ms": 111.30000000074506
+            "ms": 85.40000000596046
           },
           {
             "name": "setupLighting",
-            "ms": 0.6999999992549419
+            "ms": 0.7999999821186066
           },
           {
             "name": "exterior",
-            "ms": 36.20000000298023
+            "ms": 32.099999994039536
           },
           {
             "name": "carpetTextures",
-            "ms": 157.5
+            "ms": 141.2000000178814
           },
           {
             "name": "wallTextures",
-            "ms": 80.70000000298023
+            "ms": 101.30000001192093
           },
           {
             "name": "aisleShelving",
-            "ms": 24.100000001490116
+            "ms": 21.19999998807907
           },
           {
             "name": "floorAO",
-            "ms": 1
+            "ms": 1.199999988079071
           },
           {
             "name": "signage",
-            "ms": 220.10000000149012
+            "ms": 203.5
           },
           {
             "name": "buildStore",
-            "ms": 1515.5
+            "ms": 1452.199999988079
           },
           {
             "name": "bakeEnvironment",
@@ -79,32 +80,32 @@
           },
           {
             "name": "textureArrayInit",
-            "ms": 0.3999999985098839
+            "ms": 2.5999999940395355
           },
           {
             "name": "buildAllMovieBoxes",
-            "ms": 149.69999999925494
+            "ms": 189.7999999821186
           },
           {
             "name": "rebuildMovieBoxes",
-            "ms": 20.5
+            "ms": 13
           }
         ],
         "top3": [
           {
             "name": "buildStore",
-            "ms": 1515.5
+            "ms": 1452.199999988079
           },
           {
             "name": "signage",
-            "ms": 220.10000000149012
+            "ms": 203.5
           },
           {
-            "name": "carpetTextures",
-            "ms": 157.5
+            "name": "buildAllMovieBoxes",
+            "ms": 189.7999999821186
           }
         ],
-        "totalMs": 2317.7000000067055
+        "totalMs": 2244.2999999523163
       }
     }
   },
@@ -112,71 +113,71 @@
   "waitedForFullTextures": true,
   "diag": {
     "marks": {
-      "appStart": 367.9000000022352,
-      "credentialStart": 518.4000000022352,
-      "credentialEnd": 518.4000000022352,
-      "catalogStart": 518.4000000022352,
-      "catalogEnd": 544.7000000029802,
-      "sidecarsStart": 544.7000000029802,
-      "sidecarsEnd": 544.7000000029802,
-      "baseFontsStart": 544.7000000029802,
-      "brandPackStart": 544.9000000022352,
-      "brandPackEnd": 585.1000000014901,
-      "baseFontsEnd": 585.1000000014901,
-      "cjkFontsStart": 585.1000000014901,
-      "cjkFontsEnd": 628,
-      "qualityCalibrationStart": 1171.7000000029802,
-      "qualityCalibrationEnd": 1183.9000000022352,
-      "threeSceneImportStart": 1183.9000000022352,
-      "threeSceneImportEnd": 1324.9000000022352,
-      "storeSceneConstructStart": 1324.9000000022352,
-      "storeSceneConstructEnd": 5760.70000000298,
-      "criticalTextureReady": 10351.10000000149,
-      "storeInteractive": 10351.10000000149,
-      "allTexturesSettled": 11417.900000002235
+      "appStart": 409.5,
+      "credentialStart": 665.9000000059605,
+      "credentialEnd": 665.9000000059605,
+      "catalogStart": 665.9000000059605,
+      "catalogEnd": 693.0999999940395,
+      "sidecarsStart": 693.0999999940395,
+      "sidecarsEnd": 693.0999999940395,
+      "baseFontsStart": 693.1999999880791,
+      "brandPackStart": 693.2999999821186,
+      "brandPackEnd": 740.0999999940395,
+      "baseFontsEnd": 740.0999999940395,
+      "cjkFontsStart": 740.4000000059605,
+      "cjkFontsEnd": 788.2999999821186,
+      "qualityCalibrationStart": 1233,
+      "qualityCalibrationEnd": 1248.2999999821186,
+      "threeSceneImportStart": 1248.2999999821186,
+      "threeSceneImportEnd": 1421.7999999821186,
+      "storeSceneConstructStart": 1421.7999999821186,
+      "storeSceneConstructEnd": 7303.0999999940395,
+      "criticalTextureReady": 43101.40000000596,
+      "storeInteractive": 43101.5,
+      "allTexturesSettled": 43233.40000000596
     },
-    "qualityCalibrationMs": 12.199999999254942,
-    "storeSceneConstructMs": 4435.800000000745,
-    "timeToInteractive": 9983.199999999255,
-    "timeToFullTextures": 11050,
+    "qualityCalibrationMs": 15.299999982118607,
+    "storeSceneConstructMs": 5881.300000011921,
+    "timeToInteractive": 42692,
+    "timeToFullTextures": 42823.90000000596,
     "criticalReadyBeforeAllTextures": true,
     "construct": {
       "stages": [
         {
           "name": "initThree",
-          "ms": 111.30000000074506
+          "ms": 85.40000000596046
         },
         {
           "name": "setupLighting",
-          "ms": 0.6999999992549419
+          "ms": 0.7999999821186066
         },
         {
           "name": "exterior",
-          "ms": 36.20000000298023
+          "ms": 32.099999994039536
         },
         {
           "name": "carpetTextures",
-          "ms": 157.5
+          "ms": 141.2000000178814
         },
         {
           "name": "wallTextures",
-          "ms": 80.70000000298023
+          "ms": 101.30000001192093
         },
         {
           "name": "aisleShelving",
-          "ms": 24.100000001490116
+          "ms": 21.19999998807907
         },
         {
           "name": "floorAO",
-          "ms": 1
+          "ms": 1.199999988079071
         },
         {
           "name": "signage",
-          "ms": 220.10000000149012
+          "ms": 203.5
         },
         {
           "name": "buildStore",
-          "ms": 1515.5
+          "ms": 1452.199999988079
         },
         {
           "name": "bakeEnvironment",
@@ -184,32 +185,32 @@
         },
         {
           "name": "textureArrayInit",
-          "ms": 0.3999999985098839
+          "ms": 2.5999999940395355
         },
         {
           "name": "buildAllMovieBoxes",
-          "ms": 149.69999999925494
+          "ms": 189.7999999821186
         },
         {
           "name": "rebuildMovieBoxes",
-          "ms": 20.5
+          "ms": 13
         }
       ],
       "top3": [
         {
           "name": "buildStore",
-          "ms": 1515.5
+          "ms": 1452.199999988079
         },
         {
           "name": "signage",
-          "ms": 220.10000000149012
+          "ms": 203.5
         },
         {
-          "name": "carpetTextures",
-          "ms": 157.5
+          "name": "buildAllMovieBoxes",
+          "ms": 189.7999999821186
         }
       ],
-      "totalMs": 2317.7000000067055
+      "totalMs": 2244.2999999523163
     }
   }
 }

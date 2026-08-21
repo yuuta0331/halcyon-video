@@ -1,0 +1,548 @@
+{
+  "phase": "ROUND5B.3_LIVE_SHELF_BLACK_AND_FRAME_HITCH_FIX",
+  "classification": "IWER_EMULATED",
+  "scope": "QUICK_TEST_CONSOLE_IWER_ENTRY_TELEMETRY_AND_PERSISTENCE",
+  "NOT_HARDWARE_VISUAL_PROOF": true,
+  "QUEST_HARDWARE": "NOT_EXECUTED",
+  "pass": true,
+  "url": "/xr-test/jp4a",
+  "before": {
+    "heading": "JP-4A TEST",
+    "start": true,
+    "meta": "Round 5B.3\nBuild: 845046171a168028f823f73556499c0a4898d1bc\nSession: not started"
+  },
+  "modeCycle": [
+    "LIVE-NORMAL",
+    "LIVE-BASE",
+    "LIVE-LOD0",
+    "LIVE-LOD1",
+    "LIVE-LOD2",
+    "LIVE-LOD3",
+    "LIVE-LINEAR",
+    "LIVE-UNLIT",
+    "LIVE-DEPTH-ISOLATED"
+  ],
+  "iwerSession": {
+    "storeStatus": {
+      "storeScene": true,
+      "xrTest": true,
+      "diagnostics": true,
+      "interactive": true,
+      "bootOverlayVisible": false
+    },
+    "entered": {
+      "ok": true
+    },
+    "firstWorldRender": true,
+    "completed": true
+  },
+  "activeSession": {
+    "schema": 1,
+    "round": "JP-4A Round 5B.3",
+    "build": "845046171a168028f823f73556499c0a4898d1bc",
+    "sessionId": "jp4a-mszloll8-e466d935",
+    "startedAt": "2026-08-19T04:37:31.340Z",
+    "xrStartedAt": "2026-08-19T04:39:38.688Z",
+    "completedAt": null,
+    "active": true,
+    "mode": "LIVE-DEPTH-ISOLATED",
+    "step": 3,
+    "lockedPoster": {
+      "opaqueId": "opaque-browser-fixture",
+      "globalIndex": 5,
+      "expectedBank": 0,
+      "meshBank": 0,
+      "expectedLayer": 5,
+      "loadedFlag": 255
+    },
+    "modeVerdicts": {
+      "LIVE-NORMAL": "UNKNOWN",
+      "LIVE-BASE": "UNKNOWN",
+      "LIVE-LOD0": "UNKNOWN",
+      "LIVE-LOD1": "UNKNOWN",
+      "LIVE-LOD2": "UNKNOWN",
+      "LIVE-LOD3": "UNKNOWN",
+      "LIVE-LINEAR": "UNKNOWN",
+      "LIVE-UNLIT": "UNKNOWN",
+      "LIVE-DEPTH-ISOLATED": "BLACK"
+    },
+    "bankInvariant": {
+      "checkedSlots": 0,
+      "bankMismatchCount": 0,
+      "layerOutOfRangeCount": 0,
+      "missingIndexCount": 0,
+      "invalidLoadedFlagCount": 0,
+      "pass": true
+    },
+    "samples": [
+      {
+        "timestamp": "2026-08-19T04:39:41.205Z",
+        "elapsedMs": 2509.199999988079,
+        "phase": "baseline",
+        "mode": "LIVE-NORMAL",
+        "fps": null,
+        "meanMs": null,
+        "onePercentLowFps": null,
+        "p95Ms": null,
+        "p99Ms": null,
+        "worstMs": null,
+        "frameCount": 2,
+        "targetHz": 72,
+        "supportedHz": [
+          72,
+          80,
+          90,
+          120
+        ],
+        "framebufferWidth": 800,
+        "framebufferHeight": 600,
+        "framebufferScale": 0.8,
+        "foveation": 0.5,
+        "drawCalls": 0,
+        "triangles": 0,
+        "textures": 136,
+        "programs": 50,
+        "posterBankCount": 1,
+        "renderBatchCount": 46,
+        "lockedPosterOpaqueId": null,
+        "globalIndex": null,
+        "expectedBank": null,
+        "meshBank": null,
+        "expectedLayer": null,
+        "loadedFlag": null,
+        "detailPhase": null,
+        "focusPhase": null,
+        "focusUploadProgress": 0.5333333333333333,
+        "pendingBase": 0,
+        "pendingNear": 0,
+        "pendingFocus": 0,
+        "gpuUploadBytes": 1310720,
+        "gpuUploadSubmitMs": 5492.000000119209,
+        "decodeMs": 1892.5,
+        "viewerDistanceM": null,
+        "viewerYawToPosterDeg": null
+      },
+      {
+        "timestamp": "2026-08-19T04:39:43.607Z",
+        "elapsedMs": 4919,
+        "phase": "baseline",
+        "mode": "LIVE-NORMAL",
+        "fps": null,
+        "meanMs": null,
+        "onePercentLowFps": null,
+        "p95Ms": null,
+        "p99Ms": null,
+        "worstMs": null,
+        "frameCount": 8,
+        "targetHz": 72,
+        "supportedHz": [
+          72,
+          80,
+          90,
+          120
+        ],
+        "framebufferWidth": 800,
+        "framebufferHeight": 600,
+        "framebufferScale": 0.8,
+        "foveation": 0.5,
+        "drawCalls": 3392,
+        "triangles": 4472348,
+        "textures": 142,
+        "programs": 54,
+        "posterBankCount": 1,
+        "renderBatchCount": 46,
+        "lockedPosterOpaqueId": null,
+        "globalIndex": null,
+        "expectedBank": null,
+        "meshBank": null,
+        "expectedLayer": null,
+        "loadedFlag": null,
+        "detailPhase": null,
+        "focusPhase": null,
+        "focusUploadProgress": 0.5333333333333333,
+        "pendingBase": 0,
+        "pendingNear": 0,
+        "pendingFocus": 0,
+        "gpuUploadBytes": 1310720,
+        "gpuUploadSubmitMs": 5492.000000119209,
+        "decodeMs": 1892.5,
+        "viewerDistanceM": null,
+        "viewerYawToPosterDeg": null
+      },
+      {
+        "timestamp": "2026-08-19T04:39:43.648Z",
+        "elapsedMs": 1000,
+        "phase": "approach",
+        "mode": "LIVE-DEPTH-ISOLATED",
+        "fps": 60,
+        "meanMs": 16.67,
+        "onePercentLowFps": 55,
+        "p95Ms": 18,
+        "p99Ms": 20,
+        "worstMs": 24,
+        "frameCount": 60,
+        "targetHz": 72,
+        "supportedHz": [
+          72,
+          90
+        ],
+        "framebufferWidth": 1832,
+        "framebufferHeight": 1920,
+        "framebufferScale": 1,
+        "foveation": 0.5,
+        "drawCalls": 10,
+        "triangles": 100,
+        "textures": 4,
+        "programs": 2,
+        "posterBankCount": 1,
+        "renderBatchCount": 2,
+        "lockedPosterOpaqueId": "opaque-browser-fixture",
+        "globalIndex": 5,
+        "expectedBank": 0,
+        "meshBank": 0,
+        "expectedLayer": 5,
+        "loadedFlag": 255,
+        "detailPhase": "ready",
+        "focusPhase": "pendingUpload",
+        "focusUploadProgress": 0.5,
+        "pendingBase": 0,
+        "pendingNear": 0,
+        "pendingFocus": 1,
+        "gpuUploadBytes": 1228800,
+        "gpuUploadSubmitMs": 1.2,
+        "decodeMs": 4.5,
+        "viewerDistanceM": 3,
+        "viewerYawToPosterDeg": 35
+      }
+    ],
+    "events": [
+      {
+        "timestamp": "2026-08-19T04:37:31.340Z",
+        "type": "session_reset"
+      },
+      {
+        "timestamp": "2026-08-19T04:37:31.343Z",
+        "type": "test_started"
+      },
+      {
+        "timestamp": "2026-08-19T04:39:38.688Z",
+        "type": "xr_started"
+      },
+      {
+        "timestamp": "2026-08-19T04:39:43.643Z",
+        "type": "poster_locked",
+        "value": "opaque-browser-fixture"
+      },
+      {
+        "timestamp": "2026-08-19T04:39:43.644Z",
+        "type": "mode_changed",
+        "value": "LIVE-BASE"
+      },
+      {
+        "timestamp": "2026-08-19T04:39:43.644Z",
+        "type": "mode_changed",
+        "value": "LIVE-LOD0"
+      },
+      {
+        "timestamp": "2026-08-19T04:39:43.644Z",
+        "type": "mode_changed",
+        "value": "LIVE-LOD1"
+      },
+      {
+        "timestamp": "2026-08-19T04:39:43.645Z",
+        "type": "mode_changed",
+        "value": "LIVE-LOD2"
+      },
+      {
+        "timestamp": "2026-08-19T04:39:43.646Z",
+        "type": "mode_changed",
+        "value": "LIVE-LOD3"
+      },
+      {
+        "timestamp": "2026-08-19T04:39:43.646Z",
+        "type": "mode_changed",
+        "value": "LIVE-LINEAR"
+      },
+      {
+        "timestamp": "2026-08-19T04:39:43.647Z",
+        "type": "mode_changed",
+        "value": "LIVE-UNLIT"
+      },
+      {
+        "timestamp": "2026-08-19T04:39:43.647Z",
+        "type": "mode_changed",
+        "value": "LIVE-DEPTH-ISOLATED"
+      },
+      {
+        "timestamp": "2026-08-19T04:39:43.647Z",
+        "type": "mode_verdict",
+        "value": "LIVE-DEPTH-ISOLATED:BLACK"
+      }
+    ],
+    "environment": "IWER_EMULATED",
+    "questHardware": "NOT_EXECUTED"
+  },
+  "restored": {
+    "heading": "TEST COMPLETE",
+    "session": {
+      "schema": 1,
+      "round": "JP-4A Round 5B.3",
+      "build": "845046171a168028f823f73556499c0a4898d1bc",
+      "sessionId": "jp4a-mszloll8-e466d935",
+      "startedAt": "2026-08-19T04:37:31.340Z",
+      "xrStartedAt": "2026-08-19T04:39:38.688Z",
+      "completedAt": "2026-08-19T04:39:45.554Z",
+      "active": false,
+      "mode": "LIVE-DEPTH-ISOLATED",
+      "step": 5,
+      "lockedPoster": {
+        "opaqueId": "opaque-browser-fixture",
+        "globalIndex": 5,
+        "expectedBank": 0,
+        "meshBank": 0,
+        "expectedLayer": 5,
+        "loadedFlag": 255
+      },
+      "modeVerdicts": {
+        "LIVE-NORMAL": "UNKNOWN",
+        "LIVE-BASE": "UNKNOWN",
+        "LIVE-LOD0": "UNKNOWN",
+        "LIVE-LOD1": "UNKNOWN",
+        "LIVE-LOD2": "UNKNOWN",
+        "LIVE-LOD3": "UNKNOWN",
+        "LIVE-LINEAR": "UNKNOWN",
+        "LIVE-UNLIT": "UNKNOWN",
+        "LIVE-DEPTH-ISOLATED": "BLACK"
+      },
+      "bankInvariant": {
+        "checkedSlots": 0,
+        "bankMismatchCount": 0,
+        "layerOutOfRangeCount": 0,
+        "missingIndexCount": 0,
+        "invalidLoadedFlagCount": 0,
+        "pass": true
+      },
+      "samples": [
+        {
+          "timestamp": "2026-08-19T04:39:41.205Z",
+          "elapsedMs": 2509.199999988079,
+          "phase": "baseline",
+          "mode": "LIVE-NORMAL",
+          "fps": null,
+          "meanMs": null,
+          "onePercentLowFps": null,
+          "p95Ms": null,
+          "p99Ms": null,
+          "worstMs": null,
+          "frameCount": 2,
+          "targetHz": 72,
+          "supportedHz": [
+            72,
+            80,
+            90,
+            120
+          ],
+          "framebufferWidth": 800,
+          "framebufferHeight": 600,
+          "framebufferScale": 0.8,
+          "foveation": 0.5,
+          "drawCalls": 0,
+          "triangles": 0,
+          "textures": 136,
+          "programs": 50,
+          "posterBankCount": 1,
+          "renderBatchCount": 46,
+          "lockedPosterOpaqueId": null,
+          "globalIndex": null,
+          "expectedBank": null,
+          "meshBank": null,
+          "expectedLayer": null,
+          "loadedFlag": null,
+          "detailPhase": null,
+          "focusPhase": null,
+          "focusUploadProgress": 0.5333333333333333,
+          "pendingBase": 0,
+          "pendingNear": 0,
+          "pendingFocus": 0,
+          "gpuUploadBytes": 1310720,
+          "gpuUploadSubmitMs": 5492.000000119209,
+          "decodeMs": 1892.5,
+          "viewerDistanceM": null,
+          "viewerYawToPosterDeg": null
+        },
+        {
+          "timestamp": "2026-08-19T04:39:43.607Z",
+          "elapsedMs": 4919,
+          "phase": "baseline",
+          "mode": "LIVE-NORMAL",
+          "fps": null,
+          "meanMs": null,
+          "onePercentLowFps": null,
+          "p95Ms": null,
+          "p99Ms": null,
+          "worstMs": null,
+          "frameCount": 8,
+          "targetHz": 72,
+          "supportedHz": [
+            72,
+            80,
+            90,
+            120
+          ],
+          "framebufferWidth": 800,
+          "framebufferHeight": 600,
+          "framebufferScale": 0.8,
+          "foveation": 0.5,
+          "drawCalls": 3392,
+          "triangles": 4472348,
+          "textures": 142,
+          "programs": 54,
+          "posterBankCount": 1,
+          "renderBatchCount": 46,
+          "lockedPosterOpaqueId": null,
+          "globalIndex": null,
+          "expectedBank": null,
+          "meshBank": null,
+          "expectedLayer": null,
+          "loadedFlag": null,
+          "detailPhase": null,
+          "focusPhase": null,
+          "focusUploadProgress": 0.5333333333333333,
+          "pendingBase": 0,
+          "pendingNear": 0,
+          "pendingFocus": 0,
+          "gpuUploadBytes": 1310720,
+          "gpuUploadSubmitMs": 5492.000000119209,
+          "decodeMs": 1892.5,
+          "viewerDistanceM": null,
+          "viewerYawToPosterDeg": null
+        },
+        {
+          "timestamp": "2026-08-19T04:39:43.648Z",
+          "elapsedMs": 1000,
+          "phase": "approach",
+          "mode": "LIVE-DEPTH-ISOLATED",
+          "fps": 60,
+          "meanMs": 16.67,
+          "onePercentLowFps": 55,
+          "p95Ms": 18,
+          "p99Ms": 20,
+          "worstMs": 24,
+          "frameCount": 60,
+          "targetHz": 72,
+          "supportedHz": [
+            72,
+            90
+          ],
+          "framebufferWidth": 1832,
+          "framebufferHeight": 1920,
+          "framebufferScale": 1,
+          "foveation": 0.5,
+          "drawCalls": 10,
+          "triangles": 100,
+          "textures": 4,
+          "programs": 2,
+          "posterBankCount": 1,
+          "renderBatchCount": 2,
+          "lockedPosterOpaqueId": "opaque-browser-fixture",
+          "globalIndex": 5,
+          "expectedBank": 0,
+          "meshBank": 0,
+          "expectedLayer": 5,
+          "loadedFlag": 255,
+          "detailPhase": "ready",
+          "focusPhase": "pendingUpload",
+          "focusUploadProgress": 0.5,
+          "pendingBase": 0,
+          "pendingNear": 0,
+          "pendingFocus": 1,
+          "gpuUploadBytes": 1228800,
+          "gpuUploadSubmitMs": 1.2,
+          "decodeMs": 4.5,
+          "viewerDistanceM": 3,
+          "viewerYawToPosterDeg": 35
+        }
+      ],
+      "events": [
+        {
+          "timestamp": "2026-08-19T04:37:31.340Z",
+          "type": "session_reset"
+        },
+        {
+          "timestamp": "2026-08-19T04:37:31.343Z",
+          "type": "test_started"
+        },
+        {
+          "timestamp": "2026-08-19T04:39:38.688Z",
+          "type": "xr_started"
+        },
+        {
+          "timestamp": "2026-08-19T04:39:43.643Z",
+          "type": "poster_locked",
+          "value": "opaque-browser-fixture"
+        },
+        {
+          "timestamp": "2026-08-19T04:39:43.644Z",
+          "type": "mode_changed",
+          "value": "LIVE-BASE"
+        },
+        {
+          "timestamp": "2026-08-19T04:39:43.644Z",
+          "type": "mode_changed",
+          "value": "LIVE-LOD0"
+        },
+        {
+          "timestamp": "2026-08-19T04:39:43.644Z",
+          "type": "mode_changed",
+          "value": "LIVE-LOD1"
+        },
+        {
+          "timestamp": "2026-08-19T04:39:43.645Z",
+          "type": "mode_changed",
+          "value": "LIVE-LOD2"
+        },
+        {
+          "timestamp": "2026-08-19T04:39:43.646Z",
+          "type": "mode_changed",
+          "value": "LIVE-LOD3"
+        },
+        {
+          "timestamp": "2026-08-19T04:39:43.646Z",
+          "type": "mode_changed",
+          "value": "LIVE-LINEAR"
+        },
+        {
+          "timestamp": "2026-08-19T04:39:43.647Z",
+          "type": "mode_changed",
+          "value": "LIVE-UNLIT"
+        },
+        {
+          "timestamp": "2026-08-19T04:39:43.647Z",
+          "type": "mode_changed",
+          "value": "LIVE-DEPTH-ISOLATED"
+        },
+        {
+          "timestamp": "2026-08-19T04:39:43.647Z",
+          "type": "mode_verdict",
+          "value": "LIVE-DEPTH-ISOLATED:BLACK"
+        },
+        {
+          "timestamp": "2026-08-19T04:39:45.554Z",
+          "type": "xr_ended"
+        }
+      ],
+      "environment": "IWER_EMULATED",
+      "questHardware": "NOT_EXECUTED"
+    },
+    "result": "JP-4A Round 5B.3\nBuild: 845046171a168028f823f73556499c0a4898d1bc\nSession: jp4a-mszloll8-e466d935\nEnvironment: IWER_EMULATED\nQUEST_HARDWARE: NOT_EXECUTED\n\nBaseline FPS: --\nApproach FPS: 60.0 FPS (1 samples)\nFocus transition FPS: --\nFocus settled FPS: --\n\nLocked poster: opaque-browser-fixture\nLIVE-NORMAL: UNKNOWN\nLIVE-BASE: UNKNOWN\nLIVE-LOD0: UNKNOWN\nLIVE-LOD1: UNKNOWN\nLIVE-LOD2: UNKNOWN\nLIVE-LOD3: UNKNOWN\nLIVE-LINEAR: UNKNOWN\nLIVE-UNLIT: UNKNOWN\nLIVE-DEPTH-ISOLATED: BLACK\n\nBank invariant: PASS\nBank mismatches: 0\nLayer out of range: 0\nMissing indices: 0\nInvalid loaded flags: 0\n\nFocus: phase=pendingUpload decode=4.50ms gpu-submit=1.20ms bytes=1228800 progress=50%\n\nIWER_EMULATED is NOT HARDWARE VISUAL PROOF.\nNotes: paste any visual observations below this line.",
+    "hasCopyResult": true,
+    "hasCopyJson": true
+  },
+  "normalConsoleAbsent": true,
+  "privacy": {
+    "containsTitle": false,
+    "opaqueOnly": true
+  },
+  "seriousErrors": [],
+  "knownDemoResourceErrors": 9
+}

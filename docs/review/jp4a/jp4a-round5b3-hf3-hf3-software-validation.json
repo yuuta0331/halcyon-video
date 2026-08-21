@@ -1,0 +1,120 @@
+{
+  "phase": "ROUND5B3_HF3_HF3_JP4A_CONSOLE_ENTRY_UI_CORRECTION",
+  "finalState": "READY_FOR_SINGLE_QUEST_JP4A_ROUND5B3_DIAGNOSTIC_RETRY",
+  "QUEST_HARDWARE": "ATTEMPTED_BUT_DIAGNOSTIC_NOT_STARTED",
+  "hardwareAttempt": {
+    "attempted": true,
+    "xrSessionEntered": false,
+    "visualDiagnosticExecuted": false,
+    "reason": "JP4A_TEST_CONSOLE_ENTRY_UI_BLOCKED",
+    "source": "USER_SUPPLIED_HARDWARE_OBSERVATION"
+  },
+  "newHardwareRunAfterFix": "NOT_EXECUTED_AFTER_FIX",
+  "questPassClaimed": false,
+  "jp4aPassClaimed": false,
+  "NOT_HARDWARE_VISUAL_PROOF": true,
+  "classification": "IWER_EMULATED",
+  "implementationTestedHead": "f92ca7554f9360949130e23f6ebf32458a5045ac",
+  "evidenceCommitHead": "NEWER_THAN_TESTED_SOURCE",
+  "previousReviewedHead": "f8b743638233095963b2589e679f94d84dfa4446",
+  "previousHf3Hf2ImplementationHead": "14c9d45f9945a4418695ef8acf1cc95518c52c2e",
+  "oldEnterVrPath": "JP4A ENTER VR -> otherDOMButton.click() -> later-registered handler -> toggleXrSession",
+  "newEnterVrPath": "JP4A ENTER VR click -> invokeJp4aEnterVr() -> enterXrSession(current scene getter) -> runXrSessionAction -> scene.enterXr() -> requestSession",
+  "syntheticClickForwardingRemoved": true,
+  "usedXrTestEnterAsPrimaryProof": false,
+  "readinessStates": [
+    "BOOTING",
+    "WAITING_FOR_STORE",
+    "XR_UNSUPPORTED",
+    "STORE_LOADING",
+    "READY_TO_ENTER_VR",
+    "ENTERING_VR",
+    "PRESENTING",
+    "ENTRY_FAILED"
+  ],
+  "storeSceneNullBehavior": "STORE_SCENE_NOT_READY visible; no silent no-op",
+  "storeLoadingBehavior": "STORE_LOADING visible; no requestSession; button disabled",
+  "xrUnsupportedBehavior": "XR_UNSUPPORTED visible; no requestSession; button disabled",
+  "entryFailureBehavior": "ENTRY_FAILED visible with machine-readable reason; retry enabled",
+  "doubleTapBehavior": "ENTERING in-flight guard; second tap does not start a second session",
+  "controllerSemanticsPreserved": {
+    "connectedEventOwnsObjectHand": true,
+    "disconnectedClearsObjectHand": true,
+    "inputSourcesIndexDoesNotRewriteObjectHand": true,
+    "noAsyncGapBetweenInstallControllersAndSetSessionEnter": true,
+    "holdNeverChangesVerdict": true,
+    "focusSelectsProductionOnce": true
+  },
+  "checks": {
+    "typescript": {
+      "command": "npx tsc --noEmit",
+      "pass": true
+    },
+    "hf3Hf3Unit": {
+      "file": "tests/jp4a-round5b3-hf3-hf3.test.ts",
+      "pass": true,
+      "tests": 18,
+      "failed": 0
+    },
+    "targeted": {
+      "command": "node --experimental-strip-types --test tests/jp4a-round5b3-hf3-hf3.test.ts tests/jp4a-round5b3-hf3-hf2.test.ts tests/jp4a-round5b3-hf3-hf1.test.ts tests/jp4a-round5b3-hf3.test.ts tests/jp4a-round5b3-hf2.test.ts tests/jp4a-round5b3-hf1.test.ts tests/jp4a-round5b3.test.ts tests/poster-focus.test.ts tests/upload-admission.test.ts tests/xr-viewer-pose.test.ts tests/hw-diag-production.test.ts tests/xr-hardware-diag.test.ts tests/xr-lifecycle.test.ts tests/xr-session-request.test.ts tests/xr-entry-order.test.ts tests/xr-startup-journal.test.ts tests/store-visible-work.test.ts tests/xr.test.ts tests/boot-readiness.test.ts",
+      "pass": true,
+      "tests": 200,
+      "failed": 0
+    },
+    "fullUnit": {
+      "command": "npm test",
+      "pass": true,
+      "tests": 639,
+      "failed": 0
+    },
+    "productionBuild": {
+      "command": "npm run build",
+      "pass": true,
+      "includes": [
+        "file-budget",
+        "signage-slot-validation",
+        "typescript",
+        "vite-production-build"
+      ]
+    },
+    "browserIwerIntegration": {
+      "command": "npm run test:jp4a-round5b3-hf3-hf3",
+      "pass": true,
+      "classification": "IWER_EMULATED",
+      "NOT_HARDWARE_VISUAL_PROOF": true,
+      "iwerCannotProveQuestUserActivation": true,
+      "QUEST_HARDWARE": "ATTEMPTED_BUT_DIAGNOSTIC_NOT_STARTED",
+      "newHardwareRunAfterFix": "NOT_EXECUTED_AFTER_FIX",
+      "implementationTestedHead": "f92ca7554f9360949130e23f6ebf32458a5045ac",
+      "usedXrTestEnter": false,
+      "validated": [
+        "actual START JP-4A TEST DOM click starts one session",
+        "console hide + JP-4A TEST reopen",
+        "actual ENTER VR DOM click after READY_TO_ENTER_VR",
+        "authoritative enterXrSession path invoked once per session",
+        "no __xrTest.enter() as primary ENTER VR proof",
+        "no synthetic xr-enter-btn / btn-enter-vr click",
+        "emulated world render starts",
+        "CONTINUE TO STORE hides console; reopen restores; session unchanged",
+        "COPY RESULT visible COPIED RESULT",
+        "COPY JSON visible COPIED JSON",
+        "RESET then second START + ENTER",
+        "normal URL console absent and production Enter VR still present",
+        "live shelf invariant checkedSlots=3692 PASS"
+      ],
+      "evidence": "docs/review/jp4a/jp4a-round5b3-hf3-hf3-iwer.json"
+    }
+  },
+  "softwareEvidence": {
+    "bankInvariantZeroSlot": "NOT_EXERCISED",
+    "iwerLiveShelfInvariant": "PASS",
+    "iwerLiveShelfCheckedSlots": 3692,
+    "productionWalkInteractRangeFt": 14,
+    "jp4aDiagnosticLockRangeM": 12,
+    "focusActualTexSubImageChunks": "PRESERVED",
+    "implementationCiRunId": 32282973429,
+    "implementationCiConclusion": "success"
+  },
+  "nextStep": "Independent review, then exactly one fresh Quest 3 Round 5B.3 diagnostic retry on /xr-test/jp4a after ENTER VR reports READY. Do not start JP-4B. Do not create HF3-HF4. Do not reuse the blocked attempt as visual evidence."
+}

@@ -13,9 +13,19 @@ import { spawn, execFileSync } from "node:child_process";
 import * as net from "node:net";
 // @ts-expect-error plain-js module, no declarations (see header note)
 import { remotePlayPlugin } from "./tools/remote-play-server.mjs";
+// @ts-expect-error plain-js module, no declarations (see header note)
+import { readGitHead, resolveHalcyonBuildIdentity } from "./tools/halcyon-build-identity.mjs";
 
 // @ts-expect-error process is a nodejs global
 const host = process.env.TAURI_DEV_HOST;
+
+// Source HEAD is the PR/worktree commit. GitHub pull_request GITHUB_SHA is the
+// merge ref and is exposed separately as the tested/checkout SHA.
+const injectedIdentity = resolveHalcyonBuildIdentity(
+  // @ts-expect-error process is a nodejs global
+  process.env,
+  readGitHead(execFileSync, import.meta.dirname),
+);
 
 // ─── Which Host headers this server answers to ────────────────────────────────
 //
@@ -497,6 +507,11 @@ function hostGuardPlugin() {
 
 // https://vite.dev/config/
 export default defineConfig(async () => ({
+  define: {
+    __HALCYON_BUILD_SHA__: JSON.stringify(injectedIdentity.sourceHeadSha),
+    __HALCYON_SOURCE_HEAD_SHA__: JSON.stringify(injectedIdentity.sourceHeadSha),
+    __HALCYON_TESTED_SHA__: JSON.stringify(injectedIdentity.testedSha),
+  },
   plugins: [
     // First: everything below it answers only to an allowed Host header.
     hostGuardPlugin(),

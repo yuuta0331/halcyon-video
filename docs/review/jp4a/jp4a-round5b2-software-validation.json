@@ -1,0 +1,52 @@
+{
+  "phase": "ROUND5B.2_DIAGNOSTIC_CORRECTION_AND_BROAD_INVESTIGATION",
+  "worktreeBaseHead": "bca93659eccf5f40d5a4d7c954a63368870b5c80",
+  "classifications": [
+    "UNIT",
+    "DESKTOP_BROWSER",
+    "IWER_EMULATED"
+  ],
+  "QUEST_HARDWARE": "NOT_EXECUTED",
+  "targeted": {
+    "pass": true,
+    "tests": 35,
+    "failures": 0
+  },
+  "fullUnit": {
+    "pass": true,
+    "tests": 555,
+    "failures": 0
+  },
+  "productionBuild": {
+    "pass": true
+  },
+  "browserResourceHarness": {
+    "pass": true,
+    "scenarios": 19,
+    "failures": 0,
+    "samplerWarnings": 0,
+    "unexpectedSeriousErrors": 0
+  },
+  "iwerHarness": {
+    "pass": true,
+    "scenarios": 16,
+    "failures": 0,
+    "samplerWarnings": 0,
+    "unexpectedSeriousErrors": 0,
+    "classification": "IWER_EMULATED",
+    "note": "NOT HARDWARE VISUAL PROOF"
+  },
+  "round5b2Iwer": {
+    "normalUrlFixtureAbsent": true,
+    "freshViewerPosePlacement": true,
+    "viewerEyeHeightM": 1.600000023841858,
+    "posterHeightM": 1.600000023841858,
+    "posterWorldStable": true,
+    "modeHudFollowsViewer": true,
+    "fpsHudVisible": true,
+    "fpsModeHudOverlap": false,
+    "modeCycle": ["A", "B", "C", "D", "E", "A"],
+    "contextLost": false,
+    "telemetryPopulated": true
+  }
+}

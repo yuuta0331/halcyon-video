@@ -8,101 +8,102 @@
     "xrTest": true,
     "diag": {
       "marks": {
-        "appStart": 283.1000000014901,
-        "credentialStart": 395,
-        "credentialEnd": 395,
-        "catalogStart": 395,
-        "catalogEnd": 423.4000000022352,
-        "sidecarsStart": 423.4000000022352,
-        "sidecarsEnd": 423.4000000022352,
-        "baseFontsStart": 423.4000000022352,
-        "brandPackStart": 423.5,
-        "brandPackEnd": 496.9000000022352,
-        "baseFontsEnd": 496.9000000022352,
-        "qualityCalibrationStart": 3853.10000000149,
-        "qualityCalibrationEnd": 4823.800000000745,
-        "threeSceneImportStart": 4823.900000002235,
-        "threeSceneImportEnd": 5431.400000002235,
-        "storeSceneConstructStart": 5431.400000002235,
-        "storeSceneConstructEnd": 25008.70000000298,
-        "criticalTextureReady": 32757.60000000149,
-        "storeInteractive": 32757.60000000149
+        "appStart": 298.69999998807907,
+        "credentialStart": 414,
+        "credentialEnd": 414,
+        "catalogStart": 414,
+        "catalogEnd": 433.59999999403954,
+        "sidecarsStart": 433.59999999403954,
+        "sidecarsEnd": 433.59999999403954,
+        "baseFontsStart": 433.69999998807907,
+        "brandPackStart": 433.69999998807907,
+        "brandPackEnd": 495.7999999821186,
+        "baseFontsEnd": 495.7999999821186,
+        "qualityCalibrationStart": 5690.699999988079,
+        "qualityCalibrationEnd": 6669.299999982119,
+        "threeSceneImportStart": 6669.299999982119,
+        "threeSceneImportEnd": 7348.799999982119,
+        "storeSceneConstructStart": 7348.9000000059605,
+        "storeSceneConstructEnd": 28880.40000000596,
+        "criticalTextureReady": 75099,
+        "storeInteractive": 75099,
+        "allTexturesSettled": 75135.40000000596
       },
-      "qualityCalibrationMs": 970.6999999992549,
-      "storeSceneConstructMs": 19577.300000000745,
-      "timeToInteractive": 32474.5,
-      "timeToFullTextures": null,
-      "criticalReadyBeforeAllTextures": null,
+      "qualityCalibrationMs": 978.5999999940395,
+      "storeSceneConstructMs": 21531.5,
+      "timeToInteractive": 74800.30000001192,
+      "timeToFullTextures": 74836.70000001788,
+      "criticalReadyBeforeAllTextures": true,
       "construct": {
         "stages": [
           {
             "name": "initThree",
-            "ms": 760.1000000014901
+            "ms": 859.2999999821186
           },
           {
             "name": "setupLighting",
-            "ms": 0.6999999992549419
+            "ms": 0.9000000059604645
           },
           {
             "name": "exterior",
-            "ms": 37
+            "ms": 44.400000005960464
           },
           {
             "name": "carpetTextures",
-            "ms": 158.89999999850988
+            "ms": 162.40000000596046
           },
           {
             "name": "wallTextures",
-            "ms": 306
+            "ms": 330
           },
           {
             "name": "aisleShelving",
-            "ms": 25.699999999254942
+            "ms": 25.19999998807907
           },
           {
             "name": "floorAO",
-            "ms": 0.8999999985098839
+            "ms": 2.100000023841858
           },
           {
             "name": "signage",
-            "ms": 210.39999999850988
+            "ms": 236.09999999403954
           },
           {
             "name": "buildStore",
-            "ms": 1768.699999999255
+            "ms": 1835.0999999940395
           },
           {
             "name": "bakeEnvironment",
-            "ms": 0
+            "ms": 0.09999999403953552
           },
           {
             "name": "textureArrayInit",
-            "ms": 0.5
+            "ms": 3.5999999940395355
           },
           {
             "name": "buildAllMovieBoxes",
-            "ms": 130.40000000223517
+            "ms": 207
           },
           {
             "name": "rebuildMovieBoxes",
-            "ms": 19.299999997019768
+            "ms": 17.400000005960464
           }
         ],
         "top3": [
           {
             "name": "buildStore",
-            "ms": 1768.699999999255
+            "ms": 1835.0999999940395
           },
           {
             "name": "initThree",
-            "ms": 760.1000000014901
+            "ms": 859.2999999821186
           },
           {
             "name": "wallTextures",
-            "ms": 306
+            "ms": 330
           }
         ],
-        "totalMs": 3418.5999999940395
+        "totalMs": 3723.5999999940395
       }
     }
   },
@@ -183,12 +184,12 @@
       "quality": {
         "n8ao": false,
         "postprocessing": "none",
-        "framebufferScale": 0.5
+        "framebufferScale": 0.8
       },
       "performance": {
         "targetHz": null,
         "supportedHz": null,
-        "framebufferScale": 0.5,
+        "framebufferScale": 0.8,
         "frameCount": 0,
         "lastFrameDtMs": null
       },
@@ -214,29 +215,29 @@
         "immersiveVrSupported": true,
         "rendererPresenting": true,
         "referenceSpace": "local-floor",
-        "sessionStartAt": 34155.20000000298
+        "sessionStartAt": 75589.29999998212
       },
       "startup": {
-        "requestSessionStart": 34153.5,
-        "requestSessionEnd": 34155.20000000298,
-        "referenceSpaceStart": 34155.5,
-        "referenceSpaceEnd": 34155.5,
-        "makeXRCompatibleStart": 34158.900000002235,
-        "makeXRCompatibleEnd": 34159.10000000149,
+        "requestSessionStart": 75587.59999999404,
+        "requestSessionEnd": 75589.29999998212,
+        "referenceSpaceStart": 75589.69999998808,
+        "referenceSpaceEnd": 75589.69999998808,
+        "makeXRCompatibleStart": 75593.09999999404,
+        "makeXRCompatibleEnd": 75593.19999998808,
         "makeXRCompatibleError": null,
-        "targetFrameRateStart": 34225.70000000298,
-        "targetFrameRateEnd": 34226.60000000149,
-        "targetFrameRateRequestedAt": 34225.70000000298,
-        "targetFrameRateResolvedAt": 34226.60000000149,
+        "targetFrameRateStart": 75606.79999998212,
+        "targetFrameRateEnd": 75607.59999999404,
+        "targetFrameRateRequestedAt": 75606.79999998212,
+        "targetFrameRateResolvedAt": 75607.59999999404,
         "targetFrameRateError": null,
         "frameratechangeCount": 1,
-        "rendererSetSessionStart": 34159.400000002235,
-        "rendererSetSessionEnd": 34219.20000000298,
-        "firstAnimationCallbackAt": 34224.5,
-        "firstDirectRenderStart": 34224.800000000745,
-        "firstDirectRenderEnd": 34225.60000000149,
-        "firstWorldRenderCompletedAt": 34225.60000000149,
-        "firstVisibleFrameAt": 34225.60000000149,
+        "rendererSetSessionStart": 75593.5,
+        "rendererSetSessionEnd": 75596.69999998808,
+        "firstAnimationCallbackAt": 75605.5,
+        "firstDirectRenderStart": 75605.79999998212,
+        "firstDirectRenderEnd": 75606.69999998808,
+        "firstWorldRenderCompletedAt": 75606.69999998808,
+        "firstVisibleFrameAt": 75606.69999998808,
         "lastCompletedStage": "targetFrameRateEnd",
         "lastError": null,
         "contextXrCompatibleBefore": false,
@@ -284,7 +285,7 @@
       "quality": {
         "n8ao": false,
         "postprocessing": "none",
-        "framebufferScale": 0.5
+        "framebufferScale": 0.8
       },
       "performance": {
         "targetHz": 72,
@@ -294,9 +295,9 @@
           90,
           120
         ],
-        "framebufferScale": 0.5,
+        "framebufferScale": 0.8,
         "frameCount": 5,
-        "lastFrameDtMs": 1.1000000014901161
+        "lastFrameDtMs": 4.299999982118607
       },
       "flags": {
         "minimal": true,
@@ -404,7 +405,7 @@
       "quality": {
         "n8ao": false,
         "postprocessing": "none",
-        "framebufferScale": 0.5
+        "framebufferScale": 0.8
       },
       "performance": {
         "targetHz": 72,
@@ -414,7 +415,7 @@
           90,
           120
         ],
-        "framebufferScale": 0.5,
+        "framebufferScale": 0.8,
         "frameCount": 0,
         "lastFrameDtMs": null
       },
@@ -440,29 +441,29 @@
         "immersiveVrSupported": true,
         "rendererPresenting": true,
         "referenceSpace": "local-floor",
-        "sessionStartAt": 36859.70000000298
+        "sessionStartAt": 81560.29999998212
       },
       "startup": {
-        "requestSessionStart": 36859.20000000298,
-        "requestSessionEnd": 36859.70000000298,
-        "referenceSpaceStart": 36859.800000000745,
-        "referenceSpaceEnd": 36859.800000000745,
-        "makeXRCompatibleStart": 36860.5,
-        "makeXRCompatibleEnd": 36860.60000000149,
+        "requestSessionStart": 81559.69999998808,
+        "requestSessionEnd": 81560.29999998212,
+        "referenceSpaceStart": 81560.5,
+        "referenceSpaceEnd": 81560.5,
+        "makeXRCompatibleStart": 81561.69999998808,
+        "makeXRCompatibleEnd": 81561.69999998808,
         "makeXRCompatibleError": null,
-        "targetFrameRateStart": 36882.60000000149,
-        "targetFrameRateEnd": 36882.900000002235,
-        "targetFrameRateRequestedAt": 36882.60000000149,
-        "targetFrameRateResolvedAt": 36882.900000002235,
+        "targetFrameRateStart": 81614,
+        "targetFrameRateEnd": 81614.90000000596,
+        "targetFrameRateRequestedAt": 81614,
+        "targetFrameRateResolvedAt": 81614.90000000596,
         "targetFrameRateError": null,
         "frameratechangeCount": 1,
-        "rendererSetSessionStart": 36860.60000000149,
-        "rendererSetSessionEnd": 36865.20000000298,
-        "firstAnimationCallbackAt": 36874.300000000745,
-        "firstDirectRenderStart": 36874.400000002235,
-        "firstDirectRenderEnd": 36882.400000002235,
-        "firstWorldRenderCompletedAt": 36882.400000002235,
-        "firstVisibleFrameAt": 36882.400000002235,
+        "rendererSetSessionStart": 81561.79999998212,
+        "rendererSetSessionEnd": 81596.5,
+        "firstAnimationCallbackAt": 81603.19999998808,
+        "firstDirectRenderStart": 81603.69999998808,
+        "firstDirectRenderEnd": 81613.5,
+        "firstWorldRenderCompletedAt": 81613.5,
+        "firstVisibleFrameAt": 81613.5,
         "lastCompletedStage": "targetFrameRateEnd",
         "lastError": null,
         "contextXrCompatibleBefore": false,
@@ -510,7 +511,7 @@
       "quality": {
         "n8ao": false,
         "postprocessing": "none",
-        "framebufferScale": 0.5
+        "framebufferScale": 0.8
       },
       "performance": {
         "targetHz": 72,
@@ -520,9 +521,9 @@
           90,
           120
         ],
-        "framebufferScale": 0.5,
-        "frameCount": 87,
-        "lastFrameDtMs": 0.5
+        "framebufferScale": 0.8,
+        "frameCount": 81,
+        "lastFrameDtMs": 3.5
       },
       "flags": {
         "minimal": true,

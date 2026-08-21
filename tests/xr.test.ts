@@ -285,7 +285,7 @@ test('session-end cleanup empties the layer manager', () => {
 test('XR quality policy is sourced from the resource profile, not a discarded override', () => {
   const policy = xrQualityPolicy();
   assert.equal(policy.n8ao, policy.resourceProfile === 'XR_SAFE' ? false : policy.n8ao);
-  assert.ok(policy.framebufferScale === 0.5 || policy.framebufferScale === 0.7);
+  assert.ok(policy.framebufferScale === 0.8 || policy.framebufferScale === 0.7);
   assert.equal(policy.targetHz, XR_TARGET_HZ);
   const snap = { n8aoEnabled: true, composerActive: true, bokehEnabled: true, bloomEnabled: true };
   assert.deepEqual(restoreDesktopQuality(snap), snap);

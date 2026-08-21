@@ -1,0 +1,28 @@
+{
+  "name": "JP4A_CAPACITY_256_2001",
+  "classification": "SOFTWARE_PLANNING_TEST",
+  "evidenceKind": "PLANNING_ONLY",
+  "pass": true,
+  "plan": {
+    "name": "JP4A_CAPACITY_256_2001",
+    "classification": "SOFTWARE_PLANNING_TEST",
+    "evidenceKind": "PLANNING_ONLY",
+    "titles": 2001,
+    "maxArrayTextureLayers": 256,
+    "bankCount": 8,
+    "layersPerBank": 256,
+    "renderBatchCount": 8,
+    "samplersPerDraw": 1,
+    "actuallyRenderableTitles": 2001,
+    "logicalMappedTitles": 2001,
+    "expectedTitles": 2001,
+    "capacityOk": true,
+    "evictionWindow": false,
+    "cpuBytesActive": 110647296,
+    "cpuBytesAllocated": 113246208,
+    "gpuBytesEstimated": 150994944,
+    "width": 96,
+    "height": 144,
+    "duplicateOwners": 0
+  }
+}

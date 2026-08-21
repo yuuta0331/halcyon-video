@@ -26,9 +26,14 @@ export function getLocale(): Locale {
   return current;
 }
 
+/** In-memory locale only. Persistence belongs to the settings registry. */
+export function activateLocale(locale: Locale): void {
+  current = locale;
+}
+
 /** Persist and activate a locale. Callers that paint chrome should reload. */
 export function setLocale(locale: Locale): void {
-  current = locale;
+  activateLocale(locale);
   if (typeof localStorage === 'undefined') return;
   try {
     localStorage.setItem(LOCALE_KEY, locale);

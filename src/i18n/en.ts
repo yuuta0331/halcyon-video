@@ -515,6 +515,31 @@ export const en = {
   'help.xr.move.hint': 'Left stick moves. Right stick snaps 30°. Collision matches Walk Mode.',
   'help.xr.select.action': 'Point and select',
   'help.xr.select.hint': 'Controller ray + trigger. Physical grabbing is a later phase.',
+  'xr.panel.menu': 'A / X: open the in-headset menu',
+  'xr.menu.title': 'HALCYON VIDEO — MENU',
+  'xr.menu.hint': 'Trigger selects  •  Squeeze closes  •  Stick moves',
+  'xr.menu.settings': 'Settings',
+  'xr.menu.exitVr': 'Exit VR',
+  'xr.menu.close': 'Close menu',
+  'xr.settings.title': 'STORE SETTINGS',
+  'xr.settings.hint': 'Stick changes a value  •  Trigger activates  •  Apply to save',
+  'xr.settings.quality': 'XR graphics',
+  'xr.settings.qualityHint': 'Desktop quality does not apply in XR_SAFE',
+  'xr.settings.apply': 'Apply',
+  'xr.settings.cancel': 'Cancel',
+
+  'xr.controls.stickNav': '↑↓ Stick     move between items',
+  'xr.controls.confirm': 'Trigger / A·X     confirm',
+  'xr.controls.back': 'Grip     back',
+  'xr.controls.stickValue': '←→ Stick     change a value',
+  'xr.menu.legend': '↑↓ Stick  move  •  Trigger / A·X  confirm  •  Grip  back  •  ←→ Stick  change value',
+  'xr.settings.legend': '↑↓ Stick  move  •  Trigger / A·X  confirm  •  Grip  back  •  ←→ Stick  change value',
+
+  'store.preload.title': 'Preparing the store',
+  'store.preload.posters': 'Posters {done} / {total}',
+  'store.preload.signage': 'Signs {done} / {total}',
+  'store.preload.other': 'Other {done} / {total}',
+  'store.preload.waitVr': 'Enter VR when the store is ready.',
 } as const;
 
 export type MessageKey = keyof typeof en;

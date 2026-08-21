@@ -71,3 +71,8 @@ export { xrEntryShouldShow, applyXrEntryVisibility, XR_ENTER_BUTTON_ID, XR_HUD_B
 export { planMediaLayer, xrMediaLayerFlag } from './media';
 export { XrRuntime } from './runtime';
 export type { XrRuntimeHost } from './runtime';
+export { xrUiActions, XR_STANDARD_BUTTON } from './ui-input';
+export { uiOwnsInput, locomotionAllowed, worldSelectAllowed } from './ui-mode';
+export { xrContentSnapshot, requiredWorldContentParity, worldRequiredReady, onDemandReady } from './content-diagnostics';
+export { worldRequiredContentClasses, onDemandRequiredContentClasses } from './content-classes';
+export { xrSettingExposure, xrDesktopQualityAffectsXr } from './settings-policy';

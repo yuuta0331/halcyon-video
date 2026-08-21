@@ -24,6 +24,7 @@ export function xrPanelContent(opts: {
       t('xr.panel.move'),
       t('xr.panel.turn'),
       t('xr.panel.select'),
+      t('xr.panel.menu'),
       t('xr.panel.exit'),
       `${t('xr.panel.space')}: ${opts.referenceSpace ?? '—'}`,
       `${t('xr.panel.hz')}: ${opts.targetHz ?? '—'}`,

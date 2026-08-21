@@ -1820,7 +1820,7 @@ export class StoreScene {
     // Create camera
     this.camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 1000);
     this.camera.position.copy(this.currentCameraPos);
-    this.camera.layers.enable(1);
+    this.camera.layers.enable(1); this.camera.layers.enable(3);
     
     // Create renderer
     // antialias: false — every frame goes through EffectComposer (an offscreen
@@ -6188,7 +6188,7 @@ export class StoreScene {
   public toggleWalkAround() { return walk.toggleWalkAround(this); }
 
   public probeXr() { return xrBind.probeXr(this); }
-  public enterXr() { return xrBind.enterXr(this); }
+  public enterXr(opts?: { allowUnverifiedSupport?: boolean }) { return xrBind.enterXr(this, opts); }
   public exitXr() { return xrBind.exitXr(this); }
 
   private restoreDesktopAnimationLoop() {

@@ -6,6 +6,7 @@ import {
   setActiveResourceProfile,
   type ResourceProfile,
 } from './resource-profile';
+import { setTestPosterArrayLayerCeiling } from './test-array-layer-ceiling';
 import { applyPosterCacheBudgets } from '../video-case';
 import {
   attachContextLossDiagnostics,
@@ -22,11 +23,18 @@ export function bindStoreResourceProfile(
     gl: gl as never,
     maxTextures: renderer.capabilities.maxTextures,
   });
+  const flags = readResourceFlags();
+  if (flags.multibank) {
+    setTestPosterArrayLayerCeiling(flags.posterLayers ?? 8);
+  } else {
+    setTestPosterArrayLayerCeiling(null);
+  }
   const profile = setActiveResourceProfile(selectResourceProfile({
     caps,
-    flags: readResourceFlags(),
+    flags,
     userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : '',
     isTauri: !!(window as unknown as { __TAURI_INTERNALS__?: unknown }).__TAURI_INTERNALS__,
+    presentation: 'INLINE',
   }), caps);
   applyPosterCacheBudgets(profile.poster.heroCacheBytes, profile.poster.shelfCacheBytes);
   installGpuDiagnostics();

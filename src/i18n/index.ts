@@ -20,6 +20,7 @@ export { LOCALES, isLocale } from './types.ts';
 export { en } from './en.ts';
 export { ja } from './ja.ts';
 export {
+  activateLocale,
   detectBrowserLocale,
   getLocale,
   LOCALE_KEY,

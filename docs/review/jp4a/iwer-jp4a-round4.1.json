@@ -1,0 +1,343 @@
+{
+  "visualReady": true,
+  "pendingBaseAtEntry": 0,
+  "pendingBaseUploadAtEntry": 0,
+  "worldReadyBefore": true,
+  "requiredReadyBefore": true,
+  "entered": {
+    "ok": true
+  },
+  "framebufferScale": 0.8,
+  "foveation": 0.5,
+  "menuLegend": [
+    "↑↓ スティック   項目移動",
+    "トリガー / A・X   決定",
+    "グリップ          戻る",
+    "←→ スティック   値変更"
+  ],
+  "menuAfterUp": {
+    "title": "ハルシオンビデオ — メニュー",
+    "hint": "トリガーで決定  •  グリップで閉じる  •  スティックで移動",
+    "legend": [
+      "↑↓ スティック   項目移動",
+      "トリガー / A・X   決定",
+      "グリップ          戻る",
+      "←→ スティック   値変更"
+    ],
+    "rows": [
+      {
+        "label": "設定",
+        "value": "",
+        "selected": false,
+        "status": false
+      },
+      {
+        "label": "VRを終了",
+        "value": "",
+        "selected": false,
+        "status": false
+      },
+      {
+        "label": "メニューを閉じる",
+        "value": "",
+        "selected": true,
+        "status": false
+      }
+    ]
+  },
+  "menuAfterDown": {
+    "title": "ハルシオンビデオ — メニュー",
+    "hint": "トリガーで決定  •  グリップで閉じる  •  スティックで移動",
+    "legend": [
+      "↑↓ スティック   項目移動",
+      "トリガー / A・X   決定",
+      "グリップ          戻る",
+      "←→ スティック   値変更"
+    ],
+    "rows": [
+      {
+        "label": "設定",
+        "value": "",
+        "selected": true,
+        "status": false
+      },
+      {
+        "label": "VRを終了",
+        "value": "",
+        "selected": false,
+        "status": false
+      },
+      {
+        "label": "メニューを閉じる",
+        "value": "",
+        "selected": false,
+        "status": false
+      }
+    ]
+  },
+  "afterPrimary": "SETTINGS",
+  "fpsOn": true,
+  "fpsHud": true,
+  "worldMode": "WORLD",
+  "evictionDelta": 0,
+  "reacqDelta": 0,
+  "decodeDelta": 0,
+  "contextLost": false,
+  "content": {
+    "resourceProfile": "XR_SAFE",
+    "worldReady": true,
+    "requiredReady": true,
+    "onDemandWrapsReady": false,
+    "decorativeDisabled": true,
+    "poster": {
+      "allocated": 2001,
+      "decoded": 2001,
+      "uploaded": 2001,
+      "visible": 2001,
+      "state": "ready",
+      "requirement": "WORLD_REQUIRED",
+      "activation": "idle",
+      "role": "required"
+    },
+    "wraps": {
+      "allocated": 0,
+      "decoded": 0,
+      "uploaded": 0,
+      "visible": 0,
+      "state": "pending",
+      "requirement": "ON_DEMAND_REQUIRED",
+      "activation": "idle",
+      "role": "required"
+    },
+    "signage": {
+      "allocated": 97,
+      "decoded": 97,
+      "uploaded": 97,
+      "visible": 97,
+      "state": "ready",
+      "requirement": "WORLD_REQUIRED",
+      "activation": "idle",
+      "role": "required"
+    },
+    "aisleFascia": {
+      "allocated": 97,
+      "decoded": 97,
+      "uploaded": 97,
+      "visible": 97,
+      "state": "ready",
+      "requirement": "WORLD_REQUIRED",
+      "activation": "idle",
+      "representedBy": "signage",
+      "role": "required"
+    },
+    "brandPack": {
+      "allocated": 1,
+      "decoded": 1,
+      "uploaded": 1,
+      "visible": 1,
+      "state": "ready",
+      "requirement": "WORLD_REQUIRED",
+      "activation": "idle",
+      "role": "required"
+    },
+    "canvasTextures": {
+      "allocated": 472,
+      "decoded": 472,
+      "uploaded": 472,
+      "visible": 472,
+      "state": "ready",
+      "requirement": "WORLD_REQUIRED",
+      "activation": "idle",
+      "role": "required"
+    },
+    "fixtureTextures": {
+      "allocated": 8,
+      "decoded": 8,
+      "uploaded": 8,
+      "visible": 8,
+      "state": "ready",
+      "requirement": "WORLD_REQUIRED",
+      "activation": "idle",
+      "role": "required"
+    },
+    "storeLogos": {
+      "allocated": 2,
+      "decoded": 2,
+      "uploaded": 2,
+      "visible": 2,
+      "state": "ready",
+      "requirement": "WORLD_REQUIRED",
+      "activation": "idle",
+      "role": "required"
+    },
+    "crt": {
+      "allocated": 0,
+      "decoded": 0,
+      "uploaded": 0,
+      "visible": 0,
+      "state": "pending",
+      "requirement": "ON_DEMAND_REQUIRED",
+      "activation": "idle",
+      "role": "required"
+    },
+    "floorWallMaterials": {
+      "allocated": 1,
+      "decoded": 1,
+      "uploaded": 1,
+      "visible": 1,
+      "state": "ready",
+      "requirement": "WORLD_REQUIRED",
+      "activation": "idle",
+      "role": "required"
+    },
+    "mediaSurfaces": {
+      "allocated": 0,
+      "decoded": 0,
+      "uploaded": 0,
+      "visible": 0,
+      "state": "pending",
+      "requirement": "ON_DEMAND_REQUIRED",
+      "activation": "idle",
+      "role": "required"
+    },
+    "decorativeFx": {
+      "allocated": 0,
+      "decoded": 0,
+      "uploaded": 0,
+      "visible": 0,
+      "state": "disabled",
+      "requirement": "DECORATIVE",
+      "activation": "idle",
+      "role": "decorative"
+    }
+  },
+  "perf": {
+    "FRAME": {
+      "rollingFps": 40.2585494155333,
+      "meanFrameTime": 24.839444404178195,
+      "p95": 36.099998474121094,
+      "p99": 43.20000076293945,
+      "worst": 47.099998474121094,
+      "over1389ms": 180,
+      "over20ms": 149,
+      "over333ms": 14,
+      "longFrames": 180,
+      "uiMode": null,
+      "samples": 180,
+      "note": "JavaScript inter-composite gap; not GPU time"
+    },
+    "STORE_READINESS": {
+      "state": "STORE_INTERACTIVE",
+      "visibleBaseTotal": 2001,
+      "visibleBaseUploaded": 2001,
+      "visibleBaseFallback": 0,
+      "visibleBaseMissing": 0,
+      "visualReady": true,
+      "worldReady": true,
+      "requiredReady": true,
+      "timeToVisualReady": 36472.70000001788
+    },
+    "STORE_VISIBLE_BASE": {
+      "expected": 2001,
+      "realReady": 2001,
+      "stableFallback": 0,
+      "missing": 0,
+      "pendingWork": 0,
+      "pendingUpload": 0,
+      "pendingDecode": 0,
+      "pendingWorkQueued": 0,
+      "lateRealUploadRejected": 0,
+      "staleGenerationDrops": 0,
+      "fallbackReplacementCount": 0,
+      "generation": 2
+    },
+    "UPLOAD": {
+      "pendingUploads": 0,
+      "pendingBaseUploads": 0,
+      "pendingOnDemandUploads": 0,
+      "totalUploads": 4023,
+      "staleDrops": 0,
+      "work": {
+        "generation": 2,
+        "expected": 2001,
+        "realReady": 2001,
+        "stableFallback": 0,
+        "missing": 0,
+        "pendingDecode": 0,
+        "pendingUpload": 0,
+        "pendingWork": 0,
+        "onDemandPendingWork": 0,
+        "lateRealUploadRejected": 0,
+        "staleGenerationDrops": 0,
+        "fallbackReplacementCount": 0
+      }
+    },
+    "GPU": {
+      "textures": 154,
+      "geometries": 597,
+      "programs": 55,
+      "textureHighWater": 2001,
+      "creates": 2001,
+      "disposes": 0,
+      "residentBaseTitleCount": 2001,
+      "textureBankCount": 1,
+      "selectedBaseShelfResolution": {
+        "w": 96,
+        "h": 144
+      },
+      "estimatedCpuPosterBytes": 110647296,
+      "estimatedGpuPosterBytes": 147529728
+    },
+    "RESIDENCY": {
+      "baseResidentCount": 2001,
+      "baseExpectedCount": 2001,
+      "evictionCount": 0,
+      "reacquisitionCount": 0,
+      "duplicateMappingCount": 0,
+      "invalidFreeOwnedCollisionCount": 0,
+      "mappingOk": true
+    },
+    "HIGH_RES": {
+      "requested": 1,
+      "decoded": 1,
+      "uploaded": 1,
+      "resident": 1,
+      "leased": 1,
+      "pendingPixels": 0,
+      "pendingUpload": 0,
+      "readyResident": 1,
+      "slotLimit": 64,
+      "highWater": 1,
+      "readyHighWater": 1,
+      "promoted": 1,
+      "demoted": 0,
+      "evicted": 0,
+      "reacquired": 0,
+      "staleDropped": 0,
+      "loadFailed": 0,
+      "uploadFailed": 0,
+      "lutFailed": 0,
+      "malformedDropped": 0,
+      "cpuBytesEstimated": 39321600,
+      "gpuBytesEstimated": 52428800,
+      "width": 320,
+      "height": 480,
+      "textureCreates": 1,
+      "textureDisposals": 0,
+      "arrayAllocated": true,
+      "lutOk": true,
+      "lutWidth": 2001,
+      "lutHeight": 1,
+      "lutCapacity": 2001,
+      "lutRejected": 0,
+      "lutReason": null
+    },
+    "DETAIL_GPU": {
+      "creates": 1,
+      "disposals": 0
+    }
+  },
+  "classification": "IWER_EMULATED",
+  "QUEST_HARDWARE": "NOT_EXECUTED",
+  "round": "4.1"
+}

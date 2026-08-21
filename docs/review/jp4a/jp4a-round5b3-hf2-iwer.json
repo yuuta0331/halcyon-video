@@ -1,0 +1,268 @@
+{
+  "phase": "ROUND5B3_HF2_CONTROLLER_INPUT_AND_EVIDENCE_CORRECTION",
+  "classification": "IWER_EMULATED",
+  "scope": "CONTROLLER_TAP_HOLD_AND_EXACT_HEAD_PROVENANCE",
+  "NOT_HARDWARE_VISUAL_PROOF": true,
+  "QUEST_HARDWARE": "NOT_EXECUTED",
+  "implementationTestedHead": "8dba63243a130860a6db76b433346763536db200",
+  "evidenceCommitHead": "NEWER_THAN_TESTED_SOURCE",
+  "evidenceProvenance": "IWER executed committed source 8dba63243a130860a6db76b433346763536db200. This JSON did not exist at that SHA. The git commit that adds this file is the evidence commit and must not be treated as the SHA that ran.",
+  "sourceHead": "8dba63243a130860a6db76b433346763536db200",
+  "ciCheckoutSha": "same as source",
+  "pass": true,
+  "url": "/xr-test/jp4a",
+  "controllerSeam": "jp4a_stepTrigger_runtime_state_machine",
+  "iwerRayPickBoundary": "Headless IWER controller pose is not a faithful Quest 12 m ray. Critical TAP/HOLD proof uses the same stepJp4aTrigger runtime state machine the XR poll path uses, with the first visible shelf slot as the captured hit.",
+  "before": {
+    "heading": "JP-4A TEST",
+    "start": true,
+    "meta": "Round 5B.3 HF2\nSource HEAD: 8dba63243a130860a6db76b433346763536db200\nCI checkout: same as source\nBuild: 8dba63243a130860a6db76b433346763536db200\nSession: not started"
+  },
+  "firstRun": {
+    "entered": {
+      "ok": true
+    },
+    "firstWorldRender": true,
+    "afterLock": {
+      "locked": true,
+      "phase": "LOCKED_LIVE_DIAG",
+      "verdict": "UNKNOWN",
+      "selects": 0
+    },
+    "afterBlack": {
+      "verdict": "BLACK",
+      "phase": "LOCKED_LIVE_DIAG",
+      "selects": 0,
+      "mode": "LIVE-NORMAL"
+    },
+    "afterClean": {
+      "verdict": "CLEAN",
+      "phase": "LOCKED_LIVE_DIAG"
+    },
+    "modes": [
+      "LIVE-NORMAL",
+      "LIVE-BASE",
+      "LIVE-LOD0",
+      "LIVE-LOD1",
+      "LIVE-LOD2",
+      "LIVE-LOD3",
+      "LIVE-LINEAR",
+      "LIVE-UNLIT",
+      "LIVE-DEPTH-ISOLATED"
+    ],
+    "afterApproach": {
+      "command": "BEGIN_APPROACH",
+      "phase": "APPROACH",
+      "verdictBefore": "CLEAN",
+      "verdictAfter": "CLEAN",
+      "selects": 0,
+      "releaseSelects": 0
+    },
+    "approachSamples": 2,
+    "afterFocus": {
+      "command": "BEGIN_FOCUS",
+      "phase": "FOCUS_REQUESTED",
+      "verdict": "CLEAN",
+      "selectsAtFire": 1,
+      "selectsWhileHeld": 1
+    },
+    "afterExtra": {
+      "phase": "FOCUS_REQUESTED",
+      "selects": 1,
+      "verdict": "CLEAN"
+    },
+    "iwerTrigger": {
+      "attempted": true,
+      "mutatedVerdict": false
+    },
+    "completed": true,
+    "competingLoops": null
+  },
+  "liveShelfInvariant": "PASS",
+  "invariant": {
+    "checkedSlots": 3692,
+    "bankMismatchCount": 0,
+    "layerOutOfRangeCount": 0,
+    "missingIndexCount": 0,
+    "invalidLoadedFlagCount": 0,
+    "pass": true,
+    "verdict": "PASS"
+  },
+  "afterReset": {
+    "heading": "JP-4A TEST",
+    "resetSession": {
+      "schema": 1,
+      "round": "JP-4A Round 5B.3",
+      "build": "8dba63243a130860a6db76b433346763536db200",
+      "sourceHead": "8dba63243a130860a6db76b433346763536db200",
+      "testedSha": "8dba63243a130860a6db76b433346763536db200",
+      "sessionId": "jp4a-mszroihn-bb165f80",
+      "startedAt": "2026-08-19T07:25:25.019Z",
+      "xrStartedAt": null,
+      "completedAt": null,
+      "active": false,
+      "mode": "LIVE-NORMAL",
+      "step": 1,
+      "testPhase": "BASELINE",
+      "lockedPoster": null,
+      "modeVerdicts": {
+        "LIVE-NORMAL": "UNKNOWN",
+        "LIVE-BASE": "UNKNOWN",
+        "LIVE-LOD0": "UNKNOWN",
+        "LIVE-LOD1": "UNKNOWN",
+        "LIVE-LOD2": "UNKNOWN",
+        "LIVE-LOD3": "UNKNOWN",
+        "LIVE-LINEAR": "UNKNOWN",
+        "LIVE-UNLIT": "UNKNOWN",
+        "LIVE-DEPTH-ISOLATED": "UNKNOWN"
+      },
+      "bankInvariant": {
+        "checkedSlots": 3692,
+        "bankMismatchCount": 0,
+        "layerOutOfRangeCount": 0,
+        "missingIndexCount": 0,
+        "invalidLoadedFlagCount": 0,
+        "pass": true,
+        "verdict": "PASS"
+      },
+      "samples": [],
+      "events": [
+        {
+          "timestamp": "2026-08-19T07:25:25.019Z",
+          "type": "session_reset"
+        }
+      ],
+      "environment": "IWER_EMULATED",
+      "questHardware": "NOT_EXECUTED"
+    },
+    "started": {
+      "schema": 1,
+      "round": "JP-4A Round 5B.3",
+      "build": "8dba63243a130860a6db76b433346763536db200",
+      "sourceHead": "8dba63243a130860a6db76b433346763536db200",
+      "testedSha": "8dba63243a130860a6db76b433346763536db200",
+      "sessionId": "jp4a-mszroihp-8bffeb24",
+      "startedAt": "2026-08-19T07:25:25.021Z",
+      "xrStartedAt": null,
+      "completedAt": null,
+      "active": true,
+      "mode": "LIVE-NORMAL",
+      "step": 1,
+      "testPhase": "BASELINE",
+      "lockedPoster": null,
+      "modeVerdicts": {
+        "LIVE-NORMAL": "UNKNOWN",
+        "LIVE-BASE": "UNKNOWN",
+        "LIVE-LOD0": "UNKNOWN",
+        "LIVE-LOD1": "UNKNOWN",
+        "LIVE-LOD2": "UNKNOWN",
+        "LIVE-LOD3": "UNKNOWN",
+        "LIVE-LINEAR": "UNKNOWN",
+        "LIVE-UNLIT": "UNKNOWN",
+        "LIVE-DEPTH-ISOLATED": "UNKNOWN"
+      },
+      "bankInvariant": {
+        "checkedSlots": 3692,
+        "bankMismatchCount": 0,
+        "layerOutOfRangeCount": 0,
+        "missingIndexCount": 0,
+        "invalidLoadedFlagCount": 0,
+        "pass": true,
+        "verdict": "PASS"
+      },
+      "samples": [],
+      "events": [
+        {
+          "timestamp": "2026-08-19T07:25:25.021Z",
+          "type": "session_reset"
+        },
+        {
+          "timestamp": "2026-08-19T07:25:25.028Z",
+          "type": "test_started"
+        }
+      ],
+      "environment": "IWER_EMULATED",
+      "questHardware": "NOT_EXECUTED"
+    },
+    "liveAfterReset": {
+      "enabled": true,
+      "mode": "LIVE-NORMAL",
+      "locked": false,
+      "opaqueId": null,
+      "shader": {
+        "index": -1,
+        "mode": "LIVE-NORMAL",
+        "code": 0
+      },
+      "depthOffsetStoreUnits": 0,
+      "viewerDistanceM": null,
+      "viewerYawToPosterDeg": null,
+      "bankInvariant": {
+        "checkedSlots": 3692,
+        "bankMismatchCount": 0,
+        "layerOutOfRangeCount": 0,
+        "missingIndexCount": 0,
+        "invalidLoadedFlagCount": 0,
+        "pass": true,
+        "verdict": "PASS"
+      },
+      "testPhase": "BASELINE",
+      "verdict": "UNKNOWN",
+      "globalIndex": null,
+      "expectedBank": null,
+      "meshBank": null,
+      "backMeshBank": null,
+      "expectedLayer": null,
+      "posterBankCount": 1,
+      "renderBatchCount": 46,
+      "aTextureIndex": null,
+      "loadedFlag": null,
+      "arrayDepth": null,
+      "detailPhase": null,
+      "detailLut": null,
+      "focusPhase": null,
+      "focusUpload": {
+        "status": "uploading",
+        "slot": 1,
+        "bytesTotal": 2457600,
+        "bytesUploaded": 0,
+        "chunksTotal": 15,
+        "chunksComplete": 0,
+        "submitMs": 0,
+        "lastError": null,
+        "uploadId": 2,
+        "progress": 0,
+        "actualTransferOwnedByBudgetQueue": true,
+        "timingSemantics": "CPU_BLOCKING_GL_SUBMIT_NOT_GPU_EXECUTION"
+      },
+      "privacy": "OPAQUE_ID_NO_TITLE_NO_URL_NO_TOKEN"
+    },
+    "shader": {
+      "index": -1,
+      "mode": "LIVE-NORMAL",
+      "code": 0
+    },
+    "locked": false,
+    "mode": "LIVE-NORMAL",
+    "testPhase": "BASELINE"
+  },
+  "secondRun": {
+    "entered": {
+      "ok": true
+    },
+    "firstWorldRender": true,
+    "stalePressDown": false,
+    "secondLock": true,
+    "secondVerdict": "UNKNOWN",
+    "completed": true,
+    "hasCopyResult": true,
+    "hasCopyJson": true
+  },
+  "privacy": {
+    "containsTitle": false,
+    "opaqueOnly": true
+  },
+  "normalConsoleAbsent": true,
+  "seriousErrors": [],
+  "knownDemoResourceErrors": 9
+}

@@ -12,6 +12,7 @@
 import * as THREE from 'three';
 import { getActiveTheme, type StoreTheme } from '../themes';
 import { markSignMesh } from '../sign-builders';
+import { markMirrorSkip } from '../scene-layers';
 import { BOX_SPACING, SECTION_COLS } from '../store-layout';
 import {
   createTicketBoardLabelMaterial, TICKET_BOARD_W, TICKET_BOARD_H, TICKET_BOARD_T,
@@ -85,7 +86,7 @@ export function buildNewReleaseToppers(runs: NrTopperRun[]): THREE.Mesh[] {
       // Bottom edge flush on the fixture top, set just back from the front lip
       // so the card stands ON the deck instead of overhanging its edge.
       card.position.set(x, run.topY + TICKET_BOARD_H / 2, run.frontZ - TICKET_BOARD_T);
-      card.layers.set(1); // mirror-skip, like every other shelf topper
+      markMirrorSkip(card);
       run.parent.add(card);
       built.push(card);
     }

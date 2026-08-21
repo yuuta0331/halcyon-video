@@ -1,5 +1,6 @@
-// WebGL XR-compatibility boundary. Three r184 may call makeXRCompatible
-// inside WebXRManager.setSession; we record (and optionally run) it explicitly.
+// WebGL XR-compatibility boundary. Three r184 WebXRManager.setSession
+// attaches `inputsourceschange` first, then may await makeXRCompatible.
+// XrRuntime must not preflight-await this before setSession.
 
 export interface GlXrAttributes {
   xrCompatible: boolean | null;

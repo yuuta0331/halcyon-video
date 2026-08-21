@@ -76,6 +76,7 @@ test('runtime setFoveation is post-session and failure is nonfatal', () => {
   const firstWorldIdx = runtime.indexOf('this.requestTargetFrameRateBestEffort()');
   assert.ok(setSessionIdx > 0 && foveationIdx > setSessionIdx, 'setFoveation after setSession');
   assert.ok(firstWorldIdx > setSessionIdx, 'frame-rate helper is after setSession in source');
+  assert.deepEqual(trySetRuntimeFoveation({ setFoveation: () => undefined }, 0), { attempted: true, ok: true });
   assert.deepEqual(trySetRuntimeFoveation({ setFoveation: () => undefined }, 1), { attempted: true, ok: true });
   assert.deepEqual(trySetRuntimeFoveation({
     setFoveation: () => { throw new Error('foveation unsupported'); },
@@ -88,7 +89,6 @@ test('entry order remains setSession then first render; first world before fps',
     'requestSession',
     'selectReferenceSpaceType',
     'configureRendererPreSession',
-    'makeXRCompatible',
     'renderer.setSession',
     'firstXrRender',
   ]);

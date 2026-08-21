@@ -1,0 +1,34 @@
+{
+  "name": "JP4A_INLINE_PROFILE",
+  "classification": "DESKTOP_BROWSER",
+  "pass": true,
+  "probe": {
+    "classification": "DESKTOP_BROWSER",
+    "QUEST_HARDWARE": "NOT_EXECUTED",
+    "pass": true,
+    "questInline": {
+      "profile": "QUEST_INLINE",
+      "posterBase": "160x240",
+      "n8ao": false,
+      "bloom": false,
+      "liveMirrors": false
+    },
+    "questImmersive": {
+      "profile": "XR_SAFE",
+      "posterBase": "96x144"
+    },
+    "desktopInline": {
+      "profile": "DESKTOP_FULL",
+      "posterBase": "160x240"
+    },
+    "iwer": {
+      "profile": "XR_SAFE",
+      "posterBase": "96x144"
+    },
+    "near": "320x480",
+    "focus": "640x960",
+    "desktopFullEffects": true,
+    "xrSafeBase": "96x144",
+    "questInlineCheap": true
+  }
+}

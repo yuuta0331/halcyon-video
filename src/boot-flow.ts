@@ -14,6 +14,7 @@ import {
   normalizeUrl,
   JellyfinLibrary,
 } from './jellyfin';
+import { markStoreInteractive, storePreloadStatusLines } from './store-visual-ready.ts';
 import {
   activeProvider as provider,
   resetActiveProvider,
@@ -26,7 +27,8 @@ import {
   closeMembershipCardPicker,
   type MembershipLoginSession,
 } from './membership-cards';
-import { buildDemoLibraries, buildDemoGames } from './demo-library';
+import { buildDemoLibraries, buildDemoGames, buildUniqueCoverLibraries } from './demo-library';
+import { readResourceFlags } from './perf/resource-profile';
 import { getSetting } from './settings';
 import { bootMark } from './perf/boot-diagnostics';
 import { isDemoMode } from './demo-mode';
@@ -292,6 +294,22 @@ export function hideBootOverlay() {
   if (overlay) {
     overlay.classList.remove('visible');
   }
+  markStoreInteractive();
+}
+
+export function updateStorePreloadOverlay(): void {
+  if (typeof document === 'undefined') return;
+  let el = document.getElementById('store-preload-status');
+  const overlay = document.getElementById('boot-overlay');
+  if (!overlay) return;
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'store-preload-status';
+    el.style.cssText = 'margin-top:12px;font-family:var(--font-mono, ui-monospace, Menlo, Consolas, monospace);font-size:13px;line-height:1.45;color:#e8e0d0;letter-spacing:0.04em;';
+    overlay.querySelector('.boot-card')?.appendChild(el);
+  }
+  const status = storePreloadStatusLines();
+  el.textContent = `${status.title}\n${status.lines.join('\n')}`;
 }
 
 // Re-shown after a manual login (the boot overlay is only up by default on the
@@ -451,8 +469,14 @@ export function startDemoAndLoad() {
   bootMark('credentialStart');
   bootMark('credentialEnd');
   bootMark('catalogStart');
-  deps.setLibraries(buildDemoLibraries(900));
-  deps.setGames(buildDemoGames(60));
+  const flags = readResourceFlags();
+  if (flags.multibank) {
+    deps.setLibraries(buildUniqueCoverLibraries(flags.catalog ?? 24));
+    deps.setGames([]);
+  } else {
+    deps.setLibraries(buildDemoLibraries(900));
+    deps.setGames(buildDemoGames(60));
+  }
   bootMark('catalogEnd');
   bootMark('sidecarsStart');
   bootMark('sidecarsEnd');

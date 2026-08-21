@@ -18,8 +18,7 @@
 // registry is the source of truth for the *UI* and the *apply behavior*, not a
 // mandate to migrate every read.
 
-import { isDemoMode } from './demo-mode';
-import { enableFpsMeter, initFpsMeter, FPS_METER_KEY } from './fps-meter';
+import { initFpsMeter } from './fps-meter';
 import { setRemotePlayEnabled } from './remote-play';
 import { THEMES, getActiveTheme, resolveThemeId, WALL_PAINT_OPTIONS, applyThemeCssVars } from './themes';
 import { refreshBrand } from './brand-live';
@@ -40,181 +39,57 @@ import type { LogoShape, LogoSpec } from './logo-spec';
 import { drawLogo, getLogoFontString } from './logo-renderer';
 import { loadMediaReleasePin, saveMediaReleasePin } from './media-release-date';
 import { formatUnlockLabel, makeRentalRecord, rentalCapacityAt } from './rental-clock';
-import type { StoreScene } from './three-scene';
-import { LOCALE_KEY, t as tUi, tfill } from './i18n';
+import { t as tUi, tfill } from './i18n';
+import {
+  registerFpsMeterSetting,
+  registerLocaleSetting,
+  registerOutsideSetting,
+} from './settings-live-chrome.ts';
+import {
+  getSetting,
+  getSettingDef,
+  registerSetting,
+  serviceSettings,
+  setSetting,
+  settingsInGroup,
+  settingsInSubpage,
+  type SettingDef,
+  type SettingGroup,
+  type SettingKind,
+} from './settings-registry.ts';
 
-export type SettingKind = 'toggle' | 'cycle' | 'text' | 'secret';
-export type ApplyMode = 'live' | 'rebuild-scene' | 'reload';
-export type SettingGroup = 'Connection' | 'Store Look' | 'Store Brand' | 'Playback' | 'Performance' | 'Video Games';
-
-export interface SettingChoice {
-  id: string;
-  label: string;
-}
-
-export interface SettingDef<T = unknown> {
-  /** localStorage key. */
-  key: string;
-  label: string;
-  kind: SettingKind;
-  /** Which drawer section this appears under. */
-  group: SettingGroup;
-  /** Choices for a 'cycle' setting, in cycle order. */
-  values?: SettingChoice[];
-  default: T;
-  applyMode: ApplyMode;
-  /** For 'live' settings: apply the new value to the running scene in place. */
-  apply?: (value: T, scene: StoreScene) => void;
-  /**
-   * One-line helper text shown under the row. A function form is re-resolved
-   * every time the drawer (re)builds a row — for rows whose advice depends on
-   * live state (e.g. Store Theme while era-follow is driving it). Read it
-   * through resolveHint(), never directly.
-   */
-  hint?: string | (() => string);
-  /**
-   * Decorates the row's displayed value at render time (currentValueLabel) —
-   * e.g. Store Theme shows "… (AUTO)" while the Media Release Date pin is
-   * driving the era. Receives the plain label, returns what to show.
-   */
-  valueLabel?: (label: string) => string;
-  /**
-   * Runs after a drawer commit persists a new value (cycle/toggle rows).
-   * A returned string is logged to the boot console — the hook for side
-   * effects a change must announce (e.g. changing the theme detaches
-   * era-follow so the pick can actually stick).
-   */
-  onChange?: (value: unknown) => string | void;
-  /**
-   * Service/developer knob: registered so the registry documents the key and
-   * live-apply still works, but never rendered on the couch-facing drawer
-   * pages. All hidden rows appear together on the SERVICE MODE page, entered
-   * via the counter CRT's MANAGER OVERRIDE row (review §4.3).
-   */
-  hidden?: boolean;
-  /**
-   * Couch sub-page this row lives on. Rows sharing a subpage collapse into a
-   * single "<name> ›" row on their group's page (one focus stop), which opens
-   * a page listing just them — e.g. the 13 Video Games platform toggles.
-   */
-  subpage?: string;
-  /**
-   * Extra gate beyond `hidden`, re-evaluated every time the drawer renders
-   * (e.g. per-platform Video Games toggles and the Romm connection fields
-   * only make sense once `bb_games_enabled` is on). Omit for "always visible
-   * (unless `hidden`)".
-   */
-  visibleWhen?: () => boolean;
-}
-
-const registry = new Map<string, SettingDef>();
-const order: string[] = [];
-
-export function registerSetting(def: SettingDef): void {
-  if (!registry.has(def.key)) order.push(def.key);
-  registry.set(def.key, def as SettingDef);
-}
-
-export function getSettingDef(key: string): SettingDef | undefined {
-  return registry.get(key);
-}
-
-/** All registered settings, in registration order. */
-export function allSettings(): SettingDef[] {
-  return order.map((k) => registry.get(k)!).filter(Boolean);
-}
-
-/**
- * Visible (non-hidden, not conditionally hidden) settings on a group's MAIN
- * page, registration order preserved. Rows that live on a sub-page are
- * excluded — they're reached through their single "<name> ›" row instead.
- */
-export function settingsInGroup(group: SettingGroup): SettingDef[] {
-  return allSettings().filter((d) => d.group === group && !d.hidden && !d.subpage && (!d.visibleWhen || d.visibleWhen()));
-}
-
-/** Visible settings on one of a group's sub-pages, registration order preserved. */
-export function settingsInSubpage(group: SettingGroup, subpage: string): SettingDef[] {
-  return allSettings().filter((d) => d.group === group && !d.hidden && d.subpage === subpage && (!d.visibleWhen || d.visibleWhen()));
-}
-
-/** Sub-page names in a group that currently have at least one visible row. */
-export function subpagesInGroup(group: SettingGroup): string[] {
-  const names: string[] = [];
-  for (const d of allSettings()) {
-    if (d.group !== group || !d.subpage || d.hidden) continue;
-    if (d.visibleWhen && !d.visibleWhen()) continue;
-    if (!names.includes(d.subpage)) names.push(d.subpage);
-  }
-  return names;
-}
-
-/**
- * The SERVICE MODE roster: every `hidden:true` registration, in order. The
- * service page deliberately ignores both `hidden` and `visibleWhen` — staff
- * see every knob, gated or not.
- */
-export function serviceSettings(): SettingDef[] {
-  return allSettings().filter((d) => d.hidden);
-}
-
-/** Groups that currently have at least one visible setting, in a fixed order. */
-export function visibleGroups(): SettingGroup[] {
-  const wanted: SettingGroup[] = ['Store Look', 'Store Brand', 'Playback', 'Video Games', 'Performance', 'Connection'];
-  // Store Brand has no registry rows — its page is the custom logo-editor
-  // panel (buildStoreBrandPanel below), so it's always visible. The public
-  // demo has no servers to connect to, so its Connection group is hidden.
-  return wanted.filter((g) =>
-    !(isDemoMode && g === 'Connection') && (g === 'Store Brand' || settingsInGroup(g).length > 0 || subpagesInGroup(g).length > 0));
-}
-
-/**
- * Read the effective value of a setting: the persisted localStorage value if
- * present, otherwise the declared default. Toggles are stored as '1'/'0'.
- */
-export function getSetting<T = unknown>(key: string): T {
-  const def = registry.get(key);
-  if (typeof localStorage !== 'undefined') {
-    const raw = localStorage.getItem(key);
-    if (raw !== null) {
-      if (def?.kind === 'toggle') return (raw === '1') as unknown as T;
-      return raw as unknown as T;
-    }
-  }
-  if (typeof import.meta.env !== 'undefined') {
-    const envKey = `VITE_${key.toUpperCase()}`;
-    const envVal = (import.meta.env as Record<string, string | undefined>)[envKey];
-    if (envVal !== undefined && envVal !== '') {
-      if (def?.kind === 'toggle') return (envVal === '1' || envVal === 'true') as unknown as T;
-      return envVal as unknown as T;
-    }
-  }
-  return (def ? (def.default as unknown as T) : (undefined as unknown as T));
-}
-
-/** Persist a setting value. Toggles serialize to '1'/'0'. */
-export function setSetting<T = unknown>(key: string, value: T): void {
-  if (typeof localStorage === 'undefined') return;
-  const def = registry.get(key);
-  if (def?.kind === 'toggle') {
-    localStorage.setItem(key, value ? '1' : '0');
-  } else {
-    localStorage.setItem(key, String(value));
-  }
-}
-
-/** The next value id for a 'cycle' setting, wrapping around. */
-export function nextCycleValue(key: string): string {
-  const def = registry.get(key);
-  if (!def?.values || def.values.length === 0) return String(getSetting(key));
-  const cur = String(getSetting(key));
-  const idx = def.values.findIndex((v) => v.id === cur);
-  return def.values[(idx + 1) % def.values.length].id;
-}
+export type {
+  ApplyMode,
+  CommitSettingOptions,
+  SettingChoice,
+  SettingCommitResult,
+  SettingDef,
+  SettingGroup,
+  SettingKind,
+  SettingsApplyTarget,
+  SettingsStorage,
+} from './settings-registry';
+export {
+  allSettings,
+  commitSetting,
+  cycleValueIds,
+  getSetting,
+  getSettingDef,
+  nextCycleValue,
+  registerSetting,
+  serviceSettings,
+  setSetting,
+  setSettingsStorageForTests,
+  settingValuesEqual,
+  settingsInGroup,
+  settingsInSubpage,
+  subpagesInGroup,
+  visibleGroups,
+} from './settings-registry';
 
 /** Human-readable current value, for display on a drawer row. */
 export function currentValueLabel(key: string): string {
-  const def = registry.get(key);
+  const def = getSettingDef(key);
   if (!def) return '';
   const decorate = (label: string) => (def.valueLabel ? def.valueLabel(label) : label);
   if (def.kind === 'toggle') return decorate(getSetting<boolean>(key) ? tUi('value.on') : tUi('value.off'));
@@ -269,7 +144,7 @@ export function settingThumbSrc(key: string, valueId: string): string | null {
 
 /** The value id a thumb filename uses for the CURRENT value (toggles → on/off). */
 function currentThumbValueId(key: string): string {
-  const def = registry.get(key);
+  const def = getSettingDef(key);
   if (def?.kind === 'toggle') return getSetting<boolean>(key) ? 'on' : 'off';
   return String(getSetting(key));
 }
@@ -439,20 +314,7 @@ export function registerCoreSettings(): void {
   coreRegistered = true;
 
   // Language is chrome, not identity: Brand Packs still own store lettering.
-  // Reload so labels re-resolve; English remains the default when unset.
-  registerSetting({
-    key: LOCALE_KEY,
-    label: tUi('locale.label'),
-    kind: 'cycle',
-    group: 'Store Look',
-    values: [
-      { id: 'en', label: tUi('locale.en') },
-      { id: 'ja', label: tUi('locale.ja') },
-    ],
-    default: 'en',
-    applyMode: 'reload',
-    hint: tUi('locale.hint'),
-  });
+  registerLocaleSetting();
 
   // Store Look ---------------------------------------------------------------
   // While the Media Release Date pin's MATCH STORE ERA is on (#42), this row
@@ -595,21 +457,7 @@ export function registerCoreSettings(): void {
   if (typeof localStorage !== 'undefined' && localStorage.getItem('bb_outside') === 'streetview') {
     localStorage.setItem('bb_outside', 'day');
   }
-  registerSetting({
-    key: 'bb_outside',
-    label: tUi('setting.environment.label'),
-    kind: 'cycle',
-    group: 'Store Look',
-    values: [
-      { id: 'day', label: tUi('setting.environment.day') },
-      { id: 'night', label: tUi('setting.environment.night') },
-      { id: 'sunset', label: tUi('setting.environment.sunset') },
-    ],
-    default: 'day',
-    applyMode: 'live',
-    apply: (value, scene) => scene.setOutsideMode(value as 'day' | 'night' | 'sunset'),
-    hint: tUi('setting.environment.hint'),
-  });
+  registerOutsideSetting();
 
   registerSetting({
     key: 'bb_ceiling',
@@ -948,20 +796,7 @@ export function registerCoreSettings(): void {
     hint: tUi('setting.fpsCap.hint'),
   });
 
-  // On-screen frame-rate readout. Live toggle: the meter is a pure DOM overlay
-  // that passively observes composited frames through the always-on hitch
-  // tracer (see src/fps-meter.ts), so switching it on/off neither rebuilds the
-  // scene nor wakes the render-on-demand loop.
-  registerSetting({
-    key: FPS_METER_KEY,
-    label: tUi('setting.fpsMeter.label'),
-    kind: 'toggle',
-    group: 'Performance',
-    default: false,
-    applyMode: 'live',
-    apply: (value) => enableFpsMeter(!!value),
-    hint: tUi('setting.fpsMeter.hint'),
-  });
+  registerFpsMeterSetting();
 
   // (Removed) 'bb_security_cam' — the security-camera angle is now the ONLY
   // library-select view; the legacy first-person section navigation is gone.
